@@ -817,8 +817,8 @@
     0,
     0
   ],
-  "capacity": 36,
-  "trayCols": 9,
+  "capacity": 48,
+  "trayCols": 12,
   "difficulty": 12,
   "seed": 1,
   "openingMode": "scattered",

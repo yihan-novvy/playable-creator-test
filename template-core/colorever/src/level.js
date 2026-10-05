@@ -3,7 +3,7 @@ import {Puzzle} from './model.js';
 export function validateLevel(input){
   const fail=message=>{throw new Error(message);};
   if(!input||typeof input!=='object'||Array.isArray(input))fail('关卡必须是对象');
-  const {width,height,capacity=65,trayCols=13}=input;
+  const {width,height,capacity=48,trayCols=12}=input;
   for(const [key,value,min,max]of [['width',width,4,40],['height',height,4,40],['capacity',capacity,4,96],['trayCols',trayCols,4,16]])if(!Number.isInteger(value)||value<min||value>max)fail(`${key} 必须是 ${min}–${max} 的整数`);
   if(capacity<trayCols||Math.ceil(capacity/trayCols)>6)fail('篮子应为 1–6 行，容量不能小于列数');
   const colors={};
