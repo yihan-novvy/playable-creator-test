@@ -9,7 +9,7 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = ROOT / 'editor/core/scripts/image-to-pattern.py'
+SCRIPT = ROOT / 'editor/plugins/colorever-gemsort/scripts/image-to-pattern.py'
 TEMPLATE = ROOT / 'editor/templates/colorever-gemsort/template.json'
 argv = sys.argv[:]
 sys.argv = [str(SCRIPT), '--source', '/unused', '--template-json', str(TEMPLATE),
@@ -82,7 +82,7 @@ class PatternColorsTest(unittest.TestCase):
             for index, tile in enumerate(range(1, 13)):
                 image.paste(palette[tile][0], (index * 50, 0, (index + 1) * 50, 160))
             image.save(tmp / 'source.png')
-            script = ROOT / 'editor/core/scripts/image-to-pattern-full.py'
+            script = ROOT / 'editor/plugins/colorever-gemsort/scripts/image-to-pattern-full.py'
             results = []
             for limit in (34, 8):
                 subprocess.run([sys.executable, str(script), '--source', str(tmp / 'source.png'),

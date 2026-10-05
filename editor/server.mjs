@@ -9,6 +9,7 @@ import {
   PROJECTS_ROOT,
   RESULT_ROOT,
   TEMPLATES_ROOT,
+  EDITOR_ROOT,
   SCRIPTS_ROOT,
   ensureDir,
   taskProjectDir,
@@ -35,10 +36,8 @@ import {
   computeStatus,
   stepInputFilesFor,
 } from './lib/store.mjs';
-import { STEP_IDS, runStep, runAll, loadTemplate, templateSteps, stepPrerequisites, effectiveConfig, resolvePatternSource } from './core/runner.mjs';
-import { buildWsOverlayInjection } from './core/lib/ws-overlays.mjs';
-import {coloreverHtml,coloreverLevel,coloreverPatterns} from './core/lib/colorever-new.mjs';
-import { dragonHtml, dragonLevel } from './core/lib/dragon-cube.mjs';
+import { STEP_IDS, runStep, runAll, templateSteps, stepPrerequisites, effectiveConfig } from './core/runner.mjs';
+import { getEntry, listEntries, importStepModule, getLib } from './core/registry.mjs';
 import { environment, run } from './core/lib/exec.mjs';
 
 const UPLOAD_CAP_BYTES = 100 * 1024 * 1024;
@@ -80,102 +79,33 @@ function decodePngDataUrl(dataUrl) {
 }
 
 function listTemplates() {
-  if (!fs.existsSync(TEMPLATES_ROOT)) return [];
-  return fs
-    .readdirSync(TEMPLATES_ROOT, { withFileTypes: true })
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => {
-      try {
-        const template = loadTemplate(templateRoot(entry.name));
-        return {
-          id: template.id,
-          name: template.name,
-          steps: template.steps,
-          workbench: template.workbench || 'colorever',
-          defaults: template.defaults,
-          palette: template.pattern?.palette || {},
-        };
-      } catch {
-        return null;
-      }
-    })
-    .filter(Boolean);
+  return listEntries().map((entry) => ({
+    id: entry.id,
+    name: entry.template.name,
+    steps: entry.template.steps,
+    workbench: entry.plugin.workbench || entry.id,
+    defaults: entry.plugin.defaults,
+    palette: entry.template.pattern?.palette || {},
+  }));
 }
 
 function templateById(templateId) {
-  const root = templateRoot(templateId);
-  if (!isInsideRoot(TEMPLATES_ROOT, root) || !fs.existsSync(root)) return null;
   try {
-    return { root, template: loadTemplate(root) };
+    const plugin = getEntry(templateId);
+    return { root: plugin.templateDir, template: plugin.template, plugin };
   } catch {
     return null;
   }
 }
 
-// Per-template step list (template.json declares them); falls back to the
-// colorever list if the template disappeared or is unreadable.
+// Per-template step list (plugin.json declares them); falls back to the
+// legacy list if the template disappeared or is unreadable.
 function taskSteps(task) {
   try {
-    return templateSteps(loadTemplate(templateRoot(task.templateId)));
+    return templateSteps(templateById(task.templateId)?.template);
   } catch {
     return STEP_IDS;
   }
-}
-
-const WS_SHELL_SCRIPT_TAG = '<script src="game.js" defer></script>';
-const WS_SHELL_STONE_URL = 'url(./stone.svg)';
-
-// 构造 water-sort 试玩预览页:关卡以内联对象注入 window.__WATER_SORT_LEVEL__
-// (游戏优先读它;内联脚本先于后面的 game.js 标签执行,顺序可靠),资源全部
-// 改写为模板绝对路径,绕开文档相对路径(./game.js、url(./stone.svg))的解析。
-// 基础包是经典脚本、无运行时 fetch(file:// 直开可用),不再有 level.json 请求。
-function buildWaterSortPreviewHtml({ root, template }, task, taskId) {
-  let level = task.config?.level;
-  if (!level || typeof level !== 'object' || Array.isArray(level)) {
-    level = JSON.parse(fs.readFileSync(path.join(root, template.level?.assetPath || 'level.json'), 'utf8'));
-  }
-  // 作者可控字段(关卡名等)直接进内联脚本,必须防 </script> 与行分隔符逃逸。
-  const levelJson = JSON.stringify(level)
-    .replaceAll('<', '\\u003c')
-    .replaceAll('\u2028', '\\u2028')
-    .replaceAll('\u2029', '\\u2029');
-  const shell = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
-  if (!shell.includes(WS_SHELL_SCRIPT_TAG) || !shell.includes(WS_SHELL_STONE_URL)) {
-    throw new Error('预览改写失败:模板壳缺少预期的 script/url 标记');
-  }
-  for (const anchor of ['</head>', '<body>', '</body>']) {
-    const count = shell.split(anchor).length - 1;
-    if (count !== 1) throw new Error(`模板壳锚点 ${anchor} 出现 ${count} 次,拒绝注入`);
-  }
-  const generated = (name) => path.join(taskGeneratedDir(taskId), name);
-  const uploaded = (name) => path.join(taskUploadsDir(taskId), name);
-  const projectUrl = (kind, name, version = '') =>
-    `/project/${taskId}/${kind}/${name}${version ? `?v=${encodeURIComponent(version)}` : ''}`;
-  const media = {
-    hudLeft: fs.existsSync(generated('hud-left.webp')) ? projectUrl('generated', 'hud-left.webp') : null,
-    hudRight: fs.existsSync(generated('hud-right.webp')) ? projectUrl('generated', 'hud-right.webp') : null,
-    introVideo: fs.existsSync(uploaded('intro-video.mp4'))
-      ? projectUrl('uploads', 'intro-video.mp4', task.uploads?.['intro-video']?.uploadedAt || '')
-      : null,
-    introPoster: fs.existsSync(generated('poster.webp')) ? projectUrl('generated', 'poster.webp') : null,
-    background: fs.existsSync(generated('background.webp')) ? projectUrl('generated', 'background.webp') : null,
-    // CTA 图标是模板自带文件(非任务产物),按 /templates/ 绝对 URL 注入。
-    ctaIcon: template.overlays?.cta && fs.existsSync(path.join(root, template.overlays.cta, 'icon.png'))
-      ? `/templates/${template.id}/${template.overlays.cta}/icon.png`
-      : null,
-  };
-  const injection = buildWsOverlayInjection({ templateRoot: root, template, config: task.config, media });
-  let html = shell
-    .replace('</head>', `${[...injection.headStyles, ...injection.headScripts].join('\n')}\n</head>`)
-    .replace(
-      WS_SHELL_SCRIPT_TAG,
-      `${injection.uiScript}<script>window.__WATER_SORT_LEVEL__=${levelJson};</script><script src="/templates/${template.id}/game/game.js" defer></script>`,
-    );
-  const bodyDom = injection.bodyDom.join('\n');
-  if (bodyDom) html = html.replace('<body>', `<body>\n${bodyDom}`);
-  const bodyScripts = injection.bodyScripts.join('\n');
-  if (bodyScripts) html = html.replace('</body>', `${bodyScripts}\n</body>`);
-  return html;
 }
 
 async function handleApi(req, res, url) {
@@ -190,7 +120,11 @@ async function handleApi(req, res, url) {
   }
 
   if(pathname==='/api/colorever-options'&&req.method==='GET'){
-    const entry=templateById('colorever');return sendJson(res,200,coloreverPatterns(entry.root));
+    const linked=templateById('colorever');
+    if(!linked)return sendError(res,404,'未知模板');
+    const lib=await getLib(linked.plugin);
+    if(!lib||typeof lib.patterns!=='function')return sendError(res,404,'该模板不提供图案列表');
+    return sendJson(res,200,lib.patterns(linked.root,linked.template));
   }
 
   if (segments[0] !== 'api') return sendError(res, 404, '未知接口');
@@ -342,42 +276,23 @@ async function handleApi(req, res, url) {
   if (rest[0] === 'prerequisites' && req.method === 'GET') {
     const patched = readTask(taskId);
     const entry = templateById(patched.templateId);
-    return sendJson(res, 200, stepPrerequisites(rest[1], patched.config, entry?.template));
+    if (!entry) return sendJson(res, 200, { uploads: [], generated: [] });
+    return sendJson(res, 200, await stepPrerequisites(rest[1], patched.config, entry.template));
   }
 
-  // ----------------------- water-sort 在线试玩预览 -----------------------
+  // ----------------------- 在线试玩预览（插件钩子） -----------------------
   // 手机框 iframe 直接可玩当前配置的关卡,不需要先打包。不取任务锁:只读
-  // 模板与任务配置(与 pattern 端点同理)。
+  // 模板与任务配置(与 pattern 端点同理)。预览页组装逻辑在插件 lib.mjs 的
+  // previewHtml 里;没有该钩子的模板不支持在线预览。
   if (rest[0] === 'preview' && req.method === 'GET') {
-    const entry = templateById(task.templateId);
-    if (!['water-sort', 'dragon-cube', 'colorever-new'].includes(entry?.template?.workbench)) {
+    const linked = templateById(task.templateId);
+    if (!linked) return sendError(res, 400, '该任务模板不支持在线预览');
+    const lib = await getLib(linked.plugin);
+    if (!lib || typeof lib.previewHtml !== 'function') {
       return sendError(res, 400, '该任务模板不支持在线预览');
     }
     try {
-      let html;
-      if (entry.template.workbench === 'colorever-new') {
-        const config=effectiveConfig(entry.template,task.config);
-        const {level}=coloreverLevel(entry.root,config);
-        const generated=name=>fs.existsSync(path.join(taskGeneratedDir(taskId),name))?`/project/${taskId}/generated/${name}`:null;
-        const intro=config.intro?.enabled===true,hud=config.hud?.enabled===true,bg=config.background?.enabled===true;
-        html=coloreverHtml({root:entry.root,template:entry.template,level,config,preview:true,media:{introVideo:intro&&fs.existsSync(path.join(taskUploadsDir(taskId),'intro-video.mp4'))?`/project/${taskId}/uploads/intro-video.mp4`:null,introPoster:intro?generated('poster.webp'):null,hudLeft:hud?generated('hud-left.webp'):null,hudRight:hud?generated('hud-right.webp'):null,background:bg?generated('background.webp'):null,ctaIcon:config.cta?.enabled===true?'/templates/colorever/overlays/cta/icon.png':null}}).html;
-      } else if (entry.template.workbench === 'dragon-cube') {
-        const config = effectiveConfig(entry.template, task.config);
-        const level = dragonLevel(entry.root, config.levelId);
-        const generated = (name) => path.join(taskGeneratedDir(taskId), name);
-        const uploaded = (name) => path.join(taskUploadsDir(taskId), name);
-        const media = {
-          hudLeft: fs.existsSync(generated('hud-left.webp')) ? `/project/${taskId}/generated/hud-left.webp` : null,
-          hudRight: fs.existsSync(generated('hud-right.webp')) ? `/project/${taskId}/generated/hud-right.webp` : null,
-          introVideo: fs.existsSync(uploaded('intro-video.mp4')) ? `/project/${taskId}/uploads/intro-video.mp4` : null,
-          introPoster: fs.existsSync(generated('poster.webp')) ? `/project/${taskId}/generated/poster.webp` : null,
-          background: config.background?.enabled === true && fs.existsSync(generated('background.webp')) ? `/project/${taskId}/generated/background.webp` : null,
-          ctaIcon: `/templates/dragon-cube/overlays/cta/icon.png`,
-        };
-        html = dragonHtml({ root: entry.root, template: entry.template, level, config, media, preview: true }).html;
-      } else {
-        html = buildWaterSortPreviewHtml(entry, task, taskId);
-      }
+      const html = lib.previewHtml({ plugin: linked.plugin, task, taskId });
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(html);
     } catch (error) {
@@ -424,15 +339,18 @@ async function handleApi(req, res, url) {
       // 不取任务锁:只写 pattern-raw*.json(步骤不碰这些文件),避免长时间
       // AI 运行期间编辑器打开被卡住;唯一共享的 pattern-src 裁剪产物是幂等的。
       const patched = readTask(taskId);
-      const tplRoot = templateRoot(patched.templateId);
-      const config = effectiveConfig(loadTemplate(tplRoot), patched.config);
+      const linked = templateById(patched.templateId);
+      if (!linked) return sendError(res, 400, '未知模板');
+      const tplRoot = linked.root;
+      const config = effectiveConfig(linked.template, patched.config);
       const uploads = {
         'pattern-source': path.join(taskUploadsDir(taskId), 'pattern-source.png'),
         'portrait-src-left': path.join(taskProjectDir(taskId), 'uploads', 'portrait-src-left.png'),
         'portrait-src-right': path.join(taskProjectDir(taskId), 'uploads', 'portrait-src-right.png'),
       };
       const generatedDir = taskGeneratedDir(taskId);
-      const { sourcePath } = await resolvePatternSource({
+      const patternModule = await importStepModule(linked.plugin, 'pattern');
+      const { sourcePath } = await patternModule.resolvePatternSource({
         config, uploads, generatedDir, scriptsRoot: SCRIPTS_ROOT,
       });
       const pc = config.patternConfig;
@@ -440,7 +358,7 @@ async function handleApi(req, res, url) {
         ? pc.allowedTiles
         : String(pc.allowedTiles || '').split(',').map((tile) => tile.trim()).filter(Boolean);
       const patternArgs = [
-        path.join(SCRIPTS_ROOT, 'image-to-pattern-full.py'),
+        path.join(linked.plugin.pluginScriptsDir, 'image-to-pattern-full.py'),
         '--source', sourcePath,
         '--template-json', path.join(tplRoot, 'template.json'),
         '--out', path.join(generatedDir, 'pattern-raw.json'),
@@ -472,7 +390,7 @@ async function handleApi(req, res, url) {
     try {
       const result = await withTaskLock(taskId, async () => {
         const patched = readTask(taskId);
-        const palette = loadTemplate(templateRoot(patched.templateId)).pattern?.palette || {};
+        const palette = templateById(patched.templateId)?.template.pattern?.palette || {};
         const tiles = body.tiles;
         if (!Array.isArray(tiles) || tiles.length === 0 || !Array.isArray(tiles[0]) || tiles[0].length === 0) {
           throw new Error('图案数据不合法');
@@ -619,6 +537,18 @@ async function handleStatic(req, res, url) {
   if (pathname.startsWith('/templates/')) {
     const [, , templateId] = pathname.split('/');
     serveTaskStatic(req, res, url, 3, () => templateRoot(templateId), templateId);
+    return;
+  }
+  // 插件资产只读透传(覆盖层、工作台脚本):编辑器直接引用插件源文件而非拷贝。
+  if (pathname.startsWith('/plugins/')) {
+    const [, , pluginId] = pathname.split('/');
+    let pluginDir = null;
+    try {
+      pluginDir = getEntry(pluginId).dir;
+    } catch {
+      return sendError(res, 404, '未知插件');
+    }
+    serveTaskStatic(req, res, url, 3, () => pluginDir, pluginId);
     return;
   }
 

@@ -1,3 +1,4 @@
+window.PlayablePlugins = window.PlayablePlugins || {};
 // 广告任务仅选择已制作好的完整图案，编辑属于模板制作入口。
 // task.js 在本文件之后加载；下列函数只在它完成初始化后才被调用。
 (function () {
@@ -158,5 +159,5 @@
     });
     root.append(intro, hud, background, level, pack);
   }
-  window.NovvyColoreverNew = { render: async () => { try { pictures=await fetchJson('/api/colorever-options'); renderConfig(); renderSteps(); } catch(error){alert(error.message);} }, saveAll: saveLevel };
+  window.PlayablePlugins['colorever'] = { render: async () => { try { pictures=await fetchJson('/api/colorever-options'); renderConfig(); renderSteps(); } catch(error){alert(error.message);} }, saveAll: saveLevel };
 })();

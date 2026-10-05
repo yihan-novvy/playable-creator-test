@@ -6,13 +6,13 @@ import vm from 'node:vm';
 import {createServer} from '../server.mjs';
 import {deleteTask,stepInputFilesFor} from '../lib/store.mjs';
 import {loadTemplate,templateSteps,stepPrerequisites,runStep} from '../core/runner.mjs';
-import {coloreverHtml,coloreverLevel,coloreverPatterns} from '../core/lib/colorever-new.mjs';
+import {coloreverHtml,coloreverLevel,coloreverPatterns} from '../plugins/colorever/lib.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const custom=()=>({name:'Custom house </script><script>bad()</script>',width:8,height:6,colors:{10:'#123456',20:'#fedcba',30:'#ff0055'},target:Array.from({length:48},(_,i)=>i<8?0:i%3===0?10:i%3===1?20:30),capacity:12,trayCols:4,difficulty:10,seed:7,decoration:'none'});
 export default async function run(assert){
  const templateRoot=path.join(root,'editor/templates/colorever'),template=loadTemplate(templateRoot);
  assert.equal(templateSteps(template),['intro','hud','background','level','pack'],'独立五步流程');
- assert.equal(stepPrerequisites('pack',{},template),{uploads:[],generated:['level.json']},'关闭叠层时只依赖自己的关卡');
+ assert.equal(await stepPrerequisites('pack',{},template),{uploads:[],generated:['level.json']},'关闭叠层时只依赖自己的关卡');
  assert.check(stepInputFilesFor('colorever').level.length===0,'图案只消费构建产物');
  const gameDir=path.join(templateRoot,'game'),html=fs.readFileSync(path.join(gameDir,'index.html'),'utf8'),js=fs.readFileSync(path.join(gameDir,'game.js'),'utf8');new vm.Script(js);
  assert.check(!/type="module"|crossorigin|成品参考|reference-kitty-source/.test(html),'基础壳适合本地直开且无参考图片');
@@ -20,16 +20,16 @@ export default async function run(assert){
  const audio=JSON.parse(js.match(/^globalThis\.__COLOREVER_OFFLINE_AUDIO__=(.*);\n/)[1]);
  assert.equal(Object.keys(audio).sort(),['bgm','pickup','place','place-single','store','store-move','success'].sort(),'全部七个音频嵌入');
  assert.check(js.includes('__COLOREVER_LEVEL__')&&js.includes('novvy:victory')&&js.includes('novvy:hud-progress')&&js.includes('novvy:intro-finished'),'数据读取、完成、进度与片头音频契约进入引擎');
- const {level}=coloreverLevel(templateRoot,{patternId:'house'});
+ const {level}=coloreverLevel(templateRoot,{patternId:'house'},template);
  level.name=custom().name;
- const injection=coloreverHtml({root:templateRoot,template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}}).html;
+ const injection=coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}}).html;
  for(const marker of ['id="novvy-video-intro"','id="novvy-training-hud"','id="novvy-dom-bg"','id="novvy-cta"','data-novvy-analytics','__COLOREVER_CTA_URL__'])assert.check(injection.includes(marker),`叠层 ${marker} 注入`);
  assert.check(injection.includes('\\u003c/script>')&&!injection.includes('<script>bad()'),'作者字段不能逃逸内联脚本');
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'colorever-media-test-'));
  try{
   const generated=path.join(temp,'generated');fs.mkdirSync(generated);fs.mkdirSync(path.join(temp,'uploads'));
-  fs.writeFileSync(path.join(generated,'level.json'),JSON.stringify(coloreverLevel(templateRoot,{patternId:'house'}).level));
-  for(const name of ['hud-left.webp','hud-right.webp','background.webp','poster.webp'])fs.copyFileSync(path.join(templateRoot,'overlays/cta/icon.png'),path.join(generated,name));
+  fs.writeFileSync(path.join(generated,'level.json'),JSON.stringify(coloreverLevel(templateRoot,{patternId:'house'},template).level));
+  for(const name of ['hud-left.webp','hud-right.webp','background.webp','poster.webp'])fs.copyFileSync(path.join(root,'editor/plugins/colorever/overlays/cta/icon.png'),path.join(generated,name));
   fs.writeFileSync(path.join(temp,'uploads/intro-video.mp4'),'fixture');
   const result=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},cta:{enabled:true}}});
   assert.check(result.ok,`全叠层打包成功 ${result.error||''}`);
@@ -37,7 +37,7 @@ export default async function run(assert){
   fs.cpSync(path.join(templateRoot,'game'),path.join(temp,'game'),{recursive:true});
   const fixed=path.join(temp,'game/patterns/house.json');
   const tampered=JSON.parse(fs.readFileSync(fixed,'utf8'));tampered.opening=null;fs.writeFileSync(fixed,JSON.stringify(tampered));
-  let rejected=false;try{coloreverLevel(temp,{patternId:'house'});}catch{rejected=true;}
+  let rejected=false;try{coloreverLevel(temp,{patternId:'house'},template);}catch{rejected=true;}
   assert.check(rejected,'构建数据被改动时拒绝交付，不自行重新生成开局');
   assert.check(!js.includes('无法生成通过求解验证的开局'),'构建引擎不含随机开局生成器');
 
@@ -61,9 +61,9 @@ export default async function run(assert){
   const exported=await fetch(base+`/api/tasks/${id}/export`),bytes=new Uint8Array(await exported.arrayBuffer());assert.check(exported.status===200&&bytes[0]===80&&bytes[1]===75,'ZIP 导出成功');
   const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house'],'广告项目只列出已构建的成品选项');
   assert.check(!catalog[0].editableParts,'广告项目不公开作者编辑参数');
-  const before=coloreverLevel(templateRoot,{patternId:'house'}).level;
+  const before=coloreverLevel(templateRoot,{patternId:'house'},template).level;
   await api(`/api/tasks/${id}`,{config:{openingMode:'easy',seed:99,capacity:4}},'PATCH');
-  assert.equal(coloreverLevel(templateRoot,{patternId:'house'}).level,before,'广告任务不能改变固定开局和玩法参数');
+  assert.equal(coloreverLevel(templateRoot,{patternId:'house'},template).level,before,'广告任务不能改变固定开局和玩法参数');
   const oldRead=await fetch(base+'/api/colorever-patterns/cat');assert.equal(oldRead.status,404,'删除 Wholehouse 图案编辑读取接口');
   const oldWrite=await api('/api/colorever-patterns/house',custom(),'PUT');assert.equal(oldWrite.status,404,'删除 Wholehouse 模板写入接口');
   const oldPreview=await api('/api/colorever-patterns/cat/preview',custom(),'POST');assert.equal(oldPreview.status,404,'删除 Wholehouse 草稿预览接口');

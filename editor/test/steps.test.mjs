@@ -6,8 +6,8 @@ import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import { fillHudHtml, fillIntroHtml, escapeHtml } from '../core/scripts/fill-overlays.mjs';
 import { probeImage } from '../core/lib/exec.mjs';
-import { locateZipPayload } from '../core/lib/res-bundle.mjs';
-import { stripIngestTelemetry } from '../core/lib/meta-patch.mjs';
+import { locateZipPayload } from '../plugins/colorever-gemsort/lib/res-bundle.mjs';
+import { stripIngestTelemetry } from '../plugins/colorever-gemsort/lib/meta-patch.mjs';
 
 const execFile = promisify(execFileCallback);
 
@@ -15,6 +15,7 @@ const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(TEST_DIR, '..', '..');
 const EXAMPLE = path.join(ROOT, 'editor', 'test', 'fixtures', 'dragon-baby-color-ever');
 const TEMPLATE = path.join(ROOT, 'editor', 'templates', 'colorever-gemsort');
+const PLUGIN = path.join(ROOT, 'editor', 'plugins', 'colorever-gemsort');
 
 async function shasum(file) {
   const { stdout } = await execFile('shasum', ['-a', '256', file]);
@@ -83,17 +84,17 @@ export default async function run(assert) {
   assert.equal(globalConfig[5][0][2]['游戏获胜关卡条件'], 0, 'GlobalConfig keeps hand-tuned win condition off');
 
   // Overlay text placeholders exist; asset placeholders intact.
-  const hudHtml = fs.readFileSync(path.join(TEMPLATE, 'overlays', 'hud', 'hud.html'), 'utf8');
+  const hudHtml = fs.readFileSync(path.join(PLUGIN, 'overlays', 'hud', 'hud.html'), 'utf8');
   assert.check(hudHtml.includes('__HUD_TITLE_LINE1__') && hudHtml.includes('__HUD_TITLE_LINE2__') && hudHtml.includes('__HUD_ARIA_LABEL__'), 'hud.html has the three text placeholders');
   assert.check(hudHtml.includes('__HUD_LEFT_DRAGON__') && hudHtml.includes('__HUD_RIGHT_DRAGON__'), 'hud.html keeps asset placeholders');
-  const introHtml = fs.readFileSync(path.join(TEMPLATE, 'overlays', 'intro', 'intro.html'), 'utf8');
+  const introHtml = fs.readFileSync(path.join(PLUGIN, 'overlays', 'intro', 'intro.html'), 'utf8');
   assert.check(introHtml.includes('__NOVVY_INTRO_ARIA__') && introHtml.includes('__NOVVY_INTRO_POSTER__') && introHtml.includes('__NOVVY_INTRO_VIDEO__'), 'intro.html has its placeholders');
   // hud.js intentionally extends the example's port in two documented spots:
   // a materials.js UI-fill block at the top (fixed-shell task copy) and the
   // Gem_success → novvy:victory dispatch inside the playOneShot hook (analytics
   // victory signal). The tail after the hook must stay byte-identical to the
   // example's file, and the ported core statements must survive verbatim.
-  const templateHudJs = fs.readFileSync(path.join(TEMPLATE, 'overlays', 'hud', 'hud.js'), 'utf8');
+  const templateHudJs = fs.readFileSync(path.join(PLUGIN, 'overlays', 'hud', 'hud.js'), 'utf8');
   const exampleHudJs = fs.readFileSync(path.join(EXAMPLE, 'editable', 'hud', 'hud.js'), 'utf8');
   const hookEnd = 'prototype.__novvyProgressHooked';
   const sliceAfter = (source) => source.slice(source.lastIndexOf(hookEnd));
@@ -109,7 +110,7 @@ export default async function run(assert) {
   // openStore() must try the Novvy bridge before super_html: the pack's own
   // AppLovin shim is always present in an SDK WebView and its window.open
   // fallback is a silent no-op there, so a later branch would never run.
-  const templateCtaJs = fs.readFileSync(path.join(TEMPLATE, 'overlays', 'cta', 'cta.js'), 'utf8');
+  const templateCtaJs = fs.readFileSync(path.join(PLUGIN, 'overlays', 'cta', 'cta.js'), 'utf8');
   const novvyBranchAt = templateCtaJs.indexOf('__novvyBridgeVersion >= 1');
   const superHtmlBranchAt = templateCtaJs.indexOf('window.super_html.download');
   assert.check(novvyBranchAt !== -1, 'cta.js consults the Novvy bridge');
@@ -120,7 +121,7 @@ export default async function run(assert) {
   // The unlock overlay must wrap whichever AudioContext the engine will pick
   // and resume captured contexts from capture-phase gesture listeners (a
   // resume is only honored inside a user-gesture event stack).
-  const templateAudioJs = fs.readFileSync(path.join(TEMPLATE, 'overlays', 'audio', 'audio.js'), 'utf8');
+  const templateAudioJs = fs.readFileSync(path.join(PLUGIN, 'overlays', 'audio', 'audio.js'), 'utf8');
   assert.check(templateAudioJs.includes("window[key] = WrappedAudioContext"), 'audio.js wraps the engine-selected AudioContext');
   for (const gesture of ['touchend', 'mouseup', 'pointerup']) {
     assert.check(templateAudioJs.includes(`'${gesture}'`), `audio.js unlocks on ${gesture}`);
@@ -185,7 +186,7 @@ export default async function run(assert) {
     // covering the restricted-palette conversion path it was generated for.
     const referenceTiles = [...new Set(Object.values(reference.symbolToTile).map(Number))].sort((a, b) => a - b).join(',');
     await execFile('python3', [
-      path.join(ROOT, 'editor', 'core', 'scripts', 'image-to-pattern.py'),
+      path.join(ROOT, 'editor', 'plugins', 'colorever-gemsort', 'scripts', 'image-to-pattern.py'),
       '--source', path.join(EXAMPLE, 'editable', 'hud', 'dragon-right.png'),
       '--template-json', path.join(TEMPLATE, 'template.json'),
       '--allowed-tiles', referenceTiles,
@@ -213,7 +214,7 @@ export default async function run(assert) {
   const levelsWork = fs.mkdtempSync(path.join(os.tmpdir(), 'steps-levels-'));
   try {
     await execFile('node', [
-      path.join(ROOT, 'editor', 'core', 'scripts', 'write-levels.mjs'),
+      path.join(ROOT, 'editor', 'plugins', 'colorever-gemsort', 'scripts', 'write-levels.mjs'),
       '--pattern', path.join(EXAMPLE, 'tools', 'dragon-pattern.generated.json'),
       '--template-root', TEMPLATE,
       '--out', path.join(levelsWork, 'levels.json'),

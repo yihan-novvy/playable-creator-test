@@ -241,16 +241,12 @@ async function saveAllConfig(button) {
     button.disabled = false;
   }
 }
+function pluginUi() {
+  return templateInfo ? (window.PlayablePlugins || {})[templateInfo.id] || null : null;
+}
 document.getElementById('save-config').addEventListener('click', (event) => {
-  if (templateInfo?.workbench === 'colorever-new' && window.NovvyColoreverNew) { window.NovvyColoreverNew.saveAll().catch(error=>alert(error.message)); return; }
-  if (templateInfo?.workbench === 'dragon-cube' && window.NovvyDragonCube) {
-    window.NovvyDragonCube.saveAll(event.target);
-    return;
-  }
-  if (templateInfo?.workbench === 'water-sort' && window.NovvyWaterSort) {
-    window.NovvyWaterSort.saveAll(event.target);
-    return;
-  }
+  const ui = pluginUi();
+  if (ui?.saveAll) { Promise.resolve(ui.saveAll(event.target)).catch(error => alert(error.message)); return; }
   saveAllConfig(event.target);
 });
 
@@ -268,18 +264,11 @@ function renderSteps() {
   }
 }
 
-// water-sort 任务改用专用工作台(task-water-sort.js 提供);colorever 维持
-// 原有的配置卡 + 六步卡分工。
+// 有专用工作台的模板由 plugins/<id>/workbench.js 接管(PlayablePlugins 注册);
+// 其余模板维持通用的配置卡 + 步骤卡分工。
 function renderWorkbench(rerender) {
-  if (templateInfo?.workbench === 'colorever-new' && window.NovvyColoreverNew) { window.NovvyColoreverNew.render(); return; }
-  if (templateInfo?.workbench === 'dragon-cube' && window.NovvyDragonCube) {
-    window.NovvyDragonCube.render();
-    return;
-  }
-  if (templateInfo?.workbench === 'water-sort' && window.NovvyWaterSort) {
-    window.NovvyWaterSort.render();
-    return;
-  }
+  const ui = pluginUi();
+  if (ui?.render) { ui.render(); return; }
   if (rerender) {
     renderSteps();
   } else {
@@ -429,8 +418,8 @@ async function runStep(stepId, { engine, button } = {}) {
 document.getElementById('run-all').addEventListener('click', async (event) => {
   event.target.disabled = true;
   try {
-    if (templateInfo?.workbench === 'colorever-new' && window.NovvyColoreverNew) await window.NovvyColoreverNew.saveAll();
-    if (templateInfo?.workbench === 'dragon-cube' && window.NovvyDragonCube) await window.NovvyDragonCube.saveAll();
+    const ui = pluginUi();
+    if (ui?.saveAll) await ui.saveAll();
     await fetchJson(`/api/tasks/${taskId}/run`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -1251,7 +1240,7 @@ async function openPatternEditor(button) {
 // 模板覆盖层 CSS 由服务端只读透传(非拷贝),模板更新预览自动跟随。
 function ensureTemplateStylesheet(templateId) {
   if (!templateId) return;
-  const href = `/templates/${encodeURIComponent(templateId)}/overlays/hud/hud.css`;
+  const href = `/plugins/${encodeURIComponent(templateId)}/overlays/hud/hud.css`;
   if (!document.querySelector(`link[data-novvy-template-css="${href}"]`)) {
     document.head.append(el('link', { rel: 'stylesheet', 'data-novvy-template-css': href, href }));
   }
@@ -1411,6 +1400,18 @@ async function refresh(rerender) {
   window.scrollTo(0, scrollY);
 }
 
+
+// 按任务所属插件动态加载工作台脚本(plugin.json 扫描出的注册表,前端不硬编码)。
+function loadWorkbenchScript(pluginId) {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = `/plugins/${encodeURIComponent(pluginId)}/workbench.js`;
+    script.onload = resolve;
+    script.onerror = resolve;
+    document.head.append(script);
+  });
+}
+
 (async function init() {
   if (!taskId) {
     window.location.href = '/';
@@ -1426,6 +1427,7 @@ async function refresh(rerender) {
   taskDoc = taskFull;
   statusInfo = taskFull.status;
   templateInfo = templates.find((t) => t.id === taskDoc.templateId);
+  if (templateInfo) await loadWorkbenchScript(templateInfo.id);
   document.getElementById('task-title').textContent = taskDoc.name;
   renderWorkbench(false);
 })();

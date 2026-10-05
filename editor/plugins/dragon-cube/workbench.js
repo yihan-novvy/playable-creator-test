@@ -1,3 +1,4 @@
+window.PlayablePlugins = window.PlayablePlugins || {};
 // DragonCube 工作台只保存 Unity 原版的关卡编号，不提供关卡创作入口。
 // task.js 在本文件之后加载；下列函数只在它完成初始化后才被调用。
 (function () {
@@ -165,5 +166,5 @@
     });
     root.append(intro, hud, background, level, pack);
   }
-  window.NovvyDragonCube = { render: () => { renderConfig(); renderSteps(); }, saveAll: async () => { await saving; document.getElementById('config-save-state').textContent = '已保存'; } };
+  window.PlayablePlugins['dragon-cube'] = { render: () => { renderConfig(); renderSteps(); }, saveAll: async () => { await saving; document.getElementById('config-save-state').textContent = '已保存'; } };
 })();

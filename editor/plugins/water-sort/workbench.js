@@ -1,3 +1,4 @@
+window.PlayablePlugins = window.PlayablePlugins || {};
 // Water-sort 工作台:config 区是可视化关卡编辑器(瓶/颜色直接点选,自动保
 // 存到 config.level),#steps 区是「关卡校验 / 打包」两张步骤卡。本文件在
 // task.js 之前加载,入口由 task.js 的 renderWorkbench()/save-config 处理器
@@ -776,4 +777,4 @@ function wsRenderSteps() {
   container.append(wsIntroCard(), wsHudCard(), wsBackgroundCard(), wsLevelCard(), wsPackCard());
 }
 
-window.NovvyWaterSort = { render, saveAll: wsSaveAll };
+window.PlayablePlugins['water-sort'] = { render, saveAll: wsSaveAll };

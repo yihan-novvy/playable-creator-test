@@ -4,8 +4,8 @@ import path from 'node:path';
 import { execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { readBundle, locateZipPayload, locateResourceObject } from '../core/lib/res-bundle.mjs';
-import { computeWinTargetPercent, pickGuideColors, routeStoreJumpThroughNovvyBridge } from '../core/lib/meta-patch.mjs';
+import { readBundle, locateZipPayload, locateResourceObject } from '../plugins/colorever-gemsort/lib/res-bundle.mjs';
+import { computeWinTargetPercent, pickGuideColors, routeStoreJumpThroughNovvyBridge } from '../plugins/colorever-gemsort/lib/meta-patch.mjs';
 import { createServer } from '../server.mjs';
 
 // Full-stack equivalence check: drive the real HTTP API to build a reference
@@ -391,7 +391,7 @@ export default async function run(assert) {
       ['background.webp', path.join(ROOT, 'project', taskId, 'generated', 'background.webp')],
       ['poster.webp', path.join(ROOT, 'project', taskId, 'generated', 'poster.webp')],
       ['tail-ad-video.mp4', path.join(ROOT, 'project', taskId, 'uploads', 'intro-video.mp4')],
-      ['app-icon.png', path.join(ROOT, 'editor', 'templates', 'colorever-gemsort', 'overlays', 'cta', 'icon.png')],
+      ['app-icon.png', path.join(ROOT, 'editor', 'plugins', 'colorever-gemsort', 'overlays', 'cta', 'icon.png')],
       ['hud-left.webp', path.join(ROOT, 'project', taskId, 'generated', 'hud-left.webp')],
       ['hud-right.webp', path.join(ROOT, 'project', taskId, 'generated', 'hud-right.webp')],
     ];

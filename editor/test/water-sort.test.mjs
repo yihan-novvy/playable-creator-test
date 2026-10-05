@@ -203,7 +203,7 @@ export default async function run(assert) {
     const enabledPreview = await (await fetch(`${base}/api/tasks/${packId}/preview`)).text();
     assert.check(enabledPreview.includes('id="novvy-training-hud"') && enabledPreview.includes(`/project/${packId}/generated/hud-left.webp`), '重新启用后 HUD 出现在预览');
     assert.check(enabledPreview.includes('id="novvy-video-intro"') && enabledPreview.includes(`/project/${packId}/uploads/intro-video.mp4`), '开场视频指向 /project/ 上传件');
-    assert.check(enabledPreview.includes('id="novvy-cta"') && enabledPreview.includes('/templates/water-sort/overlays/cta/icon.png'), 'CTA 图标在预览中指向模板绝对路径');
+    assert.check(enabledPreview.includes('id="novvy-cta"') && enabledPreview.includes('/plugins/water-sort/overlays/cta/icon.png'), 'CTA 图标在预览中指向模板绝对路径');
     const coloreverPreview = await api(base, 'GET', `/api/tasks/${coloreverId}/preview`);
     assert.check(coloreverPreview.status === 400, 'colorever 任务 preview 被拒');
 

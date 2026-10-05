@@ -33,8 +33,8 @@ function escapeInlineJson(value) {
     .replaceAll('\u2029', '\\u2029');
 }
 
-export function buildWsOverlayInjection({ templateRoot, template, config, media }) {
-  const overlayPath = (dir, name) => path.join(templateRoot, template.overlays?.[dir] || path.join('overlays', dir), name);
+export function buildWsOverlayInjection({ overlaysRoot, template, config, media }) {
+  const overlayPath = (dir, name) => path.join(overlaysRoot, template.overlays?.[dir] || path.join('overlays', dir), name);
   const readOverlay = (dir, name) => fs.readFileSync(overlayPath(dir, name), 'utf8');
 
   const hudEnabled = config?.hud?.enabled !== false && !!media.hudLeft && !!media.hudRight;

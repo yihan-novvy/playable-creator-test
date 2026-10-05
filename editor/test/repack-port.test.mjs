@@ -4,7 +4,7 @@ import path from 'node:path';
 import { execFile as execFileCallback } from 'node:child_process';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
-import { readBundle, locateZipPayload } from '../core/lib/res-bundle.mjs';
+import { readBundle, locateZipPayload } from '../plugins/colorever-gemsort/lib/res-bundle.mjs';
 
 // The strongest possible port check: run the parameterized repack against the
 // EXAMPLE's own directories (same inputs the known-good build consumed) and
@@ -29,7 +29,7 @@ async function runPortedRepack(workDir) {
   fs.symlinkSync(path.join(EXAMPLE, 'editable', 'zip-manifest.json'), path.join(gameDir, 'zip-manifest.json'));
   const outPath = path.join(workDir, 'index.html');
   await execFile('node', [
-    path.join(ROOT, 'editor', 'core', 'scripts', 'repack.mjs'),
+    path.join(ROOT, 'editor', 'plugins', 'colorever-gemsort', 'scripts', 'repack.mjs'),
     '--game', gameDir,
     '--assets-root', path.join(EXAMPLE, 'editable', 'assets'),
     '--overlays-root', path.join(EXAMPLE, 'editable'),

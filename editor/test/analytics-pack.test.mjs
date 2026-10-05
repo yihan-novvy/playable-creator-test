@@ -28,6 +28,7 @@ const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(TEST_DIR, '..', '..');
 const EXAMPLE = path.join(ROOT, 'editor', 'test', 'fixtures', 'dragon-baby-color-ever');
 const TEMPLATE = path.join(ROOT, 'editor', 'templates', 'colorever-gemsort');
+const PLUGIN = path.join(ROOT, 'editor', 'plugins', 'colorever-gemsort');
 const VENDOR = path.join(ROOT, 'editor', 'core', 'vendor', 'analytics.js');
 
 function stageExampleGame(workDir, label) {
@@ -41,7 +42,7 @@ function stageExampleGame(workDir, label) {
 
 function repackArgs(workDir, label) {
   return [
-    path.join(ROOT, 'editor', 'core', 'scripts', 'repack.mjs'),
+    path.join(ROOT, 'editor', 'plugins', 'colorever-gemsort', 'scripts', 'repack.mjs'),
     '--game', stageExampleGame(workDir, label),
     '--assets-root', path.join(EXAMPLE, 'editable', 'assets'),
     '--out', path.join(workDir, label, 'index.html'),
@@ -71,10 +72,10 @@ async function modeMatrix(workDir, assert) {
   // The template HUD ships no images (the runner generates them per task),
   // so the matrix feeds the example's portrait art instead.
   const overlayArgs = [
-    '--overlays-root', path.join(TEMPLATE, 'overlays'),
+    '--overlays-root', path.join(PLUGIN, 'overlays'),
     '--hud-image-left', path.join(EXAMPLE, 'editable', 'hud', 'dragon-left.png'),
     '--hud-image-right', path.join(EXAMPLE, 'editable', 'hud', 'dragon-right.png'),
-    '--cta-icon', path.join(TEMPLATE, 'overlays', 'cta', 'icon.png'),
+    '--cta-icon', path.join(PLUGIN, 'overlays', 'cta', 'icon.png'),
     '--intro-video', path.join(EXAMPLE, 'ad-assets', 'final', 'intro-video.mp4'),
     '--intro-poster', path.join(EXAMPLE, 'editable', 'intro', 'poster.jpg'),
   ];
@@ -236,13 +237,13 @@ function runAnalyticsSandbox(source, search) {
 async function analyticsLibrary(assert) {
   await execFile('node', ['--check', VENDOR]);
   assert.check(true, 'vendor analytics.js passes node --check');
-  await execFile('node', ['--check', path.join(TEMPLATE, 'overlays', 'analytics', 'boot.js')]);
+  await execFile('node', ['--check', path.join(PLUGIN, 'overlays', 'analytics', 'boot.js')]);
   assert.check(true, 'analytics boot.js passes node --check');
-  await execFile('node', ['--check', path.join(TEMPLATE, 'overlays', 'intro', 'intro.js')]);
+  await execFile('node', ['--check', path.join(PLUGIN, 'overlays', 'intro', 'intro.js')]);
   assert.check(true, 'intro overlay js passes node --check');
-  await execFile('node', ['--check', path.join(TEMPLATE, 'overlays', 'audio', 'audio.js')]);
+  await execFile('node', ['--check', path.join(PLUGIN, 'overlays', 'audio', 'audio.js')]);
   assert.check(true, 'audio unlock overlay js passes node --check');
-  await execFile('node', ['--check', path.join(TEMPLATE, 'overlays', 'cta', 'cta.js')]);
+  await execFile('node', ['--check', path.join(PLUGIN, 'overlays', 'cta', 'cta.js')]);
   assert.check(true, 'cta overlay js passes node --check');
 
   const source = fs.readFileSync(VENDOR, 'utf8');
@@ -340,7 +341,7 @@ function runWsFunnelSandbox(vendorSource, bootSource, withIntroVideo) {
 
 async function wsBootFunnel(assert) {
   const vendorSource = fs.readFileSync(VENDOR, 'utf8');
-  const wsTemplate = path.join(ROOT, 'editor', 'templates', 'water-sort');
+  const wsTemplate = path.join(ROOT, 'editor', 'plugins', 'water-sort');
   const bootPath = path.join(wsTemplate, 'overlays', 'analytics', 'boot.js');
   await execFile('node', ['--check', bootPath]);
   assert.check(true, 'water-sort analytics boot.js passes node --check');

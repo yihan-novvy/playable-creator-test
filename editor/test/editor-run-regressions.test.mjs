@@ -6,8 +6,8 @@ import vm from 'node:vm';
 import strict from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
 import { execFile } from '../core/lib/exec.mjs';
-import { scramblePattern, assertScrambleContract } from '../core/lib/lpcs.mjs';
-import { scrambleMoveCycle } from '../core/lib/move-cycle-scramble.mjs';
+import { scramblePattern, assertScrambleContract } from '../plugins/colorever-gemsort/lib/lpcs.mjs';
+import { scrambleMoveCycle } from '../plugins/colorever-gemsort/lib/move-cycle-scramble.mjs';
 import { runStep } from '../core/runner.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -101,7 +101,7 @@ export default async function run(assert) {
     });
     await new Promise((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', resolve); });
     const output = path.join(tmp, 'ai.json');
-    await execFile('python3', [path.join(ROOT, 'editor/core/scripts/ai-image-to-pattern.py'), '--source', sourcePath, '--template-json', path.join(templateRoot, 'template.json'), '--out', output, '--preview', path.join(tmp, 'ai.png'), '--attempts', '1', '--smoothing-passes', '0'], {
+    await execFile('python3', [path.join(ROOT, 'editor/plugins/colorever-gemsort/scripts/ai-image-to-pattern.py'), '--source', sourcePath, '--template-json', path.join(templateRoot, 'template.json'), '--out', output, '--preview', path.join(tmp, 'ai.png'), '--attempts', '1', '--smoothing-passes', '0'], {
       env: { ...process.env, ANTHROPIC_BASE_URL: `http://127.0.0.1:${server.address().port}`, ANTHROPIC_AUTH_TOKEN: 'local-test-only', ANTHROPIC_MODEL: 'local-test' },
     });
     const pattern = JSON.parse(fs.readFileSync(output));

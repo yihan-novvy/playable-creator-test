@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dragonLevel, dragonHtml } from '../core/lib/dragon-cube.mjs';
+import { dragonLevel, dragonHtml } from '../plugins/dragon-cube/lib.mjs';
 import { runStep, loadTemplate } from '../core/runner.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');

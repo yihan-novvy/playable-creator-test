@@ -351,6 +351,9 @@
           "name": "灰4"
         }
       }
+    },
+    "game": {
+      "assetsRoot": "game/assets"
     }
   }
 }

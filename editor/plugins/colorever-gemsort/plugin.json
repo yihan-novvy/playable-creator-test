@@ -1,0 +1,49 @@
+{
+  "id": "colorever-gemsort",
+  "name": "Color Ever 拼豆（gemsort 基础包）",
+  "template": "colorever-gemsort",
+  "workbench": "colorever",
+  "steps": [
+    { "id": "intro", "runner": "core:intro" },
+    { "id": "hud", "runner": "core:hud" },
+    { "id": "background", "runner": "core:background" },
+    { "id": "pattern", "runner": "./steps/pattern.mjs" },
+    { "id": "levels", "runner": "./steps/levels.mjs" },
+    { "id": "pack", "runner": "./steps/pack.mjs" }
+  ],
+  "uploads": {
+    "intro-video": { "file": "intro-video.mp4", "magic": "mp4" },
+    "intro-poster": { "file": "intro-poster.jpg", "magic": "jpg" },
+    "background": { "file": "background.png", "magic": ["png", "jpg"] },
+    "portrait-src-left": { "file": "portrait-src-left.png", "magic": ["png", "jpg"] },
+    "portrait-src-right": { "file": "portrait-src-right.png", "magic": ["png", "jpg"] },
+    "pattern-source": { "file": "pattern-source.png", "magic": ["png", "jpg"] }
+  },
+  "overlays": {
+    "hud": "overlays/hud",
+    "cta": "overlays/cta",
+    "intro": "overlays/intro",
+    "analytics": "overlays/analytics",
+    "background": "overlays/background"
+  },
+  "background": { "width": 1560, "height": 2598, "defaultSigma": 12 },
+  "defaults": {
+    "hud": { "enabled": true, "titleLine1": "", "titleLine2": "", "ariaLabel": "" },
+    "intro": { "enabled": true, "ariaLabel": "" },
+    "cta": { "enabled": true },
+    "recolorPortraits": false,
+    "patternSource": "right",
+    "background": { "blurSigma": 12 },
+    "patternConfig": {
+      "width": 40,
+      "height": 40,
+      "brightnessThreshold": 0.5,
+      "minCoverage": 0.5,
+      "pruneFloor": 6,
+      "smoothingPasses": 2,
+      "allowedTiles": "all",
+      "aiModel": ""
+    },
+    "win": { "placements": "complete" }
+  }
+}

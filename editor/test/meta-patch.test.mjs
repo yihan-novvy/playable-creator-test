@@ -13,7 +13,7 @@ import {
   stripIngestTelemetry,
   STORE_JUMP_ANCHOR,
   WIN_LEVEL_CONDITION,
-} from '../core/lib/meta-patch.mjs';
+} from '../plugins/colorever-gemsort/lib/meta-patch.mjs';
 
 const TEST_DIR = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(TEST_DIR, '..', '..');
