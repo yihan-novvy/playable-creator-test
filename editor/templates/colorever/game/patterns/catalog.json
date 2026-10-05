@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "engineSha256": "61761fb0a7a749229dbd9fa6d97129053598f73e6de2e98694f9aa0c4cef99e0",
+  "engineSha256": "26fe2cfaa0818b21982e3628b3aeda82b2a199938b4ed3a15bf32a653c608c19",
   "patterns": [
     {
       "id": "cat",
@@ -20,6 +20,26 @@
       "levelSha256": "aa5691d208ffbeab444097bdc62bd6fa9cb881011be6b66d523a22bee7dae069",
       "proof": {
         "moves": 25
+      }
+    },
+    {
+      "id": "axe",
+      "name": "双刃斧子",
+      "description": "银灰双刃与棕色长柄，沿用立体拼珠材质",
+      "level": "axe.json",
+      "levelSha256": "b18eac389c6a510943a17c52db4d5a4b53763d9680c382e317006b7a0fa824f7",
+      "proof": {
+        "moves": 5
+      }
+    },
+    {
+      "id": "torch",
+      "name": "火把",
+      "description": "红橙黄火焰、银灰托环与棕色握柄组成的立体拼珠图案",
+      "level": "torch.json",
+      "levelSha256": "41ac04349f18dad0de2eadda7f5793884d03f5b7e0fb548dd070632701670261",
+      "proof": {
+        "moves": 6
       }
     }
   ]

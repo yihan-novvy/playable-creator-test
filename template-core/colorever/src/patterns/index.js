@@ -1,5 +1,9 @@
 import catLevel from './cat.json';
 import houseLevel from './house.json';
+import axeLevel from './axe.json';
+import torchLevel from './torch.json';
 import {decorate as cat} from './cat.js';
 import {decorate as house} from './house.js';
-export const patterns={cat:{level:catLevel,decorate:cat},house:{level:houseLevel,decorate:house}};
+import {decorate as axe} from './axe.js';
+import {decorate as torch} from './torch.js';
+export const patterns={cat:{level:catLevel,decorate:cat},house:{level:houseLevel,decorate:house},axe:{level:axeLevel,decorate:axe},torch:{level:torchLevel,decorate:torch}};

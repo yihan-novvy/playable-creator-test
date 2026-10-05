@@ -50,5 +50,19 @@
     "description": "固定小屋图案，可独立增加门窗等装饰",
     "level": "house.json",
     "module": "house.js"
+  },
+  {
+    "id": "axe",
+    "name": "双刃斧子",
+    "description": "银灰双刃与棕色长柄，沿用立体拼珠材质",
+    "level": "axe.json",
+    "module": "axe.js"
+  },
+  {
+    "id": "torch",
+    "name": "火把",
+    "description": "红橙黄火焰、银灰托环与棕色握柄组成的立体拼珠图案",
+    "level": "torch.json",
+    "module": "torch.js"
   }
 ]

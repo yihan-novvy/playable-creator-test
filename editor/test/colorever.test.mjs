@@ -59,8 +59,17 @@ export default async function run(assert){
   const packed=await(await fetch(base+`/result/${id}/index.html`)).text();assert.check(packed.includes('"width":20')&&packed.includes('__COLOREVER_PATTERN_ID__="house"'),'交付选择相同图案模块');
   assert.equal(fs.readFileSync(path.join(root,'result',id,'game.js'),'utf8'),js,'换图复用同一引擎');
   const exported=await fetch(base+`/api/tasks/${id}/export`),bytes=new Uint8Array(await exported.arrayBuffer());assert.check(exported.status===200&&bytes[0]===80&&bytes[1]===75,'ZIP 导出成功');
-  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house'],'广告项目只列出已构建的成品选项');
+  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch'],'广告项目只列出已构建的成品选项');
   assert.check(!catalog[0].editableParts,'广告项目不公开作者编辑参数');
+  for(const patternId of ['axe','torch']){
+   const selected=await api(`/api/tasks/${id}`,{config:{patternId}},'PATCH');assert.equal(selected.body.config.patternId,patternId,'任务可选择新增图案');
+   const response=await fetch(base+`/api/tasks/${id}/preview`),text=await response.text();
+   assert.check(response.status===200&&text.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'新增图案即时预览');
+   const built=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(built.status===200&&built.body.every(r=>r.ok),'新增图案五步构建通过');
+   const output=await(await fetch(base+`/result/${id}/index.html`)).text();assert.check(output.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'交付包含新增图案');
+   assert.check(coloreverLevel(templateRoot,{patternId},template).level.openingMode==='easy','新增图案使用固定简易开局');
+  }
+  await api(`/api/tasks/${id}`,{config:{patternId:'house'}},'PATCH');
   const before=coloreverLevel(templateRoot,{patternId:'house'},template).level;
   await api(`/api/tasks/${id}`,{config:{openingMode:'easy',seed:99,capacity:4}},'PATCH');
   assert.equal(coloreverLevel(templateRoot,{patternId:'house'},template).level,before,'广告任务不能改变固定开局和玩法参数');
