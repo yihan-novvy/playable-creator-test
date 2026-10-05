@@ -16,3 +16,9 @@
 #guide-hand{position:absolute;left:50%;top:50%;width:80px;height:auto;max-width:none;pointer-events:none;transform:translate(-32%,-18%);transform-origin:32% 18%;animation:guide-tap .85s ease-in-out infinite;filter:drop-shadow(0 2px 2px #23496933)}
 @keyframes guide-tap{50%{transform:translate(-32%,-18%) scale(.9)}}
 @media(prefers-reduced-motion:reduce){#guide,#guide-hand{animation:none}}
+
+.controls,.hud strong,.hud small,.hud p,#instruction,#celebration{display:none!important}
+.hud{left:19%;right:19%;width:62%;gap:8px}
+.hud span{font-size:14px;font-weight:600}
+.hud progress{height:14px;border-radius:999px}
+.hud progress::-webkit-progress-value{border-radius:999px}

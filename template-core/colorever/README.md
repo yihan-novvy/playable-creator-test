@@ -2,9 +2,11 @@
 
 Run `npm install` and `npm run dev -- --port 5173`. The default page is a playable kitten bead puzzle. `npm run build` builds index.html and calibration.html. The legacy beads.html study remains available in development.
 
-The main puzzle has 829 active cells with 42 misplaced beads and a 65-slot cache. Tap connected same-color wrong beads, then tap a matching empty board cell or an empty cache slot. Correct beads are locked. Hint, undo and restart are available. Earlier scene code is saved in docs/previous-gameplay.
+The main puzzle has 829 active cells with 42 misplaced beads and a 48-slot cache (4 rows × 12 columns). Tap connected same-color wrong beads, then tap a matching empty board cell or an empty cache slot. Correct beads are locked. Hint, undo and restart are available. Earlier scene code is saved in docs/previous-gameplay.
 
 ## Current rendering
+
+当前游戏界面保留较短且较厚的进度条与已归位/总珠子数，不显示图案标题、步骤/缓存计数、说明文字、完成颜色提示或右上角工具按钮；工具节点保留供内部重开逻辑调用。广告 HUD 支持配置主标题、副标题，显示真实珠子数量，不显示百分比文字。四个图案的缓存默认统一为 4 行 × 12 列；画室以行数和列数设置篮子，容量由两者相乘计算。缓存使用紧贴珠子尺寸的方形凹槽，整体尺寸适度放大，外壳随行列数变化。广告 `game_start` 的模版标识为 `colorever_square_beads_v1`。
 
 - `src/bead-reference.js`: solid square mosaic cells with flat tops and rolled beveled edges. The top face carries the bead color; no clear window or painted highlight arc is used.
 - `src/square-pattern.js`: reference-inspired circular silhouette, pointed ears, rounded face, cheeks and smaller body sampled on a uniform square grid.

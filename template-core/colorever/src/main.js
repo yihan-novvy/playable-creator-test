@@ -6,6 +6,7 @@ import {AmbientSheen} from './ambient-sheen.js';
 import {GameTutorial,hintInstruction} from './game-tutorial.js';
 import {GameHaptics} from './game-haptics.js';
 import guideHand from './assets/guide-hand.png?inline';
+import {trayLayout} from './tray-layout.js';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {patterns} from './patterns/index.js';
@@ -16,8 +17,8 @@ import {validateLevel} from './level.js';
 const level=validateLevel(globalThis.__COLOREVER_LEVEL__??pattern.level);
 if(!level.opening)throw new Error('Missing authored opening; generate it in the Colorever editor and build again');
 const {width,height,capacity,trayCols}=level;
-const boardScale=Math.min(3,33/Math.max(width,height)),trayRows=Math.ceil(capacity/trayCols);
-const trayScale=Math.min(1.3,24.96/trayCols/1.48,8.5/trayRows/1.38);
+const boardScale=Math.min(3,33/Math.max(width,height)),tray=trayLayout(capacity,trayCols),trayRows=tray.rows;
+const trayScale=tray.scale;
 const reference={beads:level.target.flatMap((color,i)=>color?[{x:780+(i%width-(width-1)/2)*39.2*boardScale,y:1441+(Math.floor(i/width)-(height-1)/2)*39.2*boardScale,row:Math.floor(i/width),col:i%width,color}]:[])};
 import {createBeadParts} from './bead-reference.js';
 import {lightBeadStudio} from './studio-reference.js';
@@ -57,23 +58,23 @@ const occlusion=new THREE.InstancedMesh(new THREE.PlaneGeometry(.87,.87),new THR
 occlusion.frustumCulled=false;
 reference.beads.filter(b=>b.row>=0).forEach((b,i)=>{dummy.position.copy(at(b.x,b.y,.002));dummy.scale.setScalar(boardScale);dummy.updateMatrix();occlusion.setMatrixAt(i,dummy.matrix);});scene.add(occlusion);
 pattern.decorate({scene,at,level,boardScale});
-// Original cache structure: 5 rows x 13 columns; recessed pockets in a warm rounded box.
+// Compact square pockets sized just above the beads, in a fitted warm shell.
 const trayCenter=at(761,2425,-.02);
 function rounded(w,h,r,x=0,y=0){const s=new THREE.Shape(),l=x-w/2,b=y-h/2;s.moveTo(l+r,b);s.lineTo(l+w-r,b);s.quadraticCurveTo(l+w,b,l+w,b+r);s.lineTo(l+w,b+h-r);s.quadraticCurveTo(l+w,b+h,l+w-r,b+h);s.lineTo(l+r,b+h);s.quadraticCurveTo(l,b+h,l,b+h-r);s.lineTo(l,b+r);s.quadraticCurveTo(l,b,l+r,b);return s;}
 const shellMaterial=new THREE.MeshPhysicalMaterial({color:'#fff0e0',roughness:.38,clearcoat:.3,clearcoatRoughness:.26,envMapIntensity:.25});
 const pocketMaterial=new THREE.MeshStandardMaterial({color:'#d4b296',roughness:.72});
-const base=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(28.35,10.1,1.1),{depth:.25,bevelSize:.13,bevelThickness:.11,bevelSegments:6,curveSegments:20}),shellMaterial);
+const base=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(tray.width, tray.height,.6),{depth:.25,bevelSize:.13,bevelThickness:.11,bevelSegments:6,curveSegments:20}),shellMaterial);
 base.position.set(0,trayCenter.y,-.27);base.castShadow=true;base.receiveShadow=true;scene.add(base);
-const rimShape=rounded(28.25,10.05,1.08);rimShape.holes.push(rounded(26.95,8.72,.63));
+const rimShape=rounded(tray.width-.1,tray.height-.1,.55);rimShape.holes.push(rounded(tray.width-.65,tray.height-.65,.3));
 const rim=new THREE.Mesh(new THREE.ExtrudeGeometry(rimShape,{depth:.37,bevelSize:.18,bevelThickness:.14,bevelSegments:6,curveSegments:20}),shellMaterial);
 rim.position.set(0,trayCenter.y,.04);rim.castShadow=true;rim.receiveShadow=true;scene.add(rim);
-const pitch=24.96/trayCols,rowPitch=8.5/trayRows,trayPoint=(col,row)=>new THREE.Vector3((col-(trayCols-1)/2)*pitch,trayCenter.y+((trayRows-1)/2-row)*rowPitch,.21);
-const insetShape=rounded(26.4,8.6,.45);
+const pitch=tray.pitch,rowPitch=pitch,trayPoint=(col,row)=>new THREE.Vector3((col-(trayCols-1)/2)*pitch,trayCenter.y+((trayRows-1)/2-row)*rowPitch,.21);
+const insetShape=rounded(tray.width-.9,tray.height-.9,.25);
 for(let row=0;row<trayRows;row++)for(let col=0;col<trayCols;col++){
   if(row*trayCols+col>=capacity)continue;
   const position=trayPoint(col,row);
-  insetShape.holes.push(rounded(pitch*.77,rowPitch*.81,Math.min(.25,pitch*.15,rowPitch*.15),position.x,position.y-trayCenter.y));
-  const floor=new THREE.Mesh(new RoundedBoxGeometry(pitch*.80,rowPitch*.85,.09,4,.035),pocketMaterial);
+  insetShape.holes.push(rounded(tray.pocketWidth,tray.pocketWidth,.09,position.x,position.y-trayCenter.y));
+  const floor=new THREE.Mesh(new RoundedBoxGeometry(tray.pocketWidth+.06,tray.pocketWidth+.06,.09,4,.035),pocketMaterial);
   floor.position.set(position.x,position.y,.09);floor.receiveShadow=true;scene.add(floor);
 }
 const inset=new THREE.Mesh(new THREE.ExtrudeGeometry(insetShape,{depth:.21,bevelSize:.065,bevelThickness:.065,bevelSegments:4,curveSegments:12}),shellMaterial);
@@ -120,7 +121,7 @@ function updateUI(){
   $('instruction').textContent=completion?'全图扫光中…':puzzle.complete?'拼画完成！':puzzle.selection?`已选 ${puzzle.selection.indices.length} 颗 · 点同色空格归位，或点盒子暂存`:'点金色边框的错珠，再点底部空格暂存';
   if(tutorial.active)hint=tutorial.hint(puzzle,busy);
   showHint();
-  document.dispatchEvent(new CustomEvent('novvy:hud-progress',{bubbles:true,detail:{percent:Math.round(puzzle.correct/puzzle.total*100)}}));
+  document.dispatchEvent(new CustomEvent('novvy:hud-progress',{bubbles:true,detail:{percent:Math.round(puzzle.correct/puzzle.total*100),correct:puzzle.correct,total:puzzle.total}}));
   if(!puzzle.complete)wasWon=false;
 }
 function projectHint(){if(!hint)return;const p=point(hint.region,hint.index).clone();p.z+=.5;p.project(camera);$('guide').style.left=`${(p.x+1)*50}%`;$('guide').style.top=`${(1-p.y)*50}%`;}

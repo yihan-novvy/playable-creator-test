@@ -1,13 +1,13 @@
 {
   "version": 1,
-  "engineSha256": "32e6d161a7c2a8af46d69e868dfd0800cc09d5ac8cc1a61e24f26f9894dbd7a5",
+  "engineSha256": "8227b535bfb001ecc01061b4638c2af2cf03039eb66bcc9e97dca780bd98e510",
   "patterns": [
     {
       "id": "cat",
       "name": "蝴蝶结猫咪",
       "description": "方形珠子搭配立体眼睛、鼻子、嘴巴、胡须和蝴蝶结",
       "level": "cat.json",
-      "levelSha256": "3e81c2de0762b491e41dc920f716d4005c4ce1c91161413b20b4563d13215de1",
+      "levelSha256": "633509a9f5cc69a3645ac4896dc33a848d183666f6b618a88cfe2a7ba1cce418",
       "proof": {
         "moves": 45
       }
@@ -17,7 +17,7 @@
       "name": "彩色小屋",
       "description": "固定小屋图案，可独立增加门窗等装饰",
       "level": "house.json",
-      "levelSha256": "aa5691d208ffbeab444097bdc62bd6fa9cb881011be6b66d523a22bee7dae069",
+      "levelSha256": "32c9a23ea6c81bc3c529214fc9d7d6c860f2d3c2e61aae4e64db77fcf311b069",
       "proof": {
         "moves": 25
       }
@@ -27,7 +27,7 @@
       "name": "双刃斧子",
       "description": "银灰双刃与棕色长柄，沿用立体拼珠材质",
       "level": "axe.json",
-      "levelSha256": "b18eac389c6a510943a17c52db4d5a4b53763d9680c382e317006b7a0fa824f7",
+      "levelSha256": "8bdf475ee86080d3f61baadfcf78d06c219004a253d5d1db9a6764e9a79857f6",
       "proof": {
         "moves": 5
       }
@@ -37,7 +37,7 @@
       "name": "火把",
       "description": "红橙黄火焰、银灰托环与棕色握柄组成的立体拼珠图案",
       "level": "torch.json",
-      "levelSha256": "41ac04349f18dad0de2eadda7f5793884d03f5b7e0fb548dd070632701670261",
+      "levelSha256": "18d5d30ec07ddea47ffd981409fda3cb67aaec73a9d1b22d0b4c47003523aae9",
       "proof": {
         "moves": 6
       }
