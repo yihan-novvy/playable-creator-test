@@ -14,9 +14,13 @@
   let viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
   let attempt = 0;
   const visible = () => !document.hidden && viewable;
+  const SVG_SOUND_ON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+  const SVG_SOUND_OFF = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon><line x1="22" y1="9" x2="16" y2="15"></line><line x1="16" y1="9" x2="22" y2="15"></line></svg>';
+
   function updateSound() {
-    sound.textContent = video.muted ? '声音关闭' : '声音开启';
-    sound.setAttribute('aria-label', video.muted ? '打开声音' : '关闭声音');
+    sound.innerHTML = video.muted ? SVG_SOUND_OFF : SVG_SOUND_ON;
+    sound.setAttribute('aria-label', video.muted ? 'Unmute sound' : 'Mute sound');
+    sound.setAttribute('title', video.muted ? 'Unmute sound' : 'Mute sound');
   }
   function finish(reason) {
     if (!active) return;
@@ -77,6 +81,8 @@
     if (active && video.paused) void playVideo();
   });
   root.addEventListener('click', () => { if (active && video.paused) void playVideo(); });
+  updateSound();
+  video.addEventListener('volumechange', updateSound);
   video.addEventListener('ended', () => finish('video_ended'));
   video.addEventListener('timeupdate', () => {
     if (active && visible() && video.currentTime >= 5) revealCta();

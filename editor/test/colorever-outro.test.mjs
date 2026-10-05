@@ -40,6 +40,15 @@ export default async function run(assert){
  assert.check(p.nodes['novvy-video-outro'].hidden&&p.counts().plays===0,'达到 100% 时等待完成效果，不提前播放');
  p.emit('novvy:victory');await flush();
  assert.check(!p.nodes['novvy-video-outro'].hidden&&p.counts().plays===1,'效果结束后的胜利事件触发片尾');
+ const sound=p.nodes['novvy-outro-sound'];
+ const introSource=fs.readFileSync(path.join(overlay,'intro/intro.js'),'utf8');
+ const soundOn=introSource.match(/const SVG_SOUND_ON = '([^']+)'/)[1];
+ const soundOff=introSource.match(/const SVG_SOUND_OFF = '([^']+)'/)[1];
+ assert.equal(sound.innerHTML,soundOn,'片尾播放声音时使用与片头相同的 SVG 图标');
+ sound.emit('click',{stopPropagation(){}});
+ assert.check(p.video.muted&&sound.innerHTML===soundOff,'点击片尾声音按钮静音并切换为片头同款静音图标');
+ sound.emit('click',{stopPropagation(){}});
+ assert.check(!p.video.muted&&sound.innerHTML===soundOn,'再次点击恢复声音和图标');
  assert.equal([p.counts().opens,p.timers.length],[0,0],'片尾播放前不跳转、不安排重开');
  const cta=p.nodes['novvy-cta'];
  assert.check(cta.classList.contains('novvy-cta-outro')&&!cta.classList.contains('novvy-cta-visible'),'片尾开始后隐藏 CTA，并提升到视频之上');
@@ -58,6 +67,7 @@ export default async function run(assert){
  p.document.hidden=false;p.emit('document:visibilitychange');await flush();
  p.video.currentTime=10;p.video.ended=true;p.video.emit('ended');
  assert.check(!p.nodes['novvy-video-outro'].hidden&&p.video.paused,'片尾结束后保留最后一帧');
+ assert.check(sound.hidden,'片尾结束后隐藏声音按钮');
  assert.equal([p.counts().opens,p.counts().resets,p.delays[0]],[0,0,1000],'片尾结束后等待 1 秒再跳转');
  p.timers[0]();assert.equal(p.counts().opens,1,'1 秒到期后执行 CTA 跳转');
  p.emit('novvy:viewablechange',{viewable:false});p.emit('novvy:viewablechange',{viewable:true});
@@ -82,6 +92,7 @@ export default async function run(assert){
  assert.equal(interrupted.counts().opens,1,'恢复可见后等待剩余时间，只跳转一次');
  const blocked=playback({rejectPlay:true});blocked.emit('novvy:victory');await flush();
  assert.check(blocked.video.muted&&!blocked.nodes['novvy-outro-play'].hidden,'自动播放被拒绝时提供播放按钮');
+ assert.equal(blocked.nodes['novvy-outro-sound'].innerHTML,soundOff,'自动播放退回静音时同步显示静音图标');
  assert.equal(blocked.counts().opens,0,'播放被阻止时不提前跳转');
  blocked.video.emit('error');
  assert.check(blocked.nodes['novvy-video-outro'].hidden&&blocked.counts().opens===1,'视频解码错误时退出片尾并继续完成流程');
