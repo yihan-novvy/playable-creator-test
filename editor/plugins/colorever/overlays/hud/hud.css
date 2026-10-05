@@ -17,6 +17,7 @@
 
 .novvy-hud-title {
   position: absolute;
+  transform: translateY(6px);
   z-index: 3;
   top: 8%;
   left: 17%;
