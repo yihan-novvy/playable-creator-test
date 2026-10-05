@@ -1,0 +1,31 @@
+subject_definitions:
+<Subject 1> is Eva, the young female lead in <Picture 1>: early-twenties, fair skin, hazel-green eyes, soft brown hair in a loose period updo, wearing a modest high-neck gray Victorian servant dress. Preserve her exact face, hairstyle, age, clothing, and natural live-action realism.
+<Subject 2> is Nox, the baby dragon in <Picture 2>: tiny black-scaled dragon baby with very large glossy blue eyes, pale cream horns, pointed ears, small black wings and tail, wearing a beige footed onesie. Preserve his exact proportions, facial features, horns, wings, outfit, and photoreal creature style.
+<Subject 3> is the live-action bedroom composition and period-drama visual language in <Picture 3> and <Picture 4>: Eva kneels at screen-left beside the bed, Nox is centered in the foreground on the bed, with a dark-haired nobleman and a maid standing behind them. Use these pictures only for spatial blocking, warm candlelit atmosphere, lens language, and continuity; generate entirely new footage and do not reproduce their burned-in subtitles.
+<Subject 4> is the exact ColorEver mobile playable composition in <Picture 5>: a 9:16 warm live-action background with the title HUD, two circular Nox portraits, progress bar, bottle-shaped bead board, cache tray, and bottom CTA. Preserve this product composition for the final match-cut frame.
+
+summary:
+[reference generation] Generate one entirely new, continuous 8-second vertical 9:16 cinematic mobile-ad video. It begins as a photoreal period-drama scene with Eva and Nox, gives the viewer a direct task, then transforms through an empty baby bottle into the real ColorEver bottle-shaped bead puzzle. The source video is reference-only; no source footage may be reused.
+
+retention_analysis:
+<Subject 1>: fully_preserved - Eva must remain the same recognizable woman in every live-action frame, with stable face, hair, costume, hands, and body proportions.
+<Subject 2>: fully_preserved - Nox must remain the same recognizable baby dragon, with stable eyes, horns, wings, ears, onesie, scale texture, and size.
+<Subject 3>: composition_reference - preserve the established left/center/background blocking and warm bedroom geography, but create new motion and new frames without subtitles.
+<Subject 4>: fully_preserved_at_transition - the final frame must closely match the real playable UI, bottle silhouette, portrait positions, progress bar, cache tray, warm palette, and vertical layout.
+
+detailed_description:
+[Shot 1] From 00:00.000 to 00:04.000: In a single stable medium shot, Eva kneels at screen-left beside the bed while Nox stands centered in the foreground, crying softly and rubbing his eyes. The dark-haired nobleman and maid remain naturally out of focus behind them, maintaining the spatial arrangement from <Picture 3> and <Picture 4>. Eva gently steadies Nox, looks worried, and clearly says in natural English: “Nox only likes white milk.” Use a subtle slow push-in. Warm candlelit live-action realism, shallow depth of field, emotionally urgent but tender. No subtitles and no on-screen text.
+
+[Shot 2] From 00:04.000 to 00:06.000: Without changing screen direction or character identity, Eva picks up a clearly empty transparent baby bottle from beside the bed. Nox remains visible and continues to cry softly. Eva turns her eyes directly toward the camera, holds the empty bottle at chest height, and clearly asks the viewer in natural English: “Can you make his favorite milk?” Her mouth movement must match the exact spoken sentence. The camera continues its gentle forward movement. No subtitles and no on-screen text.
+
+[Shot 3] From 00:06.000 to 00:07.200: Eva raises the empty baby bottle into the exact center of the frame. Rack focus from Eva and Nox onto the bottle. The camera rapidly pushes toward it; the bottle stays upright, symmetrical, and centered while its clean silhouette expands to fill most of the 9:16 frame. Keep Eva, Nox, the nobleman, and maid spatially continuous behind it. Add a soft magical white glint along the bottle edge, but no liquid appears.
+
+[Shot 4] From 00:07.200 to 00:08.000: Perform a precise silhouette match cut: the centered empty bottle becomes the bottle-shaped ColorEver bead-board from <Picture 5>. Transition from photoreal glass to glossy mobile-game beads from the center outward. The authentic gameplay HUD, two circular Nox portraits, progress bar, cache tray, and warm background resolve around it. End on a clean, stable product frame closely matching <Picture 5>, ready for immediate handoff to the interactive playable. Do not open an app store and do not show a separate end card.
+
+Continuity and negative constraints: one newly generated continuous sequence; no reused source-video frames; no spatial jumps; no identity drift; no character swapping; no duplicate characters; no extra limbs, fingers, horns, wings, bottles, or faces; no malformed hands; no changing wardrobe; no golden milk; the bottle stays visibly empty until it becomes the game board; no captions, subtitles, logos, watermarks, or invented UI text; no camera rotation; no landscape framing; no cuts to unrelated rooms; preserve 9:16 composition throughout.
+
+overall_soundscape:
+Natural quiet bedroom room tone, soft fabric movement, restrained baby-dragon crying from Nox, a delicate bottle pickup sound, and a short magical crystalline whoosh synchronized with the 00:07.200 match cut. Eva speaks both exact English lines clearly, intimately, and urgently. Keep background characters silent. Avoid crowd noise and avoid any announcer voice.
+
+non_diegetic_music:
+Very soft emotional period-drama strings under the dialogue, building subtle tension through 00:06.000, then a brief rising shimmer into the game transition. Keep music well below Eva's voice and Nox's crying; resolve cleanly at 00:08.000 for the playable handoff.

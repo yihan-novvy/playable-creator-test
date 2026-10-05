@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#faad7d">
+  <title>DragonCube Playable</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main id="game-shell">
+    <header class="top-ui">
+      <div class="level-pill">LEVEL <strong id="level-number">1</strong></div>
+      <div class="timer-pill"><span aria-hidden="true">◷</span> <strong id="timer">05:00</strong></div>
+    </header>
+    <div id="board-wrap"><canvas id="board" aria-label="拖动彩色色块收集同色小猫"></canvas></div>
+    <div class="bottom-ui"><div id="hint">拖动色块，收集同色小猫</div><button id="reset" type="button">↻ 重新开始</button></div>
+    <div id="win" class="result" hidden><div class="result-card"><div class="result-icon">★</div><h1 id="result-title">关卡完成！</h1><p id="result-copy">所有小猫都回家了</p><button id="result-reset" type="button">再玩一次</button></div></div>
+  </main>
+</body>
+</html>

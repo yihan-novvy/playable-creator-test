@@ -1,0 +1,51 @@
+{
+  "id": "water-sort",
+  "name": "水色排序(water-sort 基础包)",
+  "workbench": "water-sort",
+  "steps": [
+    "intro",
+    "hud",
+    "background",
+    "level",
+    "pack"
+  ],
+  "game": {
+    "indexHtml": "game/index.html"
+  },
+  "overlays": {
+    "hud": "overlays/hud",
+    "cta": "overlays/cta",
+    "intro": "overlays/intro",
+    "background": "overlays/background",
+    "analytics": "overlays/analytics"
+  },
+  "level": {
+    "assetPath": "level.json"
+  },
+  "background": {
+    "width": 1560,
+    "height": 2598,
+    "defaultSigma": 12
+  },
+  "defaults": {
+    "hud": {
+      "enabled": true,
+      "titleLine1": "",
+      "titleLine2": "",
+      "ariaLabel": ""
+    },
+    "intro": {
+      "enabled": true,
+      "ariaLabel": ""
+    },
+    "cta": {
+      "enabled": true
+    },
+    "background": {
+      "blurSigma": 12
+    },
+    "win": {
+      "placements": 5
+    }
+  }
+}

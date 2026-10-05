@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <script src="analytics.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Colorever: Gem Art Puzzle</title>
+  <style>
+    :root { color-scheme: dark; font-family: Arial, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; background: #070b12; display: grid; place-items: center; overflow: hidden; }
+    main { position: relative; width: min(100vw, 56.25vh); height: min(177.78vw, 100vh); background: #000; overflow: hidden; }
+    video { display: block; width: 100%; height: 100%; object-fit: cover; }
+    .sound-toggle { position: absolute; top: max(12px, env(safe-area-inset-top)); left: 12px; z-index: 2; width: 30px; height: 30px; display: grid; place-items: center; padding: 0; border: none; border-radius: 50%; background: rgba(0, 0, 0, 0.5); color: #fff; cursor: pointer; backdrop-filter: blur(4px); }
+    .sound-toggle:active { transform: scale(.92); }
+    .end-card { position: absolute; inset: 0; display: grid; place-items: end center; padding: 24px 14px max(24px, env(safe-area-inset-bottom)); opacity: 0; pointer-events: none; background: linear-gradient(transparent 52%, rgba(4, 9, 17, .78)); transition: opacity .3s ease; }
+    .end-card.position-top { place-items: start center; padding: max(72px, calc(env(safe-area-inset-top) + 64px)) 14px 24px; background: linear-gradient(rgba(4, 9, 17, .85) 0%, rgba(4, 9, 17, .4) 65%, transparent 100%); }
+    .end-card.visible { opacity: 1; pointer-events: auto; }
+    .cta-card { width: min(100%, 410px); min-height: 88px; display: grid; grid-template-columns: 60px minmax(0, 1fr) auto; align-items: center; gap: 11px; padding: 12px; border: 1px solid rgba(255,255,255,.19); border-radius: 8px; background: rgba(18, 29, 42, .96); box-shadow: 0 12px 34px rgba(0,0,0,.48); animation: float 1.45s ease-in-out infinite; }
+    .app-icon { width: 60px; height: 60px; display: grid; place-items: center; overflow: hidden; border-radius: 10px; background: #1a73c9; color: #fff; font-size: 25px; font-weight: 800; }
+    .app-icon img { width: 100%; height: 100%; object-fit: cover; }
+    .app-details { min-width: 0; text-align: left; }
+    .app-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 15px; line-height: 1.25; font-weight: 700; color: #fff; }
+    .rating { display: flex; align-items: center; gap: 5px; margin-top: 3px; color: #ffc84a; font-size: 13px; letter-spacing: 1px; }
+    .rating small { color: #d4dce5; font-size: 11px; letter-spacing: 0; }
+    .copy { margin-top: 3px; color: #d4dce5; font-size: 11px; line-height: 1.25; }
+    .download { min-height: 42px; padding: 0 14px; border: 0; border-radius: 6px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; font-weight: 700; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16,185,129,0.3); transition: transform .15s ease; }
+    .download:active { transform: scale(0.96); }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+
+    /* Interactive Gate - Rewarded Gesture Card Layout */
+    .interactive-gate { position: absolute; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(0, 0, 0, 0.65); backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity .35s cubic-bezier(0.16, 1, 0.3, 1); user-select: none; padding: 20px; }
+    .interactive-gate.active { opacity: 1; pointer-events: auto; }
+    .gate-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+    .gate-card { position: relative; width: min(100%, 316px); background: linear-gradient(180deg, #fff7f8 0%, #ffffff 35%, #ffffff 100%); border-radius: 22px; padding: 28px 20px 24px; text-align: center; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.7); transform: scale(0.85); transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1); cursor: pointer; }
+    .interactive-gate.active .gate-card { transform: scale(1); }
+    .gate-card:active { transform: scale(0.98); }
+    .gate-title { font-size: 20px; font-weight: 800; color: #111827; margin: 0 0 16px; letter-spacing: -0.01em; line-height: 1.25; }
+    .gate-reward-box { background: linear-gradient(135deg, #fff1f2 0%, #ffe4e6 100%); border: 1px solid rgba(244, 63, 94, 0.2); border-radius: 14px; padding: 12px 14px; display: flex; align-items: center; gap: 14px; margin-bottom: 20px; text-align: left; box-shadow: 0 4px 12px rgba(244, 63, 94, 0.06); }
+    .gate-gift-icon { width: 52px; height: 52px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .gate-gift-icon svg { width: 100%; height: 100%; display: block; }
+    .gate-reward-info { min-width: 0; flex: 1; }
+    .gate-reward-title { font-size: 17px; font-weight: 800; color: #0f172a; line-height: 1.25; margin-bottom: 3px; }
+    .gate-reward-desc { font-size: 12px; font-weight: 500; color: #64748b; line-height: 1.35; }
+    .gate-action-prompt { font-size: 19px; font-weight: 900; background: linear-gradient(135deg, #ef4444 0%, #e11d48 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: 0.2px; animation: gateActionPulse 1.4s infinite ease-in-out; display: inline-block; cursor: pointer; }
+    .gate-continue-btn { margin-top: 12px; font-size: 13.5px; font-weight: 600; color: rgba(255, 255, 255, 0.9); text-shadow: 0 1px 4px rgba(0,0,0,0.85); cursor: pointer; padding: 6px 16px; border-radius: 16px; transition: color .15s, transform .15s, opacity .15s; user-select: none; }
+    .gate-continue-btn:hover { color: #ffffff; text-decoration: underline; text-underline-offset: 3px; }
+    .gate-continue-btn:active { transform: scale(0.95); opacity: 0.8; }
+    @keyframes gateActionPulse { 0%, 100% { transform: scale(1); filter: drop-shadow(0 2px 6px rgba(239, 68, 68, 0.2)); } 50% { transform: scale(1.05); filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.4)); } }
+
+    .modal-cta-overlay { position: absolute; inset: 0; z-index: 20; display: grid; place-items: center; background: rgba(0, 0, 0, 0.72); backdrop-filter: blur(8px); opacity: 0; pointer-events: none; transition: opacity .35s cubic-bezier(0.16, 1, 0.3, 1); padding: 20px; }
+    .modal-cta-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-card { position: relative; width: min(100%, 326px); background: linear-gradient(180deg, #fffef9 0%, #fff9ec 100%); border: 1px solid rgba(251, 191, 36, 0.35); border-radius: 22px; padding: 26px 20px 20px; text-align: center; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.6); transform: scale(0.85); transition: transform .35s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    .modal-cta-overlay.active .modal-card { transform: scale(1); }
+    .modal-close-btn { display: none !important; }
+    .modal-headline { font-size: 26px; font-weight: 900; line-height: 1.25; margin: 0 0 10px; background: linear-gradient(135deg, #f59e0b 0%, #ea580c 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; letter-spacing: -0.02em; }
+    .modal-subheadline { font-size: 15px; font-weight: 700; color: #1e293b; line-height: 1.42; margin: 0 auto 16px; max-width: 270px; text-align: center; }
+    .modal-app-card { display: flex; align-items: center; gap: 12px; background: #ffffff; border: 2px solid #fbbf24; border-radius: 14px; padding: 11px 13px; margin: 0 0 18px; box-shadow: 0 4px 14px rgba(251, 191, 36, 0.12); text-align: left; cursor: pointer; transition: transform .15s ease; }
+    .modal-app-card:active { transform: scale(0.98); }
+    .modal-app-icon { width: 46px; height: 46px; border-radius: 10px; overflow: hidden; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+    .modal-app-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .modal-app-info { min-width: 0; flex: 1; }
+    .modal-title { margin: 0 0 2px; font-size: 15px; font-weight: 800; color: #0f172a; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .modal-desc { margin: 0; font-size: 12px; color: #64748b; line-height: 1.35; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .modal-cta-btn { width: 100%; height: 48px; border: none; border-radius: 12px; background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: #fff; font-size: 16px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; box-shadow: 0 6px 20px rgba(37, 99, 235, 0.38); transition: transform .15s ease, box-shadow .15s ease; }
+    .modal-cta-btn:active { transform: scale(0.98); }
+    .modal-footer-hint { margin-top: 14px; font-size: 12px; color: #94a3b8; font-weight: 500; text-align: center; cursor: pointer; user-select: none; }
+    .modal-footer-hint u { color: #2563eb; font-weight: 600; cursor: pointer; text-underline-offset: 3px; transition: color .15s ease; }
+    .modal-footer-hint u:hover { color: #1d4ed8; }
+
+    @keyframes ripple { 0% { transform: scale(0.85); opacity: 0.9; } 100% { transform: scale(1.6); opacity: 0; } }
+    @keyframes arrowPulseUp { 0%, 100% { transform: translateY(0); opacity: 0.4; } 50% { transform: translateY(-7px); opacity: 1; } }
+    @keyframes arrowPulseRight { 0%, 100% { transform: translateX(0); opacity: 0.4; } 50% { transform: translateX(7px); opacity: 1; } }
+    @keyframes handFloat { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-7px) scale(1.04); } }
+    @keyframes handSwipeRight { 0%, 100% { transform: translateX(0) scale(1); } 50% { transform: translateX(8px) scale(1.04); } }
+    @keyframes handTap { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.88); } }
+  </style>
+</head>
+<body>
+  <main>
+    <video id="ad-video" src="tail-ad-video.mp4" playsinline webkit-playsinline preload="auto"></video>
+    <button id="sound-toggle" class="sound-toggle" type="button" aria-label="Mute sound" title="Mute sound"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg></button>
+
+    <!-- Interactive Pause & Gesture Gate -->
+    <div id="interactive-gate" class="interactive-gate" aria-hidden="true">
+      <div class="gate-wrapper">
+        <div class="gate-card" id="gateCard">
+          <div id="gateTitle" class="gate-title">Congratulations! Reward Unlocked</div>
+          <div class="gate-reward-box">
+            <div class="gate-gift-icon">
+              <svg width="52" height="52" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="boxGrad" x1="8" y1="24" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#ff4b6e"/>
+                    <stop offset="1" stop-color="#e11d48"/>
+                  </linearGradient>
+                  <linearGradient id="lidGrad" x1="6" y1="18" x2="58" y2="28" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#ff6b8b"/>
+                    <stop offset="1" stop-color="#f43f5e"/>
+                  </linearGradient>
+                  <linearGradient id="ribbonGrad" x1="28" y1="18" x2="36" y2="56" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#ffffff"/>
+                    <stop offset="1" stop-color="#ffe4e6"/>
+                  </linearGradient>
+                </defs>
+                <rect x="11" y="25" width="42" height="31" rx="6" fill="url(#boxGrad)"/>
+                <rect x="27" y="25" width="10" height="31" fill="url(#ribbonGrad)"/>
+                <rect x="7" y="19" width="50" height="9" rx="3" fill="url(#lidGrad)"/>
+                <rect x="27" y="19" width="10" height="9" fill="url(#ribbonGrad)"/>
+                <path d="M32 19C27 12 18 11 16 15C14 19 25 20 32 19Z" fill="#ffffff"/>
+                <path d="M32 19C37 12 46 11 48 15C50 19 39 20 32 19Z" fill="#ffe4e6"/>
+                <circle cx="32" cy="19" r="3.2" fill="#fff1f2"/>
+              </svg>
+            </div>
+            <div class="gate-reward-info">
+              <div id="gateRewardTitle" class="gate-reward-title">Mystery Gift</div>
+              <div id="gateRewardDesc" class="gate-reward-desc">Subject to in-app event</div>
+            </div>
+          </div>
+          <div id="gatePromptText" class="gate-action-prompt">Swipe up or tap to claim</div>
+        </div>
+        <div id="gateDismissBtn" class="gate-continue-btn">Continue watching</div>
+      </div>
+    </div>
+
+    <!-- Center Modal CTA Popup -->
+    <div id="modal-cta" class="modal-cta-overlay" aria-hidden="true">
+      <div class="modal-card">
+        <div id="modalCtaHeadline" class="modal-headline">Claim Reward in 15s</div>
+        <p id="modalCtaSubheadline" class="modal-subheadline">Tap and view ad details for 15s to claim your reward instantly~</p>
+        <div id="modalAppCard" class="modal-app-card">
+          <div class="modal-app-icon">
+            <img src="app-icon.png" alt="">
+          </div>
+          <div class="modal-app-info">
+            <h3 id="modalCtaTitle" class="modal-title">Colorever: Gem Art Puzzle</h3>
+            <p id="modalCtaDesc" class="modal-desc">Start your next challenge today</p>
+          </div>
+        </div>
+        <button id="modalCtaBtn" class="modal-cta-btn" type="button">
+          <span id="modalCtaBtnText">Claim Reward Faster</span>
+        </button>
+        <div class="modal-footer-hint" id="modalFooterHint">
+          <span>Auto-skip in </span><span id="modalCtaTimer">00:08</span><span> to </span><u id="modalCtaDismissLink">continue watching</u>
+        </div>
+      </div>
+    </div>
+
+    <div id="end-card" class="end-card" aria-hidden="true">
+      <section class="cta-card" aria-label="Download Colorever: Gem Art Puzzle">
+        <div class="app-icon"><img src="app-icon.png" alt=""></div>
+        <div class="app-details"><div class="app-name">Colorever: Gem Art Puzzle</div><div class="rating"><span>★★★★★</span><small>4.8</small></div><div class="copy">Download and enjoy for free</div></div>
+        <button id="cta" class="download" type="button"><span id="ctaBtnText">Download</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;display:inline-block;vertical-align:-1px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+      </section>
+    </div>
+  </main>
+  <script>
+    const video = document.getElementById('ad-video');
+    const endCard = document.getElementById('end-card');
+    const soundToggle = document.getElementById('sound-toggle');
+    const destination = "https://play.google.com/store/apps/details?id=com.oakever.gemcoloring";
+    let endCardShown = false;
+    let customCloseRequested = false;
+    let creativeStarted = false;
+    function track(name, params) {
+      if (window.NovvyAnalytics) window.NovvyAnalytics.track(name, params);
+    }
+    function showEndCard(reason) {
+      if (endCardShown) return;
+      endCardShown = true;
+      endCard.classList.add('visible');
+      endCard.setAttribute('aria-hidden', 'false');
+      track('end_card_shown', { trigger: reason });
+    }
+    function releaseCustomClose(reason) {
+      if (!customCloseRequested) return;
+      if (window.novvy && typeof window.novvy.useCustomClose === 'function') {
+        try {
+          window.novvy.useCustomClose(false);
+          track('custom_close_disabled', { reason: reason });
+        } catch (error) {
+          track('custom_close_disable_failed', { reason: reason });
+        }
+      }
+      customCloseRequested = false;
+    }
+    if (window.NovvyAnalytics) {
+      window.NovvyAnalytics.registerMedia(video, { name: 'tail_ad_video' });
+    }
+    const SVG_SOUND_ON = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>';
+    const SVG_SOUND_OFF = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:block"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor"></polygon><line x1="22" y1="9" x2="16" y2="15"></line><line x1="16" y1="9" x2="22" y2="15"></line></svg>';
+    function updateSoundControl() {
+      const muted = video.muted;
+      soundToggle.innerHTML = muted ? SVG_SOUND_OFF : SVG_SOUND_ON;
+      soundToggle.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
+      soundToggle.setAttribute('title', muted ? 'Unmute sound' : 'Mute sound');
+    }
+    video.muted = false;
+    updateSoundControl();
+    soundToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      video.muted = !video.muted;
+      soundLocked = true; // explicit user choice — stop second-guessing it
+      updateSoundControl();
+      // interaction(), not click(): muting is not an ad click. click() asks the
+      // SDK to fire the campaign's click URL, so routing the sound toggle
+      // through it billed a click and inflated CTR every time someone tapped it.
+      if (window.NovvyAnalytics) {
+        window.NovvyAnalytics.interaction('sound_button', video.muted ? 'mute' : 'unmute');
+      }
+    });
+
+    // The autoplay fallback below is a one-way latch: it mutes when the platform refuses
+    // audible playback, and nothing ever unmutes again.  On iOS that refusal is usually
+    // transient — the host app's own player is holding the audio session at the moment the
+    // ad appears, and lets go a moment later — so a single refusal at frame one should not
+    // pin the creative silent for its whole life.  Keep asking while the video is rolling.
+    let soundLocked = false;
+    let soundTimer = setInterval(restoreSound, 500);
+
+    function stopSoundWatch() {
+      if (soundTimer) { clearInterval(soundTimer); soundTimer = null; }
+    }
+
+    function restoreSound() {
+      if (soundLocked || video.ended) { stopSoundWatch(); return; }
+      if (!video.muted || video.paused) return; // nothing to fix, or not rolling yet
+      video.muted = false;
+      updateSoundControl();
+      const p = video.play();
+      if (p && p.catch) p.catch(() => {});
+      // Unmuting is not free: WebKit pauses a video that was only allowed to play *because*
+      // it was muted, the instant you unmute it.  Verify we are still rolling and go back to
+      // silent playback if not — a muted ad is bad, a frozen one is worse.
+      setTimeout(() => {
+        if (video.muted) return; // the user muted it themselves in the meantime
+        if (!video.paused || video.ended) { track('sound_restored'); return; }
+        video.muted = true;
+        updateSoundControl();
+        const retry = video.play();
+        if (retry && retry.catch) retry.catch(() => {});
+      }, 120);
+    }
+
+    function playVideo() {
+      return video.play().catch(() => {
+        // Some browsers prohibit audible autoplay.  Keep the creative moving
+        // and expose the visible control so the user can enable sound.
+        video.muted = true;
+        updateSoundControl();
+        track('autoplay_muted_fallback');
+        return video.play();
+      }).catch(() => showEndCard('playback_blocked'));
+    }
+    const interactiveConfig = window.__NOVVY_INTERACTIVE_CONFIG__ || {"ctaPosition": "bottom", "pauseGate": {"enabled": false, "time": 3.5, "type": "swipe_up", "title": "Congratulations! Reward Unlocked", "rewardTitle": "Mystery Gift", "rewardDesc": "Subject to in-app event", "text": "Swipe up or tap to claim", "continueText": "Continue watching"}, "modalCta": {"enabled": false, "time": 6.0, "headline": "Claim Reward in 15s", "subheadline": "Tap and view ad details for 15s to claim your reward instantly~", "title": "Colorever: Gem Art Puzzle", "desc": "Download and enjoy for free", "buttonText": "Claim Reward Faster", "showClose": false, "pauseVideo": true, "autoDismissSeconds": 8}};
+
+    let pauseGateTriggered = false;
+    let pauseGateCompleted = false;
+    let modalCtaTriggered = false;
+    let modalCtaDismissed = false;
+
+    const interactiveGate = document.getElementById('interactive-gate');
+    const gateCard = document.getElementById('gateCard');
+    const gateTitle = document.getElementById('gateTitle');
+    const gateRewardTitle = document.getElementById('gateRewardTitle');
+    const gateRewardDesc = document.getElementById('gateRewardDesc');
+    const gatePromptText = document.getElementById('gatePromptText');
+    const gateDismissBtn = document.getElementById('gateDismissBtn');
+    const modalCtaOverlay = document.getElementById('modal-cta');
+    const modalCtaHeadline = document.getElementById('modalCtaHeadline');
+    const modalCtaSubheadline = document.getElementById('modalCtaSubheadline');
+    const modalAppCard = document.getElementById('modalAppCard');
+    const modalCtaTitle = document.getElementById('modalCtaTitle');
+    const modalCtaDesc = document.getElementById('modalCtaDesc');
+    const modalCtaBtn = document.getElementById('modalCtaBtn');
+    const modalCtaBtnText = document.getElementById('modalCtaBtnText');
+    const modalCtaClose = document.getElementById('modalCtaClose');
+    const modalCtaTimer = document.getElementById('modalCtaTimer');
+    const modalCtaDismissLink = document.getElementById('modalCtaDismissLink');
+
+    let modalCountdownSec = 8;
+    let modalCountdownTimer = null;
+
+    function updateModalTimerDisplay() {
+      if (modalCtaTimer) {
+        modalCtaTimer.textContent = '00:' + String(Math.max(0, modalCountdownSec)).padStart(2, '0');
+      }
+    }
+
+    function startModalCountdown() {
+      stopModalCountdown();
+      modalCountdownSec = (interactiveConfig.modalCta && interactiveConfig.modalCta.autoDismissSeconds) || 8;
+      updateModalTimerDisplay();
+      modalCountdownTimer = setInterval(() => {
+        modalCountdownSec--;
+        if (modalCountdownSec <= 0) {
+          stopModalCountdown();
+          dismissModalCta();
+        } else {
+          updateModalTimerDisplay();
+        }
+      }, 1000);
+    }
+
+    function stopModalCountdown() {
+      if (modalCountdownTimer) {
+        clearInterval(modalCountdownTimer);
+        modalCountdownTimer = null;
+      }
+    }
+
+    const SVG_HAND = '<svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v0"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v2"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v8"></path><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"></path></svg>';
+    const SVG_ARROW_UP = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>';
+    const SVG_ARROW_RIGHT = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+    const SVG_TAP_RINGS = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M7.75 7.75a6 6 0 0 0 0 8.5"></path><path d="M16.25 7.75a6 6 0 0 1 0 8.5"></path></svg>';
+
+    function setupInteractiveUI() {
+      if (!interactiveConfig) return;
+      if (interactiveConfig.ctaPosition === 'top') {
+        endCard.classList.add('position-top');
+      } else if (interactiveConfig.ctaPosition === 'bottom') {
+        endCard.classList.remove('position-top');
+      }
+      if (interactiveConfig.pauseGate) {
+        if (gatePromptText && interactiveConfig.pauseGate.text) gatePromptText.textContent = interactiveConfig.pauseGate.text;
+        if (gateTitle && interactiveConfig.pauseGate.title) gateTitle.textContent = interactiveConfig.pauseGate.title;
+        if (gateRewardTitle && interactiveConfig.pauseGate.rewardTitle) gateRewardTitle.textContent = interactiveConfig.pauseGate.rewardTitle;
+        if (gateRewardDesc && interactiveConfig.pauseGate.rewardDesc) gateRewardDesc.textContent = interactiveConfig.pauseGate.rewardDesc;
+        if (gateDismissBtn && interactiveConfig.pauseGate.continueText) gateDismissBtn.textContent = interactiveConfig.pauseGate.continueText;
+      }
+      if (interactiveConfig.modalCta) {
+        if (modalCtaHeadline && interactiveConfig.modalCta.headline) modalCtaHeadline.textContent = interactiveConfig.modalCta.headline;
+        if (modalCtaSubheadline && interactiveConfig.modalCta.subheadline) modalCtaSubheadline.textContent = interactiveConfig.modalCta.subheadline;
+        const ctaNameEl = document.querySelector('.cta-card .app-name') || document.querySelector('.app-name');
+        const ctaNameText = ctaNameEl ? ctaNameEl.textContent.trim() : '';
+        if (modalCtaTitle) {
+          if (interactiveConfig.modalCta.title && interactiveConfig.modalCta.title !== 'Seekers Notes' && interactiveConfig.modalCta.title !== 'Special Offer') {
+            modalCtaTitle.textContent = interactiveConfig.modalCta.title;
+          } else if (ctaNameText) {
+            modalCtaTitle.textContent = ctaNameText;
+          }
+        }
+        const ctaCopyEl = document.querySelector('.cta-card .copy') || document.querySelector('.copy');
+        const ctaCopyText = ctaCopyEl ? ctaCopyEl.textContent.trim() : '';
+        if (modalCtaDesc) {
+          if (interactiveConfig.modalCta.desc && interactiveConfig.modalCta.desc !== 'Trending short dramas updated daily!' && interactiveConfig.modalCta.desc !== 'Download the app to watch all episodes now!') {
+            modalCtaDesc.textContent = interactiveConfig.modalCta.desc;
+          } else if (ctaCopyText) {
+            modalCtaDesc.textContent = ctaCopyText;
+          }
+        }
+        if (interactiveConfig.modalCta.buttonText) {
+          if (modalCtaBtnText) modalCtaBtnText.textContent = interactiveConfig.modalCta.buttonText;
+          else if (modalCtaBtn) modalCtaBtn.textContent = interactiveConfig.modalCta.buttonText;
+        }
+        if (modalCtaClose) modalCtaClose.style.display = interactiveConfig.modalCta.showClose ? 'grid' : 'none';
+      }
+    }
+    setupInteractiveUI();
+
+    function showPauseGate() {
+      if (!interactiveGate || pauseGateCompleted) return;
+      video.pause();
+      interactiveGate.classList.add('active');
+      interactiveGate.setAttribute('aria-hidden', 'false');
+      track('pause_gate_shown', { second: video.currentTime });
+    }
+
+    function handleGateClaim() {
+      if (!interactiveGate || pauseGateCompleted) return;
+      pauseGateCompleted = true;
+      interactiveGate.classList.remove('active');
+      interactiveGate.setAttribute('aria-hidden', 'true');
+      if (window.NovvyAnalytics) {
+        window.NovvyAnalytics.interaction('interactive_gate', 'gesture_completed', {
+          second: interactiveConfig.pauseGate ? interactiveConfig.pauseGate.time : 0
+        });
+      }
+      const cta = document.getElementById('cta');
+      if (cta) cta.click();
+      else triggerCtaClick();
+    }
+
+    function completePauseGate() {
+      if (!interactiveGate || pauseGateCompleted) return;
+      pauseGateCompleted = true;
+      interactiveGate.classList.remove('active');
+      interactiveGate.setAttribute('aria-hidden', 'true');
+      if (window.NovvyAnalytics) {
+        window.NovvyAnalytics.interaction('interactive_gate', 'dismiss_continue');
+      }
+      playVideo();
+    }
+
+    if (gateCard) {
+      gateCard.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleGateClaim();
+      });
+    }
+
+    if (gateDismissBtn) {
+      gateDismissBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        completePauseGate();
+      });
+    }
+
+    if (interactiveGate) {
+      let startX = 0;
+      let startY = 0;
+      let isDragging = false;
+
+      function handleGestureStart(x, y) {
+        startX = x;
+        startY = y;
+        isDragging = true;
+      }
+      function handleGestureEnd(x, y, target) {
+        if (!isDragging) return;
+        isDragging = false;
+        if (target && target.closest && target.closest('#gateDismissBtn')) {
+          return;
+        }
+        const dx = x - startX;
+        const dy = y - startY;
+        const dist = Math.hypot(dx, dy);
+        const gType = (interactiveConfig.pauseGate && interactiveConfig.pauseGate.type) || 'swipe_up';
+        if (gType === 'tap') {
+          handleGateClaim();
+        } else if (gType === 'swipe_up') {
+          if (dy <= -20 || dist <= 8) handleGateClaim();
+        } else if (gType === 'swipe_right') {
+          if (dx >= 20 || dist <= 8) handleGateClaim();
+        } else {
+          if (dy <= -15 || dist <= 8 || dist >= 15) handleGateClaim();
+        }
+      }
+
+      interactiveGate.addEventListener('touchstart', (e) => {
+        if (e.touches && e.touches.length > 0) handleGestureStart(e.touches[0].clientX, e.touches[0].clientY);
+      }, { passive: true });
+      interactiveGate.addEventListener('touchend', (e) => {
+        if (e.changedTouches && e.changedTouches.length > 0) handleGestureEnd(e.changedTouches[0].clientX, e.changedTouches[0].clientY, e.target);
+      });
+      interactiveGate.addEventListener('mousedown', (e) => {
+        handleGestureStart(e.clientX, e.clientY);
+      });
+      interactiveGate.addEventListener('mouseup', (e) => {
+        handleGestureEnd(e.clientX, e.clientY, e.target);
+      });
+    }
+
+    function showModalCta() {
+      if (!modalCtaOverlay || modalCtaDismissed) return;
+      if (interactiveConfig.modalCta && interactiveConfig.modalCta.pauseVideo) {
+        video.pause();
+      }
+      modalCtaOverlay.classList.add('active');
+      modalCtaOverlay.setAttribute('aria-hidden', 'false');
+      startModalCountdown();
+      track('modal_cta_shown', { second: video.currentTime });
+    }
+
+    function dismissModalCta() {
+      if (!modalCtaOverlay) return;
+      stopModalCountdown();
+      modalCtaDismissed = true;
+      modalCtaOverlay.classList.remove('active');
+      modalCtaOverlay.setAttribute('aria-hidden', 'true');
+      if (window.NovvyAnalytics) {
+        window.NovvyAnalytics.interaction('modal_cta', 'dismiss');
+      }
+      if (interactiveConfig.modalCta && interactiveConfig.modalCta.pauseVideo && !video.ended) {
+        playVideo();
+      }
+    }
+
+    function handleModalCtaClick() {
+      stopModalCountdown();
+      const cta = document.getElementById('cta');
+      if (cta) {
+        cta.click();
+      } else {
+        triggerCtaClick();
+      }
+    }
+
+    if (modalCtaBtn) {
+      modalCtaBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleModalCtaClick();
+      });
+    }
+    if (modalAppCard) {
+      modalAppCard.addEventListener('click', (e) => {
+        e.stopPropagation();
+        handleModalCtaClick();
+      });
+    }
+    if (modalCtaDismissLink) {
+      modalCtaDismissLink.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dismissModalCta();
+      });
+    }
+    const modalFooterHint = document.getElementById('modalFooterHint');
+    if (modalFooterHint) {
+      modalFooterHint.addEventListener('click', (e) => {
+        e.stopPropagation();
+        dismissModalCta();
+      });
+    }
+
+    let progress25Reached = false;
+    function triggerCtaClick() {
+      if (window.NovvyAnalytics) {
+        window.NovvyAnalytics.click('primary_cta', 'open_destination', { scene: 'end_card' });
+      }
+      // A store handoff may suspend this WebView before the video's `ended`
+      // callback runs. Restore the SDK close button before opening the store.
+      releaseCustomClose('store_handoff');
+      if (window.novvy && typeof window.novvy.open === 'function') window.novvy.open();
+      else window.location.assign(destination);
+    }
+    function isVideo25Complete() {
+      if (progress25Reached) return true;
+      if (isFinite(video.duration) && video.duration > 0 && (video.currentTime / video.duration) >= 0.25) {
+        progress25Reached = true;
+        return true;
+      }
+      return false;
+    }
+    function handleVideoClick() {
+      if (isVideo25Complete()) {
+        triggerCtaClick();
+      }
+    }
+    video.addEventListener('timeupdate', () => {
+      // Check interactive pause gate
+      if (interactiveConfig.pauseGate && interactiveConfig.pauseGate.enabled && !pauseGateTriggered && !pauseGateCompleted) {
+        if (video.currentTime >= interactiveConfig.pauseGate.time) {
+          pauseGateTriggered = true;
+          showPauseGate();
+        }
+      }
+      // Check interactive center modal CTA
+      if (interactiveConfig.modalCta && interactiveConfig.modalCta.enabled && !modalCtaTriggered && !modalCtaDismissed) {
+        if (video.currentTime >= interactiveConfig.modalCta.time) {
+          modalCtaTriggered = true;
+          showModalCta();
+        }
+      }
+      // Check 25% click threshold
+      if (!progress25Reached && isFinite(video.duration) && video.duration > 0 && (video.currentTime / video.duration) >= 0.25) {
+        progress25Reached = true;
+        video.style.cursor = 'pointer';
+      }
+      if (video.currentTime >= 3) showEndCard('video_progress');
+    });
+    video.addEventListener('error', () => showEndCard('video_error'));
+    video.addEventListener('ended', () => {
+      progress25Reached = true;
+      video.style.cursor = 'pointer';
+      showEndCard('video_complete');
+      releaseCustomClose('video_complete');
+    });
+    video.addEventListener('click', handleVideoClick);
+    endCard.addEventListener('click', (e) => {
+      if (e.target === endCard) {
+        handleVideoClick();
+      }
+    });
+    document.getElementById('cta').addEventListener('click', (e) => {
+      e.stopPropagation();
+      triggerCtaClick();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        releaseCustomClose('creative_returned');
+        // Store handoffs/backgrounding do not consistently re-dispatch the
+        // native bridge event, so resume directly when the page returns.
+        if (creativeStarted && !video.ended) {
+          playVideo();
+          track('creative_resumed_browser');
+        }
+      }
+    });
+
+    // The SDK owns playback while an ad is visible.  The fallback preserves
+    // normal browser playback for local previews and older integrations.
+    (function bindNovvyLifecycle() {
+      let started = false;
+      function startCreative() {
+        creativeStarted = true;
+        if (!customCloseRequested && window.novvy && typeof window.novvy.useCustomClose === 'function') {
+          try {
+            window.novvy.useCustomClose(true);
+            customCloseRequested = true;
+            track('custom_close_enabled');
+          } catch (error) {
+            track('custom_close_enable_failed');
+          }
+        }
+        playVideo();
+        track('creative_started');
+      }
+      function pauseCreative() {
+        video.pause();
+        track('creative_paused');
+      }
+      function resumeCreative() {
+        playVideo();
+        track('creative_resumed');
+      }
+      function run(viewable) {
+        if (!viewable) {
+          if (started) pauseCreative();
+          return;
+        }
+        if (!started) { started = true; startCreative(); }
+        else resumeCreative();
+      }
+      if (window.__novvyBridgeVersion >= 1) {
+        if (window.__novvyViewable) run(true);
+        window.addEventListener('novvy:viewablechange', (event) => {
+          run(!!(event.detail && event.detail.viewable));
+        });
+      } else {
+        run(true);
+      }
+    }());
+  </script>
+</body>
+</html>

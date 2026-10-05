@@ -1,0 +1,168 @@
+#novvy-training-hud {
+  --hud-progress: 10%;
+  position: fixed;
+  z-index: 2147483000;
+  top: calc(env(safe-area-inset-top) + max(4px, .8dvh));
+  left: 50%;
+  width: min(88dvw, 720px);
+  aspect-ratio: 804 / 304;
+  transform: translateX(-50%);
+  container-type: inline-size;
+  pointer-events: none;
+  user-select: none;
+  overflow: visible;
+  filter: drop-shadow(0 2px 3px rgba(28, 13, 7, .32));
+  font-family: "Arial Rounded MT Bold", "Trebuchet MS", Arial, sans-serif;
+}
+
+.novvy-hud-title {
+  position: absolute;
+  z-index: 3;
+  top: 4%;
+  left: 17%;
+  right: 17%;
+  color: #f8f8ff;
+  text-align: center;
+  font-size: clamp(20px, 6.2vw, 52px);
+  font-size: clamp(20px, 6.2cqw, 52px);
+  font-weight: 1000;
+  line-height: .98;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 3px rgba(41, 22, 14, .72);
+  -webkit-text-stroke: 0 transparent;
+}
+
+.novvy-hud-title div:last-child {
+  margin-top: 2.2%;
+  color: #ffdf4c;
+  text-shadow: 0 2px 3px rgba(75, 40, 9, .7);
+  -webkit-text-stroke: 0 transparent;
+}
+
+.novvy-hud-dragon {
+  position: absolute;
+  z-index: 4;
+  top: 39%;
+  width: 18%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 50%;
+  border: 4px solid white;
+}
+
+.novvy-hud-dragon-left { left: 2.8%; }
+.novvy-hud-dragon-right { right: 2.8%; }
+
+/* Corner polaroid of the pattern source ("this is what you're building").
+   Hangs off the banner's right end so the title reads as one sentence with
+   the goal photo; the board's ribbon section leaves the top-right pocket
+   free. Pure chrome: pointer-events never reach it (inherited none) and it
+   stays until the win jump. */
+.novvy-pattern-ref {
+  position: absolute;
+  z-index: 4;
+  top: 100%;
+  right: .8%;
+  width: 23%;
+  aspect-ratio: 4 / 5;
+  box-sizing: border-box;
+  margin-top: 1.2dvh;
+  padding: 1.5vw 1.7vw 3.4vw;
+  padding: 1.5cqw 1.7cqw 3.4cqw;
+  border-radius: clamp(5px, 1.6vw, 9px);
+  border-radius: clamp(5px, 1.6cqw, 9px);
+  background: linear-gradient(165deg, #fffdf4 0%, #f6ecd9 100%);
+  box-shadow: 0 3px 7px rgba(24, 12, 8, .38), 0 1px 2px rgba(24, 12, 8, .3);
+  object-fit: contain;
+  transform: rotate(4.5deg);
+  transform-origin: 50% -6%;
+  opacity: 0;
+  translate: 0 -14%;
+  transition: opacity 460ms ease, translate 460ms cubic-bezier(.2, .85, .3, 1.15);
+}
+
+#novvy-training-hud.is-live .novvy-pattern-ref {
+  opacity: 1;
+  translate: 0 0;
+  /* Attract loop: hold still, then one pendulum swing around the top edge,
+     hold again. Keyframes carry the 4.5deg resting tilt (a transform
+     animation replaces the whole property) and ride on transform, so they
+     compose with the entrance translate above. */
+  animation: novvy-pattern-ref-sway 4.4s ease-in-out 1.8s infinite;
+}
+
+@keyframes novvy-pattern-ref-sway {
+  0%, 78% { transform: rotate(4.5deg); }
+  85% { transform: rotate(1.4deg); }
+  91% { transform: rotate(6.6deg); }
+  96% { transform: rotate(3.4deg); }
+  100% { transform: rotate(4.5deg); }
+}
+
+.novvy-hud-progress-wrap {
+  position: absolute;
+  z-index: 2;
+  top: 54%;
+  left: 26.5%;
+  right: 26.5%;
+}
+
+.novvy-hud-progress-track {
+  position: relative;
+  height: clamp(20px, 5.7vw, 47px);
+  height: clamp(20px, 5.7cqw, 47px);
+  padding: clamp(3px, .8vw, 7px);
+  overflow: hidden;
+  border: clamp(2px, .55vw, 5px) solid #fff2d7;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ead2aa 0%, #b7834a 100%);
+  box-shadow: 0 0 0 2px rgba(106, 61, 31, .82), inset 0 2px 5px rgba(89, 47, 25, .3), 0 4px 8px rgba(25, 12, 11, .38);
+}
+
+#novvy-hud-progress-fill {
+  width: var(--hud-progress);
+  height: 100%;
+  min-width: 0;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff53c 0%, #ffd91e 54%, #ffc80a 100%);
+  box-shadow: inset 0 2px 2px rgba(255,255,255,.75), 0 0 5px rgba(255, 211, 19, .9);
+  transition: width 520ms cubic-bezier(.18, .88, .24, 1.18);
+}
+
+.novvy-hud-progress-shine {
+  position: absolute;
+  top: 15%;
+  left: 4%;
+  right: 4%;
+  height: 28%;
+  border-radius: 999px;
+  background: rgba(255,255,255,.25);
+}
+
+#novvy-hud-progress-label {
+  margin-top: .3%;
+  color: #fff;
+  text-align: right;
+  font-size: clamp(18px, 5vw, 43px);
+  font-size: clamp(18px, 5cqw, 43px);
+  font-weight: 1000;
+  line-height: 1;
+  text-shadow: 0 3px 3px rgba(35, 20, 17, .75);
+  -webkit-text-stroke: 1px rgba(70, 55, 73, .5);
+}
+
+@media (orientation: portrait) {
+  #novvy-training-hud {
+    /* Full phone width for 9:16–9:19.5; restrained on squarer tablets. */
+    width: min(88dvw, 55dvh, 720px);
+  }
+}
+
+@media (orientation: landscape) {
+  #novvy-training-hud {
+    width: min(70dvw, 76dvh, 820px);
+  }
+  .novvy-hud-title { font-size: clamp(18px, 3.8vw, 52px); }
+  #novvy-hud-progress-label { font-size: clamp(17px, 3vw, 43px); }
+  .novvy-pattern-ref { width: 19%; }
+}

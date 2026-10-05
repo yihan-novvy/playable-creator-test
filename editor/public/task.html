@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>任务工作台 · 可玩广告编辑器</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="row">
+    <a href="/" class="hint" style="text-decoration:none">← 任务列表</a>
+    <h1 id="task-title">任务工作台</h1>
+  </div>
+  <div class="row">
+    <button id="run-all" class="primary">全部运行</button>
+  </div>
+</header>
+
+<main class="container">
+  <section class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin-bottom:0">任务配置</h2>
+      <div class="row">
+        <span id="config-save-state" class="hint"></span>
+        <button id="save-config" class="primary" title="保存下方全部配置项(输入框失焦时也会自动保存)">保存配置</button>
+      </div>
+    </div>
+    <div id="config-grid" class="config-grid" style="margin-top:12px"></div>
+    <p id="config-hint" class="hint">文案会经 HTML 转义后注入 HUD/intro;关闭某组覆盖层后打包会跳过其注入。</p>
+  </section>
+
+  <div id="steps" class="step-grid"></div>
+</main>
+
+<script src="/task-water-sort.js"></script>
+<script src="/task-colorever-new.js"></script>
+<script src="/task-dragon-cube.js"></script>
+<script src="/task.js"></script>
+</body>
+</html>

@@ -1,0 +1,47 @@
+.novvy-video-intro {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #120b08;
+  opacity: 1;
+  transition: opacity 180ms ease-out;
+  touch-action: manipulation;
+}
+
+.novvy-video-intro.is-finished {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.novvy-intro-video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+  background: #120b08;
+}
+
+.novvy-intro-sound {
+  position: absolute;
+  left: 50%;
+  bottom: max(28px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  min-width: 152px;
+  padding: 11px 18px;
+  border: 2px solid rgba(255, 244, 218, 0.9);
+  border-radius: 999px;
+  color: #fff8e8;
+  background: rgba(39, 23, 15, 0.78);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.38);
+  font: 800 14px/1 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 2px #000;
+}
+
+.novvy-intro-sound[hidden] {
+  display: none;
+}

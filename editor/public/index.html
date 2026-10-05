@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>可玩广告编辑器</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <h1>可玩广告编辑器</h1>
+  <div id="env-chips" class="env-chips"></div>
+</header>
+
+<main class="container">
+  <section class="card">
+    <h2>新建任务</h2>
+    <form id="create-form" class="row">
+      <input id="task-name" type="text" placeholder="任务名,例如:Dragon Baby v2" required>
+      <button type="submit" class="primary">创建</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>任务列表</h2>
+    <table class="task-table">
+      <thead>
+        <tr><th>名称</th><th>模板</th><th>步骤状态</th><th>成品</th><th>更新时间</th><th></th></tr>
+      </thead>
+      <tbody id="task-rows"></tbody>
+    </table>
+    <p id="empty-hint" class="hint" hidden>还没有任务。先创建一个,然后上传素材、逐步预览、打包。</p>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>
