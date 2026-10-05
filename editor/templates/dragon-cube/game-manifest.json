@@ -1,0 +1,58 @@
+{
+  "id": "dragon-cube",
+  "name": "DragonCube（Unity 前十关）",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": 1,
+      "name": "Level 1",
+      "path": "levels/1.json"
+    },
+    {
+      "id": 2,
+      "name": "Level 2",
+      "path": "levels/2.json"
+    },
+    {
+      "id": 3,
+      "name": "Level 3",
+      "path": "levels/3.json"
+    },
+    {
+      "id": 4,
+      "name": "Level 4",
+      "path": "levels/4.json"
+    },
+    {
+      "id": 5,
+      "name": "Level 5",
+      "path": "levels/5.json"
+    },
+    {
+      "id": 6,
+      "name": "Level 6",
+      "path": "levels/6.json"
+    },
+    {
+      "id": 7,
+      "name": "Level 7",
+      "path": "levels/7.json"
+    },
+    {
+      "id": 8,
+      "name": "Level 8",
+      "path": "levels/8.json"
+    },
+    {
+      "id": 9,
+      "name": "Level 9",
+      "path": "levels/9.json"
+    },
+    {
+      "id": 10,
+      "name": "Level 10",
+      "path": "levels/10.json"
+    }
+  ]
+}

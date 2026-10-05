@@ -1,0 +1,22 @@
+{
+  "id": "colorever",
+  "name": "Colorever",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": "cat",
+      "name": "蝴蝶结猫咪",
+      "path": "game/patterns/cat.json"
+    },
+    {
+      "id": "house",
+      "name": "彩色小屋",
+      "path": "game/patterns/house.json"
+    }
+  ],
+  "constants": {
+    "engineSha256": "61761fb0a7a749229dbd9fa6d97129053598f73e6de2e98694f9aa0c4cef99e0",
+    "patternsCatalog": "game/patterns/catalog.json"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "colorever-three-playable",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.js",
+    "build:offline": "node scripts/build-offline.mjs",
+    "build:game": "node scripts/build-template.mjs",
+    "build:template": "node scripts/build-template.mjs --out ../../editor/templates/colorever/game",
+    "editor": "vite --host 127.0.0.1 --port 5174 --strictPort --open /editor/"
+  },
+  "dependencies": {
+    "three": "^0.180.0"
+  },
+  "devDependencies": {
+    "vite": "^7.1.0",
+    "@playwright/test": "^1.55.0"
+  }
+}

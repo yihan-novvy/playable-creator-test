@@ -1,0 +1,11 @@
+{
+  "name": "template-colorever-gemsort",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "colorever-gemsort 冻结静态模板：game/ 为原始 Cocos 构建产物，build 即纯复制",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/test.mjs"
+  }
+}

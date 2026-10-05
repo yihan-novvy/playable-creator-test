@@ -1,0 +1,33 @@
+{
+  "id": "level-001",
+  "name": "The Alchemist\u2019s Table",
+  "capacity": 4,
+  "colors": {
+    "blue": "#0077CB",
+    "gold": "#F5B900",
+    "white": "#F2F0EA"
+  },
+  "bottles": [
+    [
+      "blue",
+      "gold",
+      "gold"
+    ],
+    [
+      "blue",
+      "gold",
+      "white",
+      "white"
+    ],
+    [
+      "blue",
+      "white",
+      "blue",
+      "gold"
+    ],
+    [
+      "white"
+    ],
+    []
+  ]
+}

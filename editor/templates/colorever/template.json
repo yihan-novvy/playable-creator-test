@@ -1,0 +1,55 @@
+{
+  "id": "colorever",
+  "name": "Colorever New（方形珠子）",
+  "workbench": "colorever-new",
+  "steps": [
+    "intro",
+    "hud",
+    "background",
+    "level",
+    "pack"
+  ],
+  "game": {
+    "indexHtml": "game/index.html"
+  },
+  "defaults": {
+    "intro": {
+      "enabled": false,
+      "ariaLabel": ""
+    },
+    "hud": {
+      "enabled": false,
+      "titleLine1": "",
+      "titleLine2": "",
+      "ariaLabel": ""
+    },
+    "background": {
+      "enabled": false,
+      "blurSigma": 12
+    },
+    "hudImageSource": {
+      "left": "upload",
+      "right": "upload"
+    },
+    "cta": {
+      "enabled": false,
+      "destinationUrl": ""
+    },
+    "patternId": "cat"
+  },
+  "overlays": {
+    "hud": "overlays/hud",
+    "intro": "overlays/intro",
+    "background": "overlays/background",
+    "cta": "overlays/cta",
+    "analytics": "overlays/analytics"
+  },
+  "background": {
+    "width": 1560,
+    "height": 2598,
+    "defaultSigma": 12
+  },
+  "patterns": {
+    "catalog": "game/patterns/catalog.json"
+  }
+}

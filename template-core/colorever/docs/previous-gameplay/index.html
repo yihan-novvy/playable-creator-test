@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#e9f1e8"><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Ctext y='40' font-size='45' fill='%23d28a61'%3E✿%3C/text%3E%3C/svg%3E"><title>Colorever · A little color, a little calm</title></head>
+<body>
+<main class="app">
+  <header><a class="brand" href="#" aria-label="Colorever home"><span class="brand-flower">✿</span> colorever<span class="brand-dot">.</span></a><div class="controls"><button id="undo" class="icon-button" aria-label="Undo last move" title="Undo">↶</button><button id="restart" class="icon-button" aria-label="Restart puzzle" title="Restart">⟳</button><button id="sound" class="icon-button" aria-label="Enable sound" title="Sound" aria-pressed="false">♫<i></i></button></div></header>
+  <section class="intro"><div class="eyebrow">YOUR DAILY LITTLE JOY</div><h1>Piece by piece,<br>make something lovely.</h1></section>
+  <section class="summary"><div class="reference"><span>成品参考</span><canvas id="reference" width="180" height="180" aria-label="Completed kitten reference"></canvas></div><div class="progress-panel"><div class="level">KITTY BEADS <span>01 · BLUE BOW</span></div><div class="progress-caption"><span>Piece by piece</span><strong id="percent">0<span>%</span></strong></div><div class="progress-track"><div id="progress"></div></div><div class="progress-foot"><span id="placed">0 beads in place</span><span>✧</span></div></div></section>
+  <section class="play-area" aria-label="Interactive bead puzzle"><canvas id="game" aria-label="Select matching beads and place them in matching empty sockets"></canvas><div id="guide" class="guide" aria-hidden="true"><span>☝</span></div><div class="tray-label"><span>BEAD TRAY</span><span id="tray-count">0 / 48</span></div><div id="toast" role="status"></div><div id="loading">Setting out your beads…</div></section>
+  <footer><div class="instruction"><span class="instruction-icon">✧</span><p id="instruction">Pick a color. Find its little home.</p></div><button id="hint" class="hint-button"><span>✦</span> A little hint <span class="arrow">↗</span></button><p class="footnote">Tap matching colors · Use the tray to make room</p></footer>
+  <section id="win" class="win" hidden><div class="win-card"><div class="win-flower">✿</div><div class="eyebrow">MADE BY YOU</div><h2>Oh, so lovely.</h2><p>A little patience. A lot of color.<br>Your kitty is complete.</p><canvas id="win-reference" width="300" height="300"></canvas><button id="play-again" class="hint-button">Make it again <span>↗</span></button><button id="keep-looking">Admire my creation</button></div></section>
+</main>
+<script type="module" src="/src/main.js"></script>
+</body></html>

@@ -108,7 +108,7 @@ const CONFIG_PATCH_WHITELIST = new Set(['hud', 'intro', 'cta', 'recolorPortraits
 
 // Water Sort 保存关卡数据；Colorever New 任务仅选择完整图案 ID。
 const CONFIG_WHITELISTS = new Map([
-  ['colorever-new', new Set(['hud','intro','cta','background','hudImageSource','hudCrop','patternId'])],
+  ['colorever', new Set(['hud','intro','cta','background','hudImageSource','hudCrop','patternId'])],
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId'])],
 ]);
@@ -132,10 +132,10 @@ export function updateTaskConfig(id, patch) {
   if (!doc) return null;
   doc.config = doc.config || {};
   const whitelist = configWhitelistFor(doc.templateId);
-  if(doc.templateId==='colorever-new'){
+  if(doc.templateId==='colorever'){
     if('level' in (patch||{}))throw new Error('图案和玩法参数只能在 colorever 源项目修改，任务仅选择已构建的 patternId');
     if('patternId' in (patch||{})){
-      const catalog=JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../editor/templates/colorever-new/game/patterns/catalog.json'),'utf8'));
+      const catalog=JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../editor/templates/colorever/game/patterns/catalog.json'),'utf8'));
       if(!catalog.patterns.some(p=>p.id===patch.patternId))throw new Error('未知图案模板');
       delete doc.config.level;delete doc.steps.level;delete doc.steps.pack;
     }
@@ -162,7 +162,7 @@ export function updateTaskConfig(id, patch) {
     delete doc.steps.level;
     delete doc.steps.pack;
   }
-  if (['dragon-cube','colorever-new'].includes(doc.templateId)) {
+  if (['dragon-cube','colorever'].includes(doc.templateId)) {
     if ('intro' in (patch || {})) { delete doc.steps.intro; delete doc.steps.hud; delete doc.steps.background; delete doc.steps.pack; }
     if ('hud' in (patch || {}) || 'hudImageSource' in (patch || {}) || 'hudCrop' in (patch || {})) { delete doc.steps.hud; delete doc.steps.pack; }
     if ('background' in (patch || {})) { delete doc.steps.background; delete doc.steps.pack; }
@@ -332,7 +332,7 @@ const WATER_SORT_STEP_INPUT_FILES = {
 };
 
 export function stepInputFilesFor(templateId) {
-  return ['water-sort','dragon-cube','colorever-new'].includes(templateId) ? WATER_SORT_STEP_INPUT_FILES : STEP_INPUT_FILES;
+  return ['water-sort','dragon-cube','colorever'].includes(templateId) ? WATER_SORT_STEP_INPUT_FILES : STEP_INPUT_FILES;
 }
 
 export { RESULT_ROOT, PROJECTS_ROOT };

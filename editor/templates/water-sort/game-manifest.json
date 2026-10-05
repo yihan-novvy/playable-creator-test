@@ -1,0 +1,14 @@
+{
+  "id": "water-sort",
+  "name": "水色排序",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": "default",
+      "name": "The Alchemist’s Table",
+      "path": "level.json"
+    }
+  ],
+  "constants": {}
+}

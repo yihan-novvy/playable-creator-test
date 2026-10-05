@@ -1,0 +1,584 @@
+{
+  "assets/bundle_gemsort/import/02/029954392.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/02/029ef5e7e.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/0a/0a196e96e.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/0b/0be28d6a4.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/0c/0c8b7925-32b1-4bfc-9d87-d19a4a967c61.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/0e/0e5080e6-cddc-4a36-90f3-f61e0baefa81.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/12/12040b57-5640-4068-847c-16d8e33b043b.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/15/1500eea5-e591-42f0-894c-cc9decd1c57d.bin": {
+    "mode": "data-uri",
+    "mime": "application/octet-stream",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/import/15/15bbd601-59dd-4e40-b9ff-84a1e5bbd47d.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/18/18a2de36-152c-4299-8734-cac4f4a66cc6.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/1b/1b4e60b6-a58b-499a-a689-c8409bcb18cf.bin": {
+    "mode": "data-uri",
+    "mime": "application/octet-stream",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/import/21/218ffb3b-53ac-4e51-9675-fd6f9cf224c9.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/23/235d64aa-420f-4216-bf60-cd7423a5aa48.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/29/29a7bd96-7147-471f-9adc-1633b131d1f8.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/2a/2a2e9c91-1103-4032-8f11-de8275788eb2.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/2a/2a2e9c91-1103-4032-8f11-de8275788eb2@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/3a/3a6e8a77-9a6a-4550-8fa5-026c942a5ae4.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/3a/3a6e8a77-9a6a-4550-8fa5-026c942a5ae4@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/3b/3ba70f44-9830-48a8-8f13-d3239825756e.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/3b/3ba70f44-9830-48a8-8f13-d3239825756e@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/44/44adf3b1-a37a-4853-9f90-34640f5114c1.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/46/46d9affe-f598-492a-bf6a-8ca55bf0d7dc.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/4d/4ddfd0a8-edf6-4163-a6dd-b2fd56b9a460.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/50/50ccd290-90ef-4322-9967-5f13fcce8e2d.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/53/532f86cb-34b7-4ff8-8ce6-a217077997f4.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/5a/5aa6b681-e8a6-4a3e-b9b5-97f9e5c7876b.bin": {
+    "mode": "data-uri",
+    "mime": "application/octet-stream",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/import/69/69d06444-8382-41d3-a2b2-a8f157683a8f.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/71/7126386a-0fdb-442b-8fcc-2733b48b71a1.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/71/7195b0ab-cb0c-424a-8b02-d25edf00cc00.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/71/7195b0ab-cb0c-424a-8b02-d25edf00cc00@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/79/799a8078-fd9c-49ab-b968-d1edee157d31.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/80/80782c22-0f39-4c5b-b4c0-7fd7641471d2.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/80/80782c22-0f39-4c5b-b4c0-7fd7641471d2@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/87/87655cd1-7ad3-4e56-ae5f-2b87a3a03f4f.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/88/8824baa8-dfb8-446e-a717-8f2e313af61f.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/8a/8a1759e3-f74c-4168-858b-4a74ebb0832a.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/8a/8a1759e3-f74c-4168-858b-4a74ebb0832a@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/8d/8dbb6942-8fe3-461a-8d44-11849d113910.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/93/93e27a65-c63f-44ce-958c-0abe46634df4.bin": {
+    "mode": "data-uri",
+    "mime": "application/octet-stream",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/import/9e/9e88fbe1-1849-4739-a806-f0a304ca8d64.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/9e/9e88fbe1-1849-4739-a806-f0a304ca8d64@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/a1/a1b7416e-950c-472b-a20b-ff841386faf0.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/a6/a6e9834b-f713-4456-b42a-52cf0942d7c6.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/a9/a9ad3e74-2195-4f3f-aaac-cc45df2e3483.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/b6/b6ca049f-bcfc-4337-b60e-79fb4bc1612c.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/b6/b6ca049f-bcfc-4337-b60e-79fb4bc1612c@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/bb/bb751792-a211-46e6-bee3-6d257480f25e.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/bb/bb751792-a211-46e6-bee3-6d257480f25e@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/bd/bd4e154b-1b52-4d16-9f82-2cc323daf0db.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/bd/bd4e154b-1b52-4d16-9f82-2cc323daf0db@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/c5/c5a774e5-e8b7-4278-a0c3-485f88220d08.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/ce/ceb6a927-0456-4e50-aa14-25f996c935e4.bin": {
+    "mode": "data-uri",
+    "mime": "application/octet-stream",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/import/d2/d2d65e44-e640-4d86-988d-af776a2301be.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/d6/d68e564a-5ff2-4b59-ba63-9f22c43fe63c.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/de/de52e924-c171-461a-9a49-9347c8667fd1.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/de/de52e924-c171-461a-9a49-9347c8667fd1@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/f8/f8874af9-58ec-4123-95d0-2ef6fd75b24a.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/f8/f8874af9-58ec-4123-95d0-2ef6fd75b24a@f9941.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/import/f9/f9f383ec-ff50-42df-99d0-9afafbb6b5db.json": {
+    "mode": "text"
+  },
+  "assets/bundle_gemsort/native/0c/0c8b7925-32b1-4bfc-9d87-d19a4a967c61.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/21/218ffb3b-53ac-4e51-9675-fd6f9cf224c9.mp3": {
+    "mode": "data-uri",
+    "mime": "audio/mpeg",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/23/235d64aa-420f-4216-bf60-cd7423a5aa48.mp3": {
+    "mode": "data-uri",
+    "mime": "audio/mpeg",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/29/29a7bd96-7147-471f-9adc-1633b131d1f8.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/2a/2a2e9c91-1103-4032-8f11-de8275788eb2.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/3a/3a6e8a77-9a6a-4550-8fa5-026c942a5ae4.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/3b/3ba70f44-9830-48a8-8f13-d3239825756e.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/46/46d9affe-f598-492a-bf6a-8ca55bf0d7dc.mp3": {
+    "mode": "data-uri",
+    "mime": "audio/mpeg",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/50/50ccd290-90ef-4322-9967-5f13fcce8e2d.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/53/532f86cb-34b7-4ff8-8ce6-a217077997f4.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/71/7126386a-0fdb-442b-8fcc-2733b48b71a1.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/71/7195b0ab-cb0c-424a-8b02-d25edf00cc00.webp": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/80/80782c22-0f39-4c5b-b4c0-7fd7641471d2.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/8a/8a1759e3-f74c-4168-858b-4a74ebb0832a.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/9e/9e88fbe1-1849-4739-a806-f0a304ca8d64.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/a9/a9ad3e74-2195-4f3f-aaac-cc45df2e3483.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/b6/b6ca049f-bcfc-4337-b60e-79fb4bc1612c.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/bb/bb751792-a211-46e6-bee3-6d257480f25e.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/bd/bd4e154b-1b52-4d16-9f82-2cc323daf0db.webp": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/c5/c5a774e5-e8b7-4278-a0c3-485f88220d08.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/d6/d68e564a-5ff2-4b59-ba63-9f22c43fe63c.mp3": {
+    "mode": "data-uri",
+    "mime": "audio/mpeg",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/de/de52e924-c171-461a-9a49-9347c8667fd1.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/bundle_gemsort/native/f8/f8874af9-58ec-4123-95d0-2ef6fd75b24a.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/internal/import/50/50f4348b-c883-4e2f-8f11-ce233b859fa1.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/8b/8bbdbcdd-5cd4-4100-b6d5-b7c9625b6107.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/b5/b5d6115f-0370-4d7c-aad3-c194cc71cf98.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/bc/bcd64cc6-2dd9-43f6-abbe-66318d332032.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/d9/d930590d-bb92-4cc8-8bd1-23cd027f9edf.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/dd/dd3a144d-ab7f-41f0-82b8-2e43a090d496.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/e9/e9aa9a3e-5b2b-4ac7-a2c7-073de2b2b24f.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/ef/efe8e2a3-eace-427b-b4f1-cb8a937ec77d.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/f0/f0416e68-0200-4b77-a926-4f9d16e494da.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/f9/f92806d7-1768-443f-afe8-12bcde84d0f0.json": {
+    "mode": "text"
+  },
+  "assets/internal/import/fd/fda095cb-831d-4601-ad94-846013963de8.json": {
+    "mode": "text"
+  },
+  "assets/main/config.json": {
+    "mode": "text"
+  },
+  "assets/main/import/9a/9ac551c7-1f0a-4073-b776-3cb37a1ab2c0.json": {
+    "mode": "text"
+  },
+  "assets/main/import/ba/ba21476f-2866-4f81-9c4d-6e359316e448.json": {
+    "mode": "text"
+  },
+  "assets/main/import/fd/fd8ec536-a354-4a17-9c74-4f3883c378c8.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/07/07b6f9c20.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/1f/1f927911-29c4-4478-ab3c-e53f8d78a4e3.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/1f/1f927911-29c4-4478-ab3c-e53f8d78a4e3@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/23/23e02743-4b53-4002-8bf1-ec2e6636a045.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/23/23e02743-4b53-4002-8bf1-ec2e6636a045@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/24/249cae0b-09d5-41a6-b236-80be88f7e35c.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/24/249cae0b-09d5-41a6-b236-80be88f7e35c@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/2e/2ea7496c-c605-47b2-997d-f511bb582ed6.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/2e/2ea7496c-c605-47b2-997d-f511bb582ed6@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/42/427cfdcd-40f6-48c6-9d34-b5c271b1ce26.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/42/427cfdcd-40f6-48c6-9d34-b5c271b1ce26@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/45/4590242c-d2a5-4f2c-978a-08ec9aeb3b81.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/45/4590242c-d2a5-4f2c-978a-08ec9aeb3b81@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/69/69b7c34f-781d-4c67-9894-6dab5516b5d2.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/69/69b7c34f-781d-4c67-9894-6dab5516b5d2@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/84/84bd2963-92cb-4267-a10d-869a4f71db21.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/84/84bd2963-92cb-4267-a10d-869a4f71db21@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/9d/9d1c4784-4190-4d24-9016-645eacfe7d89.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/9d/9d1c4784-4190-4d24-9016-645eacfe7d89@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/a9/a9c71497-0221-45b0-8758-661bcc69fbcc.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/a9/a9c71497-0221-45b0-8758-661bcc69fbcc@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/c5/c500258c-34cb-4ee0-9515-3666641540f0.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/c5/c500258c-34cb-4ee0-9515-3666641540f0@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/dc/dc6b77e3-fcea-4c34-a639-4ced9ade02aa.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/dc/dc6b77e3-fcea-4c34-a639-4ced9ade02aa@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/eb/ebbf958f-1042-4d6f-8872-0e89c2778458.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/eb/ebbf958f-1042-4d6f-8872-0e89c2778458@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/f4/f47c905a-e58c-47f2-a0e9-20ee5daad015.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/f4/f47c905a-e58c-47f2-a0e9-20ee5daad015@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/f9/f93c74ba-bdff-43cf-a6d6-1c06469dda48.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/f9/f93c74ba-bdff-43cf-a6d6-1c06469dda48@f9941.json": {
+    "mode": "text"
+  },
+  "assets/resources/import/fd/fd28f1f8-4eeb-44ad-a831-56e12956a4a3.json": {
+    "mode": "text"
+  },
+  "assets/resources/index.js": {
+    "mode": "text"
+  },
+  "assets/resources/native/1f/1f927911-29c4-4478-ab3c-e53f8d78a4e3.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/23/23e02743-4b53-4002-8bf1-ec2e6636a045.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/24/249cae0b-09d5-41a6-b236-80be88f7e35c.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/2e/2ea7496c-c605-47b2-997d-f511bb582ed6.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/42/427cfdcd-40f6-48c6-9d34-b5c271b1ce26.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/45/4590242c-d2a5-4f2c-978a-08ec9aeb3b81.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/69/69b7c34f-781d-4c67-9894-6dab5516b5d2.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/84/84bd2963-92cb-4267-a10d-869a4f71db21.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/9d/9d1c4784-4190-4d24-9016-645eacfe7d89.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/a9/a9c71497-0221-45b0-8758-661bcc69fbcc.png": {
+    "mode": "data-uri",
+    "mime": "image/webp",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/c5/c500258c-34cb-4ee0-9515-3666641540f0.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/dc/dc6b77e3-fcea-4c34-a639-4ced9ade02aa.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/eb/ebbf958f-1042-4d6f-8872-0e89c2778458.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/f4/f47c905a-e58c-47f2-a0e9-20ee5daad015.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "assets/resources/native/f9/f93c74ba-bdff-43cf-a6d6-1c06469dda48.png": {
+    "mode": "data-uri",
+    "mime": "image/png",
+    "charset": null,
+    "base64": true
+  },
+  "cocos-js/meshopt_decoder.wasm-1Pcan4ap.js": {
+    "mode": "text"
+  },
+  "cocos-js/meshopt_decoder.wasm-DxRECbrD.js": {
+    "mode": "text"
+  },
+  "cocos-js/spine-1Pcan4ap.js": {
+    "mode": "text"
+  },
+  "cocos-js/spine.js-CPHn08RU.js": {
+    "mode": "text"
+  },
+  "cocos-js/spine.wasm-DxRECbrD.js": {
+    "mode": "text"
+  },
+  "src/settings.json": {
+    "mode": "text"
+  }
+}

@@ -190,7 +190,7 @@ async function handleApi(req, res, url) {
   }
 
   if(pathname==='/api/colorever-options'&&req.method==='GET'){
-    const entry=templateById('colorever-new');return sendJson(res,200,coloreverPatterns(entry.root));
+    const entry=templateById('colorever');return sendJson(res,200,coloreverPatterns(entry.root));
   }
 
   if (segments[0] !== 'api') return sendError(res, 404, '未知接口');
@@ -360,7 +360,7 @@ async function handleApi(req, res, url) {
         const {level}=coloreverLevel(entry.root,config);
         const generated=name=>fs.existsSync(path.join(taskGeneratedDir(taskId),name))?`/project/${taskId}/generated/${name}`:null;
         const intro=config.intro?.enabled===true,hud=config.hud?.enabled===true,bg=config.background?.enabled===true;
-        html=coloreverHtml({root:entry.root,template:entry.template,level,config,preview:true,media:{introVideo:intro&&fs.existsSync(path.join(taskUploadsDir(taskId),'intro-video.mp4'))?`/project/${taskId}/uploads/intro-video.mp4`:null,introPoster:intro?generated('poster.webp'):null,hudLeft:hud?generated('hud-left.webp'):null,hudRight:hud?generated('hud-right.webp'):null,background:bg?generated('background.webp'):null,ctaIcon:config.cta?.enabled===true?'/templates/colorever-new/overlays/cta/icon.png':null}}).html;
+        html=coloreverHtml({root:entry.root,template:entry.template,level,config,preview:true,media:{introVideo:intro&&fs.existsSync(path.join(taskUploadsDir(taskId),'intro-video.mp4'))?`/project/${taskId}/uploads/intro-video.mp4`:null,introPoster:intro?generated('poster.webp'):null,hudLeft:hud?generated('hud-left.webp'):null,hudRight:hud?generated('hud-right.webp'):null,background:bg?generated('background.webp'):null,ctaIcon:config.cta?.enabled===true?'/templates/colorever/overlays/cta/icon.png':null}}).html;
       } else if (entry.template.workbench === 'dragon-cube') {
         const config = effectiveConfig(entry.template, task.config);
         const level = dragonLevel(entry.root, config.levelId);

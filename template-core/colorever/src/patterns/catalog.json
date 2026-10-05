@@ -1,0 +1,54 @@
+[
+  {
+    "id": "cat",
+    "name": "蝴蝶结猫咪",
+    "description": "方形珠子搭配立体眼睛、鼻子、嘴巴、胡须和蝴蝶结",
+    "level": "cat.json",
+    "module": "cat.js",
+    "editableParts": [
+      {
+        "id": "eye-left",
+        "name": "左眼",
+        "x": 624,
+        "y": 1409
+      },
+      {
+        "id": "eye-right",
+        "name": "右眼",
+        "x": 920,
+        "y": 1409
+      },
+      {
+        "id": "whiskers",
+        "name": "胡须",
+        "x": 780,
+        "y": 1480
+      },
+      {
+        "id": "nose",
+        "name": "鼻子",
+        "x": 771,
+        "y": 1452
+      },
+      {
+        "id": "mouth",
+        "name": "嘴巴",
+        "x": 771,
+        "y": 1480
+      },
+      {
+        "id": "bow",
+        "name": "蝴蝶结",
+        "x": 779,
+        "y": 1700
+      }
+    ]
+  },
+  {
+    "id": "house",
+    "name": "彩色小屋",
+    "description": "固定小屋图案，可独立增加门窗等装饰",
+    "level": "house.json",
+    "module": "house.js"
+  }
+]

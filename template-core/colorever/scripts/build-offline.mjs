@@ -1,0 +1,11 @@
+import {buildGameBundle} from './build-game-bundle.mjs';
+import fs from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
+const {js,css,audio,html:source}=await buildGameBundle();
+let html=source.replace(/<script\s+type="module"[^>]*>[\s\S]*?<\/script>/g,'');
+html=html.replace('</head>',()=>`<style>${css}</style></head>`);
+const script=`globalThis.__COLOREVER_OFFLINE_AUDIO__=${JSON.stringify(audio)};\n${js}`.replace(/<\/script/gi,'<\\/script');
+html=html.replace('</body>',()=>`<script>${script}</script></body>`);
+const out=fileURLToPath(new URL('../dist-offline/',import.meta.url));
+await fs.mkdir(out,{recursive:true});await fs.writeFile(out+'Colorever.html',html);
+console.log(`Offline HTML: ${out}Colorever.html (${Buffer.byteLength(html).toLocaleString()} bytes)`);
