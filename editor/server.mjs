@@ -39,6 +39,7 @@ import { STEP_IDS, runStep, runAll, templateSteps, stepPrerequisites, effectiveC
 import { getEntry, listEntries, importStepModule, getLib } from './core/registry.mjs';
 import { validateRegistry } from './core/validate.mjs';
 import { environment, run } from './core/lib/exec.mjs';
+import { fixedViewportHtml } from './core/lib/fixed-viewport.mjs';
 
 const UPLOAD_CAP_BYTES = 100 * 1024 * 1024;
 const UPLOAD_MIME = {
@@ -294,7 +295,7 @@ async function handleApi(req, res, url) {
       return sendError(res, 400, '该任务模板不支持在线预览');
     }
     try {
-      const html = lib.previewHtml({ plugin: linked.plugin, task, taskId });
+      const html = fixedViewportHtml(lib.previewHtml({ plugin: linked.plugin, task, taskId }));
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(html);
     } catch (error) {

@@ -107,10 +107,12 @@ export default async function run(assert){
   const rejected=await api(`/api/tasks/${id}`,{config:{level:custom()}},'PATCH');assert.check(rejected.status>=400,'任务不能编辑图案数据');
   const unknown=await api(`/api/tasks/${id}`,{config:{patternId:'unknown'}},'PATCH');assert.check(unknown.status>=400,'任务不能选择未知图案');
   const preview=await fetch(base+`/api/tasks/${id}/preview`),previewText=await preview.text();assert.equal(preview.status,200,'固定小屋即时预览');
+  assert.check(previewText.includes('user-scalable=no')&&previewText.includes('data-novvy-fixed-viewport'),'在线预览应用公共视口和手势锁定');
   assert.check(previewText.includes('src="/templates/colorever/game/game.js"')&&previewText.includes('"width":20')&&previewText.includes('__COLOREVER_PATTERN_ID__="house"'),'预览注入小屋完整模板');
   results=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(results.status===200&&results.body.every(r=>r.ok),'小屋模板六步通过');
   assert.check(results.body.find(r=>r.stepId==='level').metrics.solvable,'实际解法回放验证完成');
   const packed=await(await fetch(base+`/result/${id}/index.html`)).text();assert.check(packed.includes('"width":20')&&packed.includes('__COLOREVER_PATTERN_ID__="house"'),'交付选择相同图案模块');
+  assert.check(packed.includes('user-scalable=no')&&packed.includes('data-novvy-fixed-viewport'),'导出页面应用与预览一致的视口和手势锁定');
   for (const enabled of [false, true]) {
    await api(`/api/tasks/${id}`,{config:{hud:{enabled,titleLine1:'只显示主标题',titleLine2:'无需立绘'}}},'PATCH');
    const titlePreview=await(await fetch(base+`/api/tasks/${id}/preview`)).text();

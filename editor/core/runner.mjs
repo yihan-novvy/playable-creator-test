@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { getEntry, importStepModule, deepMerge, CORE_SCRIPTS_ROOT } from './registry.mjs';
+import { fixedViewportHtml } from './lib/fixed-viewport.mjs';
 
 // Step orchestration. The editor server just dispatches step ids; which module
 // runs a step is decided by the plugin's plugin.json (see core/registry.mjs).
@@ -80,6 +81,13 @@ export async function runStep({ taskId, templateId, templateRoot, scriptsRoot, p
   try {
     const stepModule = await importStepModule(entry, stepId);
     const { metrics, warnings } = await stepModule.run(ctx);
+    if (stepId === 'pack') {
+      const indexPath = path.join(ctx.resultDir, 'index.html');
+      const original = fs.readFileSync(indexPath, 'utf8');
+      const fixed = fixedViewportHtml(original);
+      fs.writeFileSync(indexPath, fixed);
+      if (typeof metrics?.outputBytes === 'number') metrics.outputBytes += Buffer.byteLength(fixed) - Buffer.byteLength(original);
+    }
     return {
       stepId,
       ok: true,
