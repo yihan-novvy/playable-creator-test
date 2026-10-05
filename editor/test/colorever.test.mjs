@@ -20,6 +20,8 @@ export default async function run(assert){
  const audio=JSON.parse(js.match(/^globalThis\.__COLOREVER_OFFLINE_AUDIO__=(.*);\n/)[1]);
  assert.equal(Object.keys(audio).sort(),['bgm','pickup','place','place-single','store','store-move','success'].sort(),'全部七个音频嵌入');
  assert.check(js.includes('__COLOREVER_LEVEL__')&&js.includes('novvy:victory')&&js.includes('novvy:hud-progress')&&js.includes('novvy:intro-finished'),'数据读取、完成、进度与片头音频契约进入引擎');
+ assert.check(html.includes('id="guide-hand"')&&js.includes(fs.readFileSync(path.join(root,'template-core/colorever/src/assets/guide-hand.png')).toString('base64')),'旧版手势图片内嵌，无额外图片依赖');
+ assert.check(js.includes('.haptic(')&&js.includes('selection'),'SDK 震动反馈进入广告引擎');
  const {level}=coloreverLevel(templateRoot,{patternId:'house'},template);
  level.name=custom().name;
  const injection=coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}}).html;

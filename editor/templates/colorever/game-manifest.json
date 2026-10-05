@@ -26,7 +26,7 @@
     }
   ],
   "constants": {
-    "engineSha256": "26fe2cfaa0818b21982e3628b3aeda82b2a199938b4ed3a15bf32a653c608c19",
+    "engineSha256": "32e6d161a7c2a8af46d69e868dfd0800cc09d5ac8cc1a61e24f26f9894dbd7a5",
     "patternsCatalog": "game/patterns/catalog.json"
   }
 }

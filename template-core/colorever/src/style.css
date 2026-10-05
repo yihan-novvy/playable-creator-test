@@ -11,3 +11,8 @@
 #sheen[aria-pressed=true]{color:#b88114;background:#fff5cd}#sheen[aria-pressed=false]{color:#3c83a0}
 
 .hud{left:6%;right:6%;width:88%;text-align:center}.hud strong{font-size:22px}
+
+#guide{overflow:visible;padding:0;touch-action:manipulation}
+#guide-hand{position:absolute;left:50%;top:50%;width:80px;height:auto;max-width:none;pointer-events:none;transform:translate(-32%,-18%);transform-origin:32% 18%;animation:guide-tap .85s ease-in-out infinite;filter:drop-shadow(0 2px 2px #23496933)}
+@keyframes guide-tap{50%{transform:translate(-32%,-18%) scale(.9)}}
+@media(prefers-reduced-motion:reduce){#guide,#guide-hand{animation:none}}

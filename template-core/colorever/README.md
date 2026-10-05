@@ -40,6 +40,10 @@ Cells retain their square spacing and smooth bevel normals. The top camber and f
 
 ## Original template gameplay feedback
 
+新手指导在未完成的开局自动出现，复用旧版 gemsort 的手指 PNG。它依据当前棋盘提示依次指向可选错珠、缓存空格和归位位置，首次成功归位后结束；重开会重新出现，提示按钮仍可随时调用。手势素材通过 Vite 内嵌到引擎，离线 HTML 和广告包不依赖额外图片文件。
+
+`src/game-haptics.js` 沿用旧版 `novvy.haptic(style)` 接口：取珠为 light，缓存移动和逐珠落位为 selection，棋盘整组归位为 medium，完成为 success。连续反馈限制为至少间隔 45 ms，完成反馈不受限；关闭音乐仍保留震动。没有 SDK 桥接时尝试浏览器震动接口，设备不支持时正常继续游戏。
+
 Behavior was checked against `editor/templates/colorever-gemsort/game/assets/assets/bundle_gemsort/index.js`, especially BoardController, BoardModel and AudioService.
 
 - `src/game-audio.js`: original BGM starts on first input; Web Audio handles overlapping original one-shot clips. BGM, store and single-placement exports contained data-URL text, so the local assets have been decoded into binary MP3 files. Music pauses when the page is hidden. The sound button mutes music and effects.

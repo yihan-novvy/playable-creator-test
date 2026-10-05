@@ -3,6 +3,9 @@ import {Puzzle} from './model.js';
 import {GameAudio} from './game-audio.js';
 import {GameEffects} from './game-effects.js';
 import {AmbientSheen} from './ambient-sheen.js';
+import {GameTutorial,hintInstruction} from './game-tutorial.js';
+import {GameHaptics} from './game-haptics.js';
+import guideHand from './assets/guide-hand.png?inline';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {patterns} from './patterns/index.js';
@@ -78,6 +81,8 @@ inset.position.set(0,trayCenter.y,.085);inset.castShadow=true;inset.receiveShado
 const audio=new GameAudio();
 let busy=false,flights=[],hint=null,down=null,selectionStart=0,completion=null,completedColors=new Set(),pendingColors=[];
 const $=id=>document.getElementById(id);
+const tutorial=new GameTutorial(),haptics=new GameHaptics();
+$('guide-hand').src=guideHand;
 const point=(region,index)=>region==='board'?at(cells.get(index).x,cells.get(index).y,.10):trayPoint(index%trayCols,Math.floor(index/trayCols));
 const effects=new GameEffects(scene,point,cells,boardScale);
 const ambientSheen=new AmbientSheen(scene,target.length+capacity,boardScale,trayScale);
@@ -90,7 +95,8 @@ document.querySelector('.app').dataset.decoration=level.decoration;
 document.querySelector('.app').dataset.patternId=patternId;
 document.querySelector('.app').dataset.levelName=level.name;
 let wasWon=false;
-const play=k=>audio.play(k);
+const play=k=>{audio.play(k);haptics.play(k);};
+document.addEventListener('click',e=>{if(e.target.closest?.('#novvy-cta-btn')||e.target.id==='novvy-cta')haptics.trigger('light');},{capture:true});
 function seedCompleteColors(){completedColors=new Set([...new Set(target.filter(Boolean))].filter(c=>puzzle.isColorComplete(c)));}
 seedCompleteColors();
 document.addEventListener('pointerdown',e=>{if(e.target.closest('#sound'))return;audio.unlock();},{capture:true});
@@ -112,28 +118,35 @@ function updateUI(){
   $('moves').textContent=`${puzzle.moves} 步 · 缓存 ${puzzle.tray.filter(Boolean).length}/${capacity}`;
   $('undo').disabled=busy||!puzzle.history.length;$('hint').disabled=busy||puzzle.complete;
   $('instruction').textContent=completion?'全图扫光中…':puzzle.complete?'拼画完成！':puzzle.selection?`已选 ${puzzle.selection.indices.length} 颗 · 点同色空格归位，或点盒子暂存`:'点金色边框的错珠，再点底部空格暂存';
-  $('guide').hidden=!hint||busy;
+  if(tutorial.active)hint=tutorial.hint(puzzle,busy);
+  showHint();
   document.dispatchEvent(new CustomEvent('novvy:hud-progress',{bubbles:true,detail:{percent:Math.round(puzzle.correct/puzzle.total*100)}}));
   if(!puzzle.complete)wasWon=false;
 }
 function projectHint(){if(!hint)return;const p=point(hint.region,hint.index).clone();p.z+=.5;p.project(camera);$('guide').style.left=`${(p.x+1)*50}%`;$('guide').style.top=`${(1-p.y)*50}%`;}
+function showHint(){
+  $('guide').hidden=!hint||busy||puzzle.complete;
+  if($('guide').hidden)return;
+  $('guide').setAttribute('aria-label',`执行提示：${hintInstruction(hint)}`);
+  $('instruction').textContent=hintInstruction(hint);projectHint();
+}
 function clearHint(){hint=null;$('guide').hidden=true;}
 function activate(region,index){
   if(busy||puzzle.complete)return;clearHint();
   const selection=puzzle.selection;
   if(selection&&selection.region===region&&selection.indices.includes(index)){puzzle.selection=null;updateUI();return;}
-  if(selection){const moved=puzzle.place(region,index);if(moved){busy=true;let order=0;const now=performance.now();
+  if(selection){const moved=puzzle.place(region,index);if(moved){tutorial.placed(region);busy=true;let order=0;const now=performance.now();
     flights=moved.map(m=>{const mesh=new THREE.Mesh(bodyGeometry,bodyMaterials[letters[m.color]]);mesh.castShadow=true;scene.add(mesh);const a=point(m.fromRegion,m.from).clone();if(!m.shift)a.z+=.38;return{...m,mesh,start:now+(m.shift?0:order++*(region==='tray'?55:m.fromRegion==='tray'?65:50)),duration:m.shift?210:(m.fromRegion==='tray'||m.toRegion==='tray')?360:260,a,b:point(m.toRegion,m.to),landed:false};});
     if(moved.some(m=>m.shift))play('store-move');refresh();return;}
 }
-  if(puzzle.pick(region,index)){selectionStart=performance.now();play('pickup');updateUI();}else{$('instruction').textContent=region==='board'&&puzzle.board[index]===target[index]?'这颗已归位，不能移动':selection?'请选择同色空格，或盒子里的空格':'点金色边框的错珠开始';}
+  if(puzzle.pick(region,index)){selectionStart=performance.now();play('pickup');updateUI();}else if(tutorial.active){updateUI();}else{$('instruction').textContent=region==='board'&&puzzle.board[index]===target[index]?'这颗已归位，不能移动':selection?'请选择同色空格，或盒子里的空格':'点金色边框的错珠开始';}
 }
 $('sound').onclick=()=>{audio.setEnabled(!audio.enabled);updateSound();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.bgm.pause();audio.stopEffects();}else audio.unlock();});
-function reset(){wasWon=false;for(const f of flights)scene.remove(f.mesh);flights=[];busy=false;completion=null;pendingColors=[];effects.clear();audio.stopEffects();clearHint();puzzle.reset();seedCompleteColors();$('win').hidden=true;$('celebration').hidden=true;refresh();if(puzzle.complete)afterFlights(performance.now());}
+function reset(){wasWon=false;for(const f of flights)scene.remove(f.mesh);flights=[];busy=false;completion=null;pendingColors=[];effects.clear();audio.stopEffects();clearHint();puzzle.reset();tutorial.reset();seedCompleteColors();$('win').hidden=true;$('celebration').hidden=true;refresh();if(puzzle.complete)afterFlights(performance.now());}
 $('reset').onclick=reset;$('again').onclick=reset;$('dismiss').onclick=()=>{$('win').hidden=true;};
 $('undo').onclick=()=>{if(!busy&&puzzle.undo()){clearHint();effects.clear();pendingColors=[];completion=null;seedCompleteColors();$('win').hidden=true;$('celebration').hidden=true;refresh();}};
-$('hint').onclick=()=>{hint=puzzle.hint();if(hint){$('guide').setAttribute('aria-label',`执行提示：${hint.action==='pick'?'选取错珠':hint.action==='store'?'放入缓存':'放回拼图'}`);$('instruction').textContent=hint.action==='pick'?'点击闪烁圈内的珠子':hint.action==='store'?'点击闪烁圈，将选中珠子暂存':'点击闪烁圈，将珠子归位';projectHint();$('guide').hidden=false;}};
+$('hint').onclick=()=>{hint=puzzle.hint();showHint();};
 $('guide').onclick=()=>{if(hint){const h=hint;activate(h.region,h.index);}};
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,0,1),-.1);
 function hitAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,camera);
