@@ -5,6 +5,7 @@ import {GameEffects} from './game-effects.js';
 import {AmbientSheen} from './ambient-sheen.js';
 import {GameTutorial,hintInstruction} from './game-tutorial.js';
 import {GameHaptics} from './game-haptics.js';
+import {guidePosition} from './guide-position.js';
 import guideHand from './assets/guide-hand.png?inline';
 import {trayLayout} from './tray-layout.js';
 import * as THREE from 'three';
@@ -124,7 +125,15 @@ function updateUI(){
   document.dispatchEvent(new CustomEvent('novvy:hud-progress',{bubbles:true,detail:{percent:Math.round(puzzle.correct/puzzle.total*100),correct:puzzle.correct,total:puzzle.total}}));
   if(!puzzle.complete)wasWon=false;
 }
-function projectHint(){if(!hint)return;const p=point(hint.region,hint.index).clone();p.z+=.5;p.project(camera);$('guide').style.left=`${(p.x+1)*50}%`;$('guide').style.top=`${(1-p.y)*50}%`;}
+function projectHint(){
+  if(!hint)return;
+  const guide=$('guide'),container=guide.offsetParent;
+  if(!container)return;
+  const p=point(hint.region,hint.index).clone();p.z+=.5;
+  const position=guidePosition(p,camera,canvas.getBoundingClientRect(),container.getBoundingClientRect());
+  if(!position)return;
+  guide.style.left=`${position.left}%`;guide.style.top=`${position.top}%`;
+}
 function showHint(){
   $('guide').hidden=!hint||busy||puzzle.complete;
   if($('guide').hidden)return;
