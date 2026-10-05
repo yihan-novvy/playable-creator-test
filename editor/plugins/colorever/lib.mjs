@@ -40,6 +40,11 @@ export function coloreverHtml({ root, overlaysRoot, template, level, config, med
   for (const anchor of [SCRIPT, '</head>', '<body>', '</body>']) if (html.split(anchor).length !== 2) throw new Error(`Colorever New 基础壳缺少唯一锚点 ${anchor}`);
   const url = '';
   const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config, media, optionalHudPortraits: true });
+  // Completion conversion is independent of the download card's visibility.
+  if (!injection.ctaEnabled) {
+    const ctaRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template.overlays.cta);
+    injection.bodyScripts.push(`<script data-novvy-cta>${fs.readFileSync(path.join(ctaRoot,'cta.js'),'utf8')}</script>`);
+  }
   injection.outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
   if (injection.outroEnabled) {
     const outroRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template.overlays.outro);

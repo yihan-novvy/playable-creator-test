@@ -24,6 +24,9 @@
   transform: translateY(0);
 }
 
+#novvy-cta.novvy-cta-outro { z-index: 2147483647; }
+#novvy-cta:not(.novvy-cta-visible) .novvy-cta-card { pointer-events: none; }
+
 .novvy-cta-card {
   pointer-events: auto;
   cursor: pointer;

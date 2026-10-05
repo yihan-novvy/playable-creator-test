@@ -149,7 +149,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const root = document.getElementById('steps'); root.textContent = '';
     const introInputs = [upload('intro-video', '片头视频 MP4', 'video/mp4'), upload('intro-poster', '可选海报 JPG', 'image/jpeg')];
     const intro = card('intro', 1, '开场视频', config().intro?.enabled ? '上传视频后运行。' : '已关闭，可直接跳过。', introInputs, renderIntroPreview);
-    const outro = card('outro', 2, '片尾视频（可选）', '仅在游戏完成且完成效果结束后播放。未上传视频时直接跳过；已配置 CTA 时，播放结束后再执行完成跳转。', [upload('outro-video','片尾视频 MP4（可选）','video/mp4')], right => {
+    const outro = card('outro', 2, '片尾视频（可选）', '仅在游戏完成且完成效果结束后播放。未上传视频时直接跳过；已配置 CTA 时，播完停留最后一帧，等待 1 秒后跳转，返回时保留片尾画面。', [upload('outro-video','片尾视频 MP4（可选）','video/mp4')], right => {
       if (statusInfo?.uploads?.['outro-video']?.present) right.append(el('video', { controls:'',src:versioned(`/project/${taskId}/uploads/outro-video.mp4`,uploadVersion('outro-video')),style:'max-height:300px' }));
       else right.append(el('span',{class:'hint'},['未设置片尾视频，可直接跳过。']));
     });

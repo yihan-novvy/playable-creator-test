@@ -5,6 +5,12 @@
   const play = document.getElementById('novvy-outro-play');
   if (!root || !video || !sound || !play) return;
   let active = false, consumed = false;
+  let ctaReady = false;
+  function revealCta() {
+    if (ctaReady) return;
+    ctaReady = true;
+    window.dispatchEvent(new CustomEvent('novvy:outro-cta-ready'));
+  }
   let viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
   let attempt = 0;
   const visible = () => !document.hidden && viewable;
@@ -17,7 +23,9 @@
     active = false;
     attempt++;
     video.pause();
-    root.hidden = true;
+    if (reason === 'video_ended') revealCta();
+    root.hidden = reason !== 'video_ended';
+    sound.hidden = reason === 'video_ended';
     play.hidden = true;
     window.dispatchEvent(new CustomEvent('novvy:outro-finished', { detail: { reason } }));
   }
@@ -44,6 +52,7 @@
     if (active || consumed) return;
     consumed = true;
     active = true;
+    ctaReady = false;
     video.currentTime = 0;
     video.muted = false;
     root.hidden = false;
@@ -69,5 +78,8 @@
   });
   root.addEventListener('click', () => { if (active && video.paused) void playVideo(); });
   video.addEventListener('ended', () => finish('video_ended'));
+  video.addEventListener('timeupdate', () => {
+    if (active && visible() && video.currentTime >= 5) revealCta();
+  });
   video.addEventListener('error', () => finish('video_error'));
 })();

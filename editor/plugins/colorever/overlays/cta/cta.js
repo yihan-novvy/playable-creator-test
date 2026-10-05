@@ -1,12 +1,24 @@
 (function () {
   var STORE_URL = window.__COLOREVER_CTA_URL__ || '';
   var root = document.getElementById('novvy-cta');
-  if (!root) return;
 
   /* 没有 ke66qzj0xf 里那条 3 秒等待:注入即显示。 */
-  function show() { root.classList.add('novvy-cta-visible'); }
+  function show() { if (root) root.classList.add('novvy-cta-visible'); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', show);
   else show();
+  window.addEventListener('novvy:outro-started', function () {
+    if (root) {
+      root.classList.remove('novvy-cta-visible');
+      root.classList.add('novvy-cta-outro');
+    }
+  });
+  window.addEventListener('novvy:outro-cta-ready', show);
+  window.addEventListener('novvy:outro-finished', function (event) {
+    if (root && event.detail && event.detail.reason !== 'video_ended') {
+      root.classList.remove('novvy-cta-outro');
+      show();
+    }
+  });
 
   function openStore() {
     if (window.NovvyAnalytics && typeof window.NovvyAnalytics.track === 'function') {
@@ -38,28 +50,65 @@
   var btn = document.getElementById('novvy-cta-btn');
   if (btn) btn.addEventListener('click', function (e) { e.stopPropagation(); openStore(); });
   /* 点到卡片外的压暗层也算一次 CTA 点击(与参考的 end-card 行为一致)。 */
-  root.addEventListener('click', function (e) { if (e.target === root) openStore(); });
+  if (root) root.addEventListener('click', function (e) { if (e.target === root) openStore(); });
 
-  /* water-sort 的胜利转化(colorever 是游戏内 installForGame 补丁,这里没有
-     Cocos 引擎可打,改为监听壳已在派发的 novvy:victory——ad-main.js 在每次
-     胜局上升沿广播,自动重开后下一局胜利会再次派发,即每一局完成都跳一次):
-     立即走与 CTA 点击同一套桥链;随后点隐藏的 #reset(壳的 game.reset())自动
-     开新一局,并把 HUD 进度条归位,胜利结算浮层已被壳隐藏 CSS 按住不出现。 */
-  var RESTART_DELAY_MS = 1200;
-  function finishGame() {
+  var pendingRestart = false, leftAfterOpen = false, converted = false;
+  var viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
+  var timer = null, remaining = 1000, armedAt = 0;
+  function visible() { return !document.hidden && viewable; }
+  function convert(restartOnReturn) {
+    pendingRestart = restartOnReturn;
+    leftAfterOpen = false;
     openStore();
-    setTimeout(function () {
-      var reset = document.getElementById('reset');
-      if (reset) reset.click();
-      if (window.novvyTrainingProgress && typeof window.novvyTrainingProgress.reset === 'function') {
-        window.novvyTrainingProgress.reset();
-      }
-    }, RESTART_DELAY_MS);
   }
-  window.addEventListener('novvy:victory', function () {
-    if (!window.__novvyOutroEnabled) finishGame();
+  function armOutroJump() {
+    if (timer !== null || !visible()) return;
+    armedAt = Date.now();
+    timer = setTimeout(function () {
+      timer = null;
+      remaining = 0;
+      waitingForOutroJump = false;
+      convert(false);
+    }, remaining);
+  }
+  var waitingForOutroJump = false;
+  function onVisibility() {
+    if (pendingRestart) {
+      if (!visible()) leftAfterOpen = true;
+      else if (leftAfterOpen) {
+        pendingRestart = false;
+        leftAfterOpen = false;
+        converted = false;
+        var reset = document.getElementById('reset');
+        if (reset) reset.click();
+        if (window.novvyTrainingProgress) window.novvyTrainingProgress.reset();
+      }
+    }
+    if (!waitingForOutroJump) return;
+    if (!visible() && timer !== null) {
+      clearTimeout(timer);
+      timer = null;
+      remaining = Math.max(0, remaining - (Date.now() - armedAt));
+    } else if (visible()) armOutroJump();
+  }
+  window.addEventListener('novvy:viewablechange', function (event) {
+    viewable = !!(event.detail && event.detail.viewable);
+    onVisibility();
   });
-  window.addEventListener('novvy:outro-finished', function () {
-    if (window.__novvyOutroEnabled) finishGame();
+  document.addEventListener('visibilitychange', onVisibility);
+  window.addEventListener('novvy:victory', function () {
+    if (!window.__novvyOutroEnabled && !converted) {
+      converted = true;
+      convert(true);
+    }
+  });
+  window.addEventListener('novvy:outro-finished', function (event) {
+    if (!window.__novvyOutroEnabled || converted) return;
+    converted = true;
+    if (event.detail && event.detail.reason === 'video_ended') {
+      waitingForOutroJump = true;
+      remaining = 1000;
+      armOutroJump();
+    } else convert(true);
   });
 })();
