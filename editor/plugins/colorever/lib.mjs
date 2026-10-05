@@ -38,12 +38,25 @@ const inline = (value) => JSON.stringify(value).replaceAll('<', '\\u003c').repla
 export function coloreverHtml({ root, overlaysRoot, template, level, config, media = {}, preview = false }) {
   let html = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
   for (const anchor of [SCRIPT, '</head>', '<body>', '</body>']) if (html.split(anchor).length !== 2) throw new Error(`Colorever New 基础壳缺少唯一锚点 ${anchor}`);
-  const url = String(config?.cta?.destinationUrl || '');
-  if (url && !/^https?:\/\//i.test(url)) throw new Error('CTA 地址必须为 http(s) URL');
-  const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config, media });
-  const top = injection.hudEnabled ? '.18' : '0', bottom = injection.ctaEnabled ? '.16' : '0';
-  const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root,body,.app{background:transparent}' : ''}${injection.hudEnabled ? '.app>.hud{visibility:hidden}' : ''}${injection.ctaEnabled ? '#win{display:none!important}' : ''}</style>`;
-  const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};</script>`;
+  const url = '';
+  const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config, media, optionalHudPortraits: true });
+  injection.outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
+  if (injection.outroEnabled) {
+    const outroRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template.overlays.outro);
+    const read = name => fs.readFileSync(path.join(outroRoot, name), 'utf8');
+    injection.headStyles.push(`<style data-novvy-outro>${read('outro.css')}</style>`);
+    injection.bodyDom.push(read('outro.html').replaceAll('__NOVVY_OUTRO_VIDEO__', media.outroVideo));
+    injection.bodyScripts.push(`<script data-novvy-outro>${read('outro.js')}</script>`);
+  }
+  const portraitHudEnabled = injection.hudEnabled && config?.hud?.enabled === true;
+  const top = portraitHudEnabled ? '.18' : '0', bottom = injection.ctaEnabled ? '.16' : '0';
+  // Only hex colors enter CSS; legacy/invalid values use the existing palette.
+  const color = (key, fallback) => /^#[0-9a-f]{6}$/i.test(config?.hud?.[key] ?? '') ? config.hud[key] : fallback;
+  const nativeColors = `--colorever-progress-text:${color('progressTextColor','#326b83')};--colorever-progress-fill:${color('progressFillColor','#329fc2')};--colorever-progress-track:${color('progressTrackColor','#dff3fc')}`;
+  const overlayColors = `--colorever-progress-text:${color('progressTextColor','#ffffff')};--colorever-progress-fill:${color('progressFillColor','#ffd91e')};--colorever-progress-track:${color('progressTrackColor','#b7834a')}`;
+  injection.headStyles.push(`<style data-colorever-progress>.app{${nativeColors}}.app>.hud{top:15%;color:var(--colorever-progress-text)}.app progress{accent-color:var(--colorever-progress-fill);background:var(--colorever-progress-track)}.app progress::-webkit-progress-bar{background:var(--colorever-progress-track)}.app progress::-webkit-progress-value{background:var(--colorever-progress-fill)}.app progress::-moz-progress-bar{background:var(--colorever-progress-fill)}#novvy-training-hud{${overlayColors}}</style>`);
+  const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root,body,.app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}${injection.ctaEnabled ? '#win{display:none!important}' : ''}</style>`;
+  const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__novvyOutroEnabled=${injection.outroEnabled};</script>`;
   html = html.replace('</head>', () => `${[...injection.headStyles, styles, ...injection.headScripts].join('\n')}</head>`)
     .replace(SCRIPT, () => `${injection.uiScript}${data}${preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT}`)
     .replace('<body>', () => `<body>${injection.bodyDom.join('\n')}`)
@@ -61,6 +74,7 @@ export function previewHtml({ plugin: entry, task, taskId }) {
   const media = {
     introVideo: intro && fs.existsSync(path.join(taskUploadsDir(taskId), 'intro-video.mp4')) ? `/project/${taskId}/uploads/intro-video.mp4` : null,
     introPoster: intro ? generated('poster.webp') : null,
+    outroVideo: config.outro?.enabled === true && fs.existsSync(path.join(taskUploadsDir(taskId), 'outro-video.mp4')) ? `/project/${taskId}/uploads/outro-video.mp4` : null,
     hudLeft: hud ? generated('hud-left.webp') : null,
     hudRight: hud ? generated('hud-right.webp') : null,
     background: bg ? generated('background.webp') : null,

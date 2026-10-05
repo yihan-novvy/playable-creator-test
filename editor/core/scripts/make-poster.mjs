@@ -23,6 +23,8 @@ function flag(name) {
 
 const videoPath = path.resolve(flag('video') || '');
 const outPath = path.resolve(flag('out') || '');
+const frame = flag('frame') || 'first';
+if (!['first', 'last'].includes(frame)) throw new Error('Frame must be first or last');
 if (!videoPath || !fs.existsSync(videoPath)) throw new Error(`Missing intro video: ${videoPath}`);
 if (!outPath) throw new Error('Missing --out');
 
@@ -44,9 +46,18 @@ if (!stream) throw new Error('No video stream found in the intro video');
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 const framePath = outPath.replace(/\.[^.]+$/, '') + '.frame.jpg';
 try {
+  // Use the final decoded video frame's timestamp, rather than guessing an
+  // offset from duration (which may include audio or variable frame rates).
+  let seek = [];
+  if (frame === 'last') {
+    const timestamps = execFileSync('ffprobe', ['-v', 'error', '-select_streams', 'v:0', '-show_entries', 'frame=best_effort_timestamp_time', '-of', 'csv=p=0', videoPath], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+      .split('\n').map(line => parseFloat(line)).filter(Number.isFinite);
+    if (!timestamps.length) throw new Error('No video frame timestamp found');
+    seek = ['-ss', String(Math.max(0, timestamps.at(-1) - timestamps[0]))];
+  }
   execFileSync(
     'ffmpeg',
-    ['-y', '-strict', 'unofficial', '-i', videoPath, '-frames:v', '1', '-q:v', '2', '-update', '1', framePath],
+    ['-y', '-strict', 'unofficial', '-i', videoPath, ...seek, '-frames:v', '1', '-q:v', '2', '-update', '1', framePath],
     { stdio: ['ignore', 'ignore', 'pipe'] },
   );
   if (!fs.existsSync(framePath)) throw new Error('ffmpeg did not produce a poster frame');

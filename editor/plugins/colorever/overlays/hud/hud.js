@@ -1,13 +1,15 @@
 (function () {
   var START = 10;
   var progress = START;
+  var correct = null;
+  var total = null;
   var root = document.getElementById('novvy-training-hud');
   var label = document.getElementById('novvy-hud-progress-label');
 
   // Package mode ships the shell byte-identical across tasks: the title, aria
   // texts and the start percent live in the window.__NOVVY_UI__ head script
-  // and are applied here. (Water-sort variant: no paced fallback — the game
-  // reports the real homed-color fraction, see the listener below.)
+  // and are applied here. Colorever supplies the actual homed bead count
+  // and total alongside the percent used by the analytics listener.
   var ui = window.__NOVVY_UI__ && window.__NOVVY_UI__.hud;
   if (ui && typeof ui.progressStart === 'number') START = ui.progressStart;
   progress = START;
@@ -18,18 +20,27 @@
     if (line2 && typeof ui.titleLine2 === 'string') line2.textContent = ui.titleLine2;
     if (typeof ui.ariaLabel === 'string') root.setAttribute('aria-label', ui.ariaLabel);
   }
+  // Title-only overlays have no progress elements or progress controller.
+  if (!root || !label) return;
 
   function render() {
     var shown = Math.round(progress);
     root.style.setProperty('--hud-progress', shown + '%');
-    label.textContent = shown + '%';
+    label.textContent = total !== null ? correct + '/' + total : '';
   }
 
-  // 真实数据源:广告壳(ad-main.js)在每次状态变化时把「已归位颜色比例」
-  // 派发成 novvy:hud-progress(detail.percent 0-100)。起步垫 progressStart,
-  // 只涨不跌,封顶 99——100 只属于胜利。
+  // Real counts keep both the label and bar in sync through undo/restart.
+  // Older percent-only signals retain their existing progress behavior.
   function onHudProgress(event) {
-    var percent = Math.round(Number(event.detail && event.detail.percent) || 0);
+    var detail = event.detail || {};
+    if (Number.isInteger(detail.correct) && Number.isInteger(detail.total) && detail.total > 0 && detail.correct >= 0 && detail.correct <= detail.total) {
+      correct = detail.correct;
+      total = detail.total;
+      progress = Math.min(99, Math.round(correct / total * 100));
+      render();
+      return;
+    }
+    var percent = Math.round(Number(detail.percent) || 0);
     var value = Math.min(99, Math.max(progress, Math.max(START, percent)));
     if (value > progress) {
       progress = value;
@@ -37,8 +48,7 @@
     }
   }
 
-  // 胜利是 100 的唯一来源:归位比例在最后一瓶倒完时才到顶,和 colorever 一致,
-  // 真实读数封顶 99,胜利瞬间直接打满。
+  // Fill the last percent after the final beads and celebration finish.
   function snapComplete() {
     progress = 100;
     render();
@@ -49,7 +59,7 @@
   window.novvyTrainingProgress = {
     get: function () { return Math.round(progress); },
     complete: snapComplete,
-    reset: function () { progress = START; render(); }
+    reset: function () { progress = total !== null ? Math.min(99, Math.round(correct / total * 100)) : START; render(); }
   };
 
   render();

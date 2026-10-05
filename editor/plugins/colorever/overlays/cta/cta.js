@@ -46,7 +46,7 @@
      立即走与 CTA 点击同一套桥链;随后点隐藏的 #reset(壳的 game.reset())自动
      开新一局,并把 HUD 进度条归位,胜利结算浮层已被壳隐藏 CSS 按住不出现。 */
   var RESTART_DELAY_MS = 1200;
-  window.addEventListener('novvy:victory', function () {
+  function finishGame() {
     openStore();
     setTimeout(function () {
       var reset = document.getElementById('reset');
@@ -55,5 +55,11 @@
         window.novvyTrainingProgress.reset();
       }
     }, RESTART_DELAY_MS);
+  }
+  window.addEventListener('novvy:victory', function () {
+    if (!window.__novvyOutroEnabled) finishGame();
+  });
+  window.addEventListener('novvy:outro-finished', function () {
+    if (window.__novvyOutroEnabled) finishGame();
   });
 })();

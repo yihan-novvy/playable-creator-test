@@ -33,11 +33,15 @@ function escapeInlineJson(value) {
     .replaceAll('\u2029', '\\u2029');
 }
 
-export function buildWsOverlayInjection({ overlaysRoot, template, config, media }) {
+export function buildWsOverlayInjection({ overlaysRoot, template, config, media, optionalHudPortraits = false }) {
   const overlayPath = (dir, name) => path.join(overlaysRoot, template.overlays?.[dir] || path.join('overlays', dir), name);
   const readOverlay = (dir, name) => fs.readFileSync(overlayPath(dir, name), 'utf8');
 
-  const hudEnabled = config?.hud?.enabled !== false && !!media.hudLeft && !!media.hudRight;
+  const hasHudTitle = [config?.hud?.titleLine1, config?.hud?.titleLine2].some(value => String(value ?? '').trim());
+  const titlesEnabled = !optionalHudPortraits || (config?.hud?.titleEnabled ?? hasHudTitle);
+  const hudEnabled = optionalHudPortraits
+    ? titlesEnabled || config?.hud?.enabled === true
+    : config?.hud?.enabled !== false && !!media.hudLeft && !!media.hudRight;
   const introEnabled = config?.intro?.enabled !== false && !!media.introVideo && !!media.introPoster;
   const backgroundEnabled = !!media.background;
   const ctaEnabled = config?.cta?.enabled !== false && !!media.ctaIcon;
@@ -56,15 +60,23 @@ export function buildWsOverlayInjection({ overlaysRoot, template, config, media 
   if (hudEnabled) {
     // 文案占位符填空串:任务文案由 __NOVVY_UI__ 在运行时套用,壳跨任务字节
     // 一致(colorever 同构);资产占位符填最终引用。
-    hudDom = fillHudHtml(readOverlay('hud', 'hud.html'), { titleLine1: '', titleLine2: '', ariaLabel: '' })
-      .replaceAll('__HUD_LEFT_DRAGON__', media.hudLeft)
-      .replaceAll('__HUD_RIGHT_DRAGON__', media.hudRight);
+    hudDom = fillHudHtml(readOverlay('hud', 'hud.html'), { titleLine1: '', titleLine2: '', ariaLabel: '' });
+    if (optionalHudPortraits && config?.hud?.enabled !== true) {
+      hudDom = hudDom.replace('id="novvy-training-hud"', 'id="novvy-training-hud" data-title-only')
+        .replace(/<!--__HUD_PROGRESS_START__-->[\s\S]*?<!--__HUD_PROGRESS_END__-->/g, '');
+    }
+    for (const [side, source] of [['LEFT', media.hudLeft], ['RIGHT', media.hudRight]]) {
+      const portrait = config?.hud?.enabled !== false && source;
+      hudDom = optionalHudPortraits && !portrait
+        ? hudDom.replace(new RegExp(`<img[^>]*src="__HUD_${side}_DRAGON__"[^>]*>`), '')
+        : hudDom.replaceAll(`__HUD_${side}_DRAGON__`, source);
+    }
     headStyles.push(`<style data-novvy-hud>${readOverlay('hud', 'hud.css')}</style>`);
     bodyScripts.push(`<script data-novvy-hud>${readOverlay('hud', 'hud.js')}</script>`);
     uiConfig.hud = {
       progressStart: 10,
-      titleLine1: String(config?.hud?.titleLine1 ?? ''),
-      titleLine2: String(config?.hud?.titleLine2 ?? ''),
+      titleLine1: titlesEnabled ? String(config?.hud?.titleLine1 ?? '') : '',
+      titleLine2: titlesEnabled ? String(config?.hud?.titleLine2 ?? '') : '',
       ariaLabel: String(config?.hud?.ariaLabel ?? ''),
     };
   }

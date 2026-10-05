@@ -4,6 +4,7 @@
   "workbench": "colorever-new",
   "steps": [
     "intro",
+    "outro",
     "hud",
     "background",
     "level",
@@ -13,33 +14,36 @@
     "indexHtml": "game/index.html"
   },
   "defaults": {
+    "outro": { "enabled": false },
     "intro": {
       "enabled": false,
       "ariaLabel": ""
     },
     "hud": {
       "enabled": false,
+      "titleEnabled": null,
       "titleLine1": "",
       "titleLine2": "",
       "ariaLabel": ""
     },
     "background": {
       "enabled": false,
-      "blurSigma": 12
+      "blurSigma": 12,
+      "source": "auto"
     },
     "hudImageSource": {
       "left": "upload",
       "right": "upload"
     },
     "cta": {
-      "enabled": false,
-      "destinationUrl": ""
+      "enabled": false
     },
     "patternId": "cat"
   },
   "overlays": {
     "hud": "overlays/hud",
     "intro": "overlays/intro",
+    "outro": "overlays/outro",
     "background": "overlays/background",
     "cta": "overlays/cta",
     "analytics": "overlays/analytics"

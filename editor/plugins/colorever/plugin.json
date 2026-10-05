@@ -5,13 +5,15 @@
   "workbench": "colorever-new",
   "steps": [
     { "id": "intro", "runner": "core:intro" },
-    { "id": "hud", "runner": "core:hud" },
-    { "id": "background", "runner": "core:background" },
+    { "id": "outro", "runner": "./steps/outro.mjs" },
+    { "id": "hud", "runner": "./steps/hud.mjs" },
+    { "id": "background", "runner": "./steps/background.mjs" },
     { "id": "level", "runner": "./steps/level.mjs" },
     { "id": "pack", "runner": "./steps/pack.mjs" }
   ],
   "uploads": {
     "intro-video": { "file": "intro-video.mp4", "magic": "mp4" },
+    "outro-video": { "file": "outro-video.mp4", "magic": "mp4" },
     "intro-poster": { "file": "intro-poster.jpg", "magic": "jpg" },
     "background": { "file": "background.png", "magic": ["png", "jpg"] },
     "portrait-src-left": { "file": "portrait-src-left.png", "magic": ["png", "jpg"] },
@@ -20,6 +22,7 @@
   "overlays": {
     "hud": "overlays/hud",
     "intro": "overlays/intro",
+    "outro": "overlays/outro",
     "background": "overlays/background",
     "cta": "overlays/cta",
     "analytics": "overlays/analytics"
@@ -28,10 +31,11 @@
   "patterns": { "catalog": "game/patterns/catalog.json" },
   "defaults": {
     "intro": { "enabled": false, "ariaLabel": "" },
-    "hud": { "enabled": false, "titleLine1": "", "titleLine2": "", "ariaLabel": "" },
-    "background": { "enabled": false, "blurSigma": 12 },
+    "outro": { "enabled": false },
+    "hud": { "enabled": false, "titleEnabled": null, "titleLine1": "", "titleLine2": "", "ariaLabel": "" },
+    "background": { "enabled": false, "blurSigma": 12, "source": "auto" },
     "hudImageSource": { "left": "upload", "right": "upload" },
-    "cta": { "enabled": false, "destinationUrl": "" },
+    "cta": { "enabled": false },
     "patternId": "cat"
   }
 }

@@ -17,16 +17,25 @@ window.PlayablePlugins = window.PlayablePlugins || {};
   function field(label, control) {
     return el('label', { class: 'dragon-field' }, [el('span', {}, [label]), control]);
   }
-  function checkbox(label, key, subkey) {
+  function titleEnabled() {
+    return config().hud?.titleEnabled ?? [config().hud?.titleLine1,config().hud?.titleLine2].some(value=>String(value??'').trim());
+  }
+  function checkbox(label, key, subkey, checked = config()[key]?.[subkey] === true) {
     const input = el('input', { type: 'checkbox' });
-    input.checked = config()[key]?.[subkey] === true;
+    input.checked = checked;
     input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.checked } }); await refresh(true); });
     return field(label, input);
   }
   function textField(label, key, subkey, value, placeholder = '') {
     const input = el('input', { type: 'text', placeholder }); input.value = value || '';
-    input.addEventListener('change', () => save({ [key]: { [subkey]: input.value.trim() } }));
+    input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.value.trim() } }); await refresh(true); });
     return field(label, input);
+  }
+  function progressColor(label,key,normal,portrait) {
+    const saved=config().hud?.[key];
+    const input=el('input',{type:'color',value:/^#[0-9a-f]{6}$/i.test(saved??'')?saved:config().hud?.enabled?portrait:normal});
+    input.addEventListener('change',async()=>{await save({hud:{[key]:input.value}});await refresh(true);});
+    return field(label,input);
   }
   let pictures=[];
   async function saveLevel(){await saving;}
@@ -40,10 +49,8 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     select.onchange=async()=>{await save({patternId:select.value});await refresh(true);};
     wrap.append(field('图案模板',select),el('p',{class:'hint'},[pictures.find(p=>p.id===select.value)?.description??'']),el('span',{class:'hint'},['图案和玩法参数由 colorever 构建提供。']));
     wrap.append(el('div',{class:'dragon-config-grid'},[
-      checkbox('使用开场视频','intro','enabled'),checkbox('使用顶部 HUD','hud','enabled'),checkbox('使用自定义背景','background','enabled'),checkbox('显示下载 CTA','cta','enabled'),
-      textField('HUD 主标题','hud','titleLine1',config().hud?.titleLine1),textField('HUD 副标题','hud','titleLine2',config().hud?.titleLine2),textField('CTA 目标地址','cta','destinationUrl',config().cta?.destinationUrl,'https://...'),
+      checkbox('使用开场视频','intro','enabled'),checkbox('显示顶部立绘图片','hud','enabled'),checkbox('显示顶部立绘 title','hud','titleEnabled',titleEnabled()),checkbox('使用背景','background','enabled'),checkbox('显示下载 CTA','cta','enabled'),checkbox('使用片尾视频','outro','enabled'),
     ]));
-    const blur=el('input',{type:'number',min:0,max:50,value:config().background?.blurSigma??12});blur.onchange=()=>save({background:{blurSigma:Number(blur.value)}});wrap.append(field('背景模糊程度',blur));
     root.append(wrap);
   }
   function stateChip(id) {
@@ -67,6 +74,10 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     row.append(el('span', { class: 'slot-name' }, [label]), el('button', { onclick: () => input.click() }, ['上传文件']), input);
     const meta = statusInfo?.uploads?.[slot];
     row.append(el('span', { class: 'hint' }, [meta?.present ? `${Math.round(meta.bytes / 1024)} KB` : '未上传']));
+    if (slot === 'outro-video' && meta?.present) row.append(el('button', { onclick: async () => {
+      await fetchJson(`/api/tasks/${taskId}/uploads/${slot}`, { method: 'DELETE' });
+      await refresh(true);
+    } }, ['移除视频']));
     return row;
   }
   function card(id, number, title, description, inputs = [], buildPreview = null) {
@@ -110,11 +121,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     }
   }
   function renderHudPreview(container) {
-    if (!config().hud?.enabled || !stepState('hud').ok) {
-      container.append(el('span', { class: 'hint' }, [config().hud?.enabled ? '运行后显示两侧圆形头像。' : '已关闭。']));
-      return;
-    }
+    if (!config().hud?.enabled || !stepState('hud').ok) return;
     for (const side of ['left', 'right']) {
+      if (!stepState('hud').metrics?.[side]) continue;
       container.append(el('img', {
         src: versioned(`/project/${taskId}/generated/hud-${side}.webp`, stepVersion('hud')),
         class: 'ws-avatar-preview', title: side === 'left' ? '左立绘' : '右立绘',
@@ -140,16 +149,44 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const root = document.getElementById('steps'); root.textContent = '';
     const introInputs = [upload('intro-video', '片头视频 MP4', 'video/mp4'), upload('intro-poster', '可选海报 JPG', 'image/jpeg')];
     const intro = card('intro', 1, '开场视频', config().intro?.enabled ? '上传视频后运行。' : '已关闭，可直接跳过。', introInputs, renderIntroPreview);
+    const outro = card('outro', 2, '片尾视频（可选）', '仅在游戏完成且完成效果结束后播放。未上传视频时直接跳过；已配置 CTA 时，播放结束后再执行完成跳转。', [upload('outro-video','片尾视频 MP4（可选）','video/mp4')], right => {
+      if (statusInfo?.uploads?.['outro-video']?.present) right.append(el('video', { controls:'',src:versioned(`/project/${taskId}/uploads/outro-video.mp4`,uploadVersion('outro-video')),style:'max-height:300px' }));
+      else right.append(el('span',{class:'hint'},['未设置片尾视频，可直接跳过。']));
+    });
     const hudInputs = [upload('portrait-src-left', '左立绘', 'image/png,image/jpeg'), upload('portrait-src-right', '右立绘', 'image/png,image/jpeg')];
     if (config().hud?.enabled && config().intro?.enabled) {
       hudInputs.push(el('button', { onclick: async () => { await save({ hudImageSource: { left: 'poster', right: 'poster' } }); await refresh(true); } }, ['两侧使用视频海报']));
     }
-    const hud = card('hud', 2, '顶部 HUD', config().hud?.enabled ? '上传两张立绘，或使用视频海报作为来源。' : '已关闭，可直接跳过。', hudInputs, renderHudPreview);
-    const background = card('background', 3, '自定义背景', config().background?.enabled ? '上传背景图（或用片头海报），按 1560×2598 高斯模糊成 background.webp 垫在透明棋盘之下——与 water-sort/colorever 同一条管线。' : '已关闭：游戏使用自带纯色底。', [upload('background', '背景图 PNG', 'image/png')], renderBackgroundPreview);
-    const level = card('level', 4, '图案模板校验', '读取所选模板的固定图案和装饰，并验证开局可完成。', [], (right) => {
+    const hud = card('hud', 3, '顶部立绘图片', '上传所需的左右立绘图片，与标题开关独立。', hudInputs, renderHudPreview);
+    const title = el('section',{class:'step-card',id:'hud-title-settings'},[
+      el('h3',{},['顶部立绘 title']),
+      el('div',{class:'dragon-config-grid'},[textField('HUD 主标题','hud','titleLine1',config().hud?.titleLine1),textField('HUD 副标题','hud','titleLine2',config().hud?.titleLine2)]),
+    ]);
+    const cta = el('section',{class:'step-card',id:'cta-settings'},[
+      el('h3',{},['下载 CTA']),el('p',{class:'hint'},['显示底部下载卡片，点击后通过广告 SDK 打开推广页面。']),
+    ]);
+    const progressStyle=el('section',{class:'step-card',id:'progress-style-settings'},[
+      el('h3',{},['进度样式']),
+      el('div',{class:'dragon-config-grid'},[
+        progressColor('进度数字颜色','progressTextColor','#326b83','#ffffff'),
+        progressColor('进度条已完成颜色','progressFillColor','#329fc2','#ffd91e'),
+        progressColor('进度条底色','progressTrackColor','#dff3fc','#b7834a'),
+      ]),
+    ]);
+    const backgroundSource=el('select',{'aria-label':'背景图来源'});
+    for (const [value,label] of [['auto','自动（上传图片优先，否则使用海报）'],['upload','上传背景图片'],['video-first','片头视频的首帧'],['video-last','片头视频的尾帧']]) backgroundSource.append(el('option',{value},[label]));
+    backgroundSource.value=config().background?.source??'auto';
+    backgroundSource.onchange=async()=>{await save({background:{source:backgroundSource.value}});await refresh(true);};
+    const blur=el('input',{type:'number',min:0,max:50,step:1,value:config().background?.blurSigma??12});
+    blur.onchange=async()=>{await save({background:{blurSigma:Number(blur.value)}});await refresh(true);};
+    const backgroundInputs=[field('背景图来源',backgroundSource),field('背景模糊程度（0–50）',blur)];
+    if(backgroundSource.value.startsWith('video-')) backgroundInputs.push(el('p',{class:'hint'},['使用“开场视频”步骤上传的 MP4，无需开启视频播放或先生成海报。']));
+    else backgroundInputs.push(upload('background','背景图片 PNG / JPG','image/png,image/jpeg'));
+    const background = card('background', 4, '自定义背景', config().background?.enabled ? '选择上传图片或片头视频的首帧、尾帧，调整模糊程度后运行。' : '已关闭：游戏使用自带纯色底。', backgroundInputs, renderBackgroundPreview);
+    const level = card('level', 5, '图案模板校验', '读取所选模板的固定图案和装饰，并验证开局可完成。', [], (right) => {
       right.append(el('button', { onclick: () => mountPlayPreview(right, `/api/tasks/${taskId}/preview?v=${Date.now()}`) }, ['试玩当前关卡']));
     });
-    const pack = card('pack', 5, '打包', '组合游戏、所选关卡与已启用素材，生成可导出的 H5 ZIP。', [], (right) => {
+    const pack = card('pack', 6, '打包', '组合游戏、所选关卡与已启用素材，生成可导出的 H5 ZIP。', [], (right) => {
       if (stepState('pack').ok) {
         right.append(el('a', { class: 'primary', href: `/api/tasks/${taskId}/export`, download: `${taskId}.zip` }, ['下载 ZIP 包']));
         right.append(el('button', { onclick: () => mountPlayPreview(right, `/result/${taskId}/index.html?v=${Date.now()}`) }, ['试玩打包结果']));
@@ -157,7 +194,15 @@ window.PlayablePlugins = window.PlayablePlugins || {};
         right.append(el('span', { class: 'hint' }, ['打包成功后，这里可下载 ZIP 并试玩产物。']));
       }
     });
-    root.append(intro, hud, background, level, pack);
+    if(config().intro?.enabled)root.append(intro);
+    if(config().hud?.enabled)root.append(hud);
+    if(titleEnabled())root.append(title);
+    if(config().background?.enabled)root.append(background);
+    if(config().cta?.enabled)root.append(cta);
+    if(config().outro?.enabled)root.append(outro);
+    root.append(progressStyle,level,pack);
+    let number=0;
+    for(const section of root.children){const badge=section.querySelector('.step-num');if(badge)badge.textContent=String(++number);}
   }
   window.PlayablePlugins['colorever'] = { render: async () => { try { pictures=await fetchJson('/api/colorever-options'); renderConfig(); renderSteps(); } catch(error){alert(error.message);} }, saveAll: saveLevel };
 })();

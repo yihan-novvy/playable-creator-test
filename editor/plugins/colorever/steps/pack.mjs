@@ -7,7 +7,6 @@ export function prerequisites(config) {
   const generated = ['level.json'];
   const uploads = [];
   if (config?.intro?.enabled === true) { uploads.push('intro-video'); generated.push('poster.webp'); }
-  if (config?.hud?.enabled === true) generated.push('hud-left.webp', 'hud-right.webp');
   if (config?.background?.enabled === true) generated.push('background.webp');
   return { uploads, generated };
 }
@@ -17,14 +16,20 @@ export async function run(ctx) {
   const generated = path.join(ctx.generatedDir, 'level.json');
   requireFiles([generated]);
   if (JSON.stringify(JSON.parse(fs.readFileSync(generated, 'utf8'))) !== JSON.stringify(level)) throw new Error('关卡已改变，请重新运行关卡步骤');
-  const enabled = { intro: ctx.config.intro?.enabled === true, hud: ctx.config.hud?.enabled === true, background: ctx.config.background?.enabled === true, cta: ctx.config.cta?.enabled === true };
+  const enabled = { intro: ctx.config.intro?.enabled === true, outro: ctx.config.outro?.enabled === true && fs.existsSync(ctx.uploads['outro-video']), hud: ctx.config.hud?.enabled === true, background: ctx.config.background?.enabled === true, cta: ctx.config.cta?.enabled === true };
   const files = [];
   if (enabled.intro) files.push([ctx.uploads['intro-video'], 'tail-ad-video.mp4'], [path.join(ctx.generatedDir, 'poster.webp'), 'poster.webp']);
-  if (enabled.hud) for (const side of ['left', 'right']) files.push([path.join(ctx.generatedDir, `hud-${side}.webp`), `hud-${side}.webp`]);
+  if (enabled.outro) files.push([ctx.uploads['outro-video'], 'outro-video.mp4']);
+  const hudMedia = {};
+  if (enabled.hud) for (const side of ['left', 'right']) {
+    const name = `hud-${side}.webp`, source = path.join(ctx.generatedDir, name);
+    if (fs.existsSync(source)) { files.push([source, name]); hudMedia[side] = name; }
+  }
   if (enabled.background) files.push([path.join(ctx.generatedDir, 'background.webp'), 'background.webp']);
   if (enabled.cta) files.push([path.join(ctx.pluginDir, ctx.template.overlays.cta, 'icon.png'), 'app-icon.png']);
   requireFiles(files.map(([source]) => source));
-  const built = coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, hudLeft: enabled.hud ? 'hud-left.webp' : null, hudRight: enabled.hud ? 'hud-right.webp' : null, background: enabled.background ? 'background.webp' : null, ctaIcon: enabled.cta ? 'app-icon.png' : null } });
+  const built = coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, outroVideo: enabled.outro ? 'outro-video.mp4' : null, hudLeft: hudMedia.left ?? null, hudRight: hudMedia.right ?? null, background: enabled.background ? 'background.webp' : null, ctaIcon: enabled.cta ? 'app-icon.png' : null } });
+  enabled.hud = built.injection.hudEnabled;
   fs.rmSync(ctx.resultDir, { recursive: true, force: true });
   fs.mkdirSync(ctx.resultDir, { recursive: true });
   fs.copyFileSync(path.join(ctx.templateRoot, 'game/game.js'), path.join(ctx.resultDir, 'game.js'));

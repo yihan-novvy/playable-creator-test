@@ -43,6 +43,7 @@ import { environment, run } from './core/lib/exec.mjs';
 const UPLOAD_CAP_BYTES = 100 * 1024 * 1024;
 const UPLOAD_MIME = {
   'intro-video': { types: ['video/mp4'], ext: ['.mp4'] },
+  'outro-video': { types: ['video/mp4'], ext: ['.mp4'] },
   'intro-poster': { types: ['image/jpeg'], ext: ['.jpg', '.jpeg'] },
   background: { types: ['image/png'], ext: ['.png'] },
   // Portrait SOURCE images for HUD portraits (used whole by default, or
@@ -58,6 +59,7 @@ const isPngOrJpeg = (buf) =>
   (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff);
 const UPLOAD_MAGIC = {
   'intro-video': (buf) => buf.length > 12 && buf.readUInt32BE(4) === 0x66747970, // ISO-BMFF "ftyp"
+  'outro-video': (buf) => buf.length > 12 && buf.readUInt32BE(4) === 0x66747970,
   'intro-poster': (buf) => buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff,
   background: (buf) => buf.length > 8 && buf.readUInt32BE(0) === 0x89504e47,
   'portrait-src-left': isPngOrJpeg,

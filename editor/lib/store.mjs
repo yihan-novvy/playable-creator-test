@@ -14,6 +14,7 @@ import {
 const TASK_ID_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const UPLOAD_SLOTS = Object.freeze([
   'intro-video',
+  'outro-video',
   'intro-poster',
   'background',
   'portrait-src-left',
@@ -108,7 +109,7 @@ const CONFIG_PATCH_WHITELIST = new Set(['hud', 'intro', 'cta', 'recolorPortraits
 
 // Water Sort 保存关卡数据；Colorever New 任务仅选择完整图案 ID。
 const CONFIG_WHITELISTS = new Map([
-  ['colorever', new Set(['hud','intro','cta','background','hudImageSource','hudCrop','patternId'])],
+  ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId'])],
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId'])],
 ]);
@@ -164,10 +165,12 @@ export function updateTaskConfig(id, patch) {
   }
   if (['dragon-cube','colorever'].includes(doc.templateId)) {
     if ('intro' in (patch || {})) { delete doc.steps.intro; delete doc.steps.hud; delete doc.steps.background; delete doc.steps.pack; }
+    if ('outro' in (patch || {})) { delete doc.steps.outro; delete doc.steps.pack; }
     if ('hud' in (patch || {}) || 'hudImageSource' in (patch || {}) || 'hudCrop' in (patch || {})) { delete doc.steps.hud; delete doc.steps.pack; }
     if ('background' in (patch || {})) { delete doc.steps.background; delete doc.steps.pack; }
     if ('cta' in (patch || {})) delete doc.steps.pack;
   }
+  if (doc.templateId === 'colorever' && doc.config.cta) delete doc.config.cta.destinationUrl;
   return writeTask(doc);
 }
 
@@ -175,6 +178,7 @@ export function recordUpload(id, slot, meta) {
   const doc = readTask(id);
   if (!doc) return null;
   doc.uploads[slot] = meta;
+  if (doc.templateId === 'colorever' && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -182,6 +186,7 @@ export function clearUpload(id, slot) {
   const doc = readTask(id);
   if (!doc) return null;
   delete doc.uploads[slot];
+  if (doc.templateId === 'colorever' && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -222,6 +227,7 @@ export async function withTaskLock(id, fn) {
 export function uploadPath(id, slot) {
   const extBySlot = {
     'intro-video': '.mp4',
+    'outro-video': '.mp4',
     'intro-poster': '.jpg',
     background: '.png',
     // Portrait SOURCE images keep a fixed .png name regardless of the
@@ -332,6 +338,7 @@ const WATER_SORT_STEP_INPUT_FILES = {
 };
 
 export function stepInputFilesFor(templateId) {
+  if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/outro-video.mp4'] };
   return ['water-sort','dragon-cube','colorever'].includes(templateId) ? WATER_SORT_STEP_INPUT_FILES : STEP_INPUT_FILES;
 }
 

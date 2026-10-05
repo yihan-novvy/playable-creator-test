@@ -17,6 +17,10 @@
   if (introVideo && typeof analytics.registerMedia === 'function') {
     analytics.registerMedia(introVideo, { name: 'tail_ad_video' });
   }
+  var outroVideo = document.getElementById('novvy-outro-video');
+  if (outroVideo && typeof analytics.registerMedia === 'function') {
+    analytics.registerMedia(outroVideo, { name: 'outro_video' });
+  }
 
   /* Spec §3 playable_entry — fired by the intro overlay's finish(reason). */
   window.addEventListener('novvy:intro-finished', function (event) {
@@ -34,7 +38,7 @@
   function sendGameStart() {
     if (gameStartSent) return;
     gameStartSent = true;
-    analytics.track('game_start', { template: 'water_sort_puzzle_v1' });
+    analytics.track('game_start', { template: 'colorever_square_beads_v1' });
   }
 
   /* Spec §4 puzzle_placement — every rising edge of the homed-color percent is

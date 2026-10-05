@@ -26,6 +26,10 @@ async function step(ctx) {
     if (source === 'upload') {
       const sourcePath = ctx.uploads[`portrait-src-${side}`];
       if (!fs.existsSync(sourcePath)) {
+        if (ctx.hudOptionalPortraits) {
+          fs.rmSync(outPath, { force: true });
+          continue;
+        }
         const error = new Error(`${label}选择了「上传图片」,但还没有上传;请先上传源图。`);
         error.missing = [sourcePath];
         throw error;
@@ -73,7 +77,7 @@ async function step(ctx) {
     await spawnRun('python3', cropArgs);
   }
 
-  if (recolor) {
+  if (recolor && plan.length === 2) {
     const hudLeft = path.join(ctx.generatedDir, 'hud-left.webp');
     const hudRight = path.join(ctx.generatedDir, 'hud-right.webp');
     await spawnRun('python3', [
@@ -87,10 +91,13 @@ async function step(ctx) {
 
   // Outputs may be true PNGs (crop/recolor paths) or byte-copied sources that
   // are JPEG-in-.png like the example's shipped portraits — ffprobe reads both.
-  const left = await probeImage(path.join(ctx.generatedDir, 'hud-left.webp'));
-  const right = await probeImage(path.join(ctx.generatedDir, 'hud-right.webp'));
   const warnings = [];
-  for (const [name, dims] of [['左立绘', left], ['右立绘', right]]) {
+  const metrics = { recolorApplied: recolor && plan.length === 2 };
+  for (const item of plan) {
+    const dims = await probeImage(item.outPath);
+    const name = item.label;
+    metrics[item.side] = { ...dims, source: item.source, cropped: item.cropped === true };
+    metrics[`${item.side}Bytes`] = fs.statSync(item.outPath).size;
     const aspect = dims.width / dims.height;
     if (aspect < 0.75 || aspect > 1.33) {
       warnings.push(`${name}宽高比 ${aspect.toFixed(2)} 偏离正方形,HUD 头像按 1:1 圆形裁切显示`);
@@ -99,16 +106,7 @@ async function step(ctx) {
       warnings.push(`${name}分辨率 ${dims.width}x${dims.height} 偏小,建议 ≥200px`);
     }
   }
-  return {
-    metrics: {
-      left: { ...left, source: plan[0].source, cropped: plan[0].cropped === true },
-      right: { ...right, source: plan[1].source, cropped: plan[1].cropped === true },
-      recolorApplied: recolor,
-      leftBytes: fs.statSync(path.join(ctx.generatedDir, 'hud-left.webp')).size,
-      rightBytes: fs.statSync(path.join(ctx.generatedDir, 'hud-right.webp')).size,
-    },
-    warnings,
-  };
+  return { metrics: { ...metrics, ...(plan.length === 0 ? { skipped: true } : {}) }, warnings };
 }
 
 export { step as run };
