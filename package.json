@@ -1,0 +1,11 @@
+{
+  "name": "playable-creator",
+  "private": true,
+  "workspaces": [],
+  "scripts": {
+    "dev": "echo '尚未迁移：editor 在 Phase 1 入驻' && exit 1",
+    "build": "echo '尚未迁移：template-core 在 Phase 2 入驻' && exit 1",
+    "test": "echo '尚未迁移：测试在 Phase 1 入驻' && exit 1",
+    "validate": "echo '尚未迁移：注册表校验在 Phase 4 落地' && exit 1"
+  }
+}

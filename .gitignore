@@ -1,0 +1,8 @@
+node_modules/
+project/
+result/
+.env
+.env.*
+!.env.example
+__pycache__/
+.DS_Store
