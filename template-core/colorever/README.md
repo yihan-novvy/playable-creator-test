@@ -26,7 +26,7 @@ The artwork floats above the background; there is no large rectangular backing f
 
 ## Original cache reference and current lighting
 
-The large rectangular frame behind the mosaic was removed. The bottom cache now follows the original Colorever prefab: an independent warm rounded shell, recessed slots, five rows and thirteen columns. Source configuration: `Playable-Wholehouse/src/templates/colorever-gemsort/game/assets/assets/bundle_gemsort/import/69/69d06444-8382-41d3-a2b2-a8f157683a8f.json`; cache prefab: `import/05/05c83a383.json`. This is a 3D interpretation, not a direct sprite copy.
+The large rectangular frame behind the mosaic was removed. The bottom cache now follows the original Colorever prefab: an independent warm rounded shell, recessed slots, five rows and thirteen columns. Source configuration: `editor/templates/colorever-gemsort/game/assets/assets/bundle_gemsort/import/69/69d06444-8382-41d3-a2b2-a8f157683a8f.json`; cache prefab: `import/05/05c83a383.json`. This is a 3D interpretation, not a direct sprite copy.
 
 Cells retain their square spacing and smooth bevel normals. The top camber and frontal reflection panel have been removed; reduced neutral softbox reflections preserve clear dark tops and white faces. Shadows use PCF soft filtering instead of VSM blur.
 
@@ -40,7 +40,7 @@ Cells retain their square spacing and smooth bevel normals. The top camber and f
 
 ## Original template gameplay feedback
 
-Behavior was checked against `Playable-Wholehouse/src/templates/colorever-gemsort/game/assets/assets/bundle_gemsort/index.js`, especially BoardController, BoardModel and AudioService.
+Behavior was checked against `editor/templates/colorever-gemsort/game/assets/assets/bundle_gemsort/index.js`, especially BoardController, BoardModel and AudioService.
 
 - `src/game-audio.js`: original BGM starts on first input; Web Audio handles overlapping original one-shot clips. BGM, store and single-placement exports contained data-URL text, so the local assets have been decoded into binary MP3 files. Music pauses when the page is hidden. The sound button mutes music and effects.
 - Pickup lifts the group over 150 ms. Cache insertion staggers each bead by 40 ms; board placement staggers by 50 ms. Each bead plays its landing sound when it lands, rather than replaying one sound at group launch.
@@ -80,10 +80,10 @@ colorever 是图案、装饰、玩法参数和开局的唯一来源。广告项�
 npm run build:template
 ```
 
-该命令单向导出到 `../Playable-Wholehouse/src/templates/colorever-new/game`。构建时生成、求解并固定每个开局，装饰与游戏逻辑编入 game.js。导出 index.html、game.js、patterns/catalog.json 和各图案 JSON；目录附带引擎及数据校验值和完成步数。编辑器、装饰 JS 源码、开局生成器不会复制到广告项目。
+该命令单向导出到 `../../editor/templates/colorever/game`，并在模板目录写入 game-manifest.json（图案清单与引擎校验值）。构建时生成、求解并固定每个开局，装饰与游戏逻辑编入 game.js。导出 index.html、game.js、patterns/catalog.json 和各图案 JSON；目录附带引擎及数据校验值和完成步数。编辑器、装饰 JS 源码、开局生成器不会复制到广告项目。
 
 `npm run build:game -- --out <dir>` 导出相同格式到指定目录；`npm run build:offline` 导出独立 HTML。构建不会修改源图案数据。
 
-广告项目只选择 build 发布的 patternId，并配置片头/HUD/背景/CTA。预览和打包读取固定 opening，不再随机或求解。修改 colorever 源文件后，未重新 build 时广告项目仍使用旧版本；build 后相关广告任务需要重新运行校验与打包。
+广告项目只选择 build 发布的 patternId，并配置片头/HUD/背景/CTA。预览和打包读取固定 opening，不再随机或求解。修改源文件后未重新 build 时，编辑器仍使用入库的旧产物；`npm run validate` 比对 template-core 与 game-manifest 的版本号，不一致即提示重新构建。
 
-验证：`npm test`。广告集成在 Wholehouse 运行 `node editor/test/run-all.mjs colorever-new water-sort dragon-cube config-patch`。
+验证：`npm test`。广告集成在 monorepo 根运行 `npm test`。

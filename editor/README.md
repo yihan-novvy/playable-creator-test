@@ -61,19 +61,24 @@ pack 步骤同时会重写两份游戏内配置(见 `src/lib/meta-patch.mjs`):Gl
   - `steps` — 模板完整性(sha256 对 git 026ad34)、fill-overlays 转义、图案/关卡脚本对示例输入的确定性复现。
   - `e2e-reference` — 走真实 HTTP API 建任务/上传/跑六步,成品与已知产物多点等价;两个关卡数据 JSON 例外(levels 步骤每次运行都会用 move-cycle 打散重新生成(无法轮转色块的图案回退 grouped-colors)),改为结构断言「打包内容 == 本轮 levels.json 产物」,其余文件仍要求逐字节一致。
 
-## 模板(src/templates/<name>/)
+## 模板与插件(editor/templates、editor/plugins)
 
 ### DragonCube
 
-`dragon-cube` 模板使用 Unity DragonCube 的第 1–10 关。在新建任务时选择该模板，工作台的「选择原版关卡」下拉框保存 `config.levelId`；「试玩当前关卡」立即预览所选关卡，运行「全部运行」后可导出 ZIP。第 7–10 关包含定向猫块。关卡 JSON 由相邻 `playable-ad/dragon-cube` 仓库同步，工作台不提供关卡创作。
+`dragon-cube` 模板使用 Unity DragonCube 的第 1–10 关。在新建任务时选择该模板，工作台的「选择原版关卡」下拉框保存 `config.levelId`；「试玩当前关卡」立即预览所选关卡，运行「全部运行」后可导出 ZIP。第 7–10 关包含定向猫块。关卡 JSON 由 `template-core/dragon-cube` 构建落盘（`editor/templates/dragon-cube/levels/`），工作台不提供关卡创作。
 
-片头、HUD、自定义背景默认关闭，可按需开启并上传素材；CTA 默认开启，可填写目标地址，广告 SDK 也可接管跳转。修改独立游戏后在 `playable-ad/dragon-cube` 运行 `npm run sync:wholehouse` 同步基础包和关卡。
+片头、HUD、自定义背景默认关闭，可按需开启并上传素材；CTA 默认开启，可填写目标地址，广告 SDK 也可接管跳转。修改独立游戏后在 `template-core/dragon-cube` 运行 `npm run build`，产物直接落到 `editor/templates/dragon-cube/`。
 
 - `template.json` — 契约常量唯一来源:背景资产路径与 1560×2598、两关卡路径、GEM_TILE_OFFSET=68、MAX_OPENING_COMPLETION=0.9、scrambleOverrides、scrambleMoveCycle(轮转色块参数)、图案 PALETTE(34 色)与 allowedTiles、各步骤 defaults。
 - `game/` — 干净的 Cocos 构建(repack 模板 + assets 树 + 两 manifest)。注意:game_pic_bg 是 **WebP 载荷 .png 文件名**,manifest 声明 image/webp——不要"修正"。
 - `overlays/` — hud/intro 覆盖层源。文案占位符 `__HUD_TITLE_LINE1__` 等;资源占位符(`__HUD_LEFT_DRAGON__` 等 4 个)归 repack 处理。
 
-新增模板:复制本目录结构、替换基础包、改 template.json;步骤脚本全部经由 template.json 读取常量,无需改代码。
+新增模板 = 两个目录，editor 核心零改动（完整规范见根目录 `docs/template-plugin-spec.md`）：
+
+1. `template-core/<id>/`：玩法源项目，`npm run build` 产出 `editor/templates/<id>/`（game/ + game-manifest.json）；
+2. `editor/plugins/<id>/`：plugin.json（steps/runners、uploads、overlays、defaults）+ overlays/ + 按需的 steps/ 与 workbench.js。
+
+server 启动时扫描 plugins 并校验注册表（`npm run validate` 同一实现）：contract 损坏拒绝启动，template-core 与已入库产物的版本不一致给出重建警告。步骤实现既可复用 core steps（`core:intro/hud/background`），也可以是插件私有模块（导出 `run(ctx)` 与可选 `prerequisites(config)`）。
 
 ## 与手工流程的对应
 

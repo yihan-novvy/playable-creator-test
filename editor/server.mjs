@@ -9,7 +9,6 @@ import {
   PROJECTS_ROOT,
   RESULT_ROOT,
   TEMPLATES_ROOT,
-  EDITOR_ROOT,
   SCRIPTS_ROOT,
   ensureDir,
   taskProjectDir,
@@ -38,6 +37,7 @@ import {
 } from './lib/store.mjs';
 import { STEP_IDS, runStep, runAll, templateSteps, stepPrerequisites, effectiveConfig } from './core/runner.mjs';
 import { getEntry, listEntries, importStepModule, getLib } from './core/registry.mjs';
+import { validateRegistry } from './core/validate.mjs';
 import { environment, run } from './core/lib/exec.mjs';
 
 const UPLOAD_CAP_BYTES = 100 * 1024 * 1024;
@@ -598,6 +598,13 @@ export async function main(argv = process.argv.slice(2)) {
   const port = portIndex !== -1 ? Number(argv[portIndex + 1]) : 8088;
   ensureDir(PROJECTS_ROOT);
   ensureDir(RESULT_ROOT);
+  // 启动即校验插件注册表：错误（契约损坏）拒绝启动，警告（如版本护栏）仅提示。
+  const { errors, warnings } = validateRegistry();
+  for (const warning of warnings) console.warn(`警告: ${warning}`);
+  if (errors.length > 0) {
+    for (const error of errors) console.error(`错误: ${error}`);
+    throw new Error(`插件注册表校验失败（${errors.length} 个错误）；运行 npm run validate 查看详情`);
+  }
   const server = createServer();
   await new Promise((resolve) => server.listen(port, '127.0.0.1', resolve));
   const env = await environment();

@@ -13,7 +13,7 @@ npm run dev
 
 ## 打包 playable 基础包
 
-`npm run build:game` 产出可直接提供给 Playable-Wholehouse 编辑器的基础包（默认输出 `build/template/`），`file://` 双击直开即可运行（无 module 脚本、无运行时 fetch）：
+`npm run build:game` 产出编辑器消费的基础包（monorepo 内默认 `--out ../../editor/templates/water-sort/game`，本地默认 `build/template/`），`file://` 双击直开即可运行（无 module 脚本、无运行时 fetch）；同时在模板目录写 `level.json` 与 `game-manifest.json`：
 
 | 文件 | 角色 | 替换语义 |
 | --- | --- | --- |
@@ -25,9 +25,7 @@ npm run dev
 
 落位到编辑器模板目录：
 
-```sh
-npm run build:game -- --out ../Playable-Wholehouse/src/templates/water-sort/game
-```
+monorepo 内无需 --out：根目录 `npm run build` 已指向编辑器模板目录。
 
 ## 独立关卡数据
 

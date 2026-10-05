@@ -15,29 +15,18 @@ npm test
 
 ```sh
 npm run build
-# 或 npm run build:template
-npm run sync:wholehouse
+# 或 npm run build:template（二者等价）
 ```
 
-完整模板目录为 `build/dragon-cube-template/`，同时生成 `build/dragon-cube-template.zip`。ZIP 根目录结构：
+`npm run build`（默认经根 `npm run build` 串联）把模板写到 `../../editor/templates/dragon-cube/`：`game/`（不含 levelN.html 独立预览页）+ `levels/` + `game-manifest.json`。覆盖层与编辑契约属于 `editor/plugins/dragon-cube/`，不再随模板打包，也没有 ZIP——monorepo 内产物目录即被编辑器直接消费。编辑器选择关卡后通过 `window.__DRAGON_CUBE_LEVEL__` 注入配置，共用一份游戏代码，无需每关独立 HTML。`game/index.html` 仅作为基础预览入口，默认第 1 关。
 
-```text
-template.json   # Wholehouse 模板入口和默认配置
-game/           # index.html、game.js、style.css、图片与音频资源
-levels/         # Unity 第 1–10 关 JSON
-overlays/       # HUD、开场、背景、CTA、统计覆盖层
-README.md       # 接入说明
-```
-
-将完整目录放入 `Playable-Wholehouse/src/templates/dragon-cube/` 即可沿用该编辑器现有的 DragonCube 工作台。编辑器选择关卡后通过 `window.__DRAGON_CUBE_LEVEL__` 注入配置，共用一份游戏代码，无需每关独立 HTML。`game/index.html` 仅作为基础预览入口，默认第 1 关。
-
-`npm run build:template -- --out <目录>` 可指定独立输出目录。完整模板构建依赖相邻 Wholehouse 中的 `template.json` 和 `overlays/`（覆盖层继续由 Wholehouse 维护），以及系统 `zip` 命令。`npm run build:game` 仍只生成游戏基础包，兼容现有同步流程。
+`npm run build:template -- --out <目录>` 可指定独立输出目录；`npm run build:game` 生成含 levelN.html 的本地试玩基础包（默认 `build/template/`）。
 
 基础包位于 `build/template/`，可直接打开 `index.html`。文件全部本地引用，没有运行时网络请求或模块脚本。`window.__DRAGON_CUBE_LEVEL__` 可在 `game.js` 执行前设置为第 1–10 关任一原版 JSON；未设置时默认第 1 关。
 
 `npm run build:game` 同时生成 `build/template/level1.html` 至 `level10.html`，每个 HTML 内联对应关卡配置，共用目录中的 `game.js`、`style.css` 和 `assets/`。打开对应文件即可试玩该关；复制到其他位置时需一并复制这些共用资源。
 
-更新游戏或关卡后运行 `npm run sync:wholehouse`，同步 `game/` 基础包和 `levels/` 到相邻的 Playable-Wholehouse 模板目录。Wholehouse 的覆盖层和编辑器逻辑由其自身仓库维护。
+更新游戏或关卡后运行 `npm run build`，产物直接落到 `editor/templates/dragon-cube/`；`npm run validate` 的版本护栏会提示编辑器侧产物是否需要重建。覆盖层和编辑逻辑在 `editor/plugins/dragon-cube/` 维护。
 
 ## 从 Unity 工程同步素材
 

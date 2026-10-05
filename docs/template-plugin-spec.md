@@ -226,12 +226,13 @@ export function prerequisites(config) {
 | `plugin` / `template` | 解析后的 plugin.json 与 **合并后的 template 清单**（plugin.json + game-manifest 深合并，plugin 字段优先） |
 | `config` | 生效配置 = 深合并(plugin.defaults, 任务 config) |
 | `engine` | 步骤变体（如 pattern 的 `ai` vs 默认阈值脚本），由调用方传入 |
-| `templateDir` | 解析后的 `editor/templates/<id>/`（**只读**） |
-| `pluginDir` | plugin 目录（只读） |
+| `templateDir` / `templateRoot` | 解析后的 `editor/templates/<id>/`（**只读**；游戏资产与 template.json） |
+| `pluginDir` | 插件目录（**只读**；overlays 在这里） |
+| `pluginScriptsDir` | `plugins/<id>/scripts/`（插件专属脚本；通用脚本在 `ctx.scriptsRoot` = `editor/core/scripts/`） |
 | `uploads` | `{ slot: 绝对路径或 null }`，槽位见 plugin.json `uploads` |
 | `uploadsDir` / `generatedDir` | `project/<task>/uploads` 与 `generated/` 子目录，runner 可写 |
 | `resultDir` | `result/<task>/`，仅 pack 可写 |
-| `helpers` | core 工具：`run`(子进程)、`probeVideo` / `probeImage` / `pngDimensions`、`requireFiles` 等 |
+| `helpers` | core 工具：`requireFiles`（错误带 `.missing`）；子进程与探测工具从 `core/lib/exec.mjs` import |
 
 约定：
 
@@ -254,8 +255,10 @@ export function prerequisites(config) {
 
 ### 3.5 Workbench 前端接口
 
-- task 工作台按任务所属 plugin **动态加载** `/plugins/<id>/workbench.js`
-  （替代现在 task.html 里三个硬编码 `<script>`）。
+- task 工作台按任务所属 plugin **动态加载** `/plugins/<id>/workbench.js`，
+  经 `window.PlayablePlugins[<pluginId>]` 注册；没有 workbench.js 的插件
+  使用通用工作台。plugin.json 的 `workbench` 字段当前是过渡期的前端展示
+  分组键（裸字符串）；写成 `./...` 路径形态时才表示专用工作台脚本。
 - 注册契约（最小接口，实现期允许在 core 侧补充回调，但不得要求 plugin 关心 core 内部）：
 
 ```js
@@ -297,7 +300,7 @@ PlayablePlugins["colorever-new"] = {
 2. 对应 `editor/templates/<id>/game-manifest.json` 存在且可解析；`id` = 目录名；缺失时
    报错文案必须提示「先在 template-core/<id> 运行 npm run build」。
 3. **版本比对**：`game-manifest.json` 的 `version` == `template-core/<id>/package.json`
-   的 `version`，不一致 = 警告（提示重新 build）。
+   的 `version`；不一致 = **警告**（源码有更新，请重新 build），errors 才阻断启动。
 4. `steps`：id 合法且唯一；恰好一个 `pack` 且在末尾；每个 `runner` 文件存在且导出 `run`。
 5. `uploads`：magic 类型受支持；文件名不冲突。
 6. `overlays` / `workbench` 指向的路径存在。
