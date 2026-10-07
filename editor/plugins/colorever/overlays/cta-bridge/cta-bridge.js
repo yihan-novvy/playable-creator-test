@@ -13,7 +13,7 @@
   var BRIDGE_CSS = [
     '#novvy-cta-bridge-style{display:none}',
     '.novvy-cta-bridge-btn{position:fixed;left:50%;transform:translateX(-50%);',
-    'bottom:calc(14px + env(safe-area-inset-bottom));z-index:9000;',
+    'bottom:calc(14px + env(safe-area-inset-bottom));z-index:40;',
     'min-height:42px;padding:0 22px;border:0;border-radius:21px;',
     'background:linear-gradient(135deg,#10b981 0%,#059669 100%);color:#fff;',
     'font:800 14px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;',
@@ -70,7 +70,9 @@
   }
 
   /* 结算卡片显露:showEndCard 由落地页注入脚本导出,调用即全屏卡片 + 整屏
-     点击转化,同步生效无扫描延迟;预览环境不存在,自动降级为无卡片。 */
+     点击转化,同步生效无扫描延迟;预览环境不存在,自动降级为无卡片。
+     层级契约:模板所有覆盖层(HUD/intro/outro)都压在卡片(999999)之下,
+     见各 overlay css —— 这里直接调用即可,卡片天然在最顶层。 */
   function revealCard() {
     if (typeof window.showEndCard === 'function') {
       try { window.showEndCard(); } catch (e) {}

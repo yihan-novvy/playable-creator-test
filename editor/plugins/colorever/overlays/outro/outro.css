@@ -1,4 +1,4 @@
-#novvy-video-outro{position:fixed;inset:0;z-index:2147483646;display:grid;place-items:center;overflow:hidden;background:#120b08;touch-action:manipulation}
+#novvy-video-outro{position:fixed;inset:0;/* 层级契约:高于片头(20);停留最后一帧时也必须低于落地页服务注入的结算卡片(999999)。 */z-index:30;display:grid;place-items:center;overflow:hidden;background:#120b08;touch-action:manipulation}
 #novvy-video-outro[hidden],#novvy-outro-play[hidden],#novvy-outro-sound[hidden]{display:none}
 #novvy-outro-video{width:100%;height:100%;object-fit:cover;background:#120b08}
 #novvy-outro-sound {

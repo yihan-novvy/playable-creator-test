@@ -8,7 +8,7 @@
 }
 
 /* 游戏舞台抬到背景之上(壳里 #stage 是 fixed 但没有 z-index;#win=2、
-   HUD=2147483000、intro=2147483646 都在它之上)。 */
+   HUD=10、intro=20 都在它之上)。 */
 #stage {
   z-index: 1;
 }

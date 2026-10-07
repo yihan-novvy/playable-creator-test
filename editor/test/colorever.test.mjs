@@ -18,7 +18,7 @@ export default async function run(assert){
  vm.runInNewContext(bridgeSource,bridgeSandbox);
  bridgeListeners.get('novvy:victory')();
  assert.equal([endCardCalls,engineClicks],[1,1],'胜利即显露注入引擎结算卡片并经引擎统一转化');
- assert.check(!bridgeSource.includes('NovvyAnalytics'),'转化桥不携带事件上报,埋点交给落地页注入引擎');
+ assert.check(!bridgeSource.includes('novvyEndCard')&&!bridgeSource.includes('NovvyAnalytics'),'转化桥不操控服务卡片层级、不携带事件上报');
  const hudListeners=new Map(),hudNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-progress-label','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',style:{setProperty(){}},setAttribute(){}}]));
  const hudSandbox={window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}},addEventListener:(event,fn)=>hudListeners.set(event,fn)},document:{getElementById:id=>hudNodes[id]}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),hudSandbox);

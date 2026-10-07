@@ -1,7 +1,10 @@
 #novvy-training-hud {
   --hud-progress: 10%;
   position: fixed;
-  z-index: 2147483000;
+  /* 层级契约(百以内小值):背景0 < 画布1 < HUD 10 < 片头20 < 片尾30 <
+     落地页服务注入的结算卡片(novvyEndCard=999999)。不与 SDK 注入 UI 抢高层,
+     关闭按钮保持可点。 */
+  z-index: 10;
   top: calc(env(safe-area-inset-top) + max(12px, 2.4dvh));
   left: 50%;
   width: min(88dvw, 720px);
