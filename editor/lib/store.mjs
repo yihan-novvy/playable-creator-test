@@ -17,6 +17,7 @@ const UPLOAD_SLOTS = Object.freeze([
   'outro-video',
   'intro-poster',
   'background',
+  'background2',
   'portrait-src-left',
   'portrait-src-right',
   'pattern-source',
@@ -156,7 +157,7 @@ export function updateTaskConfig(id, patch) {
   if ('playableCta' in (patch || {})) delete doc.steps.pack;
   // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
   if ('opening' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
-  if ('secondPlayable' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
+  if ('secondPlayable' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; if ('background' in (patch.secondPlayable || {}) || 'enabled' in (patch.secondPlayable || {})) delete doc.steps.background2; }
   // 关卡编辑会让 water-sort 的校验产物与打包同时过期(colorever 任务的 level
   // 键进不了白名单,这里天然不可达)。
   if ('level' in (patch || {})) {
@@ -170,7 +171,7 @@ export function updateTaskConfig(id, patch) {
   }
   if (['dragon-cube','colorever'].includes(doc.templateId)) {
     if ('intro' in (patch || {})) { delete doc.steps.intro; delete doc.steps.hud; delete doc.steps.background; delete doc.steps.pack; }
-    if ('outro' in (patch || {})) { delete doc.steps.outro; delete doc.steps.pack; }
+    if ('outro' in (patch || {})) { delete doc.steps.outro; delete doc.steps.pack; if (doc.templateId === 'colorever') delete doc.steps.background2; }
     if ('hud' in (patch || {}) || 'hudImageSource' in (patch || {}) || 'hudCrop' in (patch || {})) { delete doc.steps.hud; delete doc.steps.pack; }
     if ('background' in (patch || {})) { delete doc.steps.background; delete doc.steps.pack; }
     if ('cta' in (patch || {})) delete doc.steps.pack;
@@ -183,7 +184,8 @@ export function recordUpload(id, slot, meta) {
   const doc = readTask(id);
   if (!doc) return null;
   doc.uploads[slot] = meta;
-  if (doc.templateId === 'colorever' && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.pack; }
+  if (doc.templateId === 'colorever' && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
+  if (doc.templateId === 'colorever' && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -191,7 +193,8 @@ export function clearUpload(id, slot) {
   const doc = readTask(id);
   if (!doc) return null;
   delete doc.uploads[slot];
-  if (doc.templateId === 'colorever' && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.pack; }
+  if (doc.templateId === 'colorever' && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
+  if (doc.templateId === 'colorever' && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -235,6 +238,7 @@ export function uploadPath(id, slot) {
     'outro-video': '.mp4',
     'intro-poster': '.jpg',
     background: '.png',
+    background2: '.png',
     // Portrait SOURCE images keep a fixed .png name regardless of the
     // original bytes (PIL and browsers both sniff the real format).
     'portrait-src-left': '.png',
@@ -343,7 +347,7 @@ const WATER_SORT_STEP_INPUT_FILES = {
 };
 
 export function stepInputFilesFor(templateId) {
-  if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/outro-video.mp4'] };
+  if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
   return ['water-sort','dragon-cube','colorever'].includes(templateId) ? WATER_SORT_STEP_INPUT_FILES : STEP_INPUT_FILES;
 }
 

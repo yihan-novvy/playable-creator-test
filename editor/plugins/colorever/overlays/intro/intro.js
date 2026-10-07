@@ -25,16 +25,32 @@
   };
 
   /* —— 进入 playable 前的 3-2-1 倒计时:取视频真实剩余时间,最后 3 秒逐秒
-     亮出白色浮字;每次数字出现都带一拍轻震动(桥 haptic,预览退回 vibrate),
+     亮出白色浮字;数字 3 为中等震动、2 为重震动、1 为两拍重震动(桥 haptic,预览退回 vibrate),
      配合数字的缩放回落动画提醒用户 playable 马上开始。 —— */
-  const buzz = () => {
+  let countdownPulse = null, browserPulse = false;
+  const cancelPulse = () => {
+    if (countdownPulse !== null) { clearTimeout(countdownPulse); countdownPulse = null; }
+    if (browserPulse) { try { navigator.vibrate?.(0); } catch (_) {} browserPulse = false; }
+  };
+  // Build anticipation: medium on 3, heavy on 2, two heavy beats on 1.
+  const buzz = n => {
+    cancelPulse();
     try {
-      if (typeof window.novvy?.haptic === 'function') { window.novvy.haptic('light'); return; }
-    } catch (_error) {}
-    try { navigator.vibrate?.(10); } catch (_error) {}
+      if (typeof window.novvy?.haptic === 'function') {
+        window.novvy.haptic(n === 3 ? 'medium' : 'heavy');
+        if (n === 1) countdownPulse = setTimeout(() => {
+          countdownPulse = null;
+          if (countdownShown !== 1 || document.hidden || video.paused || video.ended) return;
+          try { window.novvy.haptic('heavy'); } catch (_) {}
+        }, 120);
+        return;
+      }
+    } catch (_) {}
+    try { navigator.vibrate?.(n === 3 ? 40 : n === 2 ? 65 : [65, 70, 85]); browserPulse = n === 1; } catch (_) {}
   };
   let countdownShown = 0;
   function hideCountdown() {
+    cancelPulse();
     if (!countdownShown) return;
     countdownShown = 0;
     if (countdown) { countdown.hidden = true; countdown.innerHTML = ''; }
@@ -43,11 +59,11 @@
     if (!countdown) return;
     const duration = video.duration;
     const remaining = duration - video.currentTime;
-    if (!Number.isFinite(duration) || duration <= 0 || video.ended || remaining > 3.05 || remaining <= 0) { hideCountdown(); return; }
+    if (!Number.isFinite(duration) || duration <= 0 || video.ended || remaining > 3 || remaining <= 0) { hideCountdown(); return; }
     const n = Math.ceil(remaining);
     if (n === countdownShown) return;
     countdownShown = n;
-    buzz();
+    buzz(n);
     countdown.hidden = false;
     countdown.innerHTML = '<span>' + n + '</span>';
   }

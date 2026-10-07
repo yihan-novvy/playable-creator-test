@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "engineSha256": "9c60ee71e02e261da249eadf69116e11e0d84a40b3680e172e0ed1eef930e9a4",
+  "engineSha256": "096aa4f0b2e0fc47529907868e869c967c1f1ca51373b91bfd0c9376598cd0e0",
   "levelEngine": "level-engine.mjs",
-  "levelEngineSha256": "5ce33b0607e97bddd7e2d8677ee26badb413393398a8286a2c85f34a52ed3578",
+  "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
     {
       "id": "cat",
@@ -49,16 +49,44 @@
     {
       "id": "phoenix",
       "name": "金羽凤凰",
-      "description": "分层金白羽翼搭配朱红羽根、绛红羽影和橙红尾羽，保留原本轮廓并配专属杏仁亮眼与尖喙",
+      "description": "分层金白羽翼搭配朱红羽根、绛红羽影和橙红尾羽，保留原本轮廓并配专属圆润亮眼与尖喙",
       "level": "phoenix.json",
-      "templateSha256": "d1a406f98e46f36af758084440b40f8d15915dd2f4d3e1215e546ae2cca014d3"
+      "templateSha256": "57680d8ea498b077fa16050a1194f31177fa7c71a5c603febf9db8f24f96a4b8"
     },
     {
       "id": "chick",
       "name": "金黄小鸡",
-      "description": "奶油黄圆润身体、橙色翅膀与翘尾，搭配立体亮眼、菱形小嘴和脚爪",
+      "description": "斜额头、奶油黄圆腹和金橙色翘翼，搭配立体亮眼、圆润双瓣嘴与三趾脚爪",
       "level": "chick.json",
-      "templateSha256": "04a549574fcaeb322a199ae7d6e55a51467e6daa27cc9d438ff09f2d37fb5153"
+      "templateSha256": "35b6f7e94e10ac540cf72d9ddac841de61456bf1b53dfe94852fe81802fb4fcf"
+    },
+    {
+      "id": "tree",
+      "name": "彩饰圣诞树",
+      "description": "阶梯形绿色树冠、金黄星顶与装饰带，搭配红色彩带、蓝色方块和红色树底的立体拼珠图案",
+      "level": "tree.json",
+      "templateSha256": "decbc27d37719afe20d6dccb1519a5c24899bd11790e16e222e9cac38f1550bf"
+    },
+    {
+      "id": "backpack",
+      "name": "橙黄书包",
+      "description": "橙黄包身和侧袋，搭配深灰轮廓、粉色翻盖、奶白提手与扣带的立体拼珠书包",
+      "level": "backpack.json",
+      "templateSha256": "0ed60b7e59119604287a5d394712b9c1c1fd9069b9a5de74ecb5301aac24301e"
+    },
+    {
+      "id": "portrait",
+      "name": "短发人像",
+      "description": "参考照片的侧梳短发、皱眉眼神、肤色明暗与深蓝衣领组成的立体拼珠人脸图案",
+      "level": "portrait.json",
+      "templateSha256": "81d715953d0fc13537eae4a67add53dbf982df3ac4fe23d5bafb50308e7c385a"
+    },
+    {
+      "id": "rafflesia",
+      "name": "粉瓣霸王花",
+      "description": "五瓣粉红与蜜桃色花瓣围绕橙黄花心，点缀黄色花纹和嫩绿叶片的立体拼珠霸王花",
+      "level": "rafflesia.json",
+      "templateSha256": "80c396c390ff0e94791c789cf9170bdf9eadc089e02afe198924514bc38a7f5e"
     }
   ]
 }

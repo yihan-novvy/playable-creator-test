@@ -35,7 +35,7 @@ test('Picture-specific transforms survive normalization and reject invalid range
 });
 
 test('Easy mode has four connected patches and completes in five or six placements across seeds',()=>{
- for(const id of ['cat','house','axe','torch','contract','bank','phoenix']){
+ for(const id of ['cat','house','axe','torch','contract','bank','phoenix','tree','backpack','rafflesia']){
   const source=JSON.parse(fs.readFileSync(new URL(`../src/patterns/${id}.json`,import.meta.url)));
   for(let seed=0;seed<30;seed++){
    const input={...source,opening:null,openingMode:'easy',seed};
@@ -59,4 +59,23 @@ test('Scattered mode remains the default, easy mode rejects unsupported pictures
  assert.throws(()=>prepareLevel(checker),/连续区域/);
  const fragmented=prepareLevel({...sample(),difficulty:15}).level;
  assert.throws(()=>prepareLevel({...fragmented,openingMode:'easy'}),/6 次搬运/);
+});
+
+test('Medium openings use ten connected small patches with conserved, reproducible solutions',()=>{
+ for(const id of ['cat','chick','phoenix','house','axe','torch','contract','bank','tree','backpack','rafflesia']){
+  const source=JSON.parse(fs.readFileSync(new URL(`../src/patterns/${id}.json`,import.meta.url)));
+  for(let seed=0;seed<30;seed++){
+   const input={...source,opening:null,openingMode:'medium',seed};
+   const {level,proof}=prepareLevel(input);
+   assert.deepEqual(level,prepareLevel(input).level);
+   assert.ok(proof.moves>=12&&proof.moves<=14);
+   assert.deepEqual([...level.target].sort((a,b)=>a-b),[...level.opening].sort((a,b)=>a-b));
+   const p=new Puzzle({width:level.width,height:level.height,target:level.target,capacity:level.capacity,trayCols:level.trayCols,openingBoard:level.opening});
+   const wrong=new Set(level.target.flatMap((c,i)=>c!==level.opening[i]?[i]:[])),groups=[];
+   while(wrong.size){const i=wrong.values().next().value,group=p.connected(i,n=>wrong.has(n)&&level.opening[n]===level.opening[i]);groups.push(group);group.forEach(n=>wrong.delete(n));}
+   assert.equal(groups.length,10);assert.ok(groups.every(g=>g.length>=3&&g.length<=5));
+   for(const move of proof.solution)assert.ok(move.action==='pick'?p.pick(move.region,move.index):p.place(move.region,move.index));
+   assert.ok(p.complete);
+  }
+ }
 });

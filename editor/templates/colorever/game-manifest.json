@@ -43,12 +43,32 @@
       "id": "chick",
       "name": "金黄小鸡",
       "path": "game/patterns/chick.json"
+    },
+    {
+      "id": "tree",
+      "name": "彩饰圣诞树",
+      "path": "game/patterns/tree.json"
+    },
+    {
+      "id": "backpack",
+      "name": "橙黄书包",
+      "path": "game/patterns/backpack.json"
+    },
+    {
+      "id": "portrait",
+      "name": "短发人像",
+      "path": "game/patterns/portrait.json"
+    },
+    {
+      "id": "rafflesia",
+      "name": "粉瓣霸王花",
+      "path": "game/patterns/rafflesia.json"
     }
   ],
   "constants": {
-    "engineSha256": "9c60ee71e02e261da249eadf69116e11e0d84a40b3680e172e0ed1eef930e9a4",
+    "engineSha256": "096aa4f0b2e0fc47529907868e869c967c1f1ca51373b91bfd0c9376598cd0e0",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
-    "levelEngineSha256": "5ce33b0607e97bddd7e2d8677ee26badb413393398a8286a2c85f34a52ed3578"
+    "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"
   }
 }

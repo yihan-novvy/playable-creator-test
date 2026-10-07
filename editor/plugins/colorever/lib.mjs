@@ -26,7 +26,7 @@ export function coloreverPatterns(root, template) {
 // 任务级开局参数：做广告时才决定开局模式与随机种子；非法值回退默认，
 // 与 normalizeCtaPolicy 同一套纪律。easy=整块搬运(验证 ≤6 步完成)。
 export function normalizeOpening(raw) {
-  const mode = raw?.mode === 'scattered' ? 'scattered' : 'easy';
+  const mode = ['easy', 'medium', 'scattered'].includes(raw?.mode) ? raw.mode : 'easy';
   const difficulty = Number.isInteger(raw?.difficulty) && raw.difficulty >= 1 && raw.difficulty <= 100 ? raw.difficulty : 21;
   const seed = Number.isInteger(raw?.seed) && raw.seed >= 0 && raw.seed <= 2147483647 ? raw.seed : 1;
   return { mode, difficulty, seed };
@@ -78,7 +78,9 @@ export function normalizeCtaPolicy(raw, fallbackMode) {
 export async function coloreverPhase2(root, config, template, outroActive) {
   if (!outroActive || config?.secondPlayable?.enabled !== true) return null;
   const { level, patternId } = await coloreverLevel(root, { ...config, patternId: config.secondPlayable.patternId ?? 'house', opening: config.secondPlayable?.opening }, template);
-  return { patternId, level, cta: normalizeCtaPolicy(config.secondPlayable?.cta, 'steps') };
+  const title = config.secondPlayable?.hud;
+  const hud = { titleLine1: title?.titleEnabled === false ? '' : String(title?.titleLine1 ?? level.name), titleLine2: title?.titleEnabled === false ? '' : String(title?.titleLine2 ?? '') };
+  return { patternId, level, hud, cta: normalizeCtaPolicy(config.secondPlayable?.cta, 'steps') };
 }
 
 const inline = (value) => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
@@ -91,12 +93,17 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   // 负责(novvy_landing_page_service /api/interactive-zip/generate)。强制置空
   // ctaIcon,任务里遗留的 cta 配置不再能唤起卡片组。
   const mediaWithoutCard = { ...media, ctaIcon: null };
-  const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config, media: mediaWithoutCard, optionalHudPortraits: true, analytics: false });
+  const outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
+  const phase2 = await coloreverPhase2(root, config, template, outroEnabled);
+  // Keep the title shell available when only the second playable needs a title.
+  const firstTitleEnabled = config?.hud?.titleEnabled ?? [config?.hud?.titleLine1, config?.hud?.titleLine2].some(value => String(value ?? '').trim());
+  const overlayConfig = phase2 ? { ...config, hud: { ...config.hud, titleEnabled: true, titleLine1: firstTitleEnabled ? config?.hud?.titleLine1 : '', titleLine2: firstTitleEnabled ? config?.hud?.titleLine2 : '' } } : config;
+  const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config: overlayConfig, media: mediaWithoutCard, optionalHudPortraits: true, analytics: false });
   // 转化桥永远注入:游戏期下载按钮(#downloadBtn)+ 胜利/片尾转化时序 +
   // 注入引擎结算卡片显露(showEndCard)。旧 cta.js 的行为语义全部迁入桥内。
   const bridgeRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), 'overlays', 'cta-bridge');
   injection.bodyScripts.push(`<script data-novvy-cta-bridge>${fs.readFileSync(path.join(bridgeRoot, 'cta-bridge.js'), 'utf8')}</script>`);
-  injection.outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
+  injection.outroEnabled = outroEnabled;
   if (injection.outroEnabled) {
     const outroRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template.overlays.outro);
     const read = name => fs.readFileSync(path.join(outroRoot, name), 'utf8');
@@ -106,7 +113,19 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   }
   // 双 playable:第二关数据与两关各自的 CTA 时机策略。第一关策略仅武装于
   // 无片尾场景(有片尾时第一关只负责引出片尾,转化由片尾链/第二关负责)。
-  const phase2 = await coloreverPhase2(root, config, template, injection.outroEnabled);
+  const background2Enabled = phase2 !== null && config?.secondPlayable?.background?.enabled === true && !!media.background2;
+  if (phase2) {
+    const backgroundRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template.overlays.background);
+    injection.bodyScripts.push(`<script data-novvy-phase2-background>${fs.readFileSync(path.join(backgroundRoot, 'background.js'), 'utf8')}</script>`);
+    if (background2Enabled) {
+      const imageUrl = media.background2.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+      injection.headStyles.push(`<link rel="preload" as="image" href="${imageUrl}">`);
+      injection.bodyDom.push('<div id="novvy-dom-bg2" hidden aria-hidden="true"></div>');
+      const css = fs.readFileSync(path.join(backgroundRoot, 'background.css'), 'utf8').replaceAll('#novvy-dom-bg', '#novvy-dom-bg2').replaceAll('__NOVVY_BG_FILE__', media.background2);
+      injection.headStyles.push(`<style data-novvy-bg2>${css}#novvy-dom-bg2[hidden]{display:none}.novvy-phase2,.novvy-phase2 body,.novvy-phase2 .app{background:transparent}</style>`);
+    }
+  }
+  injection.background2Enabled = background2Enabled;
   const ctaPolicy = injection.outroEnabled ? null : normalizeCtaPolicy(config?.playableCta, 'complete');
   const portraitHudEnabled = injection.hudEnabled && config?.hud?.enabled === true;
   // 下载卡片移除后,画布不再需要为底部卡片留白。
@@ -116,7 +135,7 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const nativeColors = `--colorever-progress-text:${color('progressTextColor','#326b83')};--colorever-progress-fill:${color('progressFillColor','#329fc2')};--colorever-progress-track:${color('progressTrackColor','#dff3fc')}`;
   const overlayColors = `--colorever-progress-text:${color('progressTextColor','#ffffff')};--colorever-progress-fill:${color('progressFillColor','#ffd91e')};--colorever-progress-track:${color('progressTrackColor','#b7834a')}`;
   injection.headStyles.push(`<style data-colorever-progress>.app{${nativeColors}}.app>.hud{top:15%;color:var(--colorever-progress-text)}.app progress{accent-color:var(--colorever-progress-fill);background:var(--colorever-progress-track)}.app progress::-webkit-progress-bar{background:var(--colorever-progress-track)}.app progress::-webkit-progress-value{background:var(--colorever-progress-fill)}.app progress::-moz-progress-bar{background:var(--colorever-progress-fill)}#novvy-training-hud{${overlayColors}}</style>`);
-  const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root,body,.app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
+  const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root:not(.novvy-phase2),:root:not(.novvy-phase2) body,:root:not(.novvy-phase2) .app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
   const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__COLOREVER_CTA_POLICY__=${inline(ctaPolicy)};window.__COLOREVER_PHASE2__=${inline(phase2)};</script>`;
   html = html.replace('</head>', () => `${[...injection.headStyles, styles, ...injection.headScripts].join('\n')}</head>`)
     .replace(SCRIPT, () => `${injection.uiScript}${data}${preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT}`)
@@ -139,6 +158,7 @@ export async function previewHtml({ plugin: entry, task, taskId }) {
     hudLeft: hud ? generated('hud-left.webp') : null,
     hudRight: hud ? generated('hud-right.webp') : null,
     background: bg ? generated('background.webp') : null,
+    background2: config.secondPlayable?.background?.enabled === true ? generated('background2.webp') : null,
   };
   return (await coloreverHtml({ root, overlaysRoot: entry.dir, template: entry.template, level, config, preview: true, media })).html;
 }

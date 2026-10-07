@@ -12,7 +12,7 @@ test('Phoenix adds red feather layers and retains independently adjustable eyes 
  assert.ok(source.target.some((c,i)=>c===7&&Math.floor(i/40)<24));
  assert.ok(source.target.some((c,i)=>c===9&&Math.floor(i/40)>=24));
  assert.equal(source.target[8*40+17],0);
- assert.equal(source.target.filter(Boolean).length,592);
+ assert.equal(source.target.filter(Boolean).length,593);
  const scene=build(source),moved=build({...source,decorations:{eye:{offsetX:2,offsetY:-1,scale:1.2}}});
  assert.deepEqual(scene.children.map(x=>x.name),Object.keys(PHOENIX_PARTS).map(x=>`phoenix-${x}`));
  const before=scene.children[1],after=moved.children[1];

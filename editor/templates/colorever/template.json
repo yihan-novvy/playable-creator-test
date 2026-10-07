@@ -7,6 +7,7 @@
     "outro",
     "hud",
     "background",
+    "background2",
     "level",
     "pack"
   ],
@@ -38,7 +39,7 @@
     "patternId": "cat",
     "opening": { "mode": "easy", "difficulty": 21, "seed": 1 },
     "playableCta": { "mode": "complete", "afterSteps": 8 },
-    "secondPlayable": { "enabled": false, "patternId": "house", "opening": { "mode": "easy", "difficulty": 21, "seed": 1 }, "cta": { "mode": "steps", "afterSteps": 8 } }
+    "secondPlayable": { "enabled": false, "patternId": "house", "background": { "enabled": false, "source": "video-last", "blurSigma": 12 }, "opening": { "mode": "easy", "difficulty": 21, "seed": 1 }, "cta": { "mode": "steps", "afterSteps": 8 } }
   },
   "overlays": {
     "hud": "overlays/hud",

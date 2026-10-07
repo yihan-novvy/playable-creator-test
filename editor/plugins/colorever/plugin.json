@@ -8,6 +8,7 @@
     { "id": "outro", "runner": "./steps/outro.mjs" },
     { "id": "hud", "runner": "./steps/hud.mjs" },
     { "id": "background", "runner": "./steps/background.mjs" },
+    { "id": "background2", "runner": "./steps/background2.mjs" },
     { "id": "level", "runner": "./steps/level.mjs" },
     { "id": "pack", "runner": "./steps/pack.mjs" }
   ],
@@ -16,6 +17,7 @@
     "outro-video": { "file": "outro-video.mp4", "magic": "mp4" },
     "intro-poster": { "file": "intro-poster.jpg", "magic": "jpg" },
     "background": { "file": "background.png", "magic": ["png", "jpg"] },
+    "background2": { "file": "background2.png", "magic": ["png", "jpg"] },
     "portrait-src-left": { "file": "portrait-src-left.png", "magic": ["png", "jpg"] },
     "portrait-src-right": { "file": "portrait-src-right.png", "magic": ["png", "jpg"] }
   },
@@ -37,6 +39,6 @@
     "patternId": "cat",
     "opening": { "mode": "easy", "difficulty": 21, "seed": 1 },
     "playableCta": { "mode": "complete", "afterSteps": 8 },
-    "secondPlayable": { "enabled": false, "patternId": "house", "opening": { "mode": "easy", "difficulty": 21, "seed": 1 }, "cta": { "mode": "steps", "afterSteps": 8 } }
+    "secondPlayable": { "enabled": false, "patternId": "house", "background": { "enabled": false, "source": "video-last", "blurSigma": 12 }, "opening": { "mode": "easy", "difficulty": 21, "seed": 1 }, "cta": { "mode": "steps", "afterSteps": 8 } }
   }
 }

@@ -20,6 +20,14 @@
     if (line2 && typeof ui.titleLine2 === 'string') line2.textContent = ui.titleLine2;
     if (typeof ui.ariaLabel === 'string') root.setAttribute('aria-label', ui.ariaLabel);
   }
+  window.addEventListener('novvy:phase2-start', function (event) {
+    var title = event.detail && event.detail.hud;
+    if (!title) return;
+    var line1 = document.getElementById('novvy-hud-title-line1');
+    var line2 = document.getElementById('novvy-hud-title-line2');
+    if (line1) line1.textContent = title.titleLine1 || '';
+    if (line2) line2.textContent = title.titleLine2 || '';
+  });
   // Title-only overlays have no progress elements or progress controller.
   if (!root || !label) return;
 

@@ -8,6 +8,7 @@ import {GameHaptics} from './game-haptics.js';
 import {guidePosition} from './guide-position.js';
 import guideHand from './assets/guide-hand.png?inline';
 import {trayLayout} from './tray-layout.js';
+import {actionableCell,resolveTouchTarget} from './touch-target.js';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {patterns} from './patterns/index.js';
@@ -204,11 +205,20 @@ $('undo').onclick=()=>{if(!busy&&puzzle.undo()){clearHint();effects.clear();pend
 $('hint').onclick=()=>{hint=puzzle.hint();showHint();};
 $('guide').onclick=()=>{if(hint){const h=hint;activate(h.region,h.index);}};
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,0,1),-.1);
-function hitAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,camera);
+function preciseHitAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,camera);
   const hit=raycaster.intersectObjects(groups.map(g=>g.mesh))[0];if(hit){const g=groups.find(g=>g.mesh===hit.object),entry=g.entries[hit.instanceId];if(entry)return{region:entry.region,index:entry.index};}
   const p=new THREE.Vector3();if(!raycaster.ray.intersectPlane(plane,p))return null;
   let closest=null,distance=Infinity;for(const [index]of cells){const q=point('board',index),d=Math.hypot(p.x-q.x,p.y-q.y);if(d<.48*boardScale&&d<distance){closest={region:'board',index};distance=d;}}
   if(closest)return closest;for(let i=0;i<capacity;i++){const q=point('tray',i);if(Math.abs(p.x-q.x)<pitch*.42&&Math.abs(p.y-q.y)<rowPitch*.42)return{region:'tray',index:i};}return null;}
+function hitAt(e){
+  const direct=preciseHitAt(e);
+  if(direct&&actionableCell(puzzle,direct.region,direct.index))return direct;
+  const r=canvas.getBoundingClientRect(),candidates=[];
+  const add=(region,index)=>{const q=point(region,index).clone().project(camera);candidates.push({region,index,x:r.left+(q.x+1)*r.width/2,y:r.top+(1-q.y)*r.height/2});};
+  for(const [index]of cells)add('board',index);
+  for(let index=0;index<capacity;index++)add('tray',index);
+  return resolveTouchTarget(puzzle,direct,candidates,e.clientX,e.clientY);
+}
 canvas.addEventListener('pointerdown',e=>{if(busy)return;down={x:e.clientX,y:e.clientY,hit:hitAt(e)};canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointerup',e=>{if(!down)return;const start=down;down=null;const end=hitAt(e);if(!end)return;const drag=Math.hypot(e.clientX-start.x,e.clientY-start.y)>8;if(drag&&start.hit&&!puzzle.selection&&puzzle.pick(start.hit.region,start.hit.index)){selectionStart=performance.now();play('pickup');}activate(end.region,end.index);});
 canvas.addEventListener('pointercancel',()=>{down=null;});
@@ -240,7 +250,7 @@ function render(now){
 }
 renderer.setAnimationLoop(render);$('loading').hidden=true;
 
-/* —— 双 playable:片尾播完(留最后一帧)后页内换关进入第二关。一次性闩锁;
+/* —— 双 playable:片尾播完后立即页内换关进入第二关。一次性闩锁;
    phase2-start 在新关卡就绪后派发,outro/audio 据此收尾。 —— */
 if(phase2Spec){
   const pattern2=patterns[phase2Spec.patternId];
@@ -251,14 +261,11 @@ if(phase2Spec){
   window.addEventListener('novvy:outro-finished',event=>{
     if(switched||event.detail?.reason!=='video_ended')return;
     switched=true;
-    /* 停留片尾最后一帧 ~1s 再换关;后台期间到点换关本身无害。 */
-    window.setTimeout(()=>{
-      buildLevel(level2,pattern2,phase2Spec.patternId);
-      armedPolicy=phase2Spec.cta??null;
-      tutorial.reset();
-      refresh();
-      if(puzzle.complete)afterFlights(performance.now());
-      document.dispatchEvent(new CustomEvent('novvy:phase2-start',{bubbles:true}));
-    },1000);
+    buildLevel(level2,pattern2,phase2Spec.patternId);
+    armedPolicy=phase2Spec.cta??null;
+    tutorial.reset();
+    refresh();
+    if(puzzle.complete)afterFlights(performance.now());
+    document.dispatchEvent(new CustomEvent('novvy:phase2-start',{bubbles:true,detail:{hud:phase2Spec.hud}}));
   });
 }

@@ -82,7 +82,7 @@
   {
     "id": "phoenix",
     "name": "金羽凤凰",
-    "description": "分层金白羽翼搭配朱红羽根、绛红羽影和橙红尾羽，保留原本轮廓并配专属杏仁亮眼与尖喙",
+    "description": "分层金白羽翼搭配朱红羽根、绛红羽影和橙红尾羽，保留原本轮廓并配专属圆润亮眼与尖喙",
     "level": "phoenix.json",
     "module": "phoenix.js",
     "editableParts": [
@@ -95,23 +95,23 @@
       {
         "id": "eye",
         "name": "亮眼",
-        "x": 712.086,
-        "y": 1072.324
+        "x": 699.15,
+        "y": 1069.0900000000001
       }
     ]
   },
   {
     "id": "chick",
     "name": "金黄小鸡",
-    "description": "参照原图描绘斜额头、菱形橙喙、奶油黄圆腹和金橙色翘翼，搭配立体亮眼",
+    "description": "斜额头、奶油黄圆腹和金橙色翘翼，搭配立体亮眼、圆润双瓣嘴与三趾脚爪",
     "level": "chick.json",
     "module": "chick.js",
     "editableParts": [
       {
         "id": "eye-chick",
         "name": "亮眼",
-        "x": 560.55,
-        "y": 1212.31
+        "x": 569.79,
+        "y": 1226.17
       },
       {
         "id": "beak",
@@ -126,5 +126,33 @@
         "y": 1983.85
       }
     ]
+  },
+  {
+    "id": "tree",
+    "name": "彩饰圣诞树",
+    "description": "阶梯形绿色树冠、金黄星顶与装饰带，搭配红色彩带、蓝色方块和红色树底的立体拼珠图案",
+    "level": "tree.json",
+    "module": "tree.js"
+  },
+  {
+    "id": "backpack",
+    "name": "橙黄书包",
+    "description": "橙黄包身和侧袋，搭配深灰轮廓、粉色翻盖、奶白提手与扣带的立体拼珠书包",
+    "level": "backpack.json",
+    "module": "backpack.js"
+  },
+  {
+    "id": "portrait",
+    "name": "短发人像",
+    "description": "参考照片的侧梳短发、皱眉眼神、肤色明暗与深蓝衣领组成的立体拼珠人脸图案",
+    "level": "portrait.json",
+    "module": "portrait.js"
+  },
+  {
+    "id": "rafflesia",
+    "name": "粉瓣霸王花",
+    "description": "五瓣粉红与蜜桃色花瓣围绕橙黄花心，点缀黄色花纹和嫩绿叶片的立体拼珠霸王花",
+    "level": "rafflesia.json",
+    "module": "rafflesia.js"
   }
 ]

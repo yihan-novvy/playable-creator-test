@@ -7,7 +7,7 @@ import {execFile} from '../core/lib/exec.mjs';
 import {createServer} from '../server.mjs';
 import {deleteTask,stepInputFilesFor} from '../lib/store.mjs';
 import {loadTemplate,templateSteps,stepPrerequisites,runStep} from '../core/runner.mjs';
-import {coloreverHtml,coloreverLevel,coloreverPatterns} from '../plugins/colorever/lib.mjs';
+import {coloreverHtml,coloreverLevel,coloreverPatterns,coloreverPhase2,normalizeOpening} from '../plugins/colorever/lib.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const custom=()=>({name:'Custom house </script><script>bad()</script>',width:8,height:6,colors:{10:'#123456',20:'#fedcba',30:'#ff0055'},target:Array.from({length:48},(_,i)=>i<8?0:i%3===0?10:i%3===1?20:30),capacity:12,trayCols:4,difficulty:10,seed:7,decoration:'none'});
 export default async function run(assert){
@@ -66,7 +66,7 @@ export default async function run(assert){
  hudListeners.get('novvy:hud-progress')({detail:{percent:80,correct:216,total:270}});
  assert.equal(hudNodes['novvy-hud-progress-label'].textContent,'216/270','回退时数量跟随实际棋盘');
  const templateRoot=path.join(root,'editor/templates/colorever'),template=loadTemplate(templateRoot);
- assert.equal(templateSteps(template),['intro','outro','hud','background','level','pack'],'独立六步流程');
+ assert.equal(templateSteps(template),['intro','outro','hud','background','background2','level','pack'],'独立七步流程');
  assert.equal(await stepPrerequisites('pack',{},template),{uploads:[],generated:['level.json']},'关闭叠层时只依赖自己的关卡');
  assert.equal(await stepPrerequisites('pack',{secondPlayable:{enabled:true},outro:{enabled:true}},template),{uploads:[],generated:['level.json','level2.json']},'双 playable 打包额外依赖第二关产物');
  assert.check(stepInputFilesFor('colorever').level.length===0,'图案只消费构建产物');
@@ -95,13 +95,19 @@ export default async function run(assert){
  assert.check(withTitle.includes('id="novvy-training-hud" data-title-only')&&!withTitle.includes('id="novvy-hud-progress-label"')&&!withTitle.includes('id="novvy-hud-progress-fill"'),'仅标题模式不注入额外进度节点');
  const phase2Html=(await coloreverHtml({...overlayArgs,config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe',cta:{mode:'steps',afterSteps:8}}},media:{outroVideo:'outro-video.mp4'}})).html;
  assert.check(phase2Html.includes('__novvyTwoPhase=true')&&phase2Html.includes('__COLOREVER_PHASE2__')&&phase2Html.includes('"patternId":"axe"'),'双 playable 配置内联第二关数据');
+ assert.check(phase2Html.includes('id="novvy-training-hud" data-title-only'),'第一关无标题也为第二关独立标题保留 HUD 壳');
+ const defaultPhase2=await coloreverPhase2(templateRoot,{secondPlayable:{enabled:true,patternId:'axe'}},template,true);
+ assert.equal(defaultPhase2.hud,{titleLine1:defaultPhase2.level.name,titleLine2:''},'旧任务第二关默认显示自身图案名，不沿用第一关标题');
+ const customPhase2=await coloreverPhase2(templateRoot,{secondPlayable:{enabled:true,patternId:'house',hud:{titleLine1:'新的主标题',titleLine2:'新的副标题'}}},template,true);
+ assert.equal(customPhase2.hud,{titleLine1:'新的主标题',titleLine2:'新的副标题'},'第二关两行文案独立配置');
+ assert.equal(normalizeOpening({mode:'medium',seed:42}).mode,'medium','适中模式通过任务参数规范化');
  assert.check(phase2Html.includes('__COLOREVER_CTA_POLICY__=null'),'有片尾时第一关不武装 CTA 策略');
  const phase2OffHtml=(await coloreverHtml({...overlayArgs,config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe'}},media:{}})).html;
  assert.check(phase2OffHtml.includes('__novvyTwoPhase=false')&&phase2OffHtml.includes('__COLOREVER_PHASE2__=null'),'存在片尾视频才允许第二个 playable 生效');
  const policyHtml=(await coloreverHtml({...overlayArgs,config:{playableCta:{mode:'steps',afterSteps:8}}})).html;
  assert.check(policyHtml.includes('__COLOREVER_CTA_POLICY__={"mode":"steps","afterSteps":8}')&&policyHtml.includes('__novvyTwoPhase=false'),'无片尾时第一关 CTA 策略注入');
  const titleOnlyNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',setAttribute(){}}]));
- vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),{window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}}},document:{getElementById:id=>titleOnlyNodes[id]}});
+ vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),{window:{addEventListener(){},__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}}},document:{getElementById:id=>titleOnlyNodes[id]}});
  assert.equal([titleOnlyNodes['novvy-hud-title-line1'].textContent,titleOnlyNodes['novvy-hud-title-line2'].textContent],['主标题','副标题'],'仅标题模式没有进度节点也可正常显示两行文字');
  level.name=custom().name;
  const injection=(await coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}})).html;
@@ -162,7 +168,7 @@ export default async function run(assert){
  try{
   const templates=await(await fetch(base+'/api/templates')).json();assert.check(templates.some(t=>t.id==='colorever')&&templates.some(t=>t.id==='colorever-gemsort'),'新旧模板独立可选');
   const created=await api('/api/tasks',{name:'colorever-test-'+Date.now(),templateId:'colorever'});id=created.body.id;assert.equal(created.status,201,'创建任务');
-  let results=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(results.status===200&&results.body.length===6&&results.body.every(r=>r.ok),'默认猫咪六步全部通过');
+  let results=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(results.status===200&&results.body.length===7&&results.body.every(r=>r.ok),'默认猫咪七步全部通过');
   const patch=await api(`/api/tasks/${id}`,{config:{patternId:'house'}},'PATCH');assert.equal(patch.body.config.patternId,'house','任务保存固定图案 ID');
   assert.check(!patch.body.steps.level&&!patch.body.steps.pack,'选择图案使校验和打包失效');
   const rejected=await api(`/api/tasks/${id}`,{config:{level:custom()}},'PATCH');assert.check(rejected.status>=400,'任务不能编辑图案数据');
@@ -170,7 +176,7 @@ export default async function run(assert){
   const preview=await fetch(base+`/api/tasks/${id}/preview`),previewText=await preview.text();assert.equal(preview.status,200,'固定小屋即时预览');
   assert.check(previewText.includes('user-scalable=no')&&previewText.includes('data-novvy-fixed-viewport'),'在线预览应用公共视口和手势锁定');
   assert.check(previewText.includes('src="/templates/colorever/game/game.js"')&&previewText.includes('"width":20')&&previewText.includes('__COLOREVER_PATTERN_ID__="house"'),'预览注入小屋完整模板');
-  results=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(results.status===200&&results.body.every(r=>r.ok),'小屋模板六步通过');
+  results=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(results.status===200&&results.body.every(r=>r.ok),'小屋模板七步通过');
   assert.check(results.body.find(r=>r.stepId==='level').metrics.solvable,'实际解法回放验证完成');
   const packed=await(await fetch(base+`/result/${id}/index.html`)).text();assert.check(packed.includes('"width":20')&&packed.includes('__COLOREVER_PATTERN_ID__="house"'),'交付选择相同图案模块');
   assert.check(packed.includes('user-scalable=no')&&packed.includes('data-novvy-fixed-viewport'),'导出页面应用与预览一致的视口和手势锁定');
@@ -207,13 +213,13 @@ export default async function run(assert){
   assert.check(paletteOutput.includes('--colorever-progress-text:#7d315c')&&paletteOutput.includes('--colorever-progress-fill:#e76b3f')&&paletteOutput.includes('--colorever-progress-track:#f5dfbd'),'自定义进度颜色进入交付包');
   assert.equal(fs.readFileSync(path.join(root,'result',id,'game.js'),'utf8'),js,'换图复用同一引擎');
   const exported=await fetch(base+`/api/tasks/${id}/export`),bytes=new Uint8Array(await exported.arrayBuffer());assert.check(exported.status===200&&bytes[0]===80&&bytes[1]===75,'ZIP 导出成功');
-  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch','contract','bank','phoenix','chick'],'广告项目只列出已构建的成品选项');
+  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch','contract','bank','phoenix','chick','tree','backpack','rafflesia'],'广告项目只列出已构建的成品选项');
   assert.check(!catalog[0].editableParts,'广告项目不公开作者编辑参数');
-  for(const patternId of ['axe','torch','contract','bank','phoenix','chick']){
+  for(const patternId of ['axe','torch','contract','bank','phoenix','chick','tree','backpack','rafflesia']){
    const selected=await api(`/api/tasks/${id}`,{config:{patternId}},'PATCH');assert.equal(selected.body.config.patternId,patternId,'任务可选择新增图案');
    const response=await fetch(base+`/api/tasks/${id}/preview`),text=await response.text();
    assert.check(response.status===200&&text.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'新增图案即时预览');
-   const built=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(built.status===200&&built.body.every(r=>r.ok),'新增图案六步构建通过');
+   const built=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(built.status===200&&built.body.every(r=>r.ok),'新增图案七步构建通过');
    const output=await(await fetch(base+`/result/${id}/index.html`)).text();assert.check(output.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'交付包含新增图案');
    const generated=await coloreverLevel(templateRoot,{patternId,opening:{mode:'easy',seed:7}},template);
    assert.check(generated.level.openingMode==='easy'&&Array.isArray(generated.level.opening)&&generated.proof.moves<=6,'新增图案按任务配置生成简易开局');
@@ -226,7 +232,7 @@ export default async function run(assert){
   assert.equal(openingPatch.body.config.opening.seed,42,'任务保存开局模式与随机种子');
   assert.check(!openingPatch.body.steps.level&&!openingPatch.body.steps.pack,'修改开局使校验和打包失效');
   const scattered=await api(`/api/tasks/${id}/run`,{step:'all'});
-  assert.check(scattered.status===200&&scattered.body.every(r=>r.ok),'零散开局六步通过');
+  assert.check(scattered.status===200&&scattered.body.every(r=>r.ok),'零散开局七步通过');
   const levelMetrics=scattered.body.find(r=>r.stepId==='level').metrics;
   assert.check(levelMetrics.openingMode==='scattered'&&levelMetrics.difficulty===5&&levelMetrics.seed===42&&levelMetrics.solvable,'开局指标记录模式、打散与种子');
   const scatteredOutput=await(await fetch(base+`/result/${id}/index.html`)).text();

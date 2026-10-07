@@ -29,7 +29,7 @@ function playback({enabled=true,rejectPlay=false,withEngine=false,twoPhase=false
  const sandbox={document,window,setTimeout:(fn,delay)=>{delays.push(delay);timers.push(fn);return timers.length-1;},clearTimeout:id=>{timers[id]=null;},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
  vm.runInNewContext(fs.readFileSync(path.join(overlay,'cta-bridge/cta-bridge.js'),'utf8'),sandbox);
  if(enabled)vm.runInNewContext(fs.readFileSync(path.join(overlay,'outro/outro.js'),'utf8'),sandbox);
- return {nodes,document,video,window,timers,delays,counts:()=>({plays,opens,resets,pauses,cards,engineClicks,buzzes:buzzes.length}),emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
+ return {nodes,document,video,window,timers,delays,buzzes,counts:()=>({plays,opens,resets,pauses,cards,engineClicks,buzzes:buzzes.length}),emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
 }
 // 片头覆盖层沙箱:intro.js 加载即进入生命周期(run(true) → playVideo),
 // 用可编程 duration/currentTime 驱动 timeupdate 验证倒计时。
@@ -124,13 +124,19 @@ export default async function run(assert){
  const twoCd=playback({twoPhase:true});
  twoCd.emit('novvy:victory');await flush();
  twoCd.video.duration=10;
+ twoCd.video.currentTime=6.96;twoCd.video.emit('timeupdate');
+ assert.check(twoCd.nodes['novvy-outro-countdown'].hidden&&twoCd.counts().buzzes===0,'剩余 3.04 秒不显示 4，也不提前震动');
  twoCd.video.currentTime=7;twoCd.video.emit('timeupdate');
- assert.equal([twoCd.nodes['novvy-outro-countdown'].innerHTML,twoCd.counts().buzzes],['<span>3</span>',1],'双 playable：片尾最后 3 秒亮出倒计时 3 并伴随一拍轻震动');
+ assert.equal([twoCd.nodes['novvy-outro-countdown'].innerHTML,twoCd.counts().buzzes],['<span>3</span>',1],'双 playable：片尾最后 3 秒亮出倒计时 3 并伴随一拍中等震动');
  twoCd.video.currentTime=8;twoCd.video.emit('timeupdate');
  twoCd.video.currentTime=9;twoCd.video.emit('timeupdate');
  assert.equal([twoCd.nodes['novvy-outro-countdown'].innerHTML,twoCd.counts().buzzes],['<span>1</span>',3],'双 playable：倒计时逐秒切换 2→1，每次数字都震动');
  twoCd.video.currentTime=9.4;twoCd.video.emit('timeupdate');
  assert.equal([twoCd.nodes['novvy-outro-countdown'].innerHTML,twoCd.counts().buzzes],['<span>1</span>',3],'双 playable：同一秒内重复 timeupdate 不重复震动');
+ assert.equal(twoCd.buzzes,['medium','heavy','heavy'],'片尾倒计时 3→2→1 从中等逐步加强到重震动');
+ assert.equal(twoCd.delays[0],120,'最后一秒的第二拍重震动间隔 120ms');
+ twoCd.timers[0]();
+ assert.equal(twoCd.buzzes,['medium','heavy','heavy','heavy'],'最后一秒补上一拍重震动，形成双拍');
  twoCd.video.ended=true;twoCd.video.emit('ended');
  assert.check(twoCd.nodes['novvy-outro-countdown'].hidden,'双 playable：片尾结束后收起倒计时');
  const oneCd=playback();
@@ -141,11 +147,21 @@ export default async function run(assert){
  introCd.video.duration=10;
  introCd.emit('timeupdate');
  assert.check(introCd.nodes['novvy-intro-countdown'].hidden&&introCd.buzzes.length===0,'片头剩余时间充足时不显示倒计时');
+ introCd.video.currentTime=6.96;introCd.emit('timeupdate');
+ assert.check(introCd.nodes['novvy-intro-countdown'].hidden&&introCd.buzzes.length===0,'片头剩余 3.04 秒不闪现 4');
  introCd.video.currentTime=7;introCd.emit('timeupdate');
- assert.equal([introCd.nodes['novvy-intro-countdown'].innerHTML,introCd.buzzes.length],['<span>3</span>',1],'片头最后 3 秒亮出倒计时 3 并伴随轻震动');
+ assert.equal([introCd.nodes['novvy-intro-countdown'].innerHTML,introCd.buzzes.length],['<span>3</span>',1],'片头最后 3 秒亮出倒计时 3 并伴随中等震动');
  introCd.video.currentTime=8;introCd.emit('timeupdate');
  introCd.video.currentTime=9;introCd.emit('timeupdate');
  assert.equal([introCd.nodes['novvy-intro-countdown'].innerHTML,introCd.buzzes.length],['<span>1</span>',3],'片头倒计时逐秒切换 2→1，每次数字都震动');
+ assert.equal(introCd.buzzes,['medium','heavy','heavy'],'片头倒计时同样逐步增强震动');
+ const lastPulse=introCd.timers.findLast(timer=>timer.ms===120);
+ introCd.video.paused=false;lastPulse.fn();
+ assert.equal(introCd.buzzes,['medium','heavy','heavy','heavy'],'片头最后一秒同样使用两拍重震动');
+ const stopped=playback({twoPhase:true});stopped.emit('novvy:victory');await flush();
+ stopped.video.duration=10;stopped.video.currentTime=9;stopped.video.emit('timeupdate');
+ stopped.video.ended=true;stopped.video.emit('ended');
+ assert.equal(stopped.timers[0],null,'片尾结束会取消尚未执行的第二拍，不把震动带入 playable');
  introCd.video.currentTime=4;introCd.emit('timeupdate');
  assert.check(introCd.nodes['novvy-intro-countdown'].hidden,'剩余时间回到 3 秒外时片头倒计时收起');
  introCd.video.ended=true;introCd.emit('ended');
@@ -153,6 +169,32 @@ export default async function run(assert){
  for (const [file,needle] of [['intro/intro.html','novvy-intro-countdown'],['outro/outro.html','novvy-outro-countdown'],['intro/intro.css','novvy-countdown-pop'],['outro/outro.css','novvy-countdown-pop']]) {
   assert.check(fs.readFileSync(path.join(overlay,file),'utf8').includes(needle),`倒计时 DOM 与动画样式进入覆盖层 ${file}`);
  }
+
+ // Exercise the actual phase switch handler with lightweight rendering stubs.
+ let switchHandler,builds=0,refreshes=0;const transitions=[];
+ const spec={patternId:'house',level:{opening:[1]},hud:{titleLine1:'第二关',titleLine2:'小块挑战'},cta:{mode:'steps',afterSteps:8}};
+ const switchSandbox={phase2Spec:spec,patterns:{house:{}},validateLevel:v=>v,window:{addEventListener:(name,fn)=>{switchHandler=fn;},setTimeout:()=>{throw new Error('换关不应额外等待');}},buildLevel:()=>builds++,armedPolicy:null,tutorial:{reset(){}},refresh:()=>refreshes++,puzzle:{complete:false},afterFlights(){},document:{dispatchEvent:e=>transitions.push(e)},CustomEvent:class{constructor(type,options){this.type=type;Object.assign(this,options);}}};
+ const mainSource=fs.readFileSync(path.join(root,'template-core/colorever/src/main.js'),'utf8');
+ vm.runInNewContext(mainSource.slice(mainSource.lastIndexOf('if(phase2Spec){')),switchSandbox);
+ switchHandler({detail:{reason:'video_ended'}});
+ assert.equal([builds,refreshes,transitions.length],[1,1,1],'片尾结束当次事件直接完成第二关切换，无额外 1 秒停留');
+ assert.equal(transitions[0].detail.hud,spec.hud,'第二关开始携带自己的两行 HUD 标题');
+ switchHandler({detail:{reason:'video_ended'}});
+ assert.equal(builds,1,'重复片尾结束不会重建第二关');
+ const titleNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,node()]));
+ const titleEvents=new Map();
+ vm.runInNewContext(fs.readFileSync(path.join(overlay,'hud/hud.js'),'utf8'),{document:{getElementById:id=>titleNodes[id]??null},window:{__NOVVY_UI__:{hud:{titleLine1:'第一关',titleLine2:'旧副标题'}},addEventListener:(name,fn)=>titleEvents.set(name,fn)}});
+ titleEvents.get('novvy:phase2-start')({detail:{hud:spec.hud}});
+ assert.equal([titleNodes['novvy-hud-title-line1'].textContent,titleNodes['novvy-hud-title-line2'].textContent],['第二关','小块挑战'],'仅标题 HUD 也会在换关时独立更新两行文案');
+ titleEvents.get('novvy:phase2-start')({detail:{hud:{titleLine1:'独立标题',titleLine2:''}}});
+ assert.equal(titleNodes['novvy-hud-title-line2'].textContent,'','第二关空副标题会清除第一关文字');
+
+ const backgrounds={'novvy-dom-bg':node(),'novvy-dom-bg2':node()},htmlRoot=node();
+ backgrounds['novvy-dom-bg'].hidden=false;let switchBackground;
+ vm.runInNewContext(fs.readFileSync(path.join(overlay,'background/background.js'),'utf8'),{window:{addEventListener:(name,fn)=>{switchBackground=fn;}},document:{documentElement:htmlRoot,getElementById:id=>backgrounds[id]}});
+ assert.check(!backgrounds['novvy-dom-bg'].hidden&&backgrounds['novvy-dom-bg2'].hidden,'第二关背景在换关前隐藏');
+ switchBackground();
+ assert.check(backgrounds['novvy-dom-bg'].hidden&&!backgrounds['novvy-dom-bg2'].hidden&&htmlRoot.classList.contains('novvy-phase2'),'换关同步隐藏第一关背景并显示第二关背景');
 
  const {GameAudio}=await import('../../template-core/colorever/src/game-audio.js');
  const previous={document:globalThis.document,window:globalThis.window};
@@ -177,7 +219,7 @@ export default async function run(assert){
   const patched=await api(`/api/tasks/${id}`,{config:{outro:{enabled:true}}},'PATCH');
   assert.check(patched.body.config.outro.enabled,'片尾设置可以保存');
   let built=await api(`/api/tasks/${id}/run`,{step:'all'});
-  assert.check(built.status===200&&built.body.length===6&&built.body.every(r=>r.ok)&&built.body.find(r=>r.stepId==='outro').metrics.skipped,'未上传片尾时整个构建流程可正常跳过');
+  assert.check(built.status===200&&built.body.length===7&&built.body.every(r=>r.ok)&&built.body.find(r=>r.stepId==='outro').metrics.skipped,'未上传片尾时整个构建流程可正常跳过');
   let preview=await(await fetch(base+`/api/tasks/${id}/preview`)).text();
   assert.check(!preview.includes('id="novvy-video-outro"')&&preview.includes('__novvyOutroEnabled=false'),'未上传时预览不注入片尾，也不拦截完成流程');
   const bad=await fetch(base+`/api/tasks/${id}/uploads/outro-video`,{method:'PUT',headers:{'Content-Type':'video/mp4'},body:'invalid video content with no mp4 signature'});
@@ -197,15 +239,55 @@ export default async function run(assert){
   assert.check(packed.includes('__novvyOutroEnabled=true')&&packed.includes('src="outro-video.mp4"'),'交付包启用片尾时引用包内视频');
   const delivered=new Uint8Array(await(await fetch(base+`/result/${id}/outro-video.mp4`)).arrayBuffer());
   assert.check(Buffer.from(delivered).equals(bytes),'打包片尾保留完整视频内容');
-  await api(`/api/tasks/${id}`,{config:{secondPlayable:{enabled:true,patternId:'axe',cta:{mode:'steps',afterSteps:8}}}},'PATCH');
+  await api(`/api/tasks/${id}`,{config:{secondPlayable:{enabled:true,patternId:'axe',opening:{mode:'medium',seed:9},hud:{titleLine1:'第二关专属 </script>',titleLine2:'小块挑战'},cta:{mode:'steps',afterSteps:8}}}},'PATCH');
   built=await api(`/api/tasks/${id}/run`,{step:'all'});
   assert.check(built.status===200&&built.body.every(r=>r.ok),'双 playable 配置完整构建通过');
   assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html','outro-video.mp4'],'双 playable 数据内联,打包文件列表不变');
   assert.equal(built.body.find(r=>r.stepId==='pack').metrics.phase2,'axe','第二关图案进入打包指标');
   const twoPhasePacked=await(await fetch(base+`/result/${id}/index.html`)).text();
   assert.check(twoPhasePacked.includes('__novvyTwoPhase=true')&&twoPhasePacked.includes('"patternId":"axe"'),'交付包内联第二关数据与标记');
+  assert.check(twoPhasePacked.includes('\"openingMode\":\"medium\"')&&twoPhasePacked.includes('第二关专属 \\u003c/script>'),'第二关适中开局与安全转义的独立标题进入交付包');
   const twoPhasePreview=await(await fetch(base+`/api/tasks/${id}/preview`)).text();
   assert.check(twoPhasePreview.includes('__novvyTwoPhase=true')&&twoPhasePreview.includes('__COLOREVER_PHASE2__'),'即时预览注入双 playable 标记');
+  const jpg=path.join(temp,'background.jpg');
+  await execFile('ffmpeg',['-y','-f','lavfi','-i','color=c=red:s=32x32','-frames:v','1','-threads','1',jpg]);
+  const image=fs.readFileSync(jpg);
+  const badBackground=await fetch(base+`/api/tasks/${id}/uploads/background2`,{method:'PUT',headers:{'Content-Type':'image/jpeg'},body:'invalid image content without valid magic'});
+  assert.equal(badBackground.status,415,'第二关背景上传校验图片内容');
+  await api(`/api/tasks/${id}`,{config:{background:{enabled:true,source:'upload',blurSigma:0},secondPlayable:{background:{enabled:true,source:'video-last',blurSigma:4}}}},'PATCH');
+  const standaloneBackground=await api(`/api/tasks/${id}/run`,{step:'background2'});
+  assert.check(standaloneBackground.status===200&&standaloneBackground.body.ok,'第一关素材未就绪时仍可独立运行第二关背景模块');
+  await fetch(base+`/api/tasks/${id}/uploads/background`,{method:'PUT',headers:{'Content-Type':'image/jpeg'},body:image});
+  await api(`/api/tasks/${id}`,{config:{background:{enabled:true,source:'upload',blurSigma:0},secondPlayable:{background:{enabled:true,source:'video-last',blurSigma:4}}}},'PATCH');
+  built=await api(`/api/tasks/${id}/run`,{step:'all'});
+  assert.check(built.status===200&&built.body.every(r=>r.ok),'两关独立背景完整构建通过');
+  assert.equal(built.body.find(r=>r.stepId==='background2').metrics.source,'video-last','第二关背景从片尾尾帧获取');
+  assert.equal(built.body.find(r=>r.stepId==='background2').metrics.sigma,4,'第二关背景使用独立模糊参数');
+  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['background.webp','background2.webp','game.js','index.html','outro-video.mp4'],'两张背景分别进入交付包');
+  const firstBytes=Buffer.from(await(await fetch(base+`/result/${id}/background.webp`)).arrayBuffer());
+  const secondBytes=Buffer.from(await(await fetch(base+`/result/${id}/background2.webp`)).arrayBuffer());
+  assert.check(!firstBytes.equals(secondBytes),'片尾背景与第一关上传背景彼此独立');
+  const bgPreview=await(await fetch(base+`/api/tasks/${id}/preview`)).text();
+  assert.check(bgPreview.includes('id="novvy-dom-bg2" hidden')&&bgPreview.includes(`/project/${id}/generated/background2.webp`),'即时预览使用隐藏的第二关专属背景');
+  const bgPacked=await(await fetch(base+`/result/${id}/index.html`)).text();
+  assert.check(bgPacked.includes('background2.webp')&&bgPacked.includes('data-novvy-phase2-background'),'交付包含第二关背景与换关事件接线');
+  const uploadedBackground=await fetch(base+`/api/tasks/${id}/uploads/background2`,{method:'PUT',headers:{'Content-Type':'image/jpeg'},body:image});
+  assert.equal(uploadedBackground.status,200,'第二关支持独立上传 JPG 背景');
+  assert.check(!readTask(id).steps.background2&&!readTask(id).steps.pack,'第二关背景上传使背景步骤和打包失效');
+  await api(`/api/tasks/${id}`,{config:{secondPlayable:{background:{source:'upload',blurSigma:0}}}},'PATCH');
+  built=await api(`/api/tasks/${id}/run`,{step:'all'});
+  assert.check(built.body.every(r=>r.ok)&&built.body.find(r=>r.stepId==='background2').metrics.source==='background-upload','第二关可改用独立上传图片');
+  const untouchedFirst=Buffer.from(await(await fetch(base+`/result/${id}/background.webp`)).arrayBuffer());
+  assert.check(untouchedFirst.equals(firstBytes),'生成第二关背景不会覆盖第一关背景');
+  const removedBackground=await fetch(base+`/api/tasks/${id}/uploads/background2`,{method:'DELETE'});
+  assert.equal(removedBackground.status,200,'第二关背景可独立移除');
+  assert.check(!readTask(id).steps.background2&&!readTask(id).steps.pack,'第二关背景移除使背景步骤和打包失效');
+  await api(`/api/tasks/${id}`,{config:{background:{enabled:false},secondPlayable:{background:{source:'video-first',blurSigma:0}}}},'PATCH');
+  built=await api(`/api/tasks/${id}/run`,{step:'all'});
+  assert.check(built.body.every(r=>r.ok)&&built.body.find(r=>r.stepId==='background2').metrics.source==='video-first','第一关背景关闭时第二关仍可独立从片尾首帧生成');
+  await api(`/api/tasks/${id}`,{config:{secondPlayable:{background:{enabled:false}}}},'PATCH');
+  built=await api(`/api/tasks/${id}/run`,{step:'all'});
+  assert.check(built.body.every(r=>r.ok)&&!built.body.find(r=>r.stepId==='pack').metrics.packageFiles.includes('background2.webp'),'关闭第二关背景后旧素材不进入交付包');
   await api(`/api/tasks/${id}`,{config:{outro:{enabled:false}}},'PATCH');
   built=await api(`/api/tasks/${id}/run`,{step:'all'});
   assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html'],'关闭片尾后不再打入视频');

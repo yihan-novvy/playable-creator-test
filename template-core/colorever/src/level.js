@@ -17,7 +17,7 @@ export function validateLevel(input){
   const target=[...input.target],active=target.filter(Boolean);
   if(new Set(active).size<2)fail('图案至少需要两个实际使用的颜色');
   const openingMode=input.openingMode??'scattered';
-  if(!['easy','scattered'].includes(openingMode))fail('开局模式必须为简易模式或零散模式');
+  if(!['easy','medium','scattered'].includes(openingMode))fail('开局模式必须为简易、适中或零散模式');
   const difficulty=input.difficulty??21,seed=input.seed??1;
   if(!Number.isInteger(difficulty)||difficulty<1||difficulty>100)fail('打散对数应为 1–100');
   if(!Number.isInteger(seed)||seed<0||seed>2147483647)fail('随机种子应为 0–2147483647');
@@ -68,7 +68,7 @@ export function prepareLevel(input){
   const indices=level.target.map((c,i)=>c?i:-1).filter(i=>i>=0);
   let randomState=level.seed||1;
   const random=()=>{randomState=(Math.imul(randomState,1664525)+1013904223)>>>0;return randomState/4294967296;};
-  if(level.openingMode==='easy')return easyOpening(level,random);
+  if(level.openingMode==='easy'||level.openingMode==='medium')return blockOpening(level,random);
   for(let attempt=0;attempt<40;attempt++){
     const board=[...level.target],available=[...indices];let swapped=0;
     while(available.length>=2&&swapped<level.difficulty){
@@ -83,15 +83,18 @@ export function prepareLevel(input){
   throw new Error('无法生成通过求解验证的开局，请降低打散数量或增加篮子容量');
 }
 
-// Two swaps of equal-size compact patches usually need six placements:
+// Equal-size compact patches conserve colors and replay the actual game.
+// Easy uses two large swaps; medium uses five swaps of 3–5 beads.
+// Two swaps usually need six placements:
 // A -> basket, B -> A, basket -> B, repeated for the other pair.
 // Keep patches separated, conserve every color, then replay the actual game.
-function easyOpening(level,random){
+function blockOpening(level,random){
   const {target,width,height,capacity}=level;
   const neighbors=i=>{const x=i%width,y=Math.floor(i/width),out=[];if(x)out.push(i-1);if(x+1<width)out.push(i+1);if(y)out.push(i-width);if(y+1<height)out.push(i+width);return out;};
   const nearby=i=>{const x=i%width,y=Math.floor(i/width),out=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if(x+dx>=0&&x+dx<width&&y+dy>=0&&y+dy<height)out.push((y+dy)*width+x+dx);return out;};
   const colors=[...new Set(target.filter(Boolean))],total=target.filter(Boolean).length;
-  const preferred=Math.min(capacity,18,Math.max(6,Math.round(Math.sqrt(total)/2)));
+  const medium=level.openingMode==='medium',pairs=medium?5:2;
+  const preferred=medium?Math.min(capacity,5):Math.min(capacity,18,Math.max(6,Math.round(Math.sqrt(total)/2)));
   function patch(color,size,blocked){
     const available=new Set(target.flatMap((c,i)=>c===color&&!blocked.has(i)?[i]:[])),components=[];
     while(available.size){const start=available.values().next().value,group=[start];available.delete(start);for(let q=0;q<group.length;q++)for(const i of neighbors(group[q]))if(available.delete(i))group.push(i);if(group.length>=size)components.push(group);}
@@ -102,10 +105,10 @@ function easyOpening(level,random){
     return result.length===size?result:null;
   }
   // Prefer generous patches. Reduce only when a picture lacks enough uniform area.
-  for(let size=preferred;size>=Math.min(4,preferred);size--){
+  for(let size=preferred;size>=(medium?3:Math.min(4,preferred));size--){
     for(let attempt=0;attempt<60;attempt++){
       const blocked=new Set(),board=[...target];let swaps=0;
-      for(let pair=0;pair<2;pair++){
+      for(let pair=0;pair<pairs;pair++){
         const combinations=[];for(let a=0;a<colors.length;a++)for(let b=a+1;b<colors.length;b++)combinations.push([colors[a],colors[b]]);
         for(let i=combinations.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[combinations[i],combinations[j]]=[combinations[j],combinations[i]];}
         let found=false;
@@ -118,9 +121,9 @@ function easyOpening(level,random){
         }
         if(!found)break;
       }
-      if(swaps!==2)continue;
-      try{const candidate={...level,opening:board},proof=solveLevel(candidate);if(proof.moves>=4&&proof.moves<=6)return {level:candidate,proof};}catch{}
+      if(swaps!==pairs)continue;
+      try{const candidate={...level,opening:board},proof=solveLevel(candidate);if(proof.moves>=(medium?12:4)&&proof.moves<=(medium?14:6))return {level:candidate,proof};}catch{}
     }
   }
-  throw new Error('此图案或篮子没有足够的连续区域生成 6 次内完成的简易开局，请增加篮子容量、调整图案或选择零散模式');
+  throw new Error(`此图案或篮子没有足够的连续区域生成${medium?' 12–14 次搬运完成的适中开局':' 6 次内完成的简易开局'}，请增加篮子容量、调整图案或选择零散模式`);
 }

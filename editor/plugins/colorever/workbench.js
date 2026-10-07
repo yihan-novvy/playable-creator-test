@@ -44,7 +44,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
   function openingControls(getOpening, patchOpening) {
     const wrap=el('div',{class:'dragon-config-grid'});
     const mode=el('select',{'aria-label':'开局模式'});
-    for (const [value,label] of [['easy','简易模式 · 整块搬运（验证 ≤6 步完成）'],['scattered','零散模式 · 碎块归位']]) mode.append(el('option',{value},[label]));
+    for (const [value,label] of [['easy','简易模式 · 整块搬运（验证 ≤6 步完成）'],['medium','适中模式 · 小块搬运（验证 12–14 步完成）'],['scattered','零散模式 · 碎块归位']]) mode.append(el('option',{value},[label]));
     mode.value=getOpening()?.mode??'easy';
     mode.onchange=async()=>{await save(patchOpening({mode:mode.value}));await refresh(true);};
     wrap.append(field('开局模式',mode));
@@ -57,7 +57,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     seed.onchange=async()=>{await save(patchOpening({seed:Number(seed.value)}));await refresh(true);};
     const shuffle=el('button',{onclick:async()=>{await save(patchOpening({seed:((Number(getOpening()?.seed??1)+1)%2147483648)}));await refresh(true);}},['换一个开局']);
     wrap.append(field('随机种子',seed),shuffle);
-    wrap.append(el('p',{class:'hint'},[mode.value==='easy'?'整块搬运开局，出题器验证 6 次搬运内可完成。':'随机交换珠子生成开局，打散对数越高碎块越多；同一种子总是得到同一开局。']));
+    wrap.append(el('p',{class:'hint'},[mode.value==='easy'?'整块搬运开局，出题器验证 6 次搬运内可完成。':mode.value==='medium'?'每块 3–5 颗珠子，保留连续色块，增加到 12–14 次搬运；同一种子总是得到同一开局。':'随机交换珠子生成开局，打散对数越高碎块越多；同一种子总是得到同一开局。']));
     return wrap;
   }
   function renderConfig(){
@@ -173,7 +173,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const root = document.getElementById('steps'); root.textContent = '';
     const introInputs = [upload('intro-video', '片头视频 MP4', 'video/mp4'), upload('intro-poster', '可选海报 JPG', 'image/jpeg')];
     const intro = card('intro', 1, '开场视频', config().intro?.enabled ? '上传视频后运行。' : '已关闭，可直接跳过。', introInputs, renderIntroPreview);
-    const outro = card('outro', 2, '片尾视频（可选）', '仅在游戏完成且完成效果结束后播放。未上传视频时直接跳过；播完停留最后一帧，等待 1 秒后转化跳转，返回时保留片尾画面。', [upload('outro-video','片尾视频 MP4（可选）','video/mp4')], right => {
+    const outro = card('outro', 2, '片尾视频（可选）', '仅在游戏完成且完成效果结束后播放。未上传视频时直接跳过；有第二个 playable 时，播完立即换关；单 playable 播完停留最后一帧，等待 1 秒后转化跳转。', [upload('outro-video','片尾视频 MP4（可选）','video/mp4')], right => {
       if (statusInfo?.uploads?.['outro-video']?.present) right.append(el('video', { controls:'',src:versioned(`/project/${taskId}/uploads/outro-video.mp4`,uploadVersion('outro-video')),style:'max-height:300px' }));
       else right.append(el('span',{class:'hint'},['未设置片尾视频，可直接跳过。']));
     });
@@ -192,7 +192,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       }
       return wrap;
     }
-    // 第二个 playable:片尾播完(留最后一帧)后页内换关进入;数据全量内联,不新增包文件。
+    // 第二个 playable:片尾播完后立即页内换关进入;数据全量内联,不新增包文件。
     let secondPlayable=null;
     if(config().outro?.enabled){
       const select2=el('select',{'aria-label':'第二关图案'});
@@ -204,10 +204,36 @@ window.PlayablePlugins = window.PlayablePlugins || {};
         el('p',{class:'hint'},['第一个 playable 完成并播完片尾后，页内切换进入第二个 playable；下载卡与跳转按此关的转化时机触发。']),
         el('div',{class:'dragon-config-grid'},[checkbox('启用第二个 playable','secondPlayable','enabled',config().secondPlayable?.enabled===true)]),
         field('第二关图案',select2),
+        el('div',{class:'dragon-config-grid'},['titleLine1','titleLine2'].map((key,index)=>{
+          const input=el('input',{type:'text','aria-label':`第二关 HUD 标题 第${index+1}行`});
+          input.value=config().secondPlayable?.hud?.[key]??(index===0?pictures.find(p=>p.id===select2.value)?.name??'':'');
+          input.onchange=async()=>{await save({secondPlayable:{hud:{[key]:input.value.trim()}}});await refresh(true);};
+          return field(`第二关 HUD 标题 第${index+1}行`,input);
+        })),
         el('p',{class:'hint'},[pictures.find(p=>p.id===select2.value)?.description??'']),
         openingControls(()=>config().secondPlayable?.opening,patch=>({secondPlayable:{opening:patch}})),
         ctaTimingControls(()=>config().secondPlayable?.cta,patch=>({secondPlayable:{cta:patch}})),
       ]);
+    }
+    let secondBackground=null;
+    if(config().outro?.enabled&&config().secondPlayable?.enabled){
+      const bg=config().secondPlayable?.background??{};
+      const saveBackground=async patch=>{await save({secondPlayable:{background:patch}});await refresh(true);};
+      const enabled=el('input',{type:'checkbox'});enabled.checked=bg.enabled===true;
+      enabled.onchange=()=>saveBackground({enabled:enabled.checked});
+      const source=el('select',{'aria-label':'第二关背景图来源'});
+      for(const [value,label]of [['video-last','片尾视频的尾帧'],['video-first','片尾视频的首帧'],['upload','上传背景图片'],['auto','自动（上传图片优先，否则使用片尾尾帧）']])source.append(el('option',{value},[label]));
+      source.value=bg.source??'video-last';source.onchange=()=>saveBackground({source:source.value});
+      const blur=el('input',{type:'number',min:0,max:50,step:1,value:bg.blurSigma??12});
+      blur.onchange=()=>saveBackground({blurSigma:Number(blur.value)});
+      const inputs=[field('启用第二关独立背景',enabled)];
+      if(enabled.checked){
+        inputs.push(field('背景图来源',source),field('背景模糊程度（0–50）',blur));
+        if(source.value==='upload'||source.value==='auto')inputs.push(upload('background2','第二关背景图片 PNG / JPG','image/png,image/jpeg'));
+      }
+      secondBackground=card('background2',4,'第二关自定义背景','从片尾视频提取首帧或尾帧，也可以单独上传；进入第二关时切换。关闭时使用游戏自带纯色底。',inputs,right=>{
+        if(enabled.checked&&stepState('background2').ok&&!stepState('background2').metrics?.skipped)right.append(el('img',{src:versioned(`/project/${taskId}/generated/background2.webp`,stepVersion('background2')),style:'max-height:360px',title:'第二关背景'}));
+      });
     }
     // 第一关转化时机:仅无片尾时可配(有片尾时第一关只负责引出片尾)。
     const ctaTiming=el('section',{class:'step-card',id:'cta-timing-settings'},[
@@ -257,7 +283,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     if(config().hud?.enabled)root.append(hud);
     if(titleEnabled())root.append(title);
     if(config().background?.enabled)root.append(background);
-    if(config().outro?.enabled){root.append(outro);if(secondPlayable)root.append(secondPlayable);}
+    if(config().outro?.enabled){root.append(outro);if(secondPlayable)root.append(secondPlayable);if(secondBackground)root.append(secondBackground);}
     root.append(progressStyle);
     if(!config().outro?.enabled)root.append(ctaTiming);
     root.append(level,pack);
