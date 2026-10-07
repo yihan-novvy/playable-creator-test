@@ -63,10 +63,20 @@
       "id": "rafflesia",
       "name": "粉瓣霸王花",
       "path": "game/patterns/rafflesia.json"
+    },
+    {
+      "id": "portrait-frown",
+      "name": "皱眉人像",
+      "path": "game/patterns/portrait-frown.json"
+    },
+    {
+      "id": "yellow-code",
+      "name": "黄色编号 032363FF18478327",
+      "path": "game/patterns/yellow-code.json"
     }
   ],
   "constants": {
-    "engineSha256": "d391ca8a0527bce82644d04e0cdb11e1d52bc7b172223ae41fb98e0283c1646f",
+    "engineSha256": "f5d33a8f23f26757b4f5e4e7fee713e2698679254f6bd36025a14362bd3700b6",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"

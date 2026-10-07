@@ -154,5 +154,19 @@
     "description": "粉红与蜜桃色五瓣花、橙黄花心和嫩绿叶片，搭配墨绿色拼珠底色、青绿边缘与金黄底边",
     "level": "rafflesia.json",
     "module": "rafflesia.js"
+  },
+  {
+    "id": "portrait-frown",
+    "name": "皱眉人像",
+    "description": "正面深色短发、皱眉与微张嘴表情，搭配深色翻领外套，脸部仅使用三种肤色",
+    "level": "portrait-frown.json",
+    "module": "portrait-frown.js"
+  },
+  {
+    "id": "yellow-code",
+    "name": "黄色编号 032363FF18478327",
+    "description": "金黄色 032363FF / 18478327 两行字符居中排列，搭配深蓝底色与蓝色边框",
+    "level": "yellow-code.json",
+    "module": "yellow-code.js"
   }
 ]
