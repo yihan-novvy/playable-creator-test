@@ -203,9 +203,9 @@ export default async function run(assert){
   assert.check(paletteOutput.includes('--colorever-progress-text:#7d315c')&&paletteOutput.includes('--colorever-progress-fill:#e76b3f')&&paletteOutput.includes('--colorever-progress-track:#f5dfbd'),'自定义进度颜色进入交付包');
   assert.equal(fs.readFileSync(path.join(root,'result',id,'game.js'),'utf8'),js,'换图复用同一引擎');
   const exported=await fetch(base+`/api/tasks/${id}/export`),bytes=new Uint8Array(await exported.arrayBuffer());assert.check(exported.status===200&&bytes[0]===80&&bytes[1]===75,'ZIP 导出成功');
-  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch','contract'],'广告项目只列出已构建的成品选项');
+  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch','contract','bank'],'广告项目只列出已构建的成品选项');
   assert.check(!catalog[0].editableParts,'广告项目不公开作者编辑参数');
-  for(const patternId of ['axe','torch','contract']){
+  for(const patternId of ['axe','torch','contract','bank']){
    const selected=await api(`/api/tasks/${id}`,{config:{patternId}},'PATCH');assert.equal(selected.body.config.patternId,patternId,'任务可选择新增图案');
    const response=await fetch(base+`/api/tasks/${id}/preview`),text=await response.text();
    assert.check(response.status===200&&text.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'新增图案即时预览');

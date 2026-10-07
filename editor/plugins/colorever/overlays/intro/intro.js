@@ -11,6 +11,7 @@
   const root = document.getElementById('novvy-video-intro');
   const video = document.getElementById('novvy-intro-video');
   const soundButton = document.getElementById('novvy-intro-sound');
+  const countdown = document.getElementById('novvy-intro-countdown');
   if (!root || !video || !soundButton) return;
 
   // Package mode carries the aria text in materials.js; see hud.js note.
@@ -22,6 +23,36 @@
   const track = (name, params) => {
     if (window.NovvyAnalytics) window.NovvyAnalytics.track(name, params);
   };
+
+  /* —— 进入 playable 前的 3-2-1 倒计时:取视频真实剩余时间,最后 3 秒逐秒
+     亮出白色浮字;每次数字出现都带一拍轻震动(桥 haptic,预览退回 vibrate),
+     配合数字的缩放回落动画提醒用户 playable 马上开始。 —— */
+  const buzz = () => {
+    try {
+      if (typeof window.novvy?.haptic === 'function') { window.novvy.haptic('light'); return; }
+    } catch (_error) {}
+    try { navigator.vibrate?.(10); } catch (_error) {}
+  };
+  let countdownShown = 0;
+  function hideCountdown() {
+    if (!countdownShown) return;
+    countdownShown = 0;
+    if (countdown) { countdown.hidden = true; countdown.innerHTML = ''; }
+  }
+  function syncCountdown() {
+    if (!countdown) return;
+    const duration = video.duration;
+    const remaining = duration - video.currentTime;
+    if (!Number.isFinite(duration) || duration <= 0 || video.ended || remaining > 3.05 || remaining <= 0) { hideCountdown(); return; }
+    const n = Math.ceil(remaining);
+    if (n === countdownShown) return;
+    countdownShown = n;
+    buzz();
+    countdown.hidden = false;
+    countdown.innerHTML = '<span>' + n + '</span>';
+  }
+  video.addEventListener('timeupdate', syncCountdown);
+  video.addEventListener('ended', hideCountdown);
 
   // Icon + label live in one place; the button itself ships empty because the
   // SVG strings are static template content (safe to bake into the shell).
@@ -51,6 +82,7 @@
     let switchSeconds = 0;
     try { switchSeconds = Math.round(video.currentTime || 0); } catch (_error) {}
     try { video.pause(); } catch (_error) {}
+    hideCountdown();
     teardown(reason || 'video_ended'); // release close BEFORE playable_entry lands
     window.__novvyIntroFinished = true;
     try {

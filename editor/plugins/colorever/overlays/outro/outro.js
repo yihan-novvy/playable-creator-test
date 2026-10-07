@@ -3,6 +3,7 @@
   const video = document.getElementById('novvy-outro-video');
   const sound = document.getElementById('novvy-outro-sound');
   const play = document.getElementById('novvy-outro-play');
+  const countdown = document.getElementById('novvy-outro-countdown');
   if (!root || !video || !sound || !play) return;
   let active = false, consumed = false;
   let ctaReady = false;
@@ -11,6 +12,35 @@
     ctaReady = true;
     window.dispatchEvent(new CustomEvent('novvy:outro-cta-ready'));
   }
+  /* —— 双 playable:片尾之后还有第二关,最后 3 秒逐秒亮出 3-2-1 白色浮字,
+     每次数字出现带一拍轻震动(桥 haptic,预览退回 vibrate),配合缩放回落
+     动画提醒用户 playable 马上开始。单 playable 片尾通向结算停留,不出倒计时。 —— */
+  const buzz = () => {
+    try {
+      if (typeof window.novvy?.haptic === 'function') { window.novvy.haptic('light'); return; }
+    } catch (_) {}
+    try { navigator.vibrate?.(10); } catch (_) {}
+  };
+  let countdownShown = 0;
+  function hideCountdown() {
+    if (!countdownShown) return;
+    countdownShown = 0;
+    if (countdown) { countdown.hidden = true; countdown.innerHTML = ''; }
+  }
+  function syncCountdown() {
+    if (!countdown) return;
+    const duration = video.duration;
+    const remaining = duration - video.currentTime;
+    if (!window.__novvyTwoPhase || !active || !Number.isFinite(duration) || duration <= 0 || video.ended || remaining > 3.05 || remaining <= 0) { hideCountdown(); return; }
+    const n = Math.ceil(remaining);
+    if (n === countdownShown) return;
+    countdownShown = n;
+    buzz();
+    countdown.hidden = false;
+    countdown.innerHTML = '<span>' + n + '</span>';
+  }
+  video.addEventListener('timeupdate', syncCountdown);
+  video.addEventListener('ended', hideCountdown);
   let viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
   let attempt = 0;
   const visible = () => !document.hidden && viewable;
@@ -27,6 +57,7 @@
     active = false;
     attempt++;
     video.pause();
+    hideCountdown();
     if (reason === 'video_ended') revealCta();
     root.hidden = reason !== 'video_ended';
     sound.hidden = reason === 'video_ended';
@@ -57,6 +88,7 @@
     consumed = true;
     active = true;
     ctaReady = false;
+    countdownShown = 0;
     video.currentTime = 0;
     video.muted = false;
     root.hidden = false;

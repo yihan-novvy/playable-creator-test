@@ -12,23 +12,39 @@ const overlay=path.join(root,'editor/plugins/colorever/overlays');
 function node(){
  const listeners=new Map();
  const classes=new Set();
- return {hidden:true,textContent:'',id:'',classList:{add:name=>classes.add(name),remove:name=>classes.delete(name),contains:name=>classes.has(name)},setAttribute(){},addEventListener:(name,fn)=>listeners.set(name,fn),emit:(name,event={})=>listeners.get(name)?.(event)};
+ // DOM 语义:同一事件的多个监听器并存,按注册顺序依次触发(桩不能只留最后一个)。
+ return {hidden:true,textContent:'',id:'',classList:{add:name=>classes.add(name),remove:name=>classes.delete(name),contains:name=>classes.has(name)},setAttribute(){},addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),emit:(name,event={})=>{for(const fn of listeners.get(name)||[])fn(event);}};
 }
 function playback({enabled=true,rejectPlay=false,withEngine=false,twoPhase=false}={}){
- const listeners=new Map(),nodes=Object.fromEntries(['novvy-video-outro','novvy-outro-video','novvy-outro-sound','novvy-outro-play','reset'].map(id=>[id,node()]));
+ const listeners=new Map(),nodes=Object.fromEntries(['novvy-video-outro','novvy-outro-video','novvy-outro-sound','novvy-outro-play','novvy-outro-countdown','reset'].map(id=>[id,node()]));
  const video=nodes['novvy-outro-video'];
- let plays=0,opens=0,resets=0,pauses=0,cards=0,engineClicks=0;
+ let plays=0,opens=0,resets=0,pauses=0,cards=0,engineClicks=0;const buzzes=[];
  const timers=[],delays=[];
  video.currentTime=0;video.paused=true;video.muted=false;
  video.play=()=>{plays++;video.paused=rejectPlay;return rejectPlay?Promise.reject(new Error('blocked')):Promise.resolve();};
  video.pause=()=>{video.paused=true;pauses++;};
  nodes.reset.click=()=>resets++;
  const document={hidden:false,readyState:'complete',getElementById:id=>nodes[id]||null,addEventListener:(name,fn)=>listeners.set('document:'+name,[...(listeners.get('document:'+name)||[]),fn]),createElement:()=>node(),head:null,body:{appendChild:el=>{if(el.id==='downloadBtn')nodes['downloadBtn']=el;}}};
- const window={__novvyOutroEnabled:enabled,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,__novvyViewable:true,novvy:{open:()=>opens++},showEndCard:()=>{cards++;},novvyHandleAdClick:withEngine?()=>{engineClicks++;opens++;}:undefined,addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}};
+ const window={__novvyOutroEnabled:enabled,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,__novvyViewable:true,novvy:{open:()=>opens++,haptic:style=>buzzes.push(style)},showEndCard:()=>{cards++;},novvyHandleAdClick:withEngine?()=>{engineClicks++;opens++;}:undefined,addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}};
  const sandbox={document,window,setTimeout:(fn,delay)=>{delays.push(delay);timers.push(fn);return timers.length-1;},clearTimeout:id=>{timers[id]=null;},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
  vm.runInNewContext(fs.readFileSync(path.join(overlay,'cta-bridge/cta-bridge.js'),'utf8'),sandbox);
  if(enabled)vm.runInNewContext(fs.readFileSync(path.join(overlay,'outro/outro.js'),'utf8'),sandbox);
- return {nodes,document,video,window,timers,delays,counts:()=>({plays,opens,resets,pauses,cards,engineClicks}),emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
+ return {nodes,document,video,window,timers,delays,counts:()=>({plays,opens,resets,pauses,cards,engineClicks,buzzes:buzzes.length}),emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
+}
+// 片头覆盖层沙箱:intro.js 加载即进入生命周期(run(true) → playVideo),
+// 用可编程 duration/currentTime 驱动 timeupdate 验证倒计时。
+function introSandbox(){
+ const nodes=Object.fromEntries(['novvy-video-intro','novvy-intro-video','novvy-intro-sound','novvy-intro-countdown'].map(id=>[id,node()]));
+ const video=nodes['novvy-intro-video'];
+ video.currentTime=0;video.duration=NaN;video.muted=true;video.paused=true;video.ended=false;
+ video.play=()=>Promise.resolve();video.pause=()=>{video.paused=true;};
+ const buzzes=[],timers=[];
+ const listeners=new Map();
+ const windowObj={__novvyBridgeVersion:0,novvy:{haptic:style=>buzzes.push(style)},addEventListener:(name,fn)=>listeners.set('win:'+name,[...(listeners.get('win:'+name)||[]),fn]),removeEventListener(){},dispatchEvent:event=>{for(const fn of listeners.get('win:'+event.type)||[])fn(event);},setTimeout:(fn,ms)=>{timers.push({fn,ms});return timers.length-1;},clearTimeout(){},setInterval(){return 0;},clearInterval(){}};
+ const document={hidden:false,getElementById:id=>nodes[id]||null,addEventListener(){},removeEventListener(){}};
+ const sandbox={window:windowObj,document,navigator:{vibrate:()=>{}},setTimeout:(fn,ms)=>{timers.push({fn,ms});return timers.length-1;},clearTimeout(){},setInterval(){return 0;},clearInterval(){},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
+ vm.runInNewContext(fs.readFileSync(path.join(overlay,'intro/intro.js'),'utf8'),sandbox);
+ return {nodes,video,buzzes,timers,emit:(name)=>video.emit(name)};
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 
@@ -105,6 +121,38 @@ export default async function run(assert){
  assert.equal([two.counts().cards,two.counts().opens],[1,1],'双 playable：重复 CTA 时刻与第二关胜利不二次跳转');
  two.emit('novvy:phase2-start');
  assert.check(two.nodes['novvy-video-outro'].hidden,'双 playable：第二关就绪后收起片尾最后一帧');
+ const twoCd=playback({twoPhase:true});
+ twoCd.emit('novvy:victory');await flush();
+ twoCd.video.duration=10;
+ twoCd.video.currentTime=7;twoCd.video.emit('timeupdate');
+ assert.equal([twoCd.nodes['novvy-outro-countdown'].innerHTML,twoCd.counts().buzzes],['<span>3</span>',1],'双 playable：片尾最后 3 秒亮出倒计时 3 并伴随一拍轻震动');
+ twoCd.video.currentTime=8;twoCd.video.emit('timeupdate');
+ twoCd.video.currentTime=9;twoCd.video.emit('timeupdate');
+ assert.equal([twoCd.nodes['novvy-outro-countdown'].innerHTML,twoCd.counts().buzzes],['<span>1</span>',3],'双 playable：倒计时逐秒切换 2→1，每次数字都震动');
+ twoCd.video.currentTime=9.4;twoCd.video.emit('timeupdate');
+ assert.equal([twoCd.nodes['novvy-outro-countdown'].innerHTML,twoCd.counts().buzzes],['<span>1</span>',3],'双 playable：同一秒内重复 timeupdate 不重复震动');
+ twoCd.video.ended=true;twoCd.video.emit('ended');
+ assert.check(twoCd.nodes['novvy-outro-countdown'].hidden,'双 playable：片尾结束后收起倒计时');
+ const oneCd=playback();
+ oneCd.emit('novvy:victory');await flush();
+ oneCd.video.duration=10;oneCd.video.currentTime=9;oneCd.video.emit('timeupdate');
+ assert.check(oneCd.nodes['novvy-outro-countdown'].hidden&&oneCd.counts().buzzes===0,'单 playable 片尾通向结算停留，不出倒计时');
+ const introCd=introSandbox();
+ introCd.video.duration=10;
+ introCd.emit('timeupdate');
+ assert.check(introCd.nodes['novvy-intro-countdown'].hidden&&introCd.buzzes.length===0,'片头剩余时间充足时不显示倒计时');
+ introCd.video.currentTime=7;introCd.emit('timeupdate');
+ assert.equal([introCd.nodes['novvy-intro-countdown'].innerHTML,introCd.buzzes.length],['<span>3</span>',1],'片头最后 3 秒亮出倒计时 3 并伴随轻震动');
+ introCd.video.currentTime=8;introCd.emit('timeupdate');
+ introCd.video.currentTime=9;introCd.emit('timeupdate');
+ assert.equal([introCd.nodes['novvy-intro-countdown'].innerHTML,introCd.buzzes.length],['<span>1</span>',3],'片头倒计时逐秒切换 2→1，每次数字都震动');
+ introCd.video.currentTime=4;introCd.emit('timeupdate');
+ assert.check(introCd.nodes['novvy-intro-countdown'].hidden,'剩余时间回到 3 秒外时片头倒计时收起');
+ introCd.video.ended=true;introCd.emit('ended');
+ assert.check(introCd.nodes['novvy-intro-countdown'].hidden,'片头结束收起倒计时，可直接进入 playable');
+ for (const [file,needle] of [['intro/intro.html','novvy-intro-countdown'],['outro/outro.html','novvy-outro-countdown'],['intro/intro.css','novvy-countdown-pop'],['outro/outro.css','novvy-countdown-pop']]) {
+  assert.check(fs.readFileSync(path.join(overlay,file),'utf8').includes(needle),`倒计时 DOM 与动画样式进入覆盖层 ${file}`);
+ }
 
  const {GameAudio}=await import('../../template-core/colorever/src/game-audio.js');
  const previous={document:globalThis.document,window:globalThis.window};

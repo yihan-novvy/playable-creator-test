@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "engineSha256": "14477bfaf481f1dcfc7d521e61f559368c019717ab4dc900ad732ff6a5396162",
+  "engineSha256": "6535603bc3f81ee98498ea8c4f3525c3c4f7b080a50c247d3a80107f8616af2c",
   "patterns": [
     {
       "id": "cat",
@@ -45,11 +45,21 @@
     {
       "id": "contract",
       "name": "协议合同",
-      "description": "白色折角纸页、英文 PACT 标题、勾选条款、双方签名栏与蓝色签字笔组成的立体拼珠协议",
+      "description": "白色折角纸页、英文 PACT 标题、勾选条款与英文 SIGN 签字栏组成的立体拼珠协议",
       "level": "contract.json",
-      "levelSha256": "a02303bd9c00509c8a9daaad95aa0ae0a7f985030de31f1edb3a71f4e0173e9a",
+      "levelSha256": "0beaac89391abf1a337a7f4caffd40c191a8681a79bc71a897b97cd0f89cc4e5",
       "proof": {
         "moves": 6
+      }
+    },
+    {
+      "id": "bank",
+      "name": "银行账户余额",
+      "description": "深蓝手机屏幕、英文 BANK 标题、绿色美元余额卡片与账户明细组成的立体拼珠图案",
+      "level": "bank.json",
+      "levelSha256": "9c929280585daf5376a6d11afa34da55a7b1903e29639cfa8344879fa3c41377",
+      "proof": {
+        "moves": 5
       }
     }
   ]

@@ -28,10 +28,15 @@
       "id": "contract",
       "name": "协议合同",
       "path": "game/patterns/contract.json"
+    },
+    {
+      "id": "bank",
+      "name": "银行账户余额",
+      "path": "game/patterns/bank.json"
     }
   ],
   "constants": {
-    "engineSha256": "14477bfaf481f1dcfc7d521e61f559368c019717ab4dc900ad732ff6a5396162",
+    "engineSha256": "6535603bc3f81ee98498ea8c4f3525c3c4f7b080a50c247d3a80107f8616af2c",
     "patternsCatalog": "game/patterns/catalog.json"
   }
 }
