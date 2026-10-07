@@ -11,14 +11,33 @@ import {coloreverHtml,coloreverLevel,coloreverPatterns} from '../plugins/colorev
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const custom=()=>({name:'Custom house </script><script>bad()</script>',width:8,height:6,colors:{10:'#123456',20:'#fedcba',30:'#ff0055'},target:Array.from({length:48},(_,i)=>i<8?0:i%3===0?10:i%3===1?20:30),capacity:12,trayCols:4,difficulty:10,seed:7,decoration:'none'});
 export default async function run(assert){
- const bridgeListeners=new Map();let endCardCalls=0,engineClicks=0;
- const fakeElement=()=>({id:'',type:'',className:'',textContent:'',hidden:false,style:{},setAttribute(){},addEventListener(){},appendChild(){}});
- const bridgeSandbox={window:{__COLOREVER_CTA_URL__:'',addEventListener:(event,fn)=>bridgeListeners.set(event,fn),showEndCard:()=>{endCardCalls+=1;},novvyHandleAdClick:()=>{engineClicks+=1;}},document:{hidden:false,readyState:'complete',getElementById:()=>null,addEventListener(){},createElement:fakeElement,head:null,body:{appendChild(){}}}};
  const bridgeSource=fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/cta-bridge/cta-bridge.js'),'utf8');
- vm.runInNewContext(bridgeSource,bridgeSandbox);
- bridgeListeners.get('novvy:victory')();
- assert.equal([endCardCalls,engineClicks],[1,1],'胜利即显露注入引擎结算卡片并经引擎统一转化');
- assert.check(!bridgeSource.includes('novvyEndCard')&&!bridgeSource.includes('NovvyAnalytics'),'转化桥不操控服务卡片层级、不携带事件上报');
+ assert.check(!bridgeSource.includes('novvyEndCard')&&!bridgeSource.includes('downloadBtn')&&!bridgeSource.includes('pointer-events'),'转化桥零 DOM 耦合：不引用服务卡片与任何元素结构');
+ function bridgeRun({intro=false,engine=true,outro=false}={}){
+  const listeners=new Map();let endCards=0,engineClicks=0,opens=0;
+  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyBridgeVersion:1,novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener(){}},setTimeout(){},clearTimeout(){}};
+  vm.runInNewContext(bridgeSource,sandbox);
+  return {counts:()=>({endCards,engineClicks,opens}),emit:(name,detail)=>{for(const fn of listeners.get(name)||[])fn({detail});}};
+ }
+ const plain=bridgeRun();
+ assert.equal(plain.counts(),{endCards:1,engineClicks:0,opens:0},'无片头时加载即经服务公开 API 亮出结算卡片');
+ plain.emit('novvy:victory');
+ assert.equal(plain.counts(),{endCards:1,engineClicks:1,opens:0},'胜利经注入引擎统一转化，不重复亮卡');
+ const gated=bridgeRun({intro:true});
+ assert.equal(gated.counts().endCards,0,'片头期间不亮卡片');
+ gated.emit('novvy:intro-finished',{reason:'video_ended'});
+ assert.equal(gated.counts().endCards,1,'片头播完进入试玩时亮出结算卡片');
+ const withOutro=bridgeRun({intro:true,outro:true});
+ withOutro.emit('novvy:intro-finished',{reason:'video_ended'});
+ assert.equal(withOutro.counts().endCards,1,'有片尾时试玩开始同样亮卡');
+ withOutro.emit('novvy:victory');
+ assert.equal(withOutro.counts().engineClicks,0,'有片尾时胜利不立即转化，交给片尾事件链');
+ withOutro.emit('novvy:outro-finished',{reason:'video_ended'});
+ assert.equal(withOutro.counts().engineClicks,0,'片尾播完等待 1 秒后才主动转化，当前不立即跳转');
+ const preview=bridgeRun({engine:false});
+ preview.emit('novvy:victory');
+ assert.equal(preview.counts().opens,1,'预览环境无注入引擎时胜利走裸兜底链跳转');
+ assert.check(!bridgeSource.includes('NovvyAnalytics'),'转化桥不携带事件上报');
  const hudListeners=new Map(),hudNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-progress-label','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',style:{setProperty(){}},setAttribute(){}}]));
  const hudSandbox={window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}},addEventListener:(event,fn)=>hudListeners.set(event,fn)},document:{getElementById:id=>hudNodes[id]}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),hudSandbox);

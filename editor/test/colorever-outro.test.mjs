@@ -28,14 +28,14 @@ function playback({enabled=true,rejectPlay=false,withEngine=false}={}){
  const sandbox={document,window,setTimeout:(fn,delay)=>{delays.push(delay);timers.push(fn);return timers.length-1;},clearTimeout:id=>{timers[id]=null;},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
  vm.runInNewContext(fs.readFileSync(path.join(overlay,'cta-bridge/cta-bridge.js'),'utf8'),sandbox);
  if(enabled)vm.runInNewContext(fs.readFileSync(path.join(overlay,'outro/outro.js'),'utf8'),sandbox);
- return {nodes,document,video,window,timers,delays,counts:()=>({plays,opens,resets,pauses,cards,engineClicks}),button:()=>nodes['downloadBtn'],emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
+ return {nodes,document,video,window,timers,delays,counts:()=>({plays,opens,resets,pauses,cards,engineClicks}),emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
 }
 const flush=()=>new Promise(resolve=>setImmediate(resolve));
 
 export default async function run(assert){
  const p=playback();
  assert.equal(p.counts().plays,0,'片尾在页面加载时不播放');
- assert.check(p.button()&&!p.button().hidden,'页面加载即显示游戏期下载按钮');
+ assert.check(p.counts().cards===1,'无片头时加载即请服务亮出结算卡片');
  p.emit('novvy:hud-progress',{percent:100,correct:270,total:270});
  assert.check(p.nodes['novvy-video-outro'].hidden&&p.counts().plays===0,'达到 100% 时等待完成效果，不提前播放');
  p.emit('novvy:victory');await flush();
@@ -50,12 +50,10 @@ export default async function run(assert){
  sound.emit('click',{stopPropagation(){}});
  assert.check(!p.video.muted&&sound.innerHTML===soundOn,'再次点击恢复声音和图标');
  assert.equal([p.counts().opens,p.timers.length],[0,0],'片尾播放前不跳转、不安排重开');
- const btn=p.button();
- assert.check(btn&&btn.hidden,'胜利触发片尾后收起游戏期下载按钮');
+ assert.equal(p.counts().cards,1,'结算卡片自试玩开始常驻亮出');
  p.video.currentTime=4.9;p.video.emit('timeupdate');
- assert.equal(p.counts().cards,0,'片尾不足 5 秒时不显露注入引擎结算卡片');
  p.video.currentTime=5;p.video.emit('timeupdate');
- assert.check(p.counts().cards===1&&p.counts().opens===0,'片尾播放 5 秒后显露注入引擎结算卡片，不提前自动跳转');
+ assert.equal(p.counts().opens,0,'片尾播放中不提前主动转化');
  p.emit('novvy:victory');await flush();
  assert.equal(p.counts().plays,1,'重复胜利事件不会重播或打断片尾');
  p.emit('novvy:viewablechange',{viewable:false});
@@ -75,18 +73,11 @@ export default async function run(assert){
  assert.check(!p.nodes['novvy-video-outro'].hidden&&p.video.currentTime===10&&p.counts().resets===0,'从 CTA 返回后停留片尾最后一帧，不重开');
  p.video.emit('ended');assert.equal(p.counts().opens,1,'重复结束事件只转化一次');
  const bare=playback({enabled:false});bare.emit('novvy:victory');
- assert.equal([bare.counts().opens,bare.counts().resets,bare.timers.length],[1,0,0],'无片尾时立即跳转，但没有固定时间重开');
- bare.emit('novvy:viewablechange',{viewable:true});assert.equal(bare.counts().resets,0,'未离开页面时不会误判为返回');
- bare.emit('novvy:viewablechange',{viewable:false});assert.equal(bare.counts().resets,0,'跳转离开时尚不重开');
- bare.emit('novvy:viewablechange',{viewable:true});assert.equal(bare.counts().resets,1,'SDK 通知返回后才重开 playable');
- bare.emit('novvy:viewablechange',{viewable:true});assert.equal(bare.counts().resets,1,'重复返回通知不重复重开');
- bare.emit('novvy:victory');bare.document.hidden=true;bare.emit('document:visibilitychange');bare.document.hidden=false;bare.emit('document:visibilitychange');
- assert.equal([bare.counts().opens,bare.counts().resets],[2,2],'下一局仍可跳转，并通过浏览器可见性事件在返回后重开');
- const noCard=playback({enabled:false});noCard.emit('novvy:victory');
- assert.equal(noCard.counts().opens,1,'无片尾时完成后仍立即自动跳转');
- assert.check(noCard.counts().cards===1,'无片尾的胜利同时显露注入引擎结算卡片');
+ assert.equal([bare.counts().opens,bare.counts().cards,bare.timers.length],[1,1,0],'无片尾时胜利即主动转化，卡片自试玩起常驻亮出');
+ bare.emit('novvy:viewablechange',{viewable:true});bare.emit('novvy:victory');
+ assert.equal([bare.counts().opens,bare.counts().resets],[1,0],'终态之后返回与重复胜利不再重复跳转，也没有重开链路');
  const engine=playback({enabled:false,withEngine:true});engine.emit('novvy:victory');
- assert.equal([engine.counts().cards,engine.counts().engineClicks,engine.counts().opens],[1,1,1],'注入引擎在场时转化经引擎统一上报并跳转，不重复调用');
+ assert.equal([engine.counts().cards,engine.counts().engineClicks,engine.counts().opens],[1,1,1],'注入引擎在场时终态转化经引擎统一上报并跳转，不重复调用');
  const interrupted=playback();interrupted.emit('novvy:victory');await flush();interrupted.video.emit('ended');
  assert.check(interrupted.counts().cards>=1,'短于 5 秒的片尾结束时也显露结算卡片');
  interrupted.document.hidden=true;interrupted.emit('document:visibilitychange');
