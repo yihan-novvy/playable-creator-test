@@ -1,2 +1,2 @@
-// All five petals, the flower center and leaf sprays use the shared bead mosaic.
+// Flower, leaves, dark green background and colored board rim share mosaic beads.
 export function decorate(context) {}

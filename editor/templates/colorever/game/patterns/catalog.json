@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "096aa4f0b2e0fc47529907868e869c967c1f1ca51373b91bfd0c9376598cd0e0",
+  "engineSha256": "d391ca8a0527bce82644d04e0cdb11e1d52bc7b172223ae41fb98e0283c1646f",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
@@ -77,16 +77,16 @@
     {
       "id": "portrait",
       "name": "短发人像",
-      "description": "参考照片的侧梳短发、皱眉眼神、肤色明暗与深蓝衣领组成的立体拼珠人脸图案",
+      "description": "正面短发人脸、对称眉眼与深蓝衣领，脸部采用三种肤色和简洁明暗分区",
       "level": "portrait.json",
-      "templateSha256": "81d715953d0fc13537eae4a67add53dbf982df3ac4fe23d5bafb50308e7c385a"
+      "templateSha256": "a20142c14c1b609e4e94803ea947420f7e271b1a0498a1642eba2c394051fabe"
     },
     {
       "id": "rafflesia",
       "name": "粉瓣霸王花",
-      "description": "五瓣粉红与蜜桃色花瓣围绕橙黄花心，点缀黄色花纹和嫩绿叶片的立体拼珠霸王花",
+      "description": "粉红与蜜桃色五瓣花、橙黄花心和嫩绿叶片，搭配墨绿色拼珠底色、青绿边缘与金黄底边",
       "level": "rafflesia.json",
-      "templateSha256": "80c396c390ff0e94791c789cf9170bdf9eadc089e02afe198924514bc38a7f5e"
+      "templateSha256": "f52362727d464fcc627af4a9715815417eb8ae66590575d754db4757aa2f3933"
     }
   ]
 }

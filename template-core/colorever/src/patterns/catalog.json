@@ -144,14 +144,14 @@
   {
     "id": "portrait",
     "name": "短发人像",
-    "description": "参考照片的侧梳短发、皱眉眼神、肤色明暗与深蓝衣领组成的立体拼珠人脸图案",
+    "description": "正面短发人脸、对称眉眼与深蓝衣领，脸部采用三种肤色和简洁明暗分区",
     "level": "portrait.json",
     "module": "portrait.js"
   },
   {
     "id": "rafflesia",
     "name": "粉瓣霸王花",
-    "description": "五瓣粉红与蜜桃色花瓣围绕橙黄花心，点缀黄色花纹和嫩绿叶片的立体拼珠霸王花",
+    "description": "粉红与蜜桃色五瓣花、橙黄花心和嫩绿叶片，搭配墨绿色拼珠底色、青绿边缘与金黄底边",
     "level": "rafflesia.json",
     "module": "rafflesia.js"
   }

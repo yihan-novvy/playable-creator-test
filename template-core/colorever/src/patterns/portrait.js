@@ -1,2 +1,2 @@
-// Hair, eyes, facial shading and collar are all drawn with the shared mosaic beads.
+// Front-facing facial features use shared beads, with three skin tones and no extra accessories.
 export function decorate(context) {}
