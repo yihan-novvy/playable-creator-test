@@ -31,7 +31,7 @@ export function validateLevel(input){
   }
   const colorNames={};for(const id of Object.keys(colors))colorNames[id]=String(input.colorNames?.[id]||`颜色 ${id}`).slice(0,40);
   const decoration=input.decoration??'none';
-  if(!['cat','none'].includes(decoration))fail('未知装饰类型');
+  if(!['cat','chick','phoenix','none'].includes(decoration))fail('未知装饰类型');
   const decorations={};
   if(input.decorations!==undefined){
     if(!input.decorations||typeof input.decorations!=='object'||Array.isArray(input.decorations)||Object.keys(input.decorations).length>16)fail('装饰微调必须为最多 16 项的对象');

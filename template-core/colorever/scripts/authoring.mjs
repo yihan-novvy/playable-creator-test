@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {prepareLevel} from '../src/level.js';
+import {prepareLevel,validateLevel} from '../src/level.js';
 const sourceRoot=fileURLToPath(new URL('../',import.meta.url));
 const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
 async function body(req){let text='';for await(const chunk of req){text+=chunk;if(text.length>1024*1024)throw new Error('图案数据超过 1 MB');}return JSON.parse(text);}
@@ -18,11 +18,15 @@ export function authoringPlugin({root=sourceRoot}={}){return {name:'colorever-au
    if((segments.length===3&&req.method==='PUT')||(segments.length===4&&segments[3]==='preview'&&['GET','POST'].includes(req.method))){
     const input=req.method==='GET'?saved:await body(req);
     if(input.decoration!==saved.decoration)throw new Error('不能替换图案的专属装饰模块');
-    const {level,proof}=prepareLevel(input);
     if(req.method==='PUT'){
+     // 保存标准图案:不再烘焙具体开局。开局模式与随机参数属于广告任务,由
+     // 广告编辑器在生成任务时决定;这里存下的 openingMode/difficulty/seed 仅
+     // 作为开发页与离线样例的演示默认。
+     const level=validateLevel({...input,opening:null});
      const temp=file+'.tmp';await fs.writeFile(temp,JSON.stringify(level,null,2)+'\n');await fs.rename(temp,file);
      return json(res,200,level);
     }
+    const {level,proof}=prepareLevel(input);
     if(url.searchParams.get('completed')==='1')level.opening=[...level.target];
     const inline=value=>JSON.stringify(value).replaceAll('<','\\u003c');
     let html=await fs.readFile(path.join(root,'index.html'),'utf8');

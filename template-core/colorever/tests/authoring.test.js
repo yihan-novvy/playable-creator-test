@@ -6,7 +6,7 @@ import os from 'node:os';
 import http from 'node:http';
 import {authoringPlugin} from '../scripts/authoring.mjs';
 import {compilePatterns} from '../scripts/pattern-artifact.mjs';
-test('Colorever alone owns visual authoring, source saves, preview and build-time openings',async()=>{
+test('Colorever owns visual authoring and saves standard patterns without baked openings',async()=>{
  const root=await fs.mkdtemp(path.join(os.tmpdir(),'colorever-authoring-'));
  let server;
  try{
@@ -24,9 +24,9 @@ test('Colorever alone owns visual authoring, source saves, preview and build-tim
   assert.ok(html.includes('/src/main.js')&&html.includes('"offsetX":0.7'));assert.ok(!html.includes('Author </script>'));
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(root,'src/patterns/cat.json'),'utf8')),original);
   const saved=await fetch(base+'/api/patterns/cat',{...options,method:'PUT'});assert.equal(saved.status,200);
-  const data=await saved.json();assert.equal(data.openingMode,'easy');assert.ok(Array.isArray(data.opening));
+  const data=await saved.json();assert.equal(data.openingMode,'easy');assert.equal(data.opening,null);
   assert.deepEqual(JSON.parse(await fs.readFile(path.join(root,'src/patterns/cat.json'),'utf8')),data);
   const bad=await fetch(base+'/api/patterns/cat',{...options,method:'PUT',body:JSON.stringify({...draft,target:[255]})});assert.equal(bad.status,400);
-  const built=await compilePatterns();assert.ok(built.every(p=>Array.isArray(p.level.opening)&&Number.isInteger(p.proof.moves)));
+  const built=await compilePatterns();assert.ok(built.every(p=>p.level.opening===null&&Number.isInteger(p.level.seed)));
  }finally{if(server)await new Promise(resolve=>server.close(resolve));await fs.rm(root,{recursive:true,force:true});}
 });

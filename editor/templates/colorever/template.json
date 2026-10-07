@@ -36,8 +36,9 @@
       "right": "upload"
     },
     "patternId": "cat",
+    "opening": { "mode": "easy", "difficulty": 21, "seed": 1 },
     "playableCta": { "mode": "complete", "afterSteps": 8 },
-    "secondPlayable": { "enabled": false, "patternId": "house", "cta": { "mode": "steps", "afterSteps": 8 } }
+    "secondPlayable": { "enabled": false, "patternId": "house", "opening": { "mode": "easy", "difficulty": 21, "seed": 1 }, "cta": { "mode": "steps", "afterSteps": 8 } }
   },
   "overlays": {
     "hud": "overlays/hud",

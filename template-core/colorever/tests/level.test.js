@@ -35,7 +35,7 @@ test('Picture-specific transforms survive normalization and reject invalid range
 });
 
 test('Easy mode has four connected patches and completes in five or six placements across seeds',()=>{
- for(const id of ['cat','house','axe','torch','contract','bank']){
+ for(const id of ['cat','house','axe','torch','contract','bank','phoenix']){
   const source=JSON.parse(fs.readFileSync(new URL(`../src/patterns/${id}.json`,import.meta.url)));
   for(let seed=0;seed<30;seed++){
    const input={...source,opening:null,openingMode:'easy',seed};

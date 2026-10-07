@@ -1,5 +1,6 @@
 import {compilePatterns} from './pattern-artifact.mjs';
 import {createHash} from 'node:crypto';
+import {build} from 'vite';
 import {buildGameBundle} from './build-game-bundle.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -22,14 +23,24 @@ for(const [name,content]of [['index.html',html],['game.js',script]]){
   console.log(`${path.join(out,name)} (${Buffer.byteLength(content).toLocaleString()} bytes)`);
 }
 
-// Export only fixed, validated data. No editor, decoration source, or generators.
+// Export validated pattern templates plus the opening engine. Patterns carry no
+// baked opening; the ad editor generates per-task openings via the engine.
 const hash=text=>createHash('sha256').update(text).digest('hex');
-const catalog={version:1,engineSha256:hash(script),patterns:[]};
+// 开局引擎(prepareLevel/validateLevel/solveLevel 及 model 依赖)打成自包含 ESM,
+// 广告编辑器按任务配置即时生成开局;sha 经 catalog 与 manifest 双重锁定。
+const engineBuild=await build({configFile:false,root,publicDir:false,build:{write:false,minify:true,cssCodeSplit:false,lib:{entry:path.join(root,'src/level.js'),formats:['es']},rollupOptions:{output:{inlineDynamicImports:true}}}});
+const engine=(Array.isArray(engineBuild)?engineBuild:[engineBuild]).flatMap(r=>r.output).filter(o=>o.type==='chunk').map(o=>o.code).join('\n');
+if(/(?:^|[;\n])\s*import\s/.test(engine))throw new Error('Level engine retains external imports');
+if(!/\bprepareLevel\b/.test(engine))throw new Error('Level engine lost its entry exports');
+await fs.writeFile(path.join(out,'level-engine.mjs'),engine);
+console.log(`${path.join(out,'level-engine.mjs')} (${Buffer.byteLength(engine).toLocaleString()} bytes)`);
+const catalog={version:2,engineSha256:hash(script),levelEngine:'level-engine.mjs',levelEngineSha256:hash(engine),patterns:[]};
 await fs.mkdir(path.join(out,'patterns'),{recursive:true});
 for(const picture of pictures){
  const file=picture.id+'.json',text=JSON.stringify(picture.level);
+ if(picture.level.opening!==null)throw new Error('Pattern template must not carry a baked opening');
  await fs.writeFile(path.join(out,'patterns',file),text);
- catalog.patterns.push({id:picture.id,name:picture.name,description:picture.description,level:file,levelSha256:hash(text),proof:picture.proof});
+ catalog.patterns.push({id:picture.id,name:picture.name,description:picture.description,level:file,templateSha256:hash(text)});
 }
 await fs.writeFile(path.join(out,'patterns/catalog.json'),JSON.stringify(catalog,null,2)+'\n');
 
@@ -41,7 +52,7 @@ const manifest={
   version,
   entry:'game/index.html',
   levels:pictures.map(picture=>({id:picture.id,name:picture.name,path:`game/patterns/${picture.id}.json`})),
-  constants:{engineSha256:catalog.engineSha256,patternsCatalog:'game/patterns/catalog.json'},
+  constants:{engineSha256:catalog.engineSha256,patternsCatalog:'game/patterns/catalog.json',levelEngine:'game/level-engine.mjs',levelEngineSha256:catalog.levelEngineSha256},
 };
 await fs.writeFile(path.resolve(out,'..','game-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
 console.log(path.resolve(out,'..','game-manifest.json'));

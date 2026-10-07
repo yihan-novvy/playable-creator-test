@@ -13,12 +13,12 @@ export function prerequisites(config) {
 }
 
 export async function run(ctx) {
-  const { level } = coloreverLevel(ctx.templateRoot, ctx.config, ctx.template);
+  const { level } = await coloreverLevel(ctx.templateRoot, ctx.config, ctx.template);
   const generated = path.join(ctx.generatedDir, 'level.json');
   requireFiles([generated]);
   if (JSON.stringify(JSON.parse(fs.readFileSync(generated, 'utf8'))) !== JSON.stringify(level)) throw new Error('关卡已改变，请重新运行关卡步骤');
   const enabled = { intro: ctx.config.intro?.enabled === true, outro: ctx.config.outro?.enabled === true && fs.existsSync(ctx.uploads['outro-video']), hud: ctx.config.hud?.enabled === true, background: ctx.config.background?.enabled === true };
-  const phase2 = coloreverPhase2(ctx.templateRoot, ctx.config, ctx.template, enabled.outro);
+  const phase2 = await coloreverPhase2(ctx.templateRoot, ctx.config, ctx.template, enabled.outro);
   if (phase2) {
     const generated2 = path.join(ctx.generatedDir, 'level2.json');
     requireFiles([generated2]);
@@ -34,7 +34,7 @@ export async function run(ctx) {
   }
   if (enabled.background) files.push([path.join(ctx.generatedDir, 'background.webp'), 'background.webp']);
   requireFiles(files.map(([source]) => source));
-  const built = coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, outroVideo: enabled.outro ? 'outro-video.mp4' : null, hudLeft: hudMedia.left ?? null, hudRight: hudMedia.right ?? null, background: enabled.background ? 'background.webp' : null } });
+  const built = await coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, outroVideo: enabled.outro ? 'outro-video.mp4' : null, hudLeft: hudMedia.left ?? null, hudRight: hudMedia.right ?? null, background: enabled.background ? 'background.webp' : null } });
   enabled.hud = built.injection.hudEnabled;
   fs.rmSync(ctx.resultDir, { recursive: true, force: true });
   fs.mkdirSync(ctx.resultDir, { recursive: true });

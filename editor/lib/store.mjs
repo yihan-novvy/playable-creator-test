@@ -107,9 +107,9 @@ export function deleteTask(id) {
 // 少了它,配置界面的全部图案参数会被静默丢弃。
 const CONFIG_PATCH_WHITELIST = new Set(['hud', 'intro', 'cta', 'recolorPortraits', 'patternSource', 'background', 'pattern', 'patternConfig', 'patternCrop', 'hudImageSource', 'hudCrop', 'win']);
 
-// Water Sort 保存关卡数据；Colorever New 任务仅选择完整图案 ID。
+// Water Sort 保存关卡数据；Colorever New 选择图案 ID 与任务级开局参数。
 const CONFIG_WHITELISTS = new Map([
-  ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','playableCta','secondPlayable'])],
+  ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','opening','playableCta','secondPlayable'])],
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId'])],
 ]);
@@ -154,6 +154,8 @@ export function updateTaskConfig(id, patch) {
   if ('win' in (patch || {})) delete doc.steps.pack;
   // 转化时机只影响 pack 内联数据;第二关还影响 level 步骤写出的 level2.json。
   if ('playableCta' in (patch || {})) delete doc.steps.pack;
+  // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
+  if ('opening' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
   if ('secondPlayable' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
   // 关卡编辑会让 water-sort 的校验产物与打包同时过期(colorever 任务的 level
   // 键进不了白名单,这里天然不可达)。

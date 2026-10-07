@@ -39,15 +39,36 @@ window.PlayablePlugins = window.PlayablePlugins || {};
   }
   let pictures=[];
   async function saveLevel(){await saving;}
+  // 开局模式与随机种子是广告任务的核心玩法决策:同一图案可按任务生成不同
+  // 开局。种子决定确定的开局,便于复现与对比。
+  function openingControls(getOpening, patchOpening) {
+    const wrap=el('div',{class:'dragon-config-grid'});
+    const mode=el('select',{'aria-label':'开局模式'});
+    for (const [value,label] of [['easy','简易模式 · 整块搬运（验证 ≤6 步完成）'],['scattered','零散模式 · 碎块归位']]) mode.append(el('option',{value},[label]));
+    mode.value=getOpening()?.mode??'easy';
+    mode.onchange=async()=>{await save(patchOpening({mode:mode.value}));await refresh(true);};
+    wrap.append(field('开局模式',mode));
+    if(mode.value==='scattered'){
+      const difficulty=el('input',{type:'number',min:1,max:100,step:1,value:getOpening()?.difficulty??21});
+      difficulty.onchange=async()=>{await save(patchOpening({difficulty:Number(difficulty.value)}));await refresh(true);};
+      wrap.append(field('打散对数（1–100）',difficulty));
+    }
+    const seed=el('input',{type:'number',min:0,max:2147483647,step:1,value:getOpening()?.seed??1});
+    seed.onchange=async()=>{await save(patchOpening({seed:Number(seed.value)}));await refresh(true);};
+    const shuffle=el('button',{onclick:async()=>{await save(patchOpening({seed:((Number(getOpening()?.seed??1)+1)%2147483648)}));await refresh(true);}},['换一个开局']);
+    wrap.append(field('随机种子',seed),shuffle);
+    wrap.append(el('p',{class:'hint'},[mode.value==='easy'?'整块搬运开局，出题器验证 6 次搬运内可完成。':'随机交换珠子生成开局，打散对数越高碎块越多；同一种子总是得到同一开局。']));
+    return wrap;
+  }
   function renderConfig(){
-    document.getElementById('config-hint').textContent='选择已制作好的完整图案模板。仅使用 colorever 构建的固定图案与开局，广告任务不修改玩法参数。';
+    document.getElementById('config-hint').textContent='选择已构建的图案模板；本任务的开局模式与随机种子在「关卡生成与校验」步骤中设置，第二关的开局在其专属设置区。';
     const root=document.getElementById('config-grid');root.textContent='';
     const wrap=el('div',{class:'dragon-config',style:'grid-column:1/-1'});
     const select=el('select',{'aria-label':'图案模板'});
     for(const p of pictures)select.append(el('option',{value:p.id},[p.name]));
     select.value=config().patternId??'cat';
     select.onchange=async()=>{await save({patternId:select.value});await refresh(true);};
-    wrap.append(field('图案模板',select),el('p',{class:'hint'},[pictures.find(p=>p.id===select.value)?.description??'']),el('span',{class:'hint'},['图案和玩法参数由 colorever 构建提供。']));
+    wrap.append(field('图案模板',select),el('p',{class:'hint'},[pictures.find(p=>p.id===select.value)?.description??'']),el('span',{class:'hint'},['图案由 colorever 构建提供；开局由本任务的开局参数即时生成并验证。']));
     const toggles=[
       checkbox('使用开场视频','intro','enabled'),checkbox('显示顶部立绘图片','hud','enabled'),checkbox('显示顶部立绘 title','hud','titleEnabled',titleEnabled()),checkbox('使用背景','background','enabled'),checkbox('使用片尾视频','outro','enabled'),
     ];
@@ -184,6 +205,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
         el('div',{class:'dragon-config-grid'},[checkbox('启用第二个 playable','secondPlayable','enabled',config().secondPlayable?.enabled===true)]),
         field('第二关图案',select2),
         el('p',{class:'hint'},[pictures.find(p=>p.id===select2.value)?.description??'']),
+        openingControls(()=>config().secondPlayable?.opening,patch=>({secondPlayable:{opening:patch}})),
         ctaTimingControls(()=>config().secondPlayable?.cta,patch=>({secondPlayable:{cta:patch}})),
       ]);
     }
@@ -220,7 +242,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     if(backgroundSource.value.startsWith('video-')) backgroundInputs.push(el('p',{class:'hint'},['使用“开场视频”步骤上传的 MP4，无需开启视频播放或先生成海报。']));
     else backgroundInputs.push(upload('background','背景图片 PNG / JPG','image/png,image/jpeg'));
     const background = card('background', 4, '自定义背景', config().background?.enabled ? '选择上传图片或片头视频的首帧、尾帧，调整模糊程度后运行。' : '已关闭：游戏使用自带纯色底。', backgroundInputs, renderBackgroundPreview);
-    const level = card('level', 5, '图案模板校验', '读取所选模板的固定图案和装饰，并验证开局可完成。', [], (right) => {
+    const level = card('level', 5, '关卡生成与校验', '选择开局模式与随机种子，从所选图案生成开局，并以真实解法回放验证可完成。换种子即换一个开局。', [openingControls(()=>config().opening,patch=>({opening:patch}))], (right) => {
       right.append(el('button', { onclick: () => mountPlayPreview(right, `/api/tasks/${taskId}/preview?v=${Date.now()}`) }, ['试玩当前关卡']));
     });
     const pack = card('pack', 6, '打包', '组合游戏、所选关卡与已启用素材，生成可导出的 H5 ZIP。', [], (right) => {

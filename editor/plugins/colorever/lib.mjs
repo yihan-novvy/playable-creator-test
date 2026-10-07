@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
+import { pathToFileURL } from 'node:url';
 import { buildWsOverlayInjection } from '../../core/lib/ws-overlays.mjs';
 import { effectiveConfig } from '../../core/runner.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
@@ -14,7 +15,7 @@ function catalogFile(root, template) {
 
 function artifact(root, template) {
   const built = JSON.parse(fs.readFileSync(catalogFile(root, template), 'utf8'));
-  if (built.version !== 1 || !Array.isArray(built.patterns) || hash(fs.readFileSync(path.join(root, 'game/game.js'))) !== built.engineSha256) throw new Error('Colorever 构建产物不完整，请从源项目重新 build:template');
+  if (built.version !== 2 || !Array.isArray(built.patterns) || typeof built.levelEngine !== 'string' || !/^[-a-z0-9]+\.mjs$/.test(built.levelEngine) || hash(fs.readFileSync(path.join(root, 'game/game.js'))) !== built.engineSha256) throw new Error('Colorever 构建产物不完整，请从源项目重新 build:template');
   return built;
 }
 
@@ -22,15 +23,46 @@ export function coloreverPatterns(root, template) {
   return artifact(root, template).patterns.map(({ id, name, description }) => ({ id, name, description }));
 }
 
-export function coloreverLevel(root, config, template) {
+// 任务级开局参数：做广告时才决定开局模式与随机种子；非法值回退默认，
+// 与 normalizeCtaPolicy 同一套纪律。easy=整块搬运(验证 ≤6 步完成)。
+export function normalizeOpening(raw) {
+  const mode = raw?.mode === 'scattered' ? 'scattered' : 'easy';
+  const difficulty = Number.isInteger(raw?.difficulty) && raw.difficulty >= 1 && raw.difficulty <= 100 ? raw.difficulty : 21;
+  const seed = Number.isInteger(raw?.seed) && raw.seed >= 0 && raw.seed <= 2147483647 ? raw.seed : 1;
+  return { mode, difficulty, seed };
+}
+
+// 开局引擎由 build:template 随产物导出(catalog sha 锁定)。按 mtime 缓存
+// import,模板重建后自动换新;校验失败必须阻断交付而非静默回退。
+const engineCache = new Map();
+async function levelEngine(root, template) {
+  const built = artifact(root, template);
+  const file = path.join(root, 'game', built.levelEngine);
+  if (!fs.existsSync(file)) throw new Error('缺少开局引擎，请从源项目重新 build:template');
+  const key = `${file}:${fs.statSync(file).mtimeMs}`;
+  if (!engineCache.has(key)) {
+    engineCache.set(key, (async () => {
+      if (hash(fs.readFileSync(file)) !== built.levelEngineSha256) throw new Error('开局引擎与构建产物不匹配，请从源项目重新 build:template');
+      return import(pathToFileURL(file).href);
+    })());
+  }
+  return engineCache.get(key);
+}
+
+export async function coloreverLevel(root, config, template) {
   const id = config?.patternId ?? 'cat', picture = artifact(root, template).patterns.find((p) => p.id === id);
   if (!picture) throw new Error('未知已构建图案: ' + id);
   if (!/^[a-z][a-z0-9-]*\.json$/.test(picture.level)) throw new Error('无效的构建图案路径');
   const text = fs.readFileSync(path.join(root, 'game/patterns', picture.level), 'utf8');
-  if (hash(text) !== picture.levelSha256) throw new Error('固定图案数据已改变，请在 colorever 中修改并重新构建');
-  const level = JSON.parse(text);
-  if (!Array.isArray(level.opening)) throw new Error('构建产物缺少固定开局');
-  return { level, proof: picture.proof, patternId: id };
+  if (hash(text) !== picture.templateSha256) throw new Error('图案模板数据已改变，请在 colorever 中修改并重新构建');
+  const pattern = JSON.parse(text);
+  if (Array.isArray(pattern.opening)) throw new Error('构建产物携带固定开局，请从源项目重新 build:template');
+  const engine = await levelEngine(root, template);
+  const opening = normalizeOpening(config?.opening);
+  // 开局模式+打散+种子全部来自任务配置;prepareLevel 生成开局并以真实解法
+  // 回放验证,失败即拒绝(带可行动的错误信息)。
+  const { level, proof } = engine.prepareLevel({ ...pattern, openingMode: opening.mode, difficulty: opening.difficulty, seed: opening.seed });
+  return { level, proof, patternId: id, opening };
 }
 
 // CTA 时机策略(两关同构):complete=完成后跳转;steps=第 N 步跳转(N 不是上限,
@@ -42,16 +74,16 @@ export function normalizeCtaPolicy(raw, fallbackMode) {
 }
 
 // 双 playable 数据:仅在片尾已启用(存在片尾视频才算)时允许,否则视为未配置。
-// 第二关数据全量内联进 index.html,打包文件列表不变。
-export function coloreverPhase2(root, config, template, outroActive) {
+// 第二关数据全量内联进 index.html,打包文件列表不变。第二关开局同样由任务配置。
+export async function coloreverPhase2(root, config, template, outroActive) {
   if (!outroActive || config?.secondPlayable?.enabled !== true) return null;
-  const { level, patternId } = coloreverLevel(root, { ...config, patternId: config.secondPlayable.patternId ?? 'house' }, template);
+  const { level, patternId } = await coloreverLevel(root, { ...config, patternId: config.secondPlayable.patternId ?? 'house', opening: config.secondPlayable?.opening }, template);
   return { patternId, level, cta: normalizeCtaPolicy(config.secondPlayable?.cta, 'steps') };
 }
 
 const inline = (value) => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 
-export function coloreverHtml({ root, overlaysRoot, template, level, config, media = {}, preview = false }) {
+export async function coloreverHtml({ root, overlaysRoot, template, level, config, media = {}, preview = false }) {
   let html = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
   for (const anchor of [SCRIPT, '</head>', '<body>', '</body>']) if (html.split(anchor).length !== 2) throw new Error(`Colorever New 基础壳缺少唯一锚点 ${anchor}`);
   const url = '';
@@ -74,7 +106,7 @@ export function coloreverHtml({ root, overlaysRoot, template, level, config, med
   }
   // 双 playable:第二关数据与两关各自的 CTA 时机策略。第一关策略仅武装于
   // 无片尾场景(有片尾时第一关只负责引出片尾,转化由片尾链/第二关负责)。
-  const phase2 = coloreverPhase2(root, config, template, injection.outroEnabled);
+  const phase2 = await coloreverPhase2(root, config, template, injection.outroEnabled);
   const ctaPolicy = injection.outroEnabled ? null : normalizeCtaPolicy(config?.playableCta, 'complete');
   const portraitHudEnabled = injection.hudEnabled && config?.hud?.enabled === true;
   // 下载卡片移除后,画布不再需要为底部卡片留白。
@@ -94,10 +126,10 @@ export function coloreverHtml({ root, overlaysRoot, template, level, config, med
 }
 
 // 在线试玩预览（server /api/tasks/:id/preview 的插件钩子）。
-export function previewHtml({ plugin: entry, task, taskId }) {
+export async function previewHtml({ plugin: entry, task, taskId }) {
   const root = entry.templateDir;
   const config = effectiveConfig(entry.template, task.config);
-  const { level } = coloreverLevel(root, config, entry.template);
+  const { level } = await coloreverLevel(root, config, entry.template);
   const generated = (name) => fs.existsSync(path.join(taskGeneratedDir(taskId), name)) ? `/project/${taskId}/generated/${name}` : null;
   const intro = config.intro?.enabled === true, hud = config.hud?.enabled === true, bg = config.background?.enabled === true;
   const media = {
@@ -108,7 +140,7 @@ export function previewHtml({ plugin: entry, task, taskId }) {
     hudRight: hud ? generated('hud-right.webp') : null,
     background: bg ? generated('background.webp') : null,
   };
-  return coloreverHtml({ root, overlaysRoot: entry.dir, template: entry.template, level, config, preview: true, media }).html;
+  return (await coloreverHtml({ root, overlaysRoot: entry.dir, template: entry.template, level, config, preview: true, media })).html;
 }
 
 export { coloreverPatterns as patterns };

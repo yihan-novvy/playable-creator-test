@@ -78,5 +78,53 @@
     "description": "深蓝手机屏幕、英文 BANK 标题、绿色美元余额卡片与账户明细组成的立体拼珠图案",
     "level": "bank.json",
     "module": "bank.js"
+  },
+  {
+    "id": "phoenix",
+    "name": "金羽凤凰",
+    "description": "分层金白羽翼搭配朱红羽根、绛红羽影和橙红尾羽，保留原本轮廓并配专属杏仁亮眼与尖喙",
+    "level": "phoenix.json",
+    "module": "phoenix.js",
+    "editableParts": [
+      {
+        "id": "beak",
+        "name": "尖喙",
+        "x": 673.278,
+        "y": 1107.898
+      },
+      {
+        "id": "eye",
+        "name": "亮眼",
+        "x": 712.086,
+        "y": 1072.324
+      }
+    ]
+  },
+  {
+    "id": "chick",
+    "name": "金黄小鸡",
+    "description": "参照原图描绘斜额头、菱形橙喙、奶油黄圆腹和金橙色翘翼，搭配立体亮眼",
+    "level": "chick.json",
+    "module": "chick.js",
+    "editableParts": [
+      {
+        "id": "eye-chick",
+        "name": "亮眼",
+        "x": 560.55,
+        "y": 1212.31
+      },
+      {
+        "id": "beak",
+        "name": "小嘴",
+        "x": 426.57,
+        "y": 1318.57
+      },
+      {
+        "id": "feet",
+        "name": "脚爪",
+        "x": 717.63,
+        "y": 1983.85
+      }
+    ]
   }
 ]

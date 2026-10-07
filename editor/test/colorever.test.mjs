@@ -79,46 +79,46 @@ export default async function run(assert){
  assert.check(js.includes('__COLOREVER_PHASE2__')&&js.includes('__COLOREVER_CTA_POLICY__')&&js.includes('novvy:cta-moment')&&js.includes('novvy:phase2-start'),'双 playable 换关与 CTA 时机契约进入引擎');
  assert.check(html.includes('id="guide-hand"')&&js.includes(fs.readFileSync(path.join(root,'template-core/colorever/src/assets/guide-hand.png')).toString('base64')),'旧版手势图片内嵌，无额外图片依赖');
  assert.check(js.includes('.haptic(')&&js.includes('selection'),'SDK 震动反馈进入广告引擎');
- const {level}=coloreverLevel(templateRoot,{patternId:'house'},template);
+ const {level}=await coloreverLevel(templateRoot,{patternId:'house'},template);
  const overlayArgs={root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,media:{}};
  const progressPalette={progressTextColor:'#7d315c',progressFillColor:'#e76b3f',progressTrackColor:'#f5dfbd'};
  for(const enabled of [false,true]){
-  const colored=coloreverHtml({...overlayArgs,config:{hud:{enabled,titleEnabled:true,...progressPalette}}}).html;
+  const colored=(await coloreverHtml({...overlayArgs,config:{hud:{enabled,titleEnabled:true,...progressPalette}}})).html;
   assert.check(colored.includes('--colorever-progress-text:#7d315c')&&colored.includes('--colorever-progress-fill:#e76b3f')&&colored.includes('--colorever-progress-track:#f5dfbd'),'三个进度颜色同时应用到原生和立绘 HUD，立绘开关 '+enabled);
  }
- const invalidColor=coloreverHtml({...overlayArgs,config:{hud:{progressTextColor:'#fff;}body{display:none}'}}}).html;
+ const invalidColor=(await coloreverHtml({...overlayArgs,config:{hud:{progressTextColor:'#fff;}body{display:none}'}}})).html;
  assert.check(!invalidColor.includes('#fff;}body{display:none}'),'非法颜色不会注入 CSS');
- const withoutTitle=coloreverHtml({...overlayArgs,config:{hud:{enabled:false,titleEnabled:false}}}).html;
- const withTitle=coloreverHtml({...overlayArgs,config:{hud:{enabled:false,titleEnabled:true,titleLine1:'主标题',titleLine2:'副标题'}}}).html;
+ const withoutTitle=(await coloreverHtml({...overlayArgs,config:{hud:{enabled:false,titleEnabled:false}}})).html;
+ const withTitle=(await coloreverHtml({...overlayArgs,config:{hud:{enabled:false,titleEnabled:true,titleLine1:'主标题',titleLine2:'副标题'}}})).html;
  const shell=text=>text.match(/<style data-colorever-shell>([\s\S]*?)<\/style>/)[1];
  assert.equal(shell(withTitle),shell(withoutTitle),'仅标题开关不改变画布尺寸与原生进度');
  assert.check(withTitle.includes('id="novvy-training-hud" data-title-only')&&!withTitle.includes('id="novvy-hud-progress-label"')&&!withTitle.includes('id="novvy-hud-progress-fill"'),'仅标题模式不注入额外进度节点');
- const phase2Html=coloreverHtml({...overlayArgs,config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe',cta:{mode:'steps',afterSteps:8}}},media:{outroVideo:'outro-video.mp4'}}).html;
+ const phase2Html=(await coloreverHtml({...overlayArgs,config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe',cta:{mode:'steps',afterSteps:8}}},media:{outroVideo:'outro-video.mp4'}})).html;
  assert.check(phase2Html.includes('__novvyTwoPhase=true')&&phase2Html.includes('__COLOREVER_PHASE2__')&&phase2Html.includes('"patternId":"axe"'),'双 playable 配置内联第二关数据');
  assert.check(phase2Html.includes('__COLOREVER_CTA_POLICY__=null'),'有片尾时第一关不武装 CTA 策略');
- const phase2OffHtml=coloreverHtml({...overlayArgs,config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe'}},media:{}}).html;
+ const phase2OffHtml=(await coloreverHtml({...overlayArgs,config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe'}},media:{}})).html;
  assert.check(phase2OffHtml.includes('__novvyTwoPhase=false')&&phase2OffHtml.includes('__COLOREVER_PHASE2__=null'),'存在片尾视频才允许第二个 playable 生效');
- const policyHtml=coloreverHtml({...overlayArgs,config:{playableCta:{mode:'steps',afterSteps:8}}}).html;
+ const policyHtml=(await coloreverHtml({...overlayArgs,config:{playableCta:{mode:'steps',afterSteps:8}}})).html;
  assert.check(policyHtml.includes('__COLOREVER_CTA_POLICY__={"mode":"steps","afterSteps":8}')&&policyHtml.includes('__novvyTwoPhase=false'),'无片尾时第一关 CTA 策略注入');
  const titleOnlyNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',setAttribute(){}}]));
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),{window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}}},document:{getElementById:id=>titleOnlyNodes[id]}});
  assert.equal([titleOnlyNodes['novvy-hud-title-line1'].textContent,titleOnlyNodes['novvy-hud-title-line2'].textContent],['主标题','副标题'],'仅标题模式没有进度节点也可正常显示两行文字');
  level.name=custom().name;
- const injection=coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}}).html;
+ const injection=(await coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}})).html;
  for(const marker of ['id="novvy-video-intro"','id="novvy-training-hud"','id="novvy-dom-bg"','data-novvy-cta-bridge','__COLOREVER_CTA_URL__'])assert.check(injection.includes(marker),`叠层 ${marker} 注入`);
  assert.check(!injection.includes('id="novvy-cta"')&&!injection.includes('data-novvy-analytics')&&!injection.includes('data-novvy-cta>'),'下载卡片与埋点组不再随包，遗留 cta 配置不生效');
  assert.check(injection.includes('\\u003c/script>')&&!injection.includes('<script>bad()'),'作者字段不能逃逸内联脚本');
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'colorever-media-test-'));
  try{
   const generated=path.join(temp,'generated');fs.mkdirSync(generated);fs.mkdirSync(path.join(temp,'uploads'));
-  fs.writeFileSync(path.join(generated,'level.json'),JSON.stringify(coloreverLevel(templateRoot,{patternId:'house'},template).level));
+  fs.writeFileSync(path.join(generated,'level.json'),JSON.stringify((await coloreverLevel(templateRoot,{patternId:'house'},template)).level));
   const fixtureIcon=path.join(root,'template-core/colorever/src/assets/guide-hand.png');
   for(const name of ['hud-left.webp','hud-right.webp','background.webp','poster.webp'])fs.copyFileSync(fixtureIcon,path.join(generated,name));
   fs.writeFileSync(path.join(temp,'uploads/intro-video.mp4'),'fixture');
   const result=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},cta:{enabled:true}}});
   assert.check(result.ok,`全叠层打包成功 ${result.error||''}`);
   assert.equal(result.metrics.packageFiles,['background.webp','game.js','hud-left.webp','hud-right.webp','index.html','poster.webp','tail-ad-video.mp4'],'下载卡片图标(app-icon.png)不再进入交付包,由落地页服务补齐');
-  fs.writeFileSync(path.join(generated,'level2.json'),JSON.stringify(coloreverLevel(templateRoot,{patternId:'axe'},template).level));
+  fs.writeFileSync(path.join(generated,'level2.json'),JSON.stringify((await coloreverLevel(templateRoot,{patternId:'axe'},template)).level));
   fs.writeFileSync(path.join(temp,'uploads/outro-video.mp4'),'fixture');
   const twoPhasePack=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe'}}});
   assert.check(twoPhasePack.ok,`双 playable 打包成功 ${twoPhasePack.error||''}`);
@@ -147,10 +147,14 @@ export default async function run(assert){
   }
   fs.cpSync(path.join(templateRoot,'game'),path.join(temp,'game'),{recursive:true});
   const fixed=path.join(temp,'game/patterns/house.json');
-  const tampered=JSON.parse(fs.readFileSync(fixed,'utf8'));tampered.opening=null;fs.writeFileSync(fixed,JSON.stringify(tampered));
-  let rejected=false;try{coloreverLevel(temp,{patternId:'house'},template);}catch{rejected=true;}
-  assert.check(rejected,'构建数据被改动时拒绝交付，不自行重新生成开局');
-  assert.check(!js.includes('无法生成通过求解验证的开局'),'构建引擎不含随机开局生成器');
+  const tampered=JSON.parse(fs.readFileSync(fixed,'utf8'));tampered.target[0]=tampered.target[0]===0?1:0;fs.writeFileSync(fixed,JSON.stringify(tampered));
+  let rejected=false;try{await coloreverLevel(temp,{patternId:'house'},template);}catch{rejected=true;}
+  assert.check(rejected,'图案模板被改动时拒绝交付，不静默采用脏数据');
+  assert.check(!Array.isArray(JSON.parse(fs.readFileSync(path.join(templateRoot,'game/patterns/house.json'),'utf8')).opening),'构建图案不携带固定开局，开局由任务配置生成');
+  let engineRejected=false;
+  try{fs.writeFileSync(fixed,JSON.stringify(JSON.parse(fs.readFileSync(path.join(templateRoot,'game/patterns/house.json'),'utf8'))));fs.appendFileSync(path.join(temp,'game/level-engine.mjs'),'\n');await coloreverLevel(temp,{patternId:'house'},template);}catch{engineRejected=true;}
+  assert.check(engineRejected,'开局引擎被改动时拒绝交付');
+  assert.check(!js.includes('无法生成通过求解验证的开局'),'广告游戏引擎不含随机开局生成器');
 
  }finally{fs.rmSync(temp,{recursive:true,force:true});}
  const server=createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base=`http://127.0.0.1:${server.address().port}`;let id;
@@ -203,20 +207,30 @@ export default async function run(assert){
   assert.check(paletteOutput.includes('--colorever-progress-text:#7d315c')&&paletteOutput.includes('--colorever-progress-fill:#e76b3f')&&paletteOutput.includes('--colorever-progress-track:#f5dfbd'),'自定义进度颜色进入交付包');
   assert.equal(fs.readFileSync(path.join(root,'result',id,'game.js'),'utf8'),js,'换图复用同一引擎');
   const exported=await fetch(base+`/api/tasks/${id}/export`),bytes=new Uint8Array(await exported.arrayBuffer());assert.check(exported.status===200&&bytes[0]===80&&bytes[1]===75,'ZIP 导出成功');
-  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch','contract','bank'],'广告项目只列出已构建的成品选项');
+  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch','contract','bank','phoenix','chick'],'广告项目只列出已构建的成品选项');
   assert.check(!catalog[0].editableParts,'广告项目不公开作者编辑参数');
-  for(const patternId of ['axe','torch','contract','bank']){
+  for(const patternId of ['axe','torch','contract','bank','phoenix','chick']){
    const selected=await api(`/api/tasks/${id}`,{config:{patternId}},'PATCH');assert.equal(selected.body.config.patternId,patternId,'任务可选择新增图案');
    const response=await fetch(base+`/api/tasks/${id}/preview`),text=await response.text();
    assert.check(response.status===200&&text.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'新增图案即时预览');
    const built=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(built.status===200&&built.body.every(r=>r.ok),'新增图案六步构建通过');
    const output=await(await fetch(base+`/result/${id}/index.html`)).text();assert.check(output.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'交付包含新增图案');
-   assert.check(coloreverLevel(templateRoot,{patternId},template).level.openingMode==='easy','新增图案使用固定简易开局');
+   const generated=await coloreverLevel(templateRoot,{patternId,opening:{mode:'easy',seed:7}},template);
+   assert.check(generated.level.openingMode==='easy'&&Array.isArray(generated.level.opening)&&generated.proof.moves<=6,'新增图案按任务配置生成简易开局');
   }
   await api(`/api/tasks/${id}`,{config:{patternId:'house'}},'PATCH');
-  const before=coloreverLevel(templateRoot,{patternId:'house'},template).level;
+  const before=(await coloreverLevel(templateRoot,{patternId:'house'},template)).level;
   await api(`/api/tasks/${id}`,{config:{openingMode:'easy',seed:99,capacity:4}},'PATCH');
-  assert.equal(coloreverLevel(templateRoot,{patternId:'house'},template).level,before,'广告任务不能改变固定开局和玩法参数');
+  assert.equal((await coloreverLevel(templateRoot,{patternId:'house'},template)).level,before,'白名单外参数不生效，开局仍由 opening 配置决定');
+  const openingPatch=await api(`/api/tasks/${id}`,{config:{opening:{mode:'scattered',difficulty:5,seed:42}}},'PATCH');
+  assert.equal(openingPatch.body.config.opening.seed,42,'任务保存开局模式与随机种子');
+  assert.check(!openingPatch.body.steps.level&&!openingPatch.body.steps.pack,'修改开局使校验和打包失效');
+  const scattered=await api(`/api/tasks/${id}/run`,{step:'all'});
+  assert.check(scattered.status===200&&scattered.body.every(r=>r.ok),'零散开局六步通过');
+  const levelMetrics=scattered.body.find(r=>r.stepId==='level').metrics;
+  assert.check(levelMetrics.openingMode==='scattered'&&levelMetrics.difficulty===5&&levelMetrics.seed===42&&levelMetrics.solvable,'开局指标记录模式、打散与种子');
+  const scatteredOutput=await(await fetch(base+`/result/${id}/index.html`)).text();
+  assert.check(scatteredOutput.includes('"openingMode":"scattered"')&&scatteredOutput.includes('"seed":42'),'交付内联任务生成的零散开局');
   const oldRead=await fetch(base+'/api/colorever-patterns/cat');assert.equal(oldRead.status,404,'删除 Wholehouse 图案编辑读取接口');
   const oldWrite=await api('/api/colorever-patterns/house',custom(),'PUT');assert.equal(oldWrite.status,404,'删除 Wholehouse 模板写入接口');
   const oldPreview=await api('/api/colorever-patterns/cat/preview',custom(),'POST');assert.equal(oldPreview.status,404,'删除 Wholehouse 草稿预览接口');

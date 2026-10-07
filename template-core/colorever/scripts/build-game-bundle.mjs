@@ -1,11 +1,11 @@
-import {compilePatterns,patternRegistry} from './pattern-artifact.mjs';
+import {compilePatterns,resolveOpenings,patternRegistry} from './pattern-artifact.mjs';
 import {build} from 'vite';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=fileURLToPath(new URL('../',import.meta.url));
 export async function buildGameBundle(pictures){
-pictures??=await compilePatterns();
+pictures=resolveOpenings(pictures??=await compilePatterns());
 const result=await build({configFile:false,root,publicDir:false,plugins:[{name:'fixed-picture-registry',load(id){if(id===path.join(root,'src/patterns/index.js'))return patternRegistry(pictures);}}],build:{write:false,minify:true,cssCodeSplit:false,lib:{entry:path.join(root,'src/main.js'),name:'ColoreverOffline',formats:['iife']},rollupOptions:{output:{inlineDynamicImports:true}}}});
 const output=(Array.isArray(result)?result:[result]).flatMap(r=>r.output);
 const js=output.filter(o=>o.type==='chunk').map(o=>o.code).join('\n');

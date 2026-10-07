@@ -1,66 +1,64 @@
 {
-  "version": 1,
-  "engineSha256": "6535603bc3f81ee98498ea8c4f3525c3c4f7b080a50c247d3a80107f8616af2c",
+  "version": 2,
+  "engineSha256": "9c60ee71e02e261da249eadf69116e11e0d84a40b3680e172e0ed1eef930e9a4",
+  "levelEngine": "level-engine.mjs",
+  "levelEngineSha256": "5ce33b0607e97bddd7e2d8677ee26badb413393398a8286a2c85f34a52ed3578",
   "patterns": [
     {
       "id": "cat",
       "name": "蝴蝶结猫咪",
       "description": "方形珠子搭配立体眼睛、鼻子、嘴巴、胡须和蝴蝶结",
       "level": "cat.json",
-      "levelSha256": "633509a9f5cc69a3645ac4896dc33a848d183666f6b618a88cfe2a7ba1cce418",
-      "proof": {
-        "moves": 45
-      }
+      "templateSha256": "17dd8436c727823a0c2bc81cab4aab6856a05d6c7361fc9c918ffdda1985dfb8"
     },
     {
       "id": "house",
       "name": "彩色小屋",
       "description": "固定小屋图案，可独立增加门窗等装饰",
       "level": "house.json",
-      "levelSha256": "32c9a23ea6c81bc3c529214fc9d7d6c860f2d3c2e61aae4e64db77fcf311b069",
-      "proof": {
-        "moves": 25
-      }
+      "templateSha256": "121aebec393979f49153c281bf5639c93608fc2b706c77aa78b45e821f8d9a9f"
     },
     {
       "id": "axe",
       "name": "双刃斧子",
       "description": "银灰双刃与棕色长柄，沿用立体拼珠材质",
       "level": "axe.json",
-      "levelSha256": "8bdf475ee86080d3f61baadfcf78d06c219004a253d5d1db9a6764e9a79857f6",
-      "proof": {
-        "moves": 5
-      }
+      "templateSha256": "a4c64114b8331361fc6746b9587c12fc7c671802adb2c2ecfb59924a9ff74170"
     },
     {
       "id": "torch",
       "name": "火把",
       "description": "红橙黄火焰、银灰托环与棕色握柄组成的立体拼珠图案",
       "level": "torch.json",
-      "levelSha256": "18d5d30ec07ddea47ffd981409fda3cb67aaec73a9d1b22d0b4c47003523aae9",
-      "proof": {
-        "moves": 6
-      }
+      "templateSha256": "26b59d19f1a82648453a0b0072b89983c197f8dff4e264c195e4d393f320304d"
     },
     {
       "id": "contract",
       "name": "协议合同",
       "description": "白色折角纸页、英文 PACT 标题、勾选条款与英文 SIGN 签字栏组成的立体拼珠协议",
       "level": "contract.json",
-      "levelSha256": "0beaac89391abf1a337a7f4caffd40c191a8681a79bc71a897b97cd0f89cc4e5",
-      "proof": {
-        "moves": 6
-      }
+      "templateSha256": "2d61cbec104d293d06d1eca18478c75d4af3178b2e51577378710b137c2d5ac7"
     },
     {
       "id": "bank",
       "name": "银行账户余额",
       "description": "深蓝手机屏幕、英文 BANK 标题、绿色美元余额卡片与账户明细组成的立体拼珠图案",
       "level": "bank.json",
-      "levelSha256": "9c929280585daf5376a6d11afa34da55a7b1903e29639cfa8344879fa3c41377",
-      "proof": {
-        "moves": 5
-      }
+      "templateSha256": "caa113496dc0174e73a19f490cfb9f4fd78fc7cfd2c4b9d5979691b7b0d43261"
+    },
+    {
+      "id": "phoenix",
+      "name": "金羽凤凰",
+      "description": "分层金白羽翼搭配朱红羽根、绛红羽影和橙红尾羽，保留原本轮廓并配专属杏仁亮眼与尖喙",
+      "level": "phoenix.json",
+      "templateSha256": "d1a406f98e46f36af758084440b40f8d15915dd2f4d3e1215e546ae2cca014d3"
+    },
+    {
+      "id": "chick",
+      "name": "金黄小鸡",
+      "description": "奶油黄圆润身体、橙色翅膀与翘尾，搭配立体亮眼、菱形小嘴和脚爪",
+      "level": "chick.json",
+      "templateSha256": "04a549574fcaeb322a199ae7d6e55a51467e6daa27cc9d438ff09f2d37fb5153"
     }
   ]
 }
