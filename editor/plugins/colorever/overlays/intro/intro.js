@@ -206,11 +206,11 @@
     });
   }
 
-  // The 12s failsafe bounds the video phase.  The reference has no timer; ours
+  // The 30s failsafe bounds the video phase.  The reference has no timer; ours
   // must not keep ticking while the SDK has us paused — a timer_reached finish
   // during a backgrounded ad would drop the user into the playable with the
   // video unseen.  Count only creative-visible time.
-  const FAILSAFE_MS = 12000;
+  const FAILSAFE_MS = 30000;
   let failsafeTimer = null;
   let failsafeRemaining = FAILSAFE_MS;
   let failsafeArmedAt = 0;
