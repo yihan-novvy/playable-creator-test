@@ -1,9 +1,11 @@
-/* 转化桥:把"试玩开始"这一模板时机翻译成服务结算卡片的显示时机。
+/* 转化桥:把模板的转化时机翻译成服务结算卡片的显示/跳转时机。
    只使用落地页注入引擎的公开导出 —— window.showEndCard(亮出结算卡片,
    服务自管其 DOM/层级/交互)与 window.novvyHandleAdClick(统一转化入口,
    自带上报与防重护栏)。不触碰服务注入的任何 DOM,不引用任何埋点 API。
-   语义约定:卡片在第一次进入试玩时出现并全程常驻(服务 API 无隐藏能力),
-   卡片为全屏接管型 —— 出现后任何点击都会走统一转化跳转。 */
+   语义约定:单 playable 时卡片在第一次进入试玩时出现并全程常驻(服务 API
+   无隐藏能力),卡片为全屏接管型 —— 出现后任何点击都会走统一转化跳转;
+   双 playable(__novvyTwoPhase)时卡片首亮与主动跳转都推迟到引擎的
+   novvy:cta-moment(第 N 步或完成兜底),片尾只是两关之间的过渡。 */
 (function () {
   var STORE_URL = window.__COLOREVER_CTA_URL__ || '';
 
@@ -36,8 +38,10 @@
   }
 
   /* 试玩开始:请服务亮出结算卡片(公开 API,零 DOM 耦合;预览环境无此
-     导出,自动降级为无 CTA)。 */
+     导出,自动降级为无 CTA)。双 playable 模式卡片首亮推迟到 CTA 时刻
+     (引擎 novvy:cta-moment,见下方监听)。 */
   function playableStarted() {
+    if (window.__novvyTwoPhase === true) return;
     if (typeof window.showEndCard === 'function') {
       try { window.showEndCard(); } catch (e) {}
     }
@@ -83,7 +87,8 @@
   });
   window.addEventListener('novvy:outro-finished', function (event) {
     var reason = event && event.detail && event.detail.reason;
-    if (!window.__novvyOutroEnabled || converted) return;
+    /* 双 playable:片尾只是两关之间的过渡,转化时机整体移交 novvy:cta-moment。 */
+    if (!window.__novvyOutroEnabled || window.__novvyTwoPhase === true || converted) return;
     converted = true;
     if (reason === 'video_ended') {
       /* 片尾播完停留最后一帧,等待 1 秒(后台感知)再主动转化。 */
@@ -91,6 +96,17 @@
       remaining = 1000;
       armOutroJump();
     } else convert();
+  });
+
+  /* CTA 时刻(引擎在武装策略命中时派发:第 N 步,或完成兜底):
+     首亮结算卡片并主动转化一次;converted 闩锁保证整组动作只发生一次。 */
+  window.addEventListener('novvy:cta-moment', function () {
+    if (converted) return;
+    converted = true;
+    if (typeof window.showEndCard === 'function') {
+      try { window.showEndCard(); } catch (e) {}
+    }
+    convert();
   });
 
   /* 试玩开始的判定:有片头覆盖层时等 intro 派发 novvy:intro-finished

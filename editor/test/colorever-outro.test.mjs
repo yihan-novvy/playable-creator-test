@@ -14,7 +14,7 @@ function node(){
  const classes=new Set();
  return {hidden:true,textContent:'',id:'',classList:{add:name=>classes.add(name),remove:name=>classes.delete(name),contains:name=>classes.has(name)},setAttribute(){},addEventListener:(name,fn)=>listeners.set(name,fn),emit:(name,event={})=>listeners.get(name)?.(event)};
 }
-function playback({enabled=true,rejectPlay=false,withEngine=false}={}){
+function playback({enabled=true,rejectPlay=false,withEngine=false,twoPhase=false}={}){
  const listeners=new Map(),nodes=Object.fromEntries(['novvy-video-outro','novvy-outro-video','novvy-outro-sound','novvy-outro-play','reset'].map(id=>[id,node()]));
  const video=nodes['novvy-outro-video'];
  let plays=0,opens=0,resets=0,pauses=0,cards=0,engineClicks=0;
@@ -24,7 +24,7 @@ function playback({enabled=true,rejectPlay=false,withEngine=false}={}){
  video.pause=()=>{video.paused=true;pauses++;};
  nodes.reset.click=()=>resets++;
  const document={hidden:false,readyState:'complete',getElementById:id=>nodes[id]||null,addEventListener:(name,fn)=>listeners.set('document:'+name,[...(listeners.get('document:'+name)||[]),fn]),createElement:()=>node(),head:null,body:{appendChild:el=>{if(el.id==='downloadBtn')nodes['downloadBtn']=el;}}};
- const window={__novvyOutroEnabled:enabled,__novvyBridgeVersion:1,__novvyViewable:true,novvy:{open:()=>opens++},showEndCard:()=>{cards++;},novvyHandleAdClick:withEngine?()=>{engineClicks++;opens++;}:undefined,addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}};
+ const window={__novvyOutroEnabled:enabled,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,__novvyViewable:true,novvy:{open:()=>opens++},showEndCard:()=>{cards++;},novvyHandleAdClick:withEngine?()=>{engineClicks++;opens++;}:undefined,addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}};
  const sandbox={document,window,setTimeout:(fn,delay)=>{delays.push(delay);timers.push(fn);return timers.length-1;},clearTimeout:id=>{timers[id]=null;},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
  vm.runInNewContext(fs.readFileSync(path.join(overlay,'cta-bridge/cta-bridge.js'),'utf8'),sandbox);
  if(enabled)vm.runInNewContext(fs.readFileSync(path.join(overlay,'outro/outro.js'),'utf8'),sandbox);
@@ -90,6 +90,21 @@ export default async function run(assert){
  assert.equal(blocked.counts().opens,0,'播放被阻止时不提前跳转');
  blocked.video.emit('error');
  assert.check(blocked.nodes['novvy-video-outro'].hidden&&blocked.counts().opens===1,'视频解码错误时退出片尾并继续完成流程');
+ const two=playback({twoPhase:true});
+ assert.check(two.counts().cards===0,'双 playable：加载不亮卡片，推迟到 CTA 时刻');
+ two.emit('novvy:victory');await flush();
+ assert.check(!two.nodes['novvy-video-outro'].hidden&&two.counts().plays===1,'双 playable：第一关胜利仍触发片尾');
+ two.video.ended=true;two.video.emit('ended');
+ assert.equal([two.counts().opens,two.timers.length],[0,0],'双 playable：片尾播完不安排自动跳转');
+ two.emit('novvy:hud-progress',{percent:5,correct:1,total:20});
+ two.emit('novvy:victory');await flush();
+ assert.equal(two.counts().plays,1,'双 playable：第二关进度回落与胜利不重播片尾');
+ two.emit('novvy:cta-moment');
+ assert.equal([two.counts().cards,two.counts().opens],[1,1],'双 playable：CTA 时刻首亮结算卡片并跳转一次');
+ two.emit('novvy:cta-moment');two.emit('novvy:victory');
+ assert.equal([two.counts().cards,two.counts().opens],[1,1],'双 playable：重复 CTA 时刻与第二关胜利不二次跳转');
+ two.emit('novvy:phase2-start');
+ assert.check(two.nodes['novvy-video-outro'].hidden,'双 playable：第二关就绪后收起片尾最后一帧');
 
  const {GameAudio}=await import('../../template-core/colorever/src/game-audio.js');
  const previous={document:globalThis.document,window:globalThis.window};
@@ -102,6 +117,7 @@ export default async function run(assert){
   assert.equal([bgmPlays,bgmPauses],[1,1],'片尾阶段暂停游戏背景音乐，点击不会重新播放 BGM');
   audioEvents.get('novvy:outro-finished')({detail:{reason:'video_ended'}});audio.unlock();assert.equal(bgmPlays,1,'片尾最后一帧停留时继续暂停游戏音乐');
   audioEvents.get('novvy:outro-finished')({detail:{reason:'video_error'}});assert.equal(bgmPlays,2,'片尾异常退出后恢复游戏音乐逻辑');
+  audioEvents.get('novvy:phase2-start')();assert.equal(bgmPlays,3,'第二关就绪后再次恢复游戏背景音乐');
  }finally{for(const [key,value]of Object.entries(previous)){if(value===undefined)delete globalThis[key];else globalThis[key]=value;}}
 
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'colorever-outro-'));
@@ -133,6 +149,15 @@ export default async function run(assert){
   assert.check(packed.includes('__novvyOutroEnabled=true')&&packed.includes('src="outro-video.mp4"'),'交付包启用片尾时引用包内视频');
   const delivered=new Uint8Array(await(await fetch(base+`/result/${id}/outro-video.mp4`)).arrayBuffer());
   assert.check(Buffer.from(delivered).equals(bytes),'打包片尾保留完整视频内容');
+  await api(`/api/tasks/${id}`,{config:{secondPlayable:{enabled:true,patternId:'axe',cta:{mode:'steps',afterSteps:8}}}},'PATCH');
+  built=await api(`/api/tasks/${id}/run`,{step:'all'});
+  assert.check(built.status===200&&built.body.every(r=>r.ok),'双 playable 配置完整构建通过');
+  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html','outro-video.mp4'],'双 playable 数据内联,打包文件列表不变');
+  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.phase2,'axe','第二关图案进入打包指标');
+  const twoPhasePacked=await(await fetch(base+`/result/${id}/index.html`)).text();
+  assert.check(twoPhasePacked.includes('__novvyTwoPhase=true')&&twoPhasePacked.includes('"patternId":"axe"'),'交付包内联第二关数据与标记');
+  const twoPhasePreview=await(await fetch(base+`/api/tasks/${id}/preview`)).text();
+  assert.check(twoPhasePreview.includes('__novvyTwoPhase=true')&&twoPhasePreview.includes('__COLOREVER_PHASE2__'),'即时预览注入双 playable 标记');
   await api(`/api/tasks/${id}`,{config:{outro:{enabled:false}}},'PATCH');
   built=await api(`/api/tasks/${id}/run`,{step:'all'});
   assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html'],'关闭片尾后不再打入视频');

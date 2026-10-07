@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "engineSha256": "0a3cace9a17868f03924cd2f25f14a2680980b442bb342a0ac4ce5a1879b2354",
+  "engineSha256": "14477bfaf481f1dcfc7d521e61f559368c019717ab4dc900ad732ff6a5396162",
   "patterns": [
     {
       "id": "cat",
@@ -38,6 +38,16 @@
       "description": "红橙黄火焰、银灰托环与棕色握柄组成的立体拼珠图案",
       "level": "torch.json",
       "levelSha256": "18d5d30ec07ddea47ffd981409fda3cb67aaec73a9d1b22d0b4c47003523aae9",
+      "proof": {
+        "moves": 6
+      }
+    },
+    {
+      "id": "contract",
+      "name": "协议合同",
+      "description": "白色折角纸页、英文 PACT 标题、勾选条款、双方签名栏与蓝色签字笔组成的立体拼珠协议",
+      "level": "contract.json",
+      "levelSha256": "a02303bd9c00509c8a9daaad95aa0ae0a7f985030de31f1edb3a71f4e0173e9a",
       "proof": {
         "moves": 6
       }

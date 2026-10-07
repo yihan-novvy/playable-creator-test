@@ -33,6 +33,22 @@ export function coloreverLevel(root, config, template) {
   return { level, proof: picture.proof, patternId: id };
 }
 
+// CTA 时机策略(两关同构):complete=完成后跳转;steps=第 N 步跳转(N 不是上限,
+// 图案先完成则在完成时兜底跳转)。非法配置回退默认。
+export function normalizeCtaPolicy(raw, fallbackMode) {
+  const mode = raw?.mode === 'steps' || raw?.mode === 'complete' ? raw.mode : fallbackMode;
+  const afterSteps = Number.isInteger(raw?.afterSteps) && raw.afterSteps >= 1 && raw.afterSteps <= 99 ? raw.afterSteps : 8;
+  return { mode, afterSteps };
+}
+
+// 双 playable 数据:仅在片尾已启用(存在片尾视频才算)时允许,否则视为未配置。
+// 第二关数据全量内联进 index.html,打包文件列表不变。
+export function coloreverPhase2(root, config, template, outroActive) {
+  if (!outroActive || config?.secondPlayable?.enabled !== true) return null;
+  const { level, patternId } = coloreverLevel(root, { ...config, patternId: config.secondPlayable.patternId ?? 'house' }, template);
+  return { patternId, level, cta: normalizeCtaPolicy(config.secondPlayable?.cta, 'steps') };
+}
+
 const inline = (value) => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 
 export function coloreverHtml({ root, overlaysRoot, template, level, config, media = {}, preview = false }) {
@@ -56,6 +72,10 @@ export function coloreverHtml({ root, overlaysRoot, template, level, config, med
     injection.bodyDom.push(read('outro.html').replaceAll('__NOVVY_OUTRO_VIDEO__', media.outroVideo));
     injection.bodyScripts.push(`<script data-novvy-outro>${read('outro.js')}</script>`);
   }
+  // 双 playable:第二关数据与两关各自的 CTA 时机策略。第一关策略仅武装于
+  // 无片尾场景(有片尾时第一关只负责引出片尾,转化由片尾链/第二关负责)。
+  const phase2 = coloreverPhase2(root, config, template, injection.outroEnabled);
+  const ctaPolicy = injection.outroEnabled ? null : normalizeCtaPolicy(config?.playableCta, 'complete');
   const portraitHudEnabled = injection.hudEnabled && config?.hud?.enabled === true;
   // 下载卡片移除后,画布不再需要为底部卡片留白。
   const top = portraitHudEnabled ? '.18' : '0', bottom = '0';
@@ -65,7 +85,7 @@ export function coloreverHtml({ root, overlaysRoot, template, level, config, med
   const overlayColors = `--colorever-progress-text:${color('progressTextColor','#ffffff')};--colorever-progress-fill:${color('progressFillColor','#ffd91e')};--colorever-progress-track:${color('progressTrackColor','#b7834a')}`;
   injection.headStyles.push(`<style data-colorever-progress>.app{${nativeColors}}.app>.hud{top:15%;color:var(--colorever-progress-text)}.app progress{accent-color:var(--colorever-progress-fill);background:var(--colorever-progress-track)}.app progress::-webkit-progress-bar{background:var(--colorever-progress-track)}.app progress::-webkit-progress-value{background:var(--colorever-progress-fill)}.app progress::-moz-progress-bar{background:var(--colorever-progress-fill)}#novvy-training-hud{${overlayColors}}</style>`);
   const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root,body,.app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
-  const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__novvyOutroEnabled=${injection.outroEnabled};</script>`;
+  const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__COLOREVER_CTA_POLICY__=${inline(ctaPolicy)};window.__COLOREVER_PHASE2__=${inline(phase2)};</script>`;
   html = html.replace('</head>', () => `${[...injection.headStyles, styles, ...injection.headScripts].join('\n')}</head>`)
     .replace(SCRIPT, () => `${injection.uiScript}${data}${preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT}`)
     .replace('<body>', () => `<body>${injection.bodyDom.join('\n')}`)

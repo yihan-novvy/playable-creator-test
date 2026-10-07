@@ -23,10 +23,15 @@
       "id": "torch",
       "name": "火把",
       "path": "game/patterns/torch.json"
+    },
+    {
+      "id": "contract",
+      "name": "协议合同",
+      "path": "game/patterns/contract.json"
     }
   ],
   "constants": {
-    "engineSha256": "0a3cace9a17868f03924cd2f25f14a2680980b442bb342a0ac4ce5a1879b2354",
+    "engineSha256": "14477bfaf481f1dcfc7d521e61f559368c019717ab4dc900ad732ff6a5396162",
     "patternsCatalog": "game/patterns/catalog.json"
   }
 }

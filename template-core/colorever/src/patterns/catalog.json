@@ -64,5 +64,12 @@
     "description": "红橙黄火焰、银灰托环与棕色握柄组成的立体拼珠图案",
     "level": "torch.json",
     "module": "torch.js"
+  },
+  {
+    "id": "contract",
+    "name": "协议合同",
+    "description": "白色折角纸页、英文 PACT 标题、勾选条款、双方签名栏与蓝色签字笔组成的立体拼珠协议",
+    "level": "contract.json",
+    "module": "contract.js"
   }
 ]

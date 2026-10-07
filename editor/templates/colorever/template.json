@@ -35,7 +35,9 @@
       "left": "upload",
       "right": "upload"
     },
-    "patternId": "cat"
+    "patternId": "cat",
+    "playableCta": { "mode": "complete", "afterSteps": 8 },
+    "secondPlayable": { "enabled": false, "patternId": "house", "cta": { "mode": "steps", "afterSteps": 8 } }
   },
   "overlays": {
     "hud": "overlays/hud",

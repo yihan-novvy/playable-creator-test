@@ -13,9 +13,9 @@ const custom=()=>({name:'Custom house </script><script>bad()</script>',width:8,h
 export default async function run(assert){
  const bridgeSource=fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/cta-bridge/cta-bridge.js'),'utf8');
  assert.check(!bridgeSource.includes('novvyEndCard')&&!bridgeSource.includes('downloadBtn')&&!bridgeSource.includes('pointer-events'),'转化桥零 DOM 耦合：不引用服务卡片与任何元素结构');
- function bridgeRun({intro=false,engine=true,outro=false}={}){
+ function bridgeRun({intro=false,engine=true,outro=false,twoPhase=false}={}){
   const listeners=new Map();let endCards=0,engineClicks=0,opens=0;
-  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyBridgeVersion:1,novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener(){}},setTimeout(){},clearTimeout(){}};
+  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener(){}},setTimeout(){},clearTimeout(){}};
   vm.runInNewContext(bridgeSource,sandbox);
   return {counts:()=>({endCards,engineClicks,opens}),emit:(name,detail)=>{for(const fn of listeners.get(name)||[])fn({detail});}};
  }
@@ -38,6 +38,25 @@ export default async function run(assert){
  preview.emit('novvy:victory');
  assert.equal(preview.counts().opens,1,'预览环境无注入引擎时胜利走裸兜底链跳转');
  assert.check(!bridgeSource.includes('NovvyAnalytics'),'转化桥不携带事件上报');
+ const stepsPolicy=bridgeRun();
+ stepsPolicy.emit('novvy:cta-moment');
+ assert.equal(stepsPolicy.counts().engineClicks,1,'单 playable steps 策略：CTA 时刻即转化');
+ stepsPolicy.emit('novvy:victory');
+ assert.equal(stepsPolicy.counts().engineClicks,1,'单 playable steps 策略：后续胜利不二次转化');
+ const twoPhase=bridgeRun({intro:true,outro:true,twoPhase:true});
+ twoPhase.emit('novvy:intro-finished',{reason:'video_ended'});
+ assert.equal(twoPhase.counts().endCards,0,'双 playable：试玩开始不亮卡，推迟到 CTA 时刻');
+ twoPhase.emit('novvy:victory');
+ assert.equal(twoPhase.counts().engineClicks,0,'双 playable：第一关胜利交给片尾链');
+ twoPhase.emit('novvy:outro-finished',{reason:'video_ended'});
+ assert.equal(twoPhase.counts().engineClicks,0,'双 playable：片尾播完不自动转化，时机移交 CTA 时刻');
+ twoPhase.emit('novvy:cta-moment');
+ assert.equal(twoPhase.counts(),{endCards:1,engineClicks:1,opens:0},'双 playable：CTA 时刻首亮结算卡片并转化一次');
+ twoPhase.emit('novvy:cta-moment');twoPhase.emit('novvy:victory');
+ assert.equal(twoPhase.counts(),{endCards:1,engineClicks:1,opens:0},'双 playable：重复 CTA 时刻与第二关胜利不二次转化');
+ const twoPhasePreview=bridgeRun({engine:false,twoPhase:true});
+ twoPhasePreview.emit('novvy:cta-moment');
+ assert.equal(twoPhasePreview.counts().opens,1,'双 playable 预览：CTA 时刻走裸兜底链跳转');
  const hudListeners=new Map(),hudNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-progress-label','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',style:{setProperty(){}},setAttribute(){}}]));
  const hudSandbox={window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}},addEventListener:(event,fn)=>hudListeners.set(event,fn)},document:{getElementById:id=>hudNodes[id]}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),hudSandbox);
@@ -49,6 +68,7 @@ export default async function run(assert){
  const templateRoot=path.join(root,'editor/templates/colorever'),template=loadTemplate(templateRoot);
  assert.equal(templateSteps(template),['intro','outro','hud','background','level','pack'],'独立六步流程');
  assert.equal(await stepPrerequisites('pack',{},template),{uploads:[],generated:['level.json']},'关闭叠层时只依赖自己的关卡');
+ assert.equal(await stepPrerequisites('pack',{secondPlayable:{enabled:true},outro:{enabled:true}},template),{uploads:[],generated:['level.json','level2.json']},'双 playable 打包额外依赖第二关产物');
  assert.check(stepInputFilesFor('colorever').level.length===0,'图案只消费构建产物');
  const gameDir=path.join(templateRoot,'game'),html=fs.readFileSync(path.join(gameDir,'index.html'),'utf8'),js=fs.readFileSync(path.join(gameDir,'game.js'),'utf8');new vm.Script(js);
  assert.check(!/type="module"|crossorigin|成品参考|reference-kitty-source/.test(html),'基础壳适合本地直开且无参考图片');
@@ -56,6 +76,7 @@ export default async function run(assert){
  const audio=JSON.parse(js.match(/^globalThis\.__COLOREVER_OFFLINE_AUDIO__=(.*);\n/)[1]);
  assert.equal(Object.keys(audio).sort(),['bgm','pickup','place','place-single','store','store-move','success'].sort(),'全部七个音频嵌入');
  assert.check(js.includes('__COLOREVER_LEVEL__')&&js.includes('novvy:victory')&&js.includes('novvy:hud-progress')&&js.includes('novvy:intro-finished'),'数据读取、完成、进度与片头音频契约进入引擎');
+ assert.check(js.includes('__COLOREVER_PHASE2__')&&js.includes('__COLOREVER_CTA_POLICY__')&&js.includes('novvy:cta-moment')&&js.includes('novvy:phase2-start'),'双 playable 换关与 CTA 时机契约进入引擎');
  assert.check(html.includes('id="guide-hand"')&&js.includes(fs.readFileSync(path.join(root,'template-core/colorever/src/assets/guide-hand.png')).toString('base64')),'旧版手势图片内嵌，无额外图片依赖');
  assert.check(js.includes('.haptic(')&&js.includes('selection'),'SDK 震动反馈进入广告引擎');
  const {level}=coloreverLevel(templateRoot,{patternId:'house'},template);
@@ -72,6 +93,13 @@ export default async function run(assert){
  const shell=text=>text.match(/<style data-colorever-shell>([\s\S]*?)<\/style>/)[1];
  assert.equal(shell(withTitle),shell(withoutTitle),'仅标题开关不改变画布尺寸与原生进度');
  assert.check(withTitle.includes('id="novvy-training-hud" data-title-only')&&!withTitle.includes('id="novvy-hud-progress-label"')&&!withTitle.includes('id="novvy-hud-progress-fill"'),'仅标题模式不注入额外进度节点');
+ const phase2Html=coloreverHtml({...overlayArgs,config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe',cta:{mode:'steps',afterSteps:8}}},media:{outroVideo:'outro-video.mp4'}}).html;
+ assert.check(phase2Html.includes('__novvyTwoPhase=true')&&phase2Html.includes('__COLOREVER_PHASE2__')&&phase2Html.includes('"patternId":"axe"'),'双 playable 配置内联第二关数据');
+ assert.check(phase2Html.includes('__COLOREVER_CTA_POLICY__=null'),'有片尾时第一关不武装 CTA 策略');
+ const phase2OffHtml=coloreverHtml({...overlayArgs,config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe'}},media:{}}).html;
+ assert.check(phase2OffHtml.includes('__novvyTwoPhase=false')&&phase2OffHtml.includes('__COLOREVER_PHASE2__=null'),'存在片尾视频才允许第二个 playable 生效');
+ const policyHtml=coloreverHtml({...overlayArgs,config:{playableCta:{mode:'steps',afterSteps:8}}}).html;
+ assert.check(policyHtml.includes('__COLOREVER_CTA_POLICY__={"mode":"steps","afterSteps":8}')&&policyHtml.includes('__novvyTwoPhase=false'),'无片尾时第一关 CTA 策略注入');
  const titleOnlyNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',setAttribute(){}}]));
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),{window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}}},document:{getElementById:id=>titleOnlyNodes[id]}});
  assert.equal([titleOnlyNodes['novvy-hud-title-line1'].textContent,titleOnlyNodes['novvy-hud-title-line2'].textContent],['主标题','副标题'],'仅标题模式没有进度节点也可正常显示两行文字');
@@ -90,6 +118,14 @@ export default async function run(assert){
   const result=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},cta:{enabled:true}}});
   assert.check(result.ok,`全叠层打包成功 ${result.error||''}`);
   assert.equal(result.metrics.packageFiles,['background.webp','game.js','hud-left.webp','hud-right.webp','index.html','poster.webp','tail-ad-video.mp4'],'下载卡片图标(app-icon.png)不再进入交付包,由落地页服务补齐');
+  fs.writeFileSync(path.join(generated,'level2.json'),JSON.stringify(coloreverLevel(templateRoot,{patternId:'axe'},template).level));
+  fs.writeFileSync(path.join(temp,'uploads/outro-video.mp4'),'fixture');
+  const twoPhasePack=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe'}}});
+  assert.check(twoPhasePack.ok,`双 playable 打包成功 ${twoPhasePack.error||''}`);
+  assert.equal(twoPhasePack.metrics.packageFiles,['background.webp','game.js','hud-left.webp','hud-right.webp','index.html','outro-video.mp4','poster.webp','tail-ad-video.mp4'],'双 playable 数据内联,打包文件只多片尾视频本身');
+  assert.equal(twoPhasePack.metrics.phase2,'axe','第二关图案进入打包指标');
+  assert.check(fs.readFileSync(path.join(temp,'dist/index.html'),'utf8').includes('__novvyTwoPhase=true'),'双 playable 打包产物注入两关标记');
+  fs.rmSync(path.join(temp,'uploads/outro-video.mp4'));fs.rmSync(path.join(generated,'level2.json'));
   fs.copyFileSync(fixtureIcon,path.join(temp,'uploads/portrait-src-left.png'));
   const optionalHud=await runStep({taskId:'fixture',templateRoot,projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'hud',config:{hud:{enabled:true}}});
   assert.check(optionalHud.ok&&optionalHud.metrics.left&&!optionalHud.metrics.right,'仅上传单侧立绘也可以生成 HUD');
@@ -167,9 +203,9 @@ export default async function run(assert){
   assert.check(paletteOutput.includes('--colorever-progress-text:#7d315c')&&paletteOutput.includes('--colorever-progress-fill:#e76b3f')&&paletteOutput.includes('--colorever-progress-track:#f5dfbd'),'自定义进度颜色进入交付包');
   assert.equal(fs.readFileSync(path.join(root,'result',id,'game.js'),'utf8'),js,'换图复用同一引擎');
   const exported=await fetch(base+`/api/tasks/${id}/export`),bytes=new Uint8Array(await exported.arrayBuffer());assert.check(exported.status===200&&bytes[0]===80&&bytes[1]===75,'ZIP 导出成功');
-  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch'],'广告项目只列出已构建的成品选项');
+  const catalog=await(await fetch(base+'/api/colorever-options')).json();assert.equal(catalog.map(p=>p.id),['cat','house','axe','torch','contract'],'广告项目只列出已构建的成品选项');
   assert.check(!catalog[0].editableParts,'广告项目不公开作者编辑参数');
-  for(const patternId of ['axe','torch']){
+  for(const patternId of ['axe','torch','contract']){
    const selected=await api(`/api/tasks/${id}`,{config:{patternId}},'PATCH');assert.equal(selected.body.config.patternId,patternId,'任务可选择新增图案');
    const response=await fetch(base+`/api/tasks/${id}/preview`),text=await response.text();
    assert.check(response.status===200&&text.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'新增图案即时预览');
@@ -190,5 +226,10 @@ export default async function run(assert){
   await api(`/api/tasks/${id}`,{config:{cta:{enabled:true,destinationUrl:'javascript:bad()'}}},'PATCH');
   const unsafePreview=await fetch(base+`/api/tasks/${id}/preview`);assert.equal(unsafePreview.status,200,'Colorever 不消费 CTA 自定义地址');
   const sdkOnlyPreview=await unsafePreview.text();assert.check(!sdkOnlyPreview.includes('javascript:bad()')&&sdkOnlyPreview.includes('__COLOREVER_CTA_URL__=""'),'CTA 交付只使用 SDK 跳转，不注入自定义地址');
+  await api(`/api/tasks/${id}`,{config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe',cta:{mode:'steps',afterSteps:8}}}},'PATCH');
+  const noVideoRun=await api(`/api/tasks/${id}/run`,{step:'all'});
+  assert.check(noVideoRun.status===200&&noVideoRun.body.every(r=>r.ok),'无片尾视频时双 playable 配置不阻塞构建');
+  const noVideoOutput=await(await fetch(base+`/result/${id}/index.html`)).text();
+  assert.check(noVideoOutput.includes('__novvyTwoPhase=false')&&noVideoOutput.includes('__COLOREVER_PHASE2__=null'),'存在片尾视频才允许第二个 playable 生效');
  }finally{if(id)deleteTask(id);await new Promise(resolve=>server.close(resolve));}
 }

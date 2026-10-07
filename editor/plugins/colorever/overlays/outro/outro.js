@@ -66,9 +66,13 @@
     void playVideo();
   });
   window.addEventListener('novvy:hud-progress', event => {
+    /* 双 playable:片尾位于两关之间只播一次,第二关的进度回落不复位 consumed。 */
+    if (window.__novvyTwoPhase) return;
     const detail = event.detail || {};
     if (!active && Number(detail.percent) < 100) consumed = false;
   });
+  /* 第二关就绪:收起最后一帧,把画面交还游戏。 */
+  window.addEventListener('novvy:phase2-start', () => { root.hidden = true; });
   window.addEventListener('novvy:viewablechange', event => {
     viewable = !!event.detail?.viewable;
     syncVisibility();

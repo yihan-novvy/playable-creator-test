@@ -34,6 +34,8 @@
     "hud": { "enabled": false, "titleEnabled": null, "titleLine1": "", "titleLine2": "", "ariaLabel": "" },
     "background": { "enabled": false, "blurSigma": 12, "source": "auto" },
     "hudImageSource": { "left": "upload", "right": "upload" },
-    "patternId": "cat"
+    "patternId": "cat",
+    "playableCta": { "mode": "complete", "afterSteps": 8 },
+    "secondPlayable": { "enabled": false, "patternId": "house", "cta": { "mode": "steps", "afterSteps": 8 } }
   }
 }

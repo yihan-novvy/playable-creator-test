@@ -48,9 +48,12 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     select.value=config().patternId??'cat';
     select.onchange=async()=>{await save({patternId:select.value});await refresh(true);};
     wrap.append(field('图案模板',select),el('p',{class:'hint'},[pictures.find(p=>p.id===select.value)?.description??'']),el('span',{class:'hint'},['图案和玩法参数由 colorever 构建提供。']));
-    wrap.append(el('div',{class:'dragon-config-grid'},[
+    const toggles=[
       checkbox('使用开场视频','intro','enabled'),checkbox('显示顶部立绘图片','hud','enabled'),checkbox('显示顶部立绘 title','hud','titleEnabled',titleEnabled()),checkbox('使用背景','background','enabled'),checkbox('使用片尾视频','outro','enabled'),
-    ]));
+    ];
+    // 存在片尾视频才允许增加第二个 playable。
+    if(config().outro?.enabled)toggles.push(checkbox('增加第二个 playable','secondPlayable','enabled',config().secondPlayable?.enabled===true));
+    wrap.append(el('div',{class:'dragon-config-grid'},toggles));
     root.append(wrap);
   }
   function stateChip(id) {
@@ -153,6 +156,43 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       if (statusInfo?.uploads?.['outro-video']?.present) right.append(el('video', { controls:'',src:versioned(`/project/${taskId}/uploads/outro-video.mp4`,uploadVersion('outro-video')),style:'max-height:300px' }));
       else right.append(el('span',{class:'hint'},['未设置片尾视频，可直接跳过。']));
     });
+    // 转化时机控件:两关同构(complete=完成后跳转;steps=第 N 步跳转,完成时兜底)。
+    function ctaTimingControls(getCta, patchCta) {
+      const wrap=el('div',{class:'dragon-config-grid'});
+      const select=el('select',{'aria-label':'转化时机'});
+      for (const [value,label] of [['steps','第 N 步跳转'],['complete','完成后跳转']]) select.append(el('option',{value},[label]));
+      select.value=getCta()?.mode??'steps';
+      select.onchange=async()=>{await save(patchCta({mode:select.value}));await refresh(true);};
+      wrap.append(field('转化时机',select));
+      if(select.value==='steps'){
+        const steps=el('input',{type:'number',min:1,max:99,step:1,value:getCta()?.afterSteps??8});
+        steps.onchange=async()=>{await save(patchCta({afterSteps:Number(steps.value)}));await refresh(true);};
+        wrap.append(field('触发步数 N（完成时也会兜底跳转）',steps));
+      }
+      return wrap;
+    }
+    // 第二个 playable:片尾播完(留最后一帧)后页内换关进入;数据全量内联,不新增包文件。
+    let secondPlayable=null;
+    if(config().outro?.enabled){
+      const select2=el('select',{'aria-label':'第二关图案'});
+      for(const p of pictures)select2.append(el('option',{value:p.id},[p.name]));
+      select2.value=config().secondPlayable?.patternId??'house';
+      select2.onchange=async()=>{await save({secondPlayable:{patternId:select2.value}});await refresh(true);};
+      secondPlayable=el('section',{class:'step-card',id:'second-playable-settings'},[
+        el('h3',{},['第二个 playable']),
+        el('p',{class:'hint'},['第一个 playable 完成并播完片尾后，页内切换进入第二个 playable；下载卡与跳转按此关的转化时机触发。']),
+        el('div',{class:'dragon-config-grid'},[checkbox('启用第二个 playable','secondPlayable','enabled',config().secondPlayable?.enabled===true)]),
+        field('第二关图案',select2),
+        el('p',{class:'hint'},[pictures.find(p=>p.id===select2.value)?.description??'']),
+        ctaTimingControls(()=>config().secondPlayable?.cta,patch=>({secondPlayable:{cta:patch}})),
+      ]);
+    }
+    // 第一关转化时机:仅无片尾时可配(有片尾时第一关只负责引出片尾)。
+    const ctaTiming=el('section',{class:'step-card',id:'cta-timing-settings'},[
+      el('h3',{},['转化时机']),
+      el('p',{class:'hint'},['仅在未使用片尾视频时生效：完成后自动跳转，或玩到第 N 步时亮出下载卡并自动跳转一次。']),
+      ctaTimingControls(()=>config().playableCta,patch=>({playableCta:patch})),
+    ]);
     const hudInputs = [upload('portrait-src-left', '左立绘', 'image/png,image/jpeg'), upload('portrait-src-right', '右立绘', 'image/png,image/jpeg')];
     if (config().hud?.enabled && config().intro?.enabled) {
       hudInputs.push(el('button', { onclick: async () => { await save({ hudImageSource: { left: 'poster', right: 'poster' } }); await refresh(true); } }, ['两侧使用视频海报']));
@@ -195,8 +235,10 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     if(config().hud?.enabled)root.append(hud);
     if(titleEnabled())root.append(title);
     if(config().background?.enabled)root.append(background);
-    if(config().outro?.enabled)root.append(outro);
-    root.append(progressStyle,level,pack);
+    if(config().outro?.enabled){root.append(outro);if(secondPlayable)root.append(secondPlayable);}
+    root.append(progressStyle);
+    if(!config().outro?.enabled)root.append(ctaTiming);
+    root.append(level,pack);
     let number=0;
     for(const section of root.children){const badge=section.querySelector('.step-num');if(badge)badge.textContent=String(++number);}
   }

@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { requireFiles } from '../../../core/lib/helpers.mjs';
-import { coloreverLevel, coloreverHtml } from '../lib.mjs';
+import { coloreverLevel, coloreverPhase2, coloreverHtml } from '../lib.mjs';
 
 export function prerequisites(config) {
   const generated = ['level.json'];
   const uploads = [];
   if (config?.intro?.enabled === true) { uploads.push('intro-video'); generated.push('poster.webp'); }
   if (config?.background?.enabled === true) generated.push('background.webp');
+  if (config?.secondPlayable?.enabled === true && config?.outro?.enabled === true) generated.push('level2.json');
   return { uploads, generated };
 }
 
@@ -17,6 +18,12 @@ export async function run(ctx) {
   requireFiles([generated]);
   if (JSON.stringify(JSON.parse(fs.readFileSync(generated, 'utf8'))) !== JSON.stringify(level)) throw new Error('关卡已改变，请重新运行关卡步骤');
   const enabled = { intro: ctx.config.intro?.enabled === true, outro: ctx.config.outro?.enabled === true && fs.existsSync(ctx.uploads['outro-video']), hud: ctx.config.hud?.enabled === true, background: ctx.config.background?.enabled === true };
+  const phase2 = coloreverPhase2(ctx.templateRoot, ctx.config, ctx.template, enabled.outro);
+  if (phase2) {
+    const generated2 = path.join(ctx.generatedDir, 'level2.json');
+    requireFiles([generated2]);
+    if (JSON.stringify(JSON.parse(fs.readFileSync(generated2, 'utf8'))) !== JSON.stringify(phase2.level)) throw new Error('第二关已改变，请重新运行关卡步骤');
+  }
   const files = [];
   if (enabled.intro) files.push([ctx.uploads['intro-video'], 'tail-ad-video.mp4'], [path.join(ctx.generatedDir, 'poster.webp'), 'poster.webp']);
   if (enabled.outro) files.push([ctx.uploads['outro-video'], 'outro-video.mp4']);
@@ -35,5 +42,5 @@ export async function run(ctx) {
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
   for (const [source, name] of files) fs.copyFileSync(source, path.join(ctx.resultDir, name));
   const packageFiles = fs.readdirSync(ctx.resultDir).sort();
-  return { metrics: { packageFiles, outputBytes: packageFiles.reduce((n, name) => n + fs.statSync(path.join(ctx.resultDir, name)).size, 0), overlays: enabled, level: level.name }, warnings: [] };
+  return { metrics: { packageFiles, outputBytes: packageFiles.reduce((n, name) => n + fs.statSync(path.join(ctx.resultDir, name)).size, 0), overlays: enabled, level: level.name, phase2: phase2 ? phase2.patternId : null }, warnings: [] };
 }

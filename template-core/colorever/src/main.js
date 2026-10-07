@@ -11,19 +11,16 @@ import {trayLayout} from './tray-layout.js';
 import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {patterns} from './patterns/index.js';
-const patternId=globalThis.__COLOREVER_PATTERN_ID__??'cat';
-const pattern=patterns[patternId];
-if(!pattern)throw new Error('Unknown picture template: '+patternId);
 import {validateLevel} from './level.js';
-const level=validateLevel(globalThis.__COLOREVER_LEVEL__??pattern.level);
-if(!level.opening)throw new Error('Missing authored opening; generate it in the Colorever editor and build again');
-const {width,height,capacity,trayCols}=level;
-const boardScale=Math.min(3,33/Math.max(width,height)),tray=trayLayout(capacity,trayCols),trayRows=tray.rows;
-const trayScale=tray.scale;
-const reference={beads:level.target.flatMap((color,i)=>color?[{x:780+(i%width-(width-1)/2)*39.2*boardScale,y:1441+(Math.floor(i/width)-(height-1)/2)*39.2*boardScale,row:Math.floor(i/width),col:i%width,color}]:[])};
 import {createBeadParts} from './bead-reference.js';
 import {lightBeadStudio} from './studio-reference.js';
 import {createMosaicSockets} from './mosaic-sockets.js';
+
+const patternId=globalThis.__COLOREVER_PATTERN_ID__??'cat';
+const pattern=patterns[patternId];
+if(!pattern)throw new Error('Unknown picture template: '+patternId);
+const level=validateLevel(globalThis.__COLOREVER_LEVEL__??pattern.level);
+if(!level.opening)throw new Error('Missing authored opening; generate it in the Colorever editor and build again');
 
 const canvas=document.getElementById('game');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});
@@ -37,77 +34,124 @@ lightBeadStudio(renderer,scene);
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(80,100),new THREE.ShadowMaterial({color:'#285469',opacity:.14}));
 ground.position.z=-.45;ground.receiveShadow=true;scene.add(ground);
 const at=(x,y,z=.10)=>new THREE.Vector3((x-760)*.02,(1360-y)*.02,z);
-const palette=level.colors;
-const {bodyGeometry,bodyMaterials}=createBeadParts(palette);
-scene.add(createMosaicSockets(reference.beads,at,palette,boardScale));
-const codes=Object.fromEntries(Object.keys(palette).map(c=>[c,Number(c)])),letters=Object.fromEntries(Object.entries(codes).map(([k,v])=>[v,k]));
-const cells=new Map(reference.beads.map(b=>[b.row*width+b.col,{...b,code:b.color}]));
-const target=level.target;
-const puzzle=new Puzzle({width,height,target,capacity,trayCols,openingBoard:level.opening});
-const groups=[],dummy=new THREE.Object3D();
-for(const c of Object.keys(palette)){
-  const mesh=new THREE.InstancedMesh(bodyGeometry,bodyMaterials[c],target.length+capacity);
-  mesh.castShadow=true;mesh.receiveShadow=false;mesh.frustumCulled=false;mesh.count=0;
-  groups.push({mesh,entries:[],color:codes[c]});scene.add(mesh);
-}
-// Small contact shadows join the pellets without drawing outlines on their faces.
-const occlusionCanvas=document.createElement('canvas');occlusionCanvas.width=64;occlusionCanvas.height=64;
-const ctx=occlusionCanvas.getContext('2d'),gradient=ctx.createRadialGradient(32,32,0,32,32,31);
-gradient.addColorStop(0,'rgba(21,26,36,.24)');gradient.addColorStop(.65,'rgba(21,26,36,.20)');gradient.addColorStop(.83,'rgba(21,26,36,.08)');gradient.addColorStop(1,'rgba(21,26,36,0)');
-ctx.fillStyle=gradient;ctx.fillRect(0,0,64,64);
-const occlusion=new THREE.InstancedMesh(new THREE.PlaneGeometry(.87,.87),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(occlusionCanvas),transparent:true,depthWrite:false}),reference.beads.filter(b=>b.row>=0).length);
-occlusion.frustumCulled=false;
-reference.beads.filter(b=>b.row>=0).forEach((b,i)=>{dummy.position.copy(at(b.x,b.y,.002));dummy.scale.setScalar(boardScale);dummy.updateMatrix();occlusion.setMatrixAt(i,dummy.matrix);});scene.add(occlusion);
-pattern.decorate({scene,at,level,boardScale});
-// Compact square pockets sized just above the beads, in a fitted warm shell.
-const trayCenter=at(761,2425,-.02);
-function rounded(w,h,r,x=0,y=0){const s=new THREE.Shape(),l=x-w/2,b=y-h/2;s.moveTo(l+r,b);s.lineTo(l+w-r,b);s.quadraticCurveTo(l+w,b,l+w,b+r);s.lineTo(l+w,b+h-r);s.quadraticCurveTo(l+w,b+h,l+w-r,b+h);s.lineTo(l+r,b+h);s.quadraticCurveTo(l,b+h,l,b+h-r);s.lineTo(l,b+r);s.quadraticCurveTo(l,b,l+r,b);return s;}
-const shellMaterial=new THREE.MeshPhysicalMaterial({color:'#fff0e0',roughness:.38,clearcoat:.3,clearcoatRoughness:.26,envMapIntensity:.25});
-const pocketMaterial=new THREE.MeshStandardMaterial({color:'#d4b296',roughness:.72});
-const base=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(tray.width, tray.height,.6),{depth:.25,bevelSize:.13,bevelThickness:.11,bevelSegments:6,curveSegments:20}),shellMaterial);
-base.position.set(0,trayCenter.y,-.27);base.castShadow=true;base.receiveShadow=true;scene.add(base);
-const rimShape=rounded(tray.width-.1,tray.height-.1,.55);rimShape.holes.push(rounded(tray.width-.65,tray.height-.65,.3));
-const rim=new THREE.Mesh(new THREE.ExtrudeGeometry(rimShape,{depth:.37,bevelSize:.18,bevelThickness:.14,bevelSegments:6,curveSegments:20}),shellMaterial);
-rim.position.set(0,trayCenter.y,.04);rim.castShadow=true;rim.receiveShadow=true;scene.add(rim);
-const pitch=tray.pitch,rowPitch=pitch,trayPoint=(col,row)=>new THREE.Vector3((col-(trayCols-1)/2)*pitch,trayCenter.y+((trayRows-1)/2-row)*rowPitch,.21);
-const insetShape=rounded(tray.width-.9,tray.height-.9,.25);
-for(let row=0;row<trayRows;row++)for(let col=0;col<trayCols;col++){
-  if(row*trayCols+col>=capacity)continue;
-  const position=trayPoint(col,row);
-  insetShape.holes.push(rounded(tray.pocketWidth,tray.pocketWidth,.09,position.x,position.y-trayCenter.y));
-  const floor=new THREE.Mesh(new RoundedBoxGeometry(tray.pocketWidth+.06,tray.pocketWidth+.06,.09,4,.035),pocketMaterial);
-  floor.position.set(position.x,position.y,.09);floor.receiveShadow=true;scene.add(floor);
-}
-const inset=new THREE.Mesh(new THREE.ExtrudeGeometry(insetShape,{depth:.21,bevelSize:.065,bevelThickness:.065,bevelSegments:4,curveSegments:12}),shellMaterial);
-inset.position.set(0,trayCenter.y,.085);inset.castShadow=true;inset.receiveShadow=true;scene.add(inset);
-const audio=new GameAudio();
-let busy=false,flights=[],hint=null,down=null,selectionStart=0,completion=null,completedColors=new Set(),pendingColors=[];
 const $=id=>document.getElementById(id);
+const audio=new GameAudio();
 const tutorial=new GameTutorial(),haptics=new GameHaptics();
 $('guide-hand').src=guideHand;
-const point=(region,index)=>region==='board'?at(cells.get(index).x,cells.get(index).y,.10):trayPoint(index%trayCols,Math.floor(index/trayCols));
-const effects=new GameEffects(scene,point,cells,boardScale);
-const ambientSheen=new AmbientSheen(scene,target.length+capacity,boardScale,trayScale);
-$('sheen').onclick=()=>{ambientSheen.enabled=!ambientSheen.enabled;$('sheen').setAttribute('aria-pressed',String(ambientSheen.enabled));$('sheen').setAttribute('aria-label',ambientSheen.enabled?'关闭常驻反光':'打开常驻反光');};
-const colorNames=level.colorNames;
-document.querySelector('.hud strong').textContent=level.name;
-document.title=level.name+' · Colorever';
-canvas.setAttribute('aria-label',level.name);
-document.querySelector('.app').dataset.decoration=level.decoration;
-document.querySelector('.app').dataset.patternId=patternId;
-document.querySelector('.app').dataset.levelName=level.name;
+
+/* —— 每关会话:buildLevel 重赋值;渲染器/相机/音频/引导等单例不重建 —— */
+let session=null,puzzle=null,groups=[],cells=new Map(),target=[],capacity=48,trayCols=12,pitch=1,rowPitch=1,trayPoint=()=>new THREE.Vector3(),point=()=>new THREE.Vector3(),boardScale=1,trayScale=1,colorNames={},effects={clear(){}},ambientSheen={update(){},enabled:false};
+let bodyGeometry=null,bodyMaterials={},letters={};
+let busy=false,flights=[],hint=null,down=null,selectionStart=0,completion=null,completedColors=new Set(),pendingColors=[];
 let wasWon=false;
+
+/* —— CTA 时机策略(两关同构):complete=完成后跳转;steps=第 N 步跳转(N 不是上限,完成时兜底)。
+   第一关策略仅注入于无片尾场景;双 playable 时第一关不武装,进第二关后换用 PHASE2.cta。 —— */
+const phase2Spec=globalThis.__COLOREVER_PHASE2__??null;
+let armedPolicy=phase2Spec?null:(globalThis.__COLOREVER_CTA_POLICY__??null);
+let ctaAnnounced=false;
+function announceCtaMoment(){
+  if(ctaAnnounced)return;
+  ctaAnnounced=true;
+  document.dispatchEvent(new CustomEvent('novvy:cta-moment',{bubbles:true}));
+}
+
+function disposeTree(root){
+  root.traverse(node=>{
+    node.geometry?.dispose();
+    const material=node.material;
+    for(const m of (Array.isArray(material)?material:[material])){if(!m)continue;for(const key of ['map','alphaMap','envMap'])m[key]?.dispose?.();m.dispose?.();}
+  });
+}
+
+function buildLevel(level,pattern,patternId){
+  clearHint();
+  audio.stopEffects();
+  if(session){scene.remove(session.group);disposeTree(session.group);}
+  for(const f of flights)scene.remove(f.mesh);
+  busy=false;flights=[];hint=null;down=null;selectionStart=0;completion=null;pendingColors=[];completedColors=new Set();wasWon=false;ctaAnnounced=false;
+  const sessionGroup=new THREE.Group();scene.add(sessionGroup);
+  const {width,height,capacity:cap,trayCols:tc}=level;
+  const bs=Math.min(3,33/Math.max(width,height)),tray=trayLayout(cap,tc),trayRows=tray.rows;
+  const ts=tray.scale;
+  const reference={beads:level.target.flatMap((color,i)=>color?[{x:780+(i%width-(width-1)/2)*39.2*bs,y:1441+(Math.floor(i/width)-(height-1)/2)*39.2*bs,row:Math.floor(i/width),col:i%width,color}]:[])};
+  const palette=level.colors;
+  const {bodyGeometry:geo,bodyMaterials:mats}=createBeadParts(palette);
+  sessionGroup.add(createMosaicSockets(reference.beads,at,palette,bs));
+  const codes=Object.fromEntries(Object.keys(palette).map(c=>[c,Number(c)]));
+  const lettersMap=Object.fromEntries(Object.entries(codes).map(([k,v])=>[v,k]));
+  const cellsMap=new Map(reference.beads.map(b=>[b.row*width+b.col,{...b,code:b.color}]));
+  const tgt=level.target;
+  puzzle=new Puzzle({width,height,target:tgt,capacity:cap,trayCols:tc,openingBoard:level.opening});
+  const gList=[];
+  for(const c of Object.keys(palette)){
+    const mesh=new THREE.InstancedMesh(geo,mats[c],tgt.length+cap);
+    mesh.castShadow=true;mesh.receiveShadow=false;mesh.frustumCulled=false;mesh.count=0;
+    gList.push({mesh,entries:[],color:codes[c]});sessionGroup.add(mesh);
+  }
+  groups=gList;bodyGeometry=geo;bodyMaterials=mats;letters=lettersMap;
+  // Small contact shadows join the pellets without drawing outlines on their faces.
+  const occlusionCanvas=document.createElement('canvas');occlusionCanvas.width=64;occlusionCanvas.height=64;
+  const ctx=occlusionCanvas.getContext('2d'),gradient=ctx.createRadialGradient(32,32,0,32,32,31);
+  gradient.addColorStop(0,'rgba(21,26,36,.24)');gradient.addColorStop(.65,'rgba(21,26,36,.20)');gradient.addColorStop(.83,'rgba(21,26,36,.08)');gradient.addColorStop(1,'rgba(21,26,36,0)');
+  ctx.fillStyle=gradient;ctx.fillRect(0,0,64,64);
+  const occlusion=new THREE.InstancedMesh(new THREE.PlaneGeometry(.87,.87),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(occlusionCanvas),transparent:true,depthWrite:false}),reference.beads.filter(b=>b.row>=0).length);
+  occlusion.frustumCulled=false;
+  reference.beads.filter(b=>b.row>=0).forEach((b,i)=>{dummy.position.copy(at(b.x,b.y,.002));dummy.scale.setScalar(bs);dummy.updateMatrix();occlusion.setMatrixAt(i,dummy.matrix);});
+  sessionGroup.add(occlusion);
+  pattern.decorate({scene:sessionGroup,at,level,boardScale:bs});
+  // Compact square pockets sized just above the beads, in a fitted warm shell.
+  const trayCenter=at(761,2425,-.02);
+  const shellMaterial=new THREE.MeshPhysicalMaterial({color:'#fff0e0',roughness:.38,clearcoat:.3,clearcoatRoughness:.26,envMapIntensity:.25});
+  const pocketMaterial=new THREE.MeshStandardMaterial({color:'#d4b296',roughness:.72});
+  const base=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(tray.width, tray.height,.6),{depth:.25,bevelSize:.13,bevelThickness:.11,bevelSegments:6,curveSegments:20}),shellMaterial);
+  base.position.set(0,trayCenter.y,-.27);base.castShadow=true;base.receiveShadow=true;sessionGroup.add(base);
+  const rimShape=rounded(tray.width-.1,tray.height-.1,.55);rimShape.holes.push(rounded(tray.width-.65,tray.height-.65,.3));
+  const rim=new THREE.Mesh(new THREE.ExtrudeGeometry(rimShape,{depth:.37,bevelSize:.18,bevelThickness:.14,bevelSegments:6,curveSegments:20}),shellMaterial);
+  rim.position.set(0,trayCenter.y,.04);rim.castShadow=true;rim.receiveShadow=true;sessionGroup.add(rim);
+  pitch=tray.pitch;rowPitch=pitch;
+  const tp=(col,row)=>new THREE.Vector3((col-(tc-1)/2)*pitch,trayCenter.y+((trayRows-1)/2-row)*rowPitch,.21);
+  const insetShape=rounded(tray.width-.9,tray.height-.9,.25);
+  for(let row=0;row<trayRows;row++)for(let col=0;col<tc;col++){
+    if(row*tc+col>=cap)continue;
+    const position=tp(col,row);
+    insetShape.holes.push(rounded(tray.pocketWidth,tray.pocketWidth,.09,position.x,position.y-trayCenter.y));
+    const floor=new THREE.Mesh(new RoundedBoxGeometry(tray.pocketWidth+.06,tray.pocketWidth+.06,.09,4,.035),pocketMaterial);
+    floor.position.set(position.x,position.y,.09);floor.receiveShadow=true;sessionGroup.add(floor);
+  }
+  const inset=new THREE.Mesh(new THREE.ExtrudeGeometry(insetShape,{depth:.21,bevelSize:.065,bevelThickness:.065,bevelSegments:4,curveSegments:12}),shellMaterial);
+  inset.position.set(0,trayCenter.y,.085);inset.castShadow=true;inset.receiveShadow=true;sessionGroup.add(inset);
+  cells=cellsMap;target=tgt;capacity=cap;trayCols=tc;
+  trayPoint=tp;boardScale=bs;trayScale=ts;
+  colorNames=level.colorNames;
+  const pt=(region,index)=>region==='board'?at(cellsMap.get(index).x,cellsMap.get(index).y,.10):tp(index%tc,Math.floor(index/tc));
+  point=pt;
+  effects=new GameEffects(sessionGroup,pt,cellsMap,bs);
+  ambientSheen=new AmbientSheen(sessionGroup,tgt.length+cap,bs,ts);
+  document.querySelector('.hud strong').textContent=level.name;
+  document.title=level.name+' · Colorever';
+  canvas.setAttribute('aria-label',level.name);
+  document.querySelector('.app').dataset.decoration=level.decoration;
+  document.querySelector('.app').dataset.patternId=patternId;
+  document.querySelector('.app').dataset.levelName=level.name;
+  session={group:sessionGroup};
+  seedCompleteColors();
+}
+
+const dummy=new THREE.Object3D();
+function rounded(w,h,r,x=0,y=0){const s=new THREE.Shape(),l=x-w/2,b=y-h/2;s.moveTo(l+r,b);s.lineTo(l+w-r,b);s.quadraticCurveTo(l+w,b,l+w,b+r);s.lineTo(l+w,b+h-r);s.quadraticCurveTo(l+w,b+h,l+w-r,b+h);s.lineTo(l+r,b+h);s.quadraticCurveTo(l,b+h,l,b+h-r);s.lineTo(l,b+r);s.quadraticCurveTo(l,b,l+r,b);return s;}
+function seedCompleteColors(){completedColors=new Set([...new Set(target.filter(Boolean))].filter(c=>puzzle.isColorComplete(c)));}
 const play=k=>{audio.play(k);haptics.play(k);};
 document.addEventListener('click',e=>{if(e.target.closest?.('#downloadBtn'))haptics.trigger('light');},{capture:true});
-function seedCompleteColors(){completedColors=new Set([...new Set(target.filter(Boolean))].filter(c=>puzzle.isColorComplete(c)));}
-seedCompleteColors();
 document.addEventListener('pointerdown',e=>{if(e.target.closest('#sound'))return;audio.unlock();},{capture:true});
 document.addEventListener('click',e=>{if(e.target.closest('#sound'))return;audio.unlock();},{capture:true});
 function updateSound(){ $('sound').setAttribute('aria-pressed',String(audio.enabled));$('sound').setAttribute('aria-label',audio.enabled?'关闭音乐':'打开音乐');}
 updateSound();
+$('sheen').onclick=()=>{ambientSheen.enabled=!ambientSheen.enabled;$('sheen').setAttribute('aria-pressed',String(ambientSheen.enabled));$('sheen').setAttribute('aria-label',ambientSheen.enabled?'关闭常驻反光':'打开常驻反光');};
 const markers=new THREE.Group();scene.add(markers);
 const outline=rounded(.77,.77,.08);outline.holes.push(rounded(.70,.70,.06));
 const outlineGeometry=new THREE.ShapeGeometry(outline),outlineMaterial=new THREE.MeshBasicMaterial({color:'#ffc526',depthTest:false,transparent:true,opacity:.9});
+buildLevel(level,pattern,patternId);
 function refresh(){
   for(const g of groups){g.entries=[];for(const region of ['board','tray'])puzzle[region].forEach((color,index)=>{if(color===g.color){g.entries.push({region,index,point:point(region,index),lift:0});}});g.mesh.count=g.entries.length;}
   while(markers.children.length)markers.remove(markers.children[0]);
@@ -123,6 +167,7 @@ function updateUI(){
   if(tutorial.active)hint=tutorial.hint(puzzle,busy);
   showHint();
   document.dispatchEvent(new CustomEvent('novvy:hud-progress',{bubbles:true,detail:{percent:Math.round(puzzle.correct/puzzle.total*100),correct:puzzle.correct,total:puzzle.total}}));
+  if(armedPolicy&&!ctaAnnounced&&armedPolicy.mode==='steps'&&puzzle.moves>=armedPolicy.afterSteps)announceCtaMoment();
   if(!puzzle.complete)wasWon=false;
 }
 function projectHint(){
@@ -163,8 +208,7 @@ function hitAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-
   const hit=raycaster.intersectObjects(groups.map(g=>g.mesh))[0];if(hit){const g=groups.find(g=>g.mesh===hit.object),entry=g.entries[hit.instanceId];if(entry)return{region:entry.region,index:entry.index};}
   const p=new THREE.Vector3();if(!raycaster.ray.intersectPlane(plane,p))return null;
   let closest=null,distance=Infinity;for(const [index]of cells){const q=point('board',index),d=Math.hypot(p.x-q.x,p.y-q.y);if(d<.48*boardScale&&d<distance){closest={region:'board',index};distance=d;}}
-  if(closest)return closest;for(let i=0;i<capacity;i++){const q=point('tray',i);if(Math.abs(p.x-q.x)<pitch*.42&&Math.abs(p.y-q.y)<rowPitch*.42)return{region:'tray',index:i};}return null;
-}
+  if(closest)return closest;for(let i=0;i<capacity;i++){const q=point('tray',i);if(Math.abs(p.x-q.x)<pitch*.42&&Math.abs(p.y-q.y)<rowPitch*.42)return{region:'tray',index:i};}return null;}
 canvas.addEventListener('pointerdown',e=>{if(busy)return;down={x:e.clientX,y:e.clientY,hit:hitAt(e)};canvas.setPointerCapture(e.pointerId);});
 canvas.addEventListener('pointerup',e=>{if(!down)return;const start=down;down=null;const end=hitAt(e);if(!end)return;const drag=Math.hypot(e.clientX-start.x,e.clientY-start.y)>8;if(drag&&start.hit&&!puzzle.selection&&puzzle.pick(start.hit.region,start.hit.index)){selectionStart=performance.now();play('pickup');}activate(end.region,end.index);});
 canvas.addEventListener('pointercancel',()=>{down=null;});
@@ -190,8 +234,31 @@ function render(now){
   for(const event of pendingColors)if(now>=event.start&&!event.announced){event.announced=true;play('success');$('celebration').textContent=`${colorNames[event.color]}全部归位！`;$('celebration').hidden=false;}
   pendingColors=pendingColors.filter(event=>now<event.start+900);
   if(!pendingColors.length){$('celebration').hidden=true;if(busy&&!flights.length&&!completion){busy=false;updateUI();}}
-  if(completion){if(now>=completion.start&&!completion.announced){completion.announced=true;play('success');$('instruction').textContent='拼画完成 · 全图扫光中…';}if(now>=completion.end){completion=null;busy=false;updateUI();$('win-detail').textContent=`${puzzle.total} 颗珠子全部归位 · ${puzzle.moves} 步完成`;$('win').hidden=false;if(!wasWon){wasWon=true;document.dispatchEvent(new CustomEvent('novvy:victory',{bubbles:true}));}}}
+  if(completion){if(now>=completion.start&&!completion.announced){completion.announced=true;play('success');$('instruction').textContent='拼画完成 · 全图扫光中…';}if(now>=completion.end){completion=null;busy=false;updateUI();if(armedPolicy&&!ctaAnnounced)announceCtaMoment();$('win-detail').textContent=`${puzzle.total} 颗珠子全部归位 · ${puzzle.moves} 步完成`;$('win').hidden=false;if(!wasWon){wasWon=true;document.dispatchEvent(new CustomEvent('novvy:victory',{bubbles:true}));}}}
   for(const {mesh,entries}of groups){for(let i=0;i<entries.length;i++){const e=entries[i],selected=puzzle.selection?.region===e.region&&puzzle.selection.indices.includes(e.index);const t=THREE.MathUtils.clamp((now-selectionStart)/150,0,1);e.lift=selected?.38*(1-Math.pow(1-t,3)):THREE.MathUtils.lerp(e.lift,0,.25);const flying=flights.some(f=>!f.landed&&f.toRegion===e.region&&f.to===e.index);dummy.position.copy(e.point);dummy.position.z+=e.lift;dummy.scale.setScalar(flying?0:(e.region==='tray'?trayScale:boardScale)*(selected?1+.07*Math.sin(Math.PI*t):1));dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);}mesh.instanceMatrix.needsUpdate=true;}
   ambientSheen.update(groups,flights);effects.update(now);renderer.render(scene,camera);
 }
 renderer.setAnimationLoop(render);$('loading').hidden=true;
+
+/* —— 双 playable:片尾播完(留最后一帧)后页内换关进入第二关。一次性闩锁;
+   phase2-start 在新关卡就绪后派发,outro/audio 据此收尾。 —— */
+if(phase2Spec){
+  const pattern2=patterns[phase2Spec.patternId];
+  if(!pattern2)throw new Error('Unknown picture template: '+phase2Spec.patternId);
+  const level2=validateLevel(phase2Spec.level??pattern2.level);
+  if(!level2.opening)throw new Error('Missing authored opening in phase-2 level');
+  let switched=false;
+  window.addEventListener('novvy:outro-finished',event=>{
+    if(switched||event.detail?.reason!=='video_ended')return;
+    switched=true;
+    /* 停留片尾最后一帧 ~1s 再换关;后台期间到点换关本身无害。 */
+    window.setTimeout(()=>{
+      buildLevel(level2,pattern2,phase2Spec.patternId);
+      armedPolicy=phase2Spec.cta??null;
+      tutorial.reset();
+      refresh();
+      if(puzzle.complete)afterFlights(performance.now());
+      document.dispatchEvent(new CustomEvent('novvy:phase2-start',{bubbles:true}));
+    },1000);
+  });
+}
