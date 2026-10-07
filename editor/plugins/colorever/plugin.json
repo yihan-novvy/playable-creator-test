@@ -24,8 +24,7 @@
     "intro": "overlays/intro",
     "outro": "overlays/outro",
     "background": "overlays/background",
-    "cta": "overlays/cta",
-    "analytics": "overlays/analytics"
+    "cta-bridge": "overlays/cta-bridge"
   },
   "background": { "width": 1560, "height": 2598, "defaultSigma": 12 },
   "patterns": { "catalog": "game/patterns/catalog.json" },
@@ -35,7 +34,6 @@
     "hud": { "enabled": false, "titleEnabled": null, "titleLine1": "", "titleLine2": "", "ariaLabel": "" },
     "background": { "enabled": false, "blurSigma": 12, "source": "auto" },
     "hudImageSource": { "left": "upload", "right": "upload" },
-    "cta": { "enabled": false },
     "patternId": "cat"
   }
 }

@@ -16,7 +16,7 @@ export async function run(ctx) {
   const generated = path.join(ctx.generatedDir, 'level.json');
   requireFiles([generated]);
   if (JSON.stringify(JSON.parse(fs.readFileSync(generated, 'utf8'))) !== JSON.stringify(level)) throw new Error('关卡已改变，请重新运行关卡步骤');
-  const enabled = { intro: ctx.config.intro?.enabled === true, outro: ctx.config.outro?.enabled === true && fs.existsSync(ctx.uploads['outro-video']), hud: ctx.config.hud?.enabled === true, background: ctx.config.background?.enabled === true, cta: ctx.config.cta?.enabled === true };
+  const enabled = { intro: ctx.config.intro?.enabled === true, outro: ctx.config.outro?.enabled === true && fs.existsSync(ctx.uploads['outro-video']), hud: ctx.config.hud?.enabled === true, background: ctx.config.background?.enabled === true };
   const files = [];
   if (enabled.intro) files.push([ctx.uploads['intro-video'], 'tail-ad-video.mp4'], [path.join(ctx.generatedDir, 'poster.webp'), 'poster.webp']);
   if (enabled.outro) files.push([ctx.uploads['outro-video'], 'outro-video.mp4']);
@@ -26,9 +26,8 @@ export async function run(ctx) {
     if (fs.existsSync(source)) { files.push([source, name]); hudMedia[side] = name; }
   }
   if (enabled.background) files.push([path.join(ctx.generatedDir, 'background.webp'), 'background.webp']);
-  if (enabled.cta) files.push([path.join(ctx.pluginDir, ctx.template.overlays.cta, 'icon.png'), 'app-icon.png']);
   requireFiles(files.map(([source]) => source));
-  const built = coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, outroVideo: enabled.outro ? 'outro-video.mp4' : null, hudLeft: hudMedia.left ?? null, hudRight: hudMedia.right ?? null, background: enabled.background ? 'background.webp' : null, ctaIcon: enabled.cta ? 'app-icon.png' : null } });
+  const built = coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, outroVideo: enabled.outro ? 'outro-video.mp4' : null, hudLeft: hudMedia.left ?? null, hudRight: hudMedia.right ?? null, background: enabled.background ? 'background.webp' : null } });
   enabled.hud = built.injection.hudEnabled;
   fs.rmSync(ctx.resultDir, { recursive: true, force: true });
   fs.mkdirSync(ctx.resultDir, { recursive: true });

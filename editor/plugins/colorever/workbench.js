@@ -49,7 +49,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     select.onchange=async()=>{await save({patternId:select.value});await refresh(true);};
     wrap.append(field('图案模板',select),el('p',{class:'hint'},[pictures.find(p=>p.id===select.value)?.description??'']),el('span',{class:'hint'},['图案和玩法参数由 colorever 构建提供。']));
     wrap.append(el('div',{class:'dragon-config-grid'},[
-      checkbox('使用开场视频','intro','enabled'),checkbox('显示顶部立绘图片','hud','enabled'),checkbox('显示顶部立绘 title','hud','titleEnabled',titleEnabled()),checkbox('使用背景','background','enabled'),checkbox('显示下载 CTA','cta','enabled'),checkbox('使用片尾视频','outro','enabled'),
+      checkbox('使用开场视频','intro','enabled'),checkbox('显示顶部立绘图片','hud','enabled'),checkbox('显示顶部立绘 title','hud','titleEnabled',titleEnabled()),checkbox('使用背景','background','enabled'),checkbox('使用片尾视频','outro','enabled'),
     ]));
     root.append(wrap);
   }
@@ -149,7 +149,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const root = document.getElementById('steps'); root.textContent = '';
     const introInputs = [upload('intro-video', '片头视频 MP4', 'video/mp4'), upload('intro-poster', '可选海报 JPG', 'image/jpeg')];
     const intro = card('intro', 1, '开场视频', config().intro?.enabled ? '上传视频后运行。' : '已关闭，可直接跳过。', introInputs, renderIntroPreview);
-    const outro = card('outro', 2, '片尾视频（可选）', '仅在游戏完成且完成效果结束后播放。未上传视频时直接跳过；已配置 CTA 时，播完停留最后一帧，等待 1 秒后跳转，返回时保留片尾画面。', [upload('outro-video','片尾视频 MP4（可选）','video/mp4')], right => {
+    const outro = card('outro', 2, '片尾视频（可选）', '仅在游戏完成且完成效果结束后播放。未上传视频时直接跳过；播完停留最后一帧，等待 1 秒后转化跳转，返回时保留片尾画面。', [upload('outro-video','片尾视频 MP4（可选）','video/mp4')], right => {
       if (statusInfo?.uploads?.['outro-video']?.present) right.append(el('video', { controls:'',src:versioned(`/project/${taskId}/uploads/outro-video.mp4`,uploadVersion('outro-video')),style:'max-height:300px' }));
       else right.append(el('span',{class:'hint'},['未设置片尾视频，可直接跳过。']));
     });
@@ -161,9 +161,6 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const title = el('section',{class:'step-card',id:'hud-title-settings'},[
       el('h3',{},['顶部立绘 title']),
       el('div',{class:'dragon-config-grid'},[textField('HUD 主标题','hud','titleLine1',config().hud?.titleLine1),textField('HUD 副标题','hud','titleLine2',config().hud?.titleLine2)]),
-    ]);
-    const cta = el('section',{class:'step-card',id:'cta-settings'},[
-      el('h3',{},['下载 CTA']),el('p',{class:'hint'},['显示底部下载卡片，点击后通过广告 SDK 打开推广页面。']),
     ]);
     const progressStyle=el('section',{class:'step-card',id:'progress-style-settings'},[
       el('h3',{},['进度样式']),
@@ -198,7 +195,6 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     if(config().hud?.enabled)root.append(hud);
     if(titleEnabled())root.append(title);
     if(config().background?.enabled)root.append(background);
-    if(config().cta?.enabled)root.append(cta);
     if(config().outro?.enabled)root.append(outro);
     root.append(progressStyle,level,pack);
     let number=0;

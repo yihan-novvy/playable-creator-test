@@ -98,7 +98,7 @@ document.querySelector('.app').dataset.patternId=patternId;
 document.querySelector('.app').dataset.levelName=level.name;
 let wasWon=false;
 const play=k=>{audio.play(k);haptics.play(k);};
-document.addEventListener('click',e=>{if(e.target.closest?.('#novvy-cta-btn')||e.target.id==='novvy-cta')haptics.trigger('light');},{capture:true});
+document.addEventListener('click',e=>{if(e.target.closest?.('#downloadBtn'))haptics.trigger('light');},{capture:true});
 function seedCompleteColors(){completedColors=new Set([...new Set(target.filter(Boolean))].filter(c=>puzzle.isColorComplete(c)));}
 seedCompleteColors();
 document.addEventListener('pointerdown',e=>{if(e.target.closest('#sound'))return;audio.unlock();},{capture:true});

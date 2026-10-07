@@ -33,7 +33,9 @@ function escapeInlineJson(value) {
     .replaceAll('\u2029', '\\u2029');
 }
 
-export function buildWsOverlayInjection({ overlaysRoot, template, config, media, optionalHudPortraits = false }) {
+// analytics=false 出"纯净包":不注入埋点库与 boot 接线(交付给落地页打包
+// 服务再注入其官方 analytics.js 的交付形态),其余组不受影响。
+export function buildWsOverlayInjection({ overlaysRoot, template, config, media, optionalHudPortraits = false, analytics = true }) {
   const overlayPath = (dir, name) => path.join(overlaysRoot, template.overlays?.[dir] || path.join('overlays', dir), name);
   const readOverlay = (dir, name) => fs.readFileSync(overlayPath(dir, name), 'utf8');
 
@@ -101,11 +103,14 @@ export function buildWsOverlayInjection({ overlaysRoot, template, config, media,
     headStyles.push(`<style data-novvy-cta>${readOverlay('cta', 'cta.css')}</style>`);
     bodyScripts.push(`<script data-novvy-cta>${readOverlay('cta', 'cta.js')}</script>`);
   }
-  // 埋点组永远注入(colorever 同款契约,没有开关):boot 缺文件直接抛错——
-  // 埋点接线是模板的一部分,不允许静默打出空埋点包。boot 收尾 body,注册在
-  // 壳 game.js(defer)执行之前,壳的首个 novvy:hud-progress 不会漏接。
-  headScripts.push(`<script data-novvy-analytics-lib>${fs.readFileSync(VENDOR_ANALYTICS, 'utf8')}</script>`);
-  bodyScripts.push(`<script data-novvy-analytics>${readOverlay('analytics', 'boot.js')}</script>`);
+  // 埋点组默认注入(colorever 同款契约):boot 缺文件直接抛错——埋点接线是
+  // 模板的一部分,不允许静默打出空埋点包。boot 收尾 body,注册在壳 game.js
+  // (defer)执行之前,壳的首个 novvy:hud-progress 不会漏接。
+  // analytics=false 时整组跳过(纯净包形态,见函数头注释)。
+  if (analytics) {
+    headScripts.push(`<script data-novvy-analytics-lib>${fs.readFileSync(VENDOR_ANALYTICS, 'utf8')}</script>`);
+    bodyScripts.push(`<script data-novvy-analytics>${readOverlay('analytics', 'boot.js')}</script>`);
+  }
 
   // DOM 顺序 = 页面叠放顺序:背景垫底,然后 intro、HUD,CTA 最后(colorever 的
   // repack 把 CTA 放在 body 首位,这里沿用 ws 组的尾插约定;z-index 另有高低,
@@ -120,7 +125,7 @@ export function buildWsOverlayInjection({ overlaysRoot, template, config, media,
     introEnabled,
     backgroundEnabled,
     ctaEnabled,
-    analyticsEnabled: true,
+    analyticsEnabled: analytics,
     headStyles,
     headScripts,
     bodyDom,

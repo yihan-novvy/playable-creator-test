@@ -11,11 +11,14 @@ import {coloreverHtml,coloreverLevel,coloreverPatterns} from '../plugins/colorev
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const custom=()=>({name:'Custom house </script><script>bad()</script>',width:8,height:6,colors:{10:'#123456',20:'#fedcba',30:'#ff0055'},target:Array.from({length:48},(_,i)=>i<8?0:i%3===0?10:i%3===1?20:30),capacity:12,trayCols:4,difficulty:10,seed:7,decoration:'none'});
 export default async function run(assert){
- const events=[],listeners=new Map();
- const sandbox={window:{NovvyAnalytics:{track:(event,params)=>events.push({event,params})},addEventListener:(event,fn)=>listeners.set(event,fn)},document:{getElementById:()=>null,addEventListener:()=>{},removeEventListener:()=>{}}};
- vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/analytics/boot.js'),'utf8'),sandbox);
- listeners.get('novvy:hud-progress')({detail:{percent:80}});
- assert.equal(events,[{event:'game_start',params:{template:'colorever_square_beads_v1'}}],'新版游戏就绪事件使用 Colorever 自己的标识');
+ const bridgeListeners=new Map();let endCardCalls=0,engineClicks=0;
+ const fakeElement=()=>({id:'',type:'',className:'',textContent:'',hidden:false,style:{},setAttribute(){},addEventListener(){},appendChild(){}});
+ const bridgeSandbox={window:{__COLOREVER_CTA_URL__:'',addEventListener:(event,fn)=>bridgeListeners.set(event,fn),showEndCard:()=>{endCardCalls+=1;},novvyHandleAdClick:()=>{engineClicks+=1;}},document:{hidden:false,readyState:'complete',getElementById:()=>null,addEventListener(){},createElement:fakeElement,head:null,body:{appendChild(){}}}};
+ const bridgeSource=fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/cta-bridge/cta-bridge.js'),'utf8');
+ vm.runInNewContext(bridgeSource,bridgeSandbox);
+ bridgeListeners.get('novvy:victory')();
+ assert.equal([endCardCalls,engineClicks],[1,1],'胜利即显露注入引擎结算卡片并经引擎统一转化');
+ assert.check(!bridgeSource.includes('NovvyAnalytics'),'转化桥不携带事件上报,埋点交给落地页注入引擎');
  const hudListeners=new Map(),hudNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-progress-label','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',style:{setProperty(){}},setAttribute(){}}]));
  const hudSandbox={window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}},addEventListener:(event,fn)=>hudListeners.set(event,fn)},document:{getElementById:id=>hudNodes[id]}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),hudSandbox);
@@ -45,31 +48,30 @@ export default async function run(assert){
  }
  const invalidColor=coloreverHtml({...overlayArgs,config:{hud:{progressTextColor:'#fff;}body{display:none}'}}}).html;
  assert.check(!invalidColor.includes('#fff;}body{display:none}'),'非法颜色不会注入 CSS');
- for(const cta of [false,true]){
-  const media=cta?{ctaIcon:'app-icon.png'}:{};
-  const withoutTitle=coloreverHtml({...overlayArgs,media,config:{cta:{enabled:cta},hud:{enabled:false,titleEnabled:false}}}).html;
-  const withTitle=coloreverHtml({...overlayArgs,media,config:{cta:{enabled:cta},hud:{enabled:false,titleEnabled:true,titleLine1:'主标题',titleLine2:'副标题'}}}).html;
-  const shell=text=>text.match(/<style data-colorever-shell>([\s\S]*?)<\/style>/)[1];
-  assert.equal(shell(withTitle),shell(withoutTitle),'仅标题开关不改变画布尺寸与原生进度，CTA '+cta);
-  assert.check(withTitle.includes('id="novvy-training-hud" data-title-only')&&!withTitle.includes('id="novvy-hud-progress-label"')&&!withTitle.includes('id="novvy-hud-progress-fill"'),'仅标题模式不注入额外进度节点，CTA '+cta);
- }
+ const withoutTitle=coloreverHtml({...overlayArgs,config:{hud:{enabled:false,titleEnabled:false}}}).html;
+ const withTitle=coloreverHtml({...overlayArgs,config:{hud:{enabled:false,titleEnabled:true,titleLine1:'主标题',titleLine2:'副标题'}}}).html;
+ const shell=text=>text.match(/<style data-colorever-shell>([\s\S]*?)<\/style>/)[1];
+ assert.equal(shell(withTitle),shell(withoutTitle),'仅标题开关不改变画布尺寸与原生进度');
+ assert.check(withTitle.includes('id="novvy-training-hud" data-title-only')&&!withTitle.includes('id="novvy-hud-progress-label"')&&!withTitle.includes('id="novvy-hud-progress-fill"'),'仅标题模式不注入额外进度节点');
  const titleOnlyNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',setAttribute(){}}]));
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),{window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}}},document:{getElementById:id=>titleOnlyNodes[id]}});
  assert.equal([titleOnlyNodes['novvy-hud-title-line1'].textContent,titleOnlyNodes['novvy-hud-title-line2'].textContent],['主标题','副标题'],'仅标题模式没有进度节点也可正常显示两行文字');
  level.name=custom().name;
  const injection=coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}}).html;
- for(const marker of ['id="novvy-video-intro"','id="novvy-training-hud"','id="novvy-dom-bg"','id="novvy-cta"','data-novvy-analytics','__COLOREVER_CTA_URL__'])assert.check(injection.includes(marker),`叠层 ${marker} 注入`);
+ for(const marker of ['id="novvy-video-intro"','id="novvy-training-hud"','id="novvy-dom-bg"','data-novvy-cta-bridge','__COLOREVER_CTA_URL__'])assert.check(injection.includes(marker),`叠层 ${marker} 注入`);
+ assert.check(!injection.includes('id="novvy-cta"')&&!injection.includes('data-novvy-analytics')&&!injection.includes('data-novvy-cta>'),'下载卡片与埋点组不再随包，遗留 cta 配置不生效');
  assert.check(injection.includes('\\u003c/script>')&&!injection.includes('<script>bad()'),'作者字段不能逃逸内联脚本');
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'colorever-media-test-'));
  try{
   const generated=path.join(temp,'generated');fs.mkdirSync(generated);fs.mkdirSync(path.join(temp,'uploads'));
   fs.writeFileSync(path.join(generated,'level.json'),JSON.stringify(coloreverLevel(templateRoot,{patternId:'house'},template).level));
-  for(const name of ['hud-left.webp','hud-right.webp','background.webp','poster.webp'])fs.copyFileSync(path.join(root,'editor/plugins/colorever/overlays/cta/icon.png'),path.join(generated,name));
+  const fixtureIcon=path.join(root,'template-core/colorever/src/assets/guide-hand.png');
+  for(const name of ['hud-left.webp','hud-right.webp','background.webp','poster.webp'])fs.copyFileSync(fixtureIcon,path.join(generated,name));
   fs.writeFileSync(path.join(temp,'uploads/intro-video.mp4'),'fixture');
   const result=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},cta:{enabled:true}}});
   assert.check(result.ok,`全叠层打包成功 ${result.error||''}`);
-  assert.equal(result.metrics.packageFiles,['app-icon.png','background.webp','game.js','hud-left.webp','hud-right.webp','index.html','poster.webp','tail-ad-video.mp4'],'所有已启用素材进入平铺交付包');
-  fs.copyFileSync(path.join(root,'editor/plugins/colorever/overlays/cta/icon.png'),path.join(temp,'uploads/portrait-src-left.png'));
+  assert.equal(result.metrics.packageFiles,['background.webp','game.js','hud-left.webp','hud-right.webp','index.html','poster.webp','tail-ad-video.mp4'],'下载卡片图标(app-icon.png)不再进入交付包,由落地页服务补齐');
+  fs.copyFileSync(fixtureIcon,path.join(temp,'uploads/portrait-src-left.png'));
   const optionalHud=await runStep({taskId:'fixture',templateRoot,projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'hud',config:{hud:{enabled:true}}});
   assert.check(optionalHud.ok&&optionalHud.metrics.left&&!optionalHud.metrics.right,'仅上传单侧立绘也可以生成 HUD');
   assert.check(!fs.existsSync(path.join(generated,'hud-right.webp')),'移除未上传一侧的旧立绘产物');
@@ -79,7 +81,7 @@ export default async function run(assert){
   assert.check(requiredRejected,'其他模板的立绘必填行为保持不变');
   assert.equal(await stepPrerequisites('background',{background:{enabled:true,source:'video-last'}},template),{uploads:['intro-video'],generated:[]},'视频背景只依赖上传视频，不要求开场视频海报');
   await execFile('ffmpeg',['-y','-f','lavfi','-i','color=c=red:s=32x32:r=5:d=1','-f','lavfi','-i','color=c=blue:s=32x32:r=5:d=1','-filter_complex','[0:v][1:v]concat=n=2:v=1:a=0[out]','-map','[out]','-c:v','libx264','-pix_fmt','yuv420p',path.join(temp,'uploads/intro-video.mp4')]);
-  fs.copyFileSync(path.join(root,'editor/plugins/colorever/overlays/cta/icon.png'),path.join(temp,'uploads/background.png'));
+  fs.copyFileSync(fixtureIcon,path.join(temp,'uploads/background.png'));
   for (const source of ['video-first','video-last']) {
    const background=await runStep({taskId:'fixture',templateRoot,projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'background',config:{intro:{enabled:false},background:{enabled:true,source,blurSigma:7}}});
    assert.check(background.ok&&background.metrics.source===source&&background.metrics.sigma===7,'视频背景提取并应用模糊参数 '+source);

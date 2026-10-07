@@ -35,9 +35,6 @@
       "left": "upload",
       "right": "upload"
     },
-    "cta": {
-      "enabled": false
-    },
     "patternId": "cat"
   },
   "overlays": {
@@ -45,8 +42,7 @@
     "intro": "overlays/intro",
     "outro": "overlays/outro",
     "background": "overlays/background",
-    "cta": "overlays/cta",
-    "analytics": "overlays/analytics"
+    "cta-bridge": "overlays/cta-bridge"
   },
   "background": {
     "width": 1560,
