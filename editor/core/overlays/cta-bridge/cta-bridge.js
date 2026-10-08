@@ -5,9 +5,12 @@
    语义约定:单 playable 时卡片在第一次进入试玩时出现并全程常驻(服务 API
    无隐藏能力),卡片为全屏接管型 —— 出现后任何点击都会走统一转化跳转;
    双 playable(__novvyTwoPhase)时卡片首亮与主动跳转都推迟到引擎的
-   novvy:cta-moment(第 N 步或完成兜底),片尾只是两关之间的过渡。 */
+   novvy:cta-moment(第 N 步或完成兜底),片尾只是两关之间的过渡。
+   本文件由各模板插件共享注入;注入时必须把 __CTA_URL_KEY__ 替换成模板
+   自己的 CTA URL 全局名(如 __COLOREVER_CTA_URL__),SDK 包内该值恒为空 ——
+   落地页由 SDK 取 adm.clicktrack,URL 只服务编辑器预览的裸兜底链。 */
 (function () {
-  var STORE_URL = window.__COLOREVER_CTA_URL__ || '';
+  var STORE_URL = window.__CTA_URL_KEY__ || '';
 
   /* 跳转兜底链(仅编辑器预览会走到):与旧 cta.js 同链。
      Novvy SDK 桥只发点击信号,落地页由 SDK 取 adm.clicktrack,不传 URL。 */

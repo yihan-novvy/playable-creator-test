@@ -1,9 +1,10 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { buildWsOverlayInjection } from '../../core/lib/ws-overlays.mjs';
 import { effectiveConfig } from '../../core/runner.mjs';
+import { normalizeCtaPolicy } from '../../core/lib/helpers.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
 
 const SCRIPT = '<script src="game.js" defer></script>';
@@ -65,13 +66,9 @@ export async function coloreverLevel(root, config, template) {
   return { level, proof, patternId: id, opening };
 }
 
-// CTA 时机策略(两关同构):complete=完成后跳转;steps=第 N 步跳转(N 不是上限,
-// 图案先完成则在完成时兜底跳转)。非法配置回退默认。
-export function normalizeCtaPolicy(raw, fallbackMode) {
-  const mode = raw?.mode === 'steps' || raw?.mode === 'complete' ? raw.mode : fallbackMode;
-  const afterSteps = Number.isInteger(raw?.afterSteps) && raw.afterSteps >= 1 && raw.afterSteps <= 99 ? raw.afterSteps : 8;
-  return { mode, afterSteps };
-}
+// CTA 时机策略(两关同构):实现上收到 core/lib/helpers.mjs 供各模板共享,
+// 这里保留 re-export 兼容既有引用。
+export { normalizeCtaPolicy };
 
 // 双 playable 数据:仅在片尾已启用(存在片尾视频才算)时允许,否则视为未配置。
 // 第二关数据全量内联进 index.html,打包文件列表不变。第二关开局同样由任务配置。
@@ -101,8 +98,11 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config: overlayConfig, media: mediaWithoutCard, optionalHudPortraits: true, analytics: false });
   // 转化桥永远注入:游戏期下载按钮(#downloadBtn)+ 胜利/片尾转化时序 +
   // 注入引擎结算卡片显露(showEndCard)。旧 cta.js 的行为语义全部迁入桥内。
-  const bridgeRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), 'overlays', 'cta-bridge');
-  injection.bodyScripts.push(`<script data-novvy-cta-bridge>${fs.readFileSync(path.join(bridgeRoot, 'cta-bridge.js'), 'utf8')}</script>`);
+  // 桥文件在 core/overlays 共享(colorever/dragon-cube 同一份),占位符在
+  // 注入时替换成本模板的 URL 变量名,保证包产物逐字节不变。
+  const bridgeFile = fileURLToPath(new URL('../../core/overlays/cta-bridge/cta-bridge.js', import.meta.url));
+  const bridge = fs.readFileSync(bridgeFile, 'utf8').replaceAll('__CTA_URL_KEY__', '__COLOREVER_CTA_URL__');
+  injection.bodyScripts.push(`<script data-novvy-cta-bridge>${bridge}</script>`);
   injection.outroEnabled = outroEnabled;
   if (injection.outroEnabled) {
     const outroRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template.overlays.outro);

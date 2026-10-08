@@ -11,7 +11,8 @@ import {coloreverHtml,coloreverLevel,coloreverPatterns,coloreverPhase2,normalize
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const custom=()=>({name:'Custom house </script><script>bad()</script>',width:8,height:6,colors:{10:'#123456',20:'#fedcba',30:'#ff0055'},target:Array.from({length:48},(_,i)=>i<8?0:i%3===0?10:i%3===1?20:30),capacity:12,trayCols:4,difficulty:10,seed:7,decoration:'none'});
 export default async function run(assert){
- const bridgeSource=fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/cta-bridge/cta-bridge.js'),'utf8');
+ // 桥文件在 core/overlays 共享;与 lib.mjs 注入同款占位符替换,保证沙箱字节忠实。
+ const bridgeSource=fs.readFileSync(path.join(root,'editor/core/overlays/cta-bridge/cta-bridge.js'),'utf8').replaceAll('__CTA_URL_KEY__','__COLOREVER_CTA_URL__');
  assert.check(!bridgeSource.includes('novvyEndCard')&&!bridgeSource.includes('downloadBtn')&&!bridgeSource.includes('pointer-events'),'转化桥零 DOM 耦合：不引用服务卡片与任何元素结构');
  function bridgeRun({intro=false,engine=true,outro=false,twoPhase=false}={}){
   const listeners=new Map();let endCards=0,engineClicks=0,opens=0;

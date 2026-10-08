@@ -9,6 +9,8 @@ import {execFile} from '../core/lib/exec.mjs';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const overlay=path.join(root,'editor/plugins/colorever/overlays');
+// 桥文件在 core/overlays 共享;与 lib.mjs 注入同款占位符替换,保证沙箱字节忠实。
+const bridgeSource=fs.readFileSync(path.join(root,'editor/core/overlays/cta-bridge/cta-bridge.js'),'utf8').replaceAll('__CTA_URL_KEY__','__COLOREVER_CTA_URL__');
 function node(){
  const listeners=new Map();
  const classes=new Set();
@@ -27,7 +29,7 @@ function playback({enabled=true,rejectPlay=false,withEngine=false,twoPhase=false
  const document={hidden:false,readyState:'complete',getElementById:id=>nodes[id]||null,addEventListener:(name,fn)=>listeners.set('document:'+name,[...(listeners.get('document:'+name)||[]),fn]),createElement:()=>node(),head:null,body:{appendChild:el=>{if(el.id==='downloadBtn')nodes['downloadBtn']=el;}}};
  const window={__novvyOutroEnabled:enabled,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,__novvyViewable:true,novvy:{open:()=>opens++,haptic:style=>buzzes.push(style)},showEndCard:()=>{cards++;},novvyHandleAdClick:withEngine?()=>{engineClicks++;opens++;}:undefined,addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}};
  const sandbox={document,window,setTimeout:(fn,delay)=>{delays.push(delay);timers.push(fn);return timers.length-1;},clearTimeout:id=>{timers[id]=null;},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
- vm.runInNewContext(fs.readFileSync(path.join(overlay,'cta-bridge/cta-bridge.js'),'utf8'),sandbox);
+ vm.runInNewContext(bridgeSource,sandbox);
  if(enabled)vm.runInNewContext(fs.readFileSync(path.join(overlay,'outro/outro.js'),'utf8'),sandbox);
  return {nodes,document,video,window,timers,delays,buzzes,counts:()=>({plays,opens,resets,pauses,cards,engineClicks,buzzes:buzzes.length}),emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
 }

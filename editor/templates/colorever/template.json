@@ -45,8 +45,7 @@
     "hud": "overlays/hud",
     "intro": "overlays/intro",
     "outro": "overlays/outro",
-    "background": "overlays/background",
-    "cta-bridge": "overlays/cta-bridge"
+    "background": "overlays/background"
   },
   "background": {
     "width": 1560,
