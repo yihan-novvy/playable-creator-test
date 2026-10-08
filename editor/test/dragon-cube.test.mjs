@@ -45,6 +45,9 @@ export default async function run(assert) {
   assert.check(/if \(armedPolicy\) announceCtaMoment\(\)/.test(shell), 'steps 策略完成时兜底派发转化时刻');
   assert.check(!shell.includes('level-number') && shell.includes('applyHudTitle') && shell.includes('hud-title-line1'), '顶栏 LEVEL 角标已换成 HUD 标题（第二关换关时切换）');
   assert.check(preview.includes('window.__DRAGON_CUBE_HUD_TITLE__={"titleLine1":"DragonCube"'), 'HUD 标题配置注入预览');
+  assert.check(!shell.includes("addEventListener('novvy:intro-finished', startMusic)") && shell.includes('introMusicKick'), '片头结束自动起 BGM（补偿覆盖层 220ms 延迟移除）');
+  assert.check(!/primeAudio\(\);\s*\n\s*reset\(\)/.test(shell), '开局不自动起声（仅视频播完切换 playable 时自动起播）');
+  assert.check(shell.includes("addEventListener('novvy:phase2-start', function () { primeAudio(); startMusic(); })"), '第二关就绪自动恢复 BGM');
 
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'dragon-cube-test-'));
   let server = null, id = null, phase2Temp = null;

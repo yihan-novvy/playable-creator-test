@@ -559,10 +559,24 @@
   document.getElementById('result-reset').addEventListener('click', function () { play('click'); reset(); });
   window.addEventListener('resize', resize);
   document.addEventListener('pointerdown', primeAudio);
-  window.addEventListener('novvy:intro-finished', startMusic);
+  // 视频播完切进 playable 时自动起声:片头结束与第二关就绪都先 primeAudio 建
+  // 好音频节点再尝试起 BGM——广告壳/预览环境带着用户激活,通常直接放行;平台
+  // 拒绝时 play() 静默失败,仍由首次触摸兜底解锁。开局不自动起声。片头覆盖层
+  // 在 novvy:intro-finished 之后约 220ms 才从 DOM 移除,而 startMusic 按 DOM
+  // 判定片头在场,这里错开一脚补起。
+  var introMusicKick = null;
+  function introFinishedAudio() {
+    primeAudio();
+    if (introMusicKick !== null) clearTimeout(introMusicKick);
+    introMusicKick = setTimeout(function () {
+      introMusicKick = null;
+      startMusic();
+    }, 240);
+  }
+  window.addEventListener('novvy:intro-finished', introFinishedAudio);
   // 片尾/第二关的音频协同:片尾起播压 BGM,第二关就绪后恢复(colorever 同款接线)。
   window.addEventListener('novvy:outro-started', function () { if (audio.music) audio.music.pause(); });
-  window.addEventListener('novvy:phase2-start', function () { if (audio.unlocked) startMusic(); });
+  window.addEventListener('novvy:phase2-start', function () { primeAudio(); startMusic(); });
   if (phase2Spec) {
     // 双 playable:片尾播完(停在最后一帧收场)后页内换关,再把画面交给游戏。
     // 闩锁保证只换一次;换关同时换用第二关的转化策略并重置计数。
