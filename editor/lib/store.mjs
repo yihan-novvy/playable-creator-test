@@ -304,7 +304,8 @@ const STEP_INPUT_FILES = {
   pattern: ['generated/hud-right.png', 'generated/hud-left.png'],
   levels: ['generated/pattern.json'],
   pack: [
-    'uploads/intro-video.mp4',
+    // pack 发的是 intro 步骤的转码产物,不是上传原片本身。
+    'generated/intro-video.mp4',
     'uploads/intro-poster.jpg',
     'uploads/background.png',
     'uploads/portrait-src-left.png',
@@ -343,17 +344,17 @@ const WATER_SORT_STEP_INPUT_FILES = {
     'generated/background.webp',
     'generated/hud-left.webp',
     'generated/hud-right.webp',
-    'uploads/intro-video.mp4',
+    'generated/intro-video.mp4',
     'uploads/intro-poster.jpg',
     'uploads/background.png',
   ],
 };
 
 export function stepInputFilesFor(templateId) {
-  if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
+  if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
   // dragon-cube 与 colorever 共用双 playable 管线(outro/background2/第二关);
   // 第一关背景维持现状(上传图或海报回退),不加片头视频帧来源。
-  if (templateId === 'dragon-cube') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp', 'generated/level2.json'] };
+  if (templateId === 'dragon-cube') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp', 'generated/level2.json'] };
   return ['water-sort','dragon-cube','colorever'].includes(templateId) ? WATER_SORT_STEP_INPUT_FILES : STEP_INPUT_FILES;
 }
 

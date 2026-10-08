@@ -390,7 +390,8 @@ export default async function run(assert) {
     const expectedSiblings = [
       ['background.webp', path.join(ROOT, 'project', taskId, 'generated', 'background.webp')],
       ['poster.webp', path.join(ROOT, 'project', taskId, 'generated', 'poster.webp')],
-      ['tail-ad-video.mp4', path.join(ROOT, 'project', taskId, 'uploads', 'intro-video.mp4')],
+      // 视频 pack 发的是 intro 步骤的转码产物(540p),不是上传原片。
+      ['tail-ad-video.mp4', path.join(ROOT, 'project', taskId, 'generated', 'intro-video.mp4')],
       ['app-icon.png', path.join(ROOT, 'editor', 'plugins', 'colorever-gemsort', 'overlays', 'cta', 'icon.png')],
       ['hud-left.webp', path.join(ROOT, 'project', taskId, 'generated', 'hud-left.webp')],
       ['hud-right.webp', path.join(ROOT, 'project', taskId, 'generated', 'hud-right.webp')],

@@ -6,7 +6,7 @@ import { coloreverLevel, coloreverPhase2, coloreverHtml } from '../lib.mjs';
 export function prerequisites(config) {
   const generated = ['level.json'];
   const uploads = [];
-  if (config?.intro?.enabled === true) { uploads.push('intro-video'); generated.push('poster.webp'); }
+  if (config?.intro?.enabled === true) { uploads.push('intro-video'); generated.push('poster.webp', 'intro-video.mp4'); }
   if (config?.background?.enabled === true) generated.push('background.webp');
   if (config?.secondPlayable?.enabled === true && config?.outro?.enabled === true) {
     generated.push('level2.json');
@@ -28,9 +28,10 @@ export async function run(ctx) {
     if (JSON.stringify(JSON.parse(fs.readFileSync(generated2, 'utf8'))) !== JSON.stringify(phase2.level)) throw new Error('第二关已改变，请重新运行关卡步骤');
   }
   enabled.background2 = phase2 !== null && ctx.config.secondPlayable?.background?.enabled === true;
+  // 视频 pack 只发 intro/outro 步骤转码出的 540p 产物(上传原片不进包)。
   const files = [];
-  if (enabled.intro) files.push([ctx.uploads['intro-video'], 'tail-ad-video.mp4'], [path.join(ctx.generatedDir, 'poster.webp'), 'poster.webp']);
-  if (enabled.outro) files.push([ctx.uploads['outro-video'], 'outro-video.mp4']);
+  if (enabled.intro) files.push([path.join(ctx.generatedDir, 'intro-video.mp4'), 'tail-ad-video.mp4'], [path.join(ctx.generatedDir, 'poster.webp'), 'poster.webp']);
+  if (enabled.outro) files.push([path.join(ctx.generatedDir, 'outro-video.mp4'), 'outro-video.mp4']);
   const hudMedia = {};
   if (enabled.hud) for (const side of ['left', 'right']) {
     const name = `hud-${side}.webp`, source = path.join(ctx.generatedDir, name);

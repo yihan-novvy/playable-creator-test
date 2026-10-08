@@ -20,7 +20,7 @@ export function prerequisites(config) {
   if (config?.hud?.enabled !== false) generated.push('hud-left.webp', 'hud-right.webp');
   if (config?.intro?.enabled !== false) {
     uploads.push('intro-video');
-    generated.push('poster.webp');
+    generated.push('poster.webp', 'intro-video.mp4');
   }
   return { uploads, generated };
 }
@@ -44,7 +44,7 @@ async function step(ctx) {
   const generated = (name) => path.join(ctx.generatedDir, name);
   const prereqs = [generated('background.webp'), generated('levels.json')];
   if (config.hud.enabled) prereqs.push(generated('hud-left.webp'), generated('hud-right.webp'));
-  if (config.intro.enabled) prereqs.push(ctx.uploads['intro-video'], generated('poster.webp'));
+  if (config.intro.enabled) prereqs.push(ctx.uploads['intro-video'], generated('intro-video.mp4'), generated('poster.webp'));
   requireFiles(prereqs);
 
   const workspace = fs.mkdtempSync(path.join(os.tmpdir(), 'playable-pack-'));
@@ -279,7 +279,8 @@ async function step(ctx) {
       repackArgs.push('--cta-icon', path.join(ctx.pluginDir, ctaOverlay, 'icon.png'));
     }
     if (config.intro.enabled) {
-      repackArgs.push('--intro-video', ctx.uploads['intro-video']);
+      // 打包发的是 intro 步骤转码出的 540p 产物(上传原片不进包)。
+      repackArgs.push('--intro-video', generated('intro-video.mp4'));
       repackArgs.push('--intro-poster', generated('poster.webp'));
     }
     await spawnRun('node', repackArgs);

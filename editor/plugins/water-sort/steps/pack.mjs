@@ -10,7 +10,7 @@ export function prerequisites(config) {
   if (config?.hud?.enabled !== false) generated.push('hud-left.webp', 'hud-right.webp');
   if (config?.intro?.enabled !== false) {
     uploads.push('intro-video');
-    generated.push('poster.webp');
+    generated.push('poster.webp', 'intro-video.mp4');
   }
   return { uploads, generated };
 }
@@ -30,7 +30,8 @@ export async function run(ctx) {
   const backgroundPath = path.join(ctx.generatedDir, 'background.webp');
   const hudLeftPath = path.join(ctx.generatedDir, 'hud-left.webp');
   const hudRightPath = path.join(ctx.generatedDir, 'hud-right.webp');
-  const introVideoPath = ctx.uploads['intro-video'];
+  // 打包发的是 intro 步骤转码出的 540p 产物(上传原片不进包)。
+  const introVideoPath = path.join(ctx.generatedDir, 'intro-video.mp4');
   const hudEnabled = config.hud?.enabled !== false;
   const introEnabled = config.intro?.enabled !== false;
   // CTA 叠层(含胜利跳转/自动重开)默认开启;图标随插件交付,无任务前置产物。
@@ -39,7 +40,7 @@ export async function run(ctx) {
   const ctaEnabled = config.cta?.enabled !== false && Boolean(ctaIconPath && fs.existsSync(ctaIconPath));
   const prereqs = [levelPath, backgroundPath];
   if (hudEnabled) prereqs.push(hudLeftPath, hudRightPath);
-  if (introEnabled) prereqs.push(introVideoPath, posterPath);
+  if (introEnabled) prereqs.push(ctx.uploads['intro-video'], introVideoPath, posterPath);
   requireFiles(prereqs);
   const levelText = fs.readFileSync(levelPath, 'utf8');
   // 作者可控字段(关卡名等)直接进内联脚本,必须防 </script> 与行分隔符逃逸。

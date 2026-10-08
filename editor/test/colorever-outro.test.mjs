@@ -233,14 +233,19 @@ export default async function run(assert){
   assert.equal(uploaded.status,200,'支持上传片尾 MP4');
   assert.check(!readTask(id).steps.outro&&!readTask(id).steps.pack,'上传片尾后校验与旧打包状态失效');
   built=await api(`/api/tasks/${id}/run`,{step:'all'});
-  assert.check(built.status===200&&built.body.every(r=>r.ok)&&built.body.find(r=>r.stepId==='outro').metrics.durationSec>0,'片尾视频进入有效性校验与完整构建');
+  const outroMetrics=built.body.find(r=>r.stepId==='outro').metrics;
+  assert.check(built.status===200&&built.body.every(r=>r.ok)&&outroMetrics.durationSec>0,'片尾视频进入有效性校验与完整构建');
+  assert.check(outroMetrics.videoPackagedBytes>0&&outroMetrics.packagedWidth===32&&outroMetrics.packagedHeight===32,'片尾步骤产出转码产物(小尺寸源不放大)');
   assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html','outro-video.mp4'],'交付包包含可选片尾视频');
   preview=await(await fetch(base+`/api/tasks/${id}/preview`)).text();
   assert.check(preview.includes('id="novvy-video-outro" hidden')&&preview.includes(`/project/${id}/uploads/outro-video.mp4`),'即时预览注入隐藏片尾，使用相同的上传视频');
   const packed=await(await fetch(base+`/result/${id}/index.html`)).text();
   assert.check(packed.includes('__novvyOutroEnabled=true')&&packed.includes('src="outro-video.mp4"'),'交付包启用片尾时引用包内视频');
+  // 打包发的是 outro 步骤的 540p 转码产物,与上传原片字节不同是预期行为。
   const delivered=new Uint8Array(await(await fetch(base+`/result/${id}/outro-video.mp4`)).arrayBuffer());
-  assert.check(Buffer.from(delivered).equals(bytes),'打包片尾保留完整视频内容');
+  const transcoded=new Uint8Array(await(await fetch(base+`/project/${id}/generated/outro-video.mp4`)).arrayBuffer());
+  assert.check(Buffer.from(delivered).equals(transcoded),'打包片尾与转码产物逐字节一致');
+  assert.check(!Buffer.from(delivered).equals(bytes),'上传原片不再原样进包');
   await api(`/api/tasks/${id}`,{config:{secondPlayable:{enabled:true,patternId:'axe',opening:{mode:'medium',seed:9},hud:{titleLine1:'第二关专属 </script>',titleLine2:'小块挑战'},cta:{mode:'steps',afterSteps:8}}}},'PATCH');
   built=await api(`/api/tasks/${id}/run`,{step:'all'});
   assert.check(built.status===200&&built.body.every(r=>r.ok),'双 playable 配置完整构建通过');

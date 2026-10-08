@@ -242,6 +242,11 @@ export function prerequisites(config) {
 - **启用开关统一**：所有 core step（及私有 step 的惯例）遵循
   `config.<step>.enabled === false` ⇒ 返回 `{ metrics: { skipped: true }, warnings: [] }`。
   禁止再像现在 dragon-cube 那样为 intro/hud/background 写三个包装函数。
+- **视频槽位统一转码**：`intro-video` / `outro-video` 由 intro/outro step 经
+  `core/scripts/transcode-video.mjs` 转码出 `generated/intro-video.mp4` /
+  `generated/outro-video.mp4`（540p H.264、CRF27 封顶 700k、mono 64k AAC、
+  faststart）。pack 只发转码产物，上传原片不进包；抽帧类步骤（海报、视频
+  背景）仍读上传原片。
 - 前置条件放 `prerequisites(config)`，**用代码表达条件逻辑**（如 pack 的前置取决于
   intro/hud 是否启用），plugin.json 里不重复声明。
 - 禁止写 `templateDir`、`pluginDir`、其他任务、monorepo 其他任何位置。

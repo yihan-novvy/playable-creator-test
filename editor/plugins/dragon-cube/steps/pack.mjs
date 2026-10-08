@@ -6,7 +6,7 @@ import { dragonLevel, dragonHtml } from '../lib.mjs';
 export function prerequisites(config) {
   const generated = ['level.json'];
   const uploads = [];
-  if (config?.intro?.enabled === true) { uploads.push('intro-video'); generated.push('poster.webp'); }
+  if (config?.intro?.enabled === true) { uploads.push('intro-video'); generated.push('poster.webp', 'intro-video.mp4'); }
   if (config?.hud?.enabled === true) generated.push('hud-left.webp', 'hud-right.webp');
   if (config?.background?.enabled === true) generated.push('background.webp');
   if (config?.secondPlayable?.enabled === true && config?.outro?.enabled === true) {
@@ -48,7 +48,8 @@ export async function run(ctx) {
     background2: enabled.background2 ? 'background2.webp' : null,
   };
   const needed = [];
-  if (enabled.intro) needed.push(ctx.uploads['intro-video'], path.join(ctx.generatedDir, 'poster.webp'));
+  if (enabled.intro) needed.push(ctx.uploads['intro-video'], path.join(ctx.generatedDir, 'poster.webp'), path.join(ctx.generatedDir, 'intro-video.mp4'));
+  if (enabled.outro) needed.push(path.join(ctx.generatedDir, 'outro-video.mp4'));
   if (enabled.hud) needed.push(path.join(ctx.generatedDir, 'hud-left.webp'), path.join(ctx.generatedDir, 'hud-right.webp'));
   if (enabled.background) needed.push(path.join(ctx.generatedDir, 'background.webp'));
   if (enabled.background2) needed.push(path.join(ctx.generatedDir, 'background2.webp'));
@@ -62,11 +63,12 @@ export async function run(ctx) {
     if (/^level\d+\.html$/.test(file)) fs.rmSync(path.join(ctx.resultDir, file));
   }
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
+  // 视频 pack 只发 intro/outro 步骤转码出的 540p 产物(上传原片不进包)。
   if (enabled.intro) {
-    fs.copyFileSync(ctx.uploads['intro-video'], path.join(ctx.resultDir, 'tail-ad-video.mp4'));
+    fs.copyFileSync(path.join(ctx.generatedDir, 'intro-video.mp4'), path.join(ctx.resultDir, 'tail-ad-video.mp4'));
     fs.copyFileSync(path.join(ctx.generatedDir, 'poster.webp'), path.join(ctx.resultDir, 'poster.webp'));
   }
-  if (enabled.outro) fs.copyFileSync(ctx.uploads['outro-video'], path.join(ctx.resultDir, 'outro-video.mp4'));
+  if (enabled.outro) fs.copyFileSync(path.join(ctx.generatedDir, 'outro-video.mp4'), path.join(ctx.resultDir, 'outro-video.mp4'));
   if (enabled.hud) {
     for (const side of ['left', 'right']) fs.copyFileSync(path.join(ctx.generatedDir, `hud-${side}.webp`), path.join(ctx.resultDir, `hud-${side}.webp`));
   }

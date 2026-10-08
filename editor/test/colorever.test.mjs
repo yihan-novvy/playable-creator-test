@@ -122,11 +122,14 @@ export default async function run(assert){
   const fixtureIcon=path.join(root,'template-core/colorever/src/assets/guide-hand.png');
   for(const name of ['hud-left.webp','hud-right.webp','background.webp','poster.webp'])fs.copyFileSync(fixtureIcon,path.join(generated,name));
   fs.writeFileSync(path.join(temp,'uploads/intro-video.mp4'),'fixture');
+  // pack 只发 intro 步骤的转码产物,这里直接塞等价 fixture(内容不校验)。
+  fs.writeFileSync(path.join(generated,'intro-video.mp4'),'fixture');
   const result=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},cta:{enabled:true}}});
   assert.check(result.ok,`全叠层打包成功 ${result.error||''}`);
   assert.equal(result.metrics.packageFiles,['background.webp','game.js','hud-left.webp','hud-right.webp','index.html','poster.webp','tail-ad-video.mp4'],'下载卡片图标(app-icon.png)不再进入交付包,由落地页服务补齐');
   fs.writeFileSync(path.join(generated,'level2.json'),JSON.stringify((await coloreverLevel(templateRoot,{patternId:'axe'},template)).level));
   fs.writeFileSync(path.join(temp,'uploads/outro-video.mp4'),'fixture');
+  fs.writeFileSync(path.join(generated,'outro-video.mp4'),'fixture');
   const twoPhasePack=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe'}}});
   assert.check(twoPhasePack.ok,`双 playable 打包成功 ${twoPhasePack.error||''}`);
   assert.equal(twoPhasePack.metrics.packageFiles,['background.webp','game.js','hud-left.webp','hud-right.webp','index.html','outro-video.mp4','poster.webp','tail-ad-video.mp4'],'双 playable 数据内联,打包文件只多片尾视频本身');
