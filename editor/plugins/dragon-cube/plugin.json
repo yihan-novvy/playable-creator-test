@@ -5,32 +5,37 @@
   "workbench": "dragon-cube",
   "steps": [
     { "id": "intro", "runner": "core:intro" },
+    { "id": "outro", "runner": "./steps/outro.mjs" },
     { "id": "hud", "runner": "core:hud" },
     { "id": "background", "runner": "core:background" },
+    { "id": "background2", "runner": "./steps/background2.mjs" },
     { "id": "level", "runner": "./steps/level.mjs" },
     { "id": "pack", "runner": "./steps/pack.mjs" }
   ],
   "uploads": {
     "intro-video": { "file": "intro-video.mp4", "magic": "mp4" },
+    "outro-video": { "file": "outro-video.mp4", "magic": "mp4" },
     "intro-poster": { "file": "intro-poster.jpg", "magic": "jpg" },
     "background": { "file": "background.png", "magic": ["png", "jpg"] },
+    "background2": { "file": "background2.png", "magic": ["png", "jpg"] },
     "portrait-src-left": { "file": "portrait-src-left.png", "magic": ["png", "jpg"] },
     "portrait-src-right": { "file": "portrait-src-right.png", "magic": ["png", "jpg"] }
   },
   "overlays": {
     "hud": "overlays/hud",
     "intro": "overlays/intro",
-    "background": "overlays/background",
-    "cta": "overlays/cta",
-    "analytics": "overlays/analytics"
+    "outro": "overlays/outro",
+    "background": "overlays/background"
   },
   "level": { "directory": "levels", "min": 1, "max": 10 },
   "background": { "width": 1560, "height": 2598, "defaultSigma": 12 },
   "defaults": {
     "levelId": 1,
     "intro": { "enabled": false, "ariaLabel": "" },
+    "outro": { "enabled": false },
     "hud": { "enabled": false, "titleLine1": "DragonCube", "titleLine2": "", "ariaLabel": "" },
     "background": { "enabled": false, "blurSigma": 12 },
-    "cta": { "enabled": true, "destinationUrl": "" }
+    "playableCta": { "mode": "complete", "afterSteps": 8 },
+    "secondPlayable": { "enabled": false, "levelId": 2, "background": { "enabled": false, "source": "video-last", "blurSigma": 12 }, "cta": { "mode": "steps", "afterSteps": 8 } }
   }
 }

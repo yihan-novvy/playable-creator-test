@@ -46,6 +46,18 @@
 
   window.addEventListener('novvy:hud-progress', onHudProgress);
   window.addEventListener('novvy:victory', snapComplete);
+  // 双 playable:第二关就绪时换标题,进度回到起点(新关卡重新计数)。
+  window.addEventListener('novvy:phase2-start', function (event) {
+    var title = event.detail && event.detail.hud;
+    if (title) {
+      var line1 = document.getElementById('novvy-hud-title-line1');
+      var line2 = document.getElementById('novvy-hud-title-line2');
+      if (line1) line1.textContent = title.titleLine1 || '';
+      if (line2) line2.textContent = title.titleLine2 || '';
+    }
+    progress = START;
+    render();
+  });
   window.novvyTrainingProgress = {
     get: function () { return Math.round(progress); },
     complete: snapComplete,

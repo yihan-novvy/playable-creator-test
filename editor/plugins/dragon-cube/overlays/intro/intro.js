@@ -11,6 +11,7 @@
   const root = document.getElementById('novvy-video-intro');
   const video = document.getElementById('novvy-intro-video');
   const soundButton = document.getElementById('novvy-intro-sound');
+  const countdown = document.getElementById('novvy-intro-countdown');
   if (!root || !video || !soundButton) return;
 
   // Package mode carries the aria text in materials.js; see hud.js note.
@@ -22,6 +23,52 @@
   const track = (name, params) => {
     if (window.NovvyAnalytics) window.NovvyAnalytics.track(name, params);
   };
+
+  /* —— 进入 playable 前的 3-2-1 倒计时:取视频真实剩余时间,最后 3 秒逐秒
+     亮出白色浮字;数字 3 为中等震动、2 为重震动、1 为两拍重震动(桥 haptic,预览退回 vibrate),
+     配合数字的缩放回落动画提醒用户 playable 马上开始。 —— */
+  let countdownPulse = null, browserPulse = false;
+  const cancelPulse = () => {
+    if (countdownPulse !== null) { clearTimeout(countdownPulse); countdownPulse = null; }
+    if (browserPulse) { try { navigator.vibrate?.(0); } catch (_) {} browserPulse = false; }
+  };
+  // Build anticipation: medium on 3, heavy on 2, two heavy beats on 1.
+  const buzz = n => {
+    cancelPulse();
+    try {
+      if (typeof window.novvy?.haptic === 'function') {
+        window.novvy.haptic(n === 3 ? 'medium' : 'heavy');
+        if (n === 1) countdownPulse = setTimeout(() => {
+          countdownPulse = null;
+          if (countdownShown !== 1 || document.hidden || video.paused || video.ended) return;
+          try { window.novvy.haptic('heavy'); } catch (_) {}
+        }, 120);
+        return;
+      }
+    } catch (_) {}
+    try { navigator.vibrate?.(n === 3 ? 40 : n === 2 ? 65 : [65, 70, 85]); browserPulse = n === 1; } catch (_) {}
+  };
+  let countdownShown = 0;
+  function hideCountdown() {
+    cancelPulse();
+    if (!countdownShown) return;
+    countdownShown = 0;
+    if (countdown) { countdown.hidden = true; countdown.innerHTML = ''; }
+  }
+  function syncCountdown() {
+    if (!countdown) return;
+    const duration = video.duration;
+    const remaining = duration - video.currentTime;
+    if (!Number.isFinite(duration) || duration <= 0 || video.ended || remaining > 3 || remaining <= 0) { hideCountdown(); return; }
+    const n = Math.ceil(remaining);
+    if (n === countdownShown) return;
+    countdownShown = n;
+    buzz(n);
+    countdown.hidden = false;
+    countdown.innerHTML = '<span>' + n + '</span>';
+  }
+  video.addEventListener('timeupdate', syncCountdown);
+  video.addEventListener('ended', hideCountdown);
 
   // Icon + label live in one place; the button itself ships empty because the
   // SVG strings are static template content (safe to bake into the shell).
@@ -51,6 +98,7 @@
     let switchSeconds = 0;
     try { switchSeconds = Math.round(video.currentTime || 0); } catch (_error) {}
     try { video.pause(); } catch (_error) {}
+    hideCountdown();
     teardown(reason || 'video_ended'); // release close BEFORE playable_entry lands
     window.__novvyIntroFinished = true;
     try {
@@ -158,11 +206,11 @@
     });
   }
 
-  // The 12s failsafe bounds the video phase.  The reference has no timer; ours
+  // The 30s failsafe bounds the video phase.  The reference has no timer; ours
   // must not keep ticking while the SDK has us paused — a timer_reached finish
   // during a backgrounded ad would drop the user into the playable with the
   // video unseen.  Count only creative-visible time.
-  const FAILSAFE_MS = 12000;
+  const FAILSAFE_MS = 30000;
   let failsafeTimer = null;
   let failsafeRemaining = FAILSAFE_MS;
   let failsafeArmedAt = 0;

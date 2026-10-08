@@ -108,11 +108,12 @@ export function deleteTask(id) {
 // 少了它,配置界面的全部图案参数会被静默丢弃。
 const CONFIG_PATCH_WHITELIST = new Set(['hud', 'intro', 'cta', 'recolorPortraits', 'patternSource', 'background', 'pattern', 'patternConfig', 'patternCrop', 'hudImageSource', 'hudCrop', 'win']);
 
-// Water Sort 保存关卡数据；Colorever New 选择图案 ID 与任务级开局参数。
+// Water Sort 保存关卡数据；Colorever New 选择图案 ID 与任务级开局参数；
+// DragonCube 选择两关的关卡编号与转化时机（第二关共用 secondPlayable）。
 const CONFIG_WHITELISTS = new Map([
   ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','opening','playableCta','secondPlayable'])],
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
-  ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId'])],
+  ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable'])],
 ]);
 
 export function configWhitelistFor(templateId) {
@@ -171,7 +172,7 @@ export function updateTaskConfig(id, patch) {
   }
   if (['dragon-cube','colorever'].includes(doc.templateId)) {
     if ('intro' in (patch || {})) { delete doc.steps.intro; delete doc.steps.hud; delete doc.steps.background; delete doc.steps.pack; }
-    if ('outro' in (patch || {})) { delete doc.steps.outro; delete doc.steps.pack; if (doc.templateId === 'colorever') delete doc.steps.background2; }
+    if ('outro' in (patch || {})) { delete doc.steps.outro; delete doc.steps.pack; delete doc.steps.background2; }
     if ('hud' in (patch || {}) || 'hudImageSource' in (patch || {}) || 'hudCrop' in (patch || {})) { delete doc.steps.hud; delete doc.steps.pack; }
     if ('background' in (patch || {})) { delete doc.steps.background; delete doc.steps.pack; }
     if ('cta' in (patch || {})) delete doc.steps.pack;
@@ -184,8 +185,10 @@ export function recordUpload(id, slot, meta) {
   const doc = readTask(id);
   if (!doc) return null;
   doc.uploads[slot] = meta;
-  if (doc.templateId === 'colorever' && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
-  if (doc.templateId === 'colorever' && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
+  // 片尾视频/第二关背景的上传与清除,会让依赖它们的步骤过期(colorever 与
+  // dragon-cube 的双 playable 管线同构)。
+  if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
+  if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -193,8 +196,8 @@ export function clearUpload(id, slot) {
   const doc = readTask(id);
   if (!doc) return null;
   delete doc.uploads[slot];
-  if (doc.templateId === 'colorever' && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
-  if (doc.templateId === 'colorever' && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
+  if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
+  if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -348,6 +351,9 @@ const WATER_SORT_STEP_INPUT_FILES = {
 
 export function stepInputFilesFor(templateId) {
   if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
+  // dragon-cube 与 colorever 共用双 playable 管线(outro/background2/第二关);
+  // 第一关背景维持现状(上传图或海报回退),不加片头视频帧来源。
+  if (templateId === 'dragon-cube') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp', 'generated/level2.json'] };
   return ['water-sort','dragon-cube','colorever'].includes(templateId) ? WATER_SORT_STEP_INPUT_FILES : STEP_INPUT_FILES;
 }
 

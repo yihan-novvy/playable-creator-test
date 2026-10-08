@@ -1,7 +1,8 @@
 #novvy-training-hud {
   --hud-progress: 10%;
   position: fixed;
-  z-index: 2147483000;
+  /* 层级契约:低于片头(20)/片尾(30)与落地页服务注入的结算卡片(999999)。 */
+  z-index: 10;
   top: calc(env(safe-area-inset-top) + max(4px, .8dvh));
   left: 50%;
   width: min(88dvw, 720px);

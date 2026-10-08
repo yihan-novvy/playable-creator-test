@@ -2,22 +2,23 @@
   "id": "dragon-cube",
   "name": "DragonCube（Unity 前十关）",
   "workbench": "dragon-cube",
-  "steps": ["intro", "hud", "background", "level", "pack"],
+  "steps": ["intro", "outro", "hud", "background", "background2", "level", "pack"],
   "game": { "indexHtml": "game/index.html" },
   "overlays": {
     "hud": "overlays/hud",
     "intro": "overlays/intro",
-    "background": "overlays/background",
-    "cta": "overlays/cta",
-    "analytics": "overlays/analytics"
+    "outro": "overlays/outro",
+    "background": "overlays/background"
   },
   "level": { "directory": "levels", "min": 1, "max": 10 },
   "background": { "width": 1560, "height": 2598, "defaultSigma": 12 },
   "defaults": {
     "levelId": 1,
     "intro": { "enabled": false, "ariaLabel": "" },
+    "outro": { "enabled": false },
     "hud": { "enabled": false, "titleLine1": "DragonCube", "titleLine2": "", "ariaLabel": "" },
     "background": { "enabled": false, "blurSigma": 12 },
-    "cta": { "enabled": true, "destinationUrl": "" }
+    "playableCta": { "mode": "complete", "afterSteps": 8 },
+    "secondPlayable": { "enabled": false, "levelId": 2, "background": { "enabled": false, "source": "video-last", "blurSigma": 12 }, "cta": { "mode": "steps", "afterSteps": 8 } }
   }
 }

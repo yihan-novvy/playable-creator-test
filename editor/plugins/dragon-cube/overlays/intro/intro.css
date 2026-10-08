@@ -1,7 +1,8 @@
 .novvy-video-intro {
   position: fixed;
   inset: 0;
-  z-index: 2147483646;
+  /* 层级契约:高于 HUD(10),低于片尾(30)与服务注入的结算卡片(999999)。 */
+  z-index: 20;
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -45,4 +46,40 @@
 
 .novvy-intro-sound:active {
   transform: scale(0.92);
+}
+
+/* 倒计时 3-2-1:白色浮字悬在视频上,不完全遮挡画面;每次数字出现都重放
+   一个快速缩放回落动画,与同拍触发的轻微震动对应,提示 playable 将至。 */
+.novvy-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.novvy-countdown[hidden] {
+  display: none;
+}
+
+.novvy-countdown span {
+  color: #fff;
+  font-size: clamp(72px, 20vw, 140px);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45), 0 0 2px rgba(0, 0, 0, 0.35);
+  animation: novvy-countdown-pop 0.42s cubic-bezier(0.2, 0.8, 0.3, 1.08);
+}
+
+@keyframes novvy-countdown-pop {
+  0% { transform: scale(1.55); opacity: 0; }
+  55% { transform: scale(0.96); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .novvy-countdown span {
+    animation: none;
+  }
 }
