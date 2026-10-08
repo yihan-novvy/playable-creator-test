@@ -32,6 +32,23 @@
   var directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
   document.getElementById('level-number').textContent = level.Index;
 
+  // —— 双 playable 与转化时机:第二关数据/策略由广告任务内联注入。单 playable
+  // 且无片尾时第一关策略武装(complete=完成跳转;steps=第 N 次有效拖放跳转,
+  // 完成时兜底);有片尾时第一关只负责引出片尾,转化交给片尾链与第二关策略。——
+  var phase2Spec = window.__DRAGON_CUBE_PHASE2__ || null;
+  var armedPolicy = phase2Spec ? null : (window.__DRAGON_CUBE_CTA_POLICY__ || null);
+  var ctaAnnounced = false;
+  var dragSteps = 0;
+  function announceCtaMoment() {
+    if (ctaAnnounced) return;
+    ctaAnnounced = true;
+    fire('novvy:cta-moment');
+  }
+  function registerStep() {
+    dragSteps += 1;
+    if (armedPolicy && armedPolicy.mode === 'steps' && dragSteps >= armedPolicy.afterSteps) announceCtaMoment();
+  }
+
   // ---- 音效：WebAudio 优先（http(s) 环境），HTMLAudio 兜底（file://）；iOS 需首次手势解锁 ----
   var SFX_NAMES = ['click', 'drop', 'collect', 'coin', 'win', 'fail'];
   var audio = { ctx: null, muted: false, unlocked: false, music: null, buffers: {}, elems: {}, volumes: { click: .55, drop: .9, collect: .8, coin: .65, win: 1, fail: .9 } };
@@ -96,7 +113,30 @@
       else if (audio.unlocked) startMusic();
     }
   }
+  // —— 震动反馈:与片头/片尾倒计时同一套桥词汇(light/selection/medium/success)。
+  // novvy.haptic 桥优先,浏览器预览退回 navigator.vibrate;后台静默,45ms 节流
+  // (success 除外),全程 try/catch —— 反馈永不打断游戏操作。——
+  var HAPTIC_PATTERNS = { light: 10, selection: 8, medium: 20, success: [25, 50, 35] };
+  var HAPTIC_FOR_SFX = { click: 'selection', drop: 'selection', coin: 'medium', win: 'success' };
+  var haptics = {
+    lastBuzzAt: -Infinity,
+    trigger: function (style) {
+      if (document.hidden) return;
+      var now = Date.now();
+      if (style !== 'success' && now - this.lastBuzzAt < 45) return;
+      try {
+        var bridge = window.novvy;
+        if (bridge && typeof bridge.haptic === 'function') { bridge.haptic(style); this.lastBuzzAt = now; }
+        else if (typeof navigator.vibrate === 'function') { navigator.vibrate(HAPTIC_PATTERNS[style] || 20); this.lastBuzzAt = now; }
+      } catch (err) { /* 反馈永不打断操作 */ }
+    },
+    play: function (name) {
+      var style = HAPTIC_FOR_SFX[name];
+      if (style) this.trigger(style);
+    }
+  };
   function play(name) {
+    haptics.play(name);
     if (audio.muted) return;
     initAudio();
     var buf = audio.buffers[name];
@@ -212,6 +252,15 @@
     render(performance.now());
     fire('novvy:hud-progress', { percent: 0 });
   }
+  // 页内换关(双 playable):换关卡数据后重算棋盘边界并重置局面;渲染器/
+  // 精灵/音频等单例不重建。
+  function loadLevel(data) {
+    level = data;
+    boardBounds = bounds();
+    document.getElementById('level-number').textContent = level.Index;
+    resize();
+    reset();
+  }
   function formatTime(seconds) { return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0'); }
   function startTimer() {
     if (state.started || state.finished) return;
@@ -232,8 +281,11 @@
     document.getElementById('result-title').textContent = won ? '关卡完成！' : '时间到！';
     document.getElementById('result-copy').textContent = won ? '所有小猫都回家了' : '再试一次，收集所有小猫';
     resultNode.hidden = false;
-    if (won) fire('novvy:victory', { levelId: level.Index, collected: state.collected });
-    else fire('dragon-cube:fail', { levelId: level.Index });
+    if (won) {
+      fire('novvy:victory', { levelId: level.Index, collected: state.collected });
+      // complete 策略的兜底转化时刻(steps 策略在 registerStep 里命中)。
+      if (armedPolicy && armedPolicy.mode === 'complete') announceCtaMoment();
+    } else fire('dragon-cube:fail', { levelId: level.Index });
   }
   function bounds() {
     var xs = level.Cells.map(function (cell) { return cell.Index.x; });
@@ -343,7 +395,8 @@
     var found = state.boxes.slice().reverse().find(function (box) { return box.remaining > 0 && boxCells(box).some(function (part) { return part.x === point.x && part.y === point.y; }); });
     if (!found) return;
     startTimer();
-    drag = { id: found.id, x: point.x, y: point.y };
+    haptics.trigger('light');
+    drag = { id: found.id, x: point.x, y: point.y, originX: found.x, originY: found.y };
     canvas.setPointerCapture(event.pointerId);
     event.preventDefault();
     hintNode.textContent = '把色块移到同色小猫上';
@@ -475,13 +528,37 @@
   }
   canvas.addEventListener('pointerdown', onDown);
   canvas.addEventListener('pointermove', onMove);
-  canvas.addEventListener('pointerup', function () { drag = null; });
+  canvas.addEventListener('pointerup', function () {
+    // 一次有效拖放 = 本次手势里色块真的挪了格(防原地点按刷步数)。
+    if (drag) {
+      var box = state.boxes.find(function (item) { return item.id === drag.id; });
+      if (box && (box.x !== drag.originX || box.y !== drag.originY)) registerStep();
+    }
+    drag = null;
+  });
   canvas.addEventListener('pointercancel', function () { drag = null; });
   document.getElementById('reset').addEventListener('click', function () { play('click'); reset(); });
   document.getElementById('result-reset').addEventListener('click', function () { play('click'); reset(); });
   window.addEventListener('resize', resize);
   document.addEventListener('pointerdown', primeAudio);
   window.addEventListener('novvy:intro-finished', startMusic);
+  // 片尾/第二关的音频协同:片尾起播压 BGM,第二关就绪后恢复(colorever 同款接线)。
+  window.addEventListener('novvy:outro-started', function () { if (audio.music) audio.music.pause(); });
+  window.addEventListener('novvy:phase2-start', function () { if (audio.unlocked) startMusic(); });
+  if (phase2Spec) {
+    // 双 playable:片尾播完(停在最后一帧收场)后页内换关,再把画面交给游戏。
+    // 闩锁保证只换一次;换关同时换用第二关的转化策略并重置计数。
+    var phase2Started = false;
+    window.addEventListener('novvy:outro-finished', function (event) {
+      if (phase2Started || !event.detail || event.detail.reason !== 'video_ended') return;
+      phase2Started = true;
+      armedPolicy = phase2Spec.cta || null;
+      ctaAnnounced = false;
+      dragSteps = 0;
+      loadLevel(phase2Spec.level);
+      fire('novvy:phase2-start', { hud: phase2Spec.hud });
+    });
+  }
   document.addEventListener('visibilitychange', function () {
     if (!audio.music) return;
     if (document.hidden) audio.music.pause();
