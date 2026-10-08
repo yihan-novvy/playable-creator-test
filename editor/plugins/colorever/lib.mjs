@@ -7,6 +7,8 @@ import { effectiveConfig } from '../../core/runner.mjs';
 import { normalizeCtaPolicy } from '../../core/lib/helpers.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
 
+import { taskGameScript, embeddedAudio } from './music.mjs';
+
 const SCRIPT = '<script src="game.js" defer></script>';
 const hash = (text) => createHash('sha256').update(text).digest('hex');
 
@@ -82,7 +84,7 @@ export async function coloreverPhase2(root, config, template, outroActive) {
 
 const inline = (value) => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 
-export async function coloreverHtml({ root, overlaysRoot, template, level, config, media = {}, preview = false }) {
+export async function coloreverHtml({ root, overlaysRoot, template, level, config, media = {}, preview = false, gameScriptUrl = null }) {
   let html = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
   for (const anchor of [SCRIPT, '</head>', '<body>', '</body>']) if (html.split(anchor).length !== 2) throw new Error(`Colorever New 基础壳缺少唯一锚点 ${anchor}`);
   const url = '';
@@ -138,7 +140,7 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root:not(.novvy-phase2),:root:not(.novvy-phase2) body,:root:not(.novvy-phase2) .app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
   const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__COLOREVER_CTA_POLICY__=${inline(ctaPolicy)};window.__COLOREVER_PHASE2__=${inline(phase2)};</script>`;
   html = html.replace('</head>', () => `${[...injection.headStyles, styles, ...injection.headScripts].join('\n')}</head>`)
-    .replace(SCRIPT, () => `${injection.uiScript}${data}${preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT}`)
+    .replace(SCRIPT, () => `${injection.uiScript}${data}${preview ? `<script src="${gameScriptUrl || `/templates/${template.id}/game/game.js`}" defer></script>` : SCRIPT}`)
     .replace('<body>', () => `<body>${injection.bodyDom.join('\n')}`)
     .replace('</body>', () => `${injection.bodyScripts.join('\n')}</body>`);
   return { html, injection };
@@ -160,7 +162,16 @@ export async function previewHtml({ plugin: entry, task, taskId }) {
     background: bg ? generated('background.webp') : null,
     background2: config.secondPlayable?.background?.enabled === true ? generated('background2.webp') : null,
   };
-  return (await coloreverHtml({ root, overlaysRoot: entry.dir, template: entry.template, level, config, preview: true, media })).html;
+  return (await coloreverHtml({ root, overlaysRoot: entry.dir, template: entry.template, level, config, preview: true, media, gameScriptUrl: config.music?.source === 'custom' ? `/api/tasks/${taskId}/preview-game.js` : null })).html;
 }
 
 export { coloreverPatterns as patterns };
+
+export function previewScript({ plugin: entry, task, taskId }) {
+  artifact(entry.templateDir, entry.template);
+  return taskGameScript(entry.templateDir, task.config, path.join(taskUploadsDir(taskId), 'background-music.mp3'));
+}
+
+export function previewMusic(script) {
+  return Buffer.from(embeddedAudio(script).audio.bgm, 'base64');
+}

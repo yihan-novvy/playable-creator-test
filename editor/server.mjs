@@ -44,6 +44,7 @@ import { fixedViewportHtml } from './core/lib/fixed-viewport.mjs';
 const UPLOAD_CAP_BYTES = 100 * 1024 * 1024;
 const UPLOAD_MIME = {
   'intro-video': { types: ['video/mp4'], ext: ['.mp4'] },
+  'background-music': { types: ['audio/mpeg', 'audio/mp3'], ext: ['.mp3'] },
   'outro-video': { types: ['video/mp4'], ext: ['.mp4'] },
   'intro-poster': { types: ['image/jpeg'], ext: ['.jpg', '.jpeg'] },
   background: { types: ['image/png', 'image/jpeg'], ext: ['.png', '.jpg', '.jpeg'] },
@@ -60,6 +61,7 @@ const isPngOrJpeg = (buf) =>
   (buf.length > 8 && buf.readUInt32BE(0) === 0x89504e47) ||
   (buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff);
 const UPLOAD_MAGIC = {
+  'background-music': (buf) => buf.length >= 3 && (buf.subarray(0, 3).toString() === 'ID3' || (buf[0] === 0xff && (buf[1] & 0xe0) === 0xe0 && (buf[1] & 0x06) === 0x02)),
   'intro-video': (buf) => buf.length > 12 && buf.readUInt32BE(4) === 0x66747970, // ISO-BMFF "ftyp"
   'outro-video': (buf) => buf.length > 12 && buf.readUInt32BE(4) === 0x66747970,
   'intro-poster': (buf) => buf.length > 3 && buf[0] === 0xff && buf[1] === 0xd8 && buf[2] === 0xff,
@@ -181,6 +183,7 @@ async function handleApi(req, res, url) {
   if (rest[0] === 'uploads') {
     const slot = rest[1];
     if (!UPLOAD_SLOTS.includes(slot)) return sendError(res, 400, `未知上传槽位: ${slot}`);
+    if (slot === 'background-music' && task.templateId !== 'colorever') return sendError(res, 400, '该模板不支持背景音乐上传');
     const slotPath = uploadPath(taskId, slot);
     if (req.method === 'PUT') {
       const declaredType = (req.headers['content-type'] || '').split(';')[0];
@@ -283,6 +286,21 @@ async function handleApi(req, res, url) {
     const entry = templateById(patched.templateId);
     if (!entry) return sendJson(res, 200, { uploads: [], generated: [] });
     return sendJson(res, 200, await stepPrerequisites(rest[1], patched.config, entry.template));
+  }
+
+  // Task-specific music never mutates the shared template bundle.
+  if (['preview-game.js', 'music'].includes(rest[0]) && req.method === 'GET') {
+    if (task.templateId !== 'colorever') return sendError(res, 400, '该模板不支持任务音乐');
+    const linked = templateById(task.templateId);
+    const lib = await getLib(linked.plugin);
+    try {
+      const script = lib.previewScript({ plugin: linked.plugin, task, taskId });
+      const music = rest[0] === 'music';
+      const payload = music ? lib.previewMusic(script) : script;
+      res.writeHead(200, { 'Content-Type': music ? 'audio/mpeg' : 'text/javascript; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(payload);
+    } catch (error) { return sendError(res, 400, error.message); }
+    return undefined;
   }
 
   // ----------------------- 在线试玩预览（插件钩子） -----------------------

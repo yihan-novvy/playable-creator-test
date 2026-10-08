@@ -13,6 +13,7 @@
     { "id": "pack", "runner": "./steps/pack.mjs" }
   ],
   "uploads": {
+    "background-music": { "file": "background-music.mp3", "magic": "mp3" },
     "intro-video": { "file": "intro-video.mp4", "magic": "mp4" },
     "outro-video": { "file": "outro-video.mp4", "magic": "mp4" },
     "intro-poster": { "file": "intro-poster.jpg", "magic": "jpg" },
@@ -30,6 +31,7 @@
   "background": { "width": 1560, "height": 2598, "defaultSigma": 12 },
   "patterns": { "catalog": "game/patterns/catalog.json" },
   "defaults": {
+    "music": { "source": "original" },
     "intro": { "enabled": false, "ariaLabel": "" },
     "outro": { "enabled": false },
     "hud": { "enabled": false, "titleEnabled": null, "titleLine1": "", "titleLine2": "", "ariaLabel": "" },

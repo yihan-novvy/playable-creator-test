@@ -40,6 +40,7 @@ export function createAssert() {
 
 export const TESTS = [
   { name: 'fixed-viewport', file: path.join(TEST_DIR, 'fixed-viewport.test.mjs') },
+  { name: 'colorever-music', file: path.join(TEST_DIR, 'colorever-music.test.mjs') },
   { name: 'colorever', file: path.join(TEST_DIR, 'colorever.test.mjs') },
   { name: 'colorever-outro', file: path.join(TEST_DIR, 'colorever-outro.test.mjs') },
   { name: 'pattern-colors', file: path.join(TEST_DIR, 'pattern-colors.test.mjs') },

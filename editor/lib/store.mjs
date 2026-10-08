@@ -15,6 +15,7 @@ const TASK_ID_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const UPLOAD_SLOTS = Object.freeze([
   'intro-video',
   'outro-video',
+  'background-music',
   'intro-poster',
   'background',
   'background2',
@@ -111,7 +112,7 @@ const CONFIG_PATCH_WHITELIST = new Set(['hud', 'intro', 'cta', 'recolorPortraits
 // Water Sort 保存关卡数据；Colorever New 选择图案 ID 与任务级开局参数；
 // DragonCube 选择两关的关卡编号与转化时机（第二关共用 secondPlayable）。
 const CONFIG_WHITELISTS = new Map([
-  ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','opening','playableCta','secondPlayable'])],
+  ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','opening','playableCta','secondPlayable','music'])],
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable'])],
 ]);
@@ -136,6 +137,7 @@ export function updateTaskConfig(id, patch) {
   doc.config = doc.config || {};
   const whitelist = configWhitelistFor(doc.templateId);
   if(doc.templateId==='colorever'){
+    if ('music' in (patch || {}) && (!patch.music || !['original', 'custom'].includes(patch.music.source))) throw new Error('未知背景音乐来源');
     if('level' in (patch||{}))throw new Error('图案和玩法参数只能在 colorever 源项目修改，任务仅选择已构建的 patternId');
     if('patternId' in (patch||{})){
       const catalog=JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../editor/templates/colorever/game/patterns/catalog.json'),'utf8'));
@@ -154,6 +156,7 @@ export function updateTaskConfig(id, patch) {
   }
   // 获胜次数只影响 pack 产物里的 meta 补丁,重跑 pack 即可生效。
   if ('win' in (patch || {})) delete doc.steps.pack;
+  if ('music' in (patch || {})) delete doc.steps.pack;
   // 转化时机只影响 pack 内联数据;第二关还影响 level 步骤写出的 level2.json。
   if ('playableCta' in (patch || {})) delete doc.steps.pack;
   // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
@@ -185,6 +188,7 @@ export function recordUpload(id, slot, meta) {
   const doc = readTask(id);
   if (!doc) return null;
   doc.uploads[slot] = meta;
+  if (slot === 'background-music') delete doc.steps.pack;
   // 片尾视频/第二关背景的上传与清除,会让依赖它们的步骤过期(colorever 与
   // dragon-cube 的双 playable 管线同构)。
   if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
@@ -196,6 +200,10 @@ export function clearUpload(id, slot) {
   const doc = readTask(id);
   if (!doc) return null;
   delete doc.uploads[slot];
+  if (slot === 'background-music') {
+    delete doc.steps.pack;
+    if (doc.templateId === 'colorever') { doc.config ||= {}; doc.config.music = { source: 'original' }; }
+  }
   if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
   if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
@@ -239,6 +247,7 @@ export function uploadPath(id, slot) {
   const extBySlot = {
     'intro-video': '.mp4',
     'outro-video': '.mp4',
+    'background-music': '.mp3',
     'intro-poster': '.jpg',
     background: '.png',
     background2: '.png',
@@ -351,7 +360,7 @@ const WATER_SORT_STEP_INPUT_FILES = {
 };
 
 export function stepInputFilesFor(templateId) {
-  if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
+  if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/background-music.mp3', 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
   // dragon-cube 与 colorever 共用双 playable 管线(outro/background2/第二关);
   // 第一关背景维持现状(上传图或海报回退),不加片头视频帧来源。
   if (templateId === 'dragon-cube') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp', 'generated/level2.json'] };

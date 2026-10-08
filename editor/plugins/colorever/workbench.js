@@ -60,6 +60,43 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     wrap.append(el('p',{class:'hint'},[mode.value==='easy'?'整块搬运开局，出题器验证 6 次搬运内可完成。':mode.value==='medium'?'每块 3–5 颗珠子，保留连续色块，增加到 12–14 次搬运；同一种子总是得到同一开局。':'随机交换珠子生成开局，打散对数越高碎块越多；同一种子总是得到同一开局。']));
     return wrap;
   }
+  let musicPlayer;
+  function musicControls() {
+    if (musicPlayer) musicPlayer.pause();
+    const row = el('div', { class: 'dragon-config-grid', style: 'grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr))' });
+    const meta = statusInfo?.uploads?.['background-music'];
+    const select = el('select', { 'aria-label': '背景音乐' });
+    select.append(el('option', { value: 'original' }, ['Colorever 原版音乐']), el('option', { value: 'custom' }, ['上传的音乐']));
+    select.value = config().music?.source ?? 'original';
+    select.onchange = async () => { await save({ music: { source: select.value } }); await refresh(true); };
+    const input = el('input', { type: 'file', accept: '.mp3,audio/mpeg', style: 'display:none' });
+    input.onchange = async () => {
+      const file = input.files?.[0]; if (!file) return;
+      musicPlayer.pause();
+      try {
+        const response = await fetch(`/api/tasks/${taskId}/uploads/background-music`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/octet-stream', 'x-novvy-original-name': encodeURIComponent(file.name) }, body: file,
+        });
+        if (!response.ok) throw new Error((await response.json()).error?.message || '音乐上传失败');
+        await save({ music: { source: 'custom' } });
+        await refresh(true);
+      } catch (error) { alert(error.message); }
+      input.value = '';
+    };
+    musicPlayer = el('audio', { controls: '', preload: 'none', style: 'min-width:0;width:100%;max-width:300px', 'aria-label': '背景音乐试听' });
+    musicPlayer.src = `/api/tasks/${taskId}/music?v=${encodeURIComponent(select.value + '-' + (meta?.meta?.sha256 ?? 'original'))}`;
+    row.append(field('背景音乐', select), el('button', { onclick: () => input.click() }, ['上传 MP3']), input);
+    row.append(el('span', { class: 'hint' }, [meta?.present ? `${meta.meta?.originalName || '已上传音乐'} · ${Math.round(meta.bytes / 1024)} KB` : '未上传自定义音乐']));
+    if (meta?.present) row.append(el('button', { onclick: async () => {
+      musicPlayer.pause();
+      await fetchJson(`/api/tasks/${taskId}/uploads/background-music`, { method: 'DELETE' });
+      await refresh(true);
+    } }, ['移除音乐']));
+    if (select.value !== 'custom' || meta?.present) row.append(field('试听', musicPlayer));
+    else row.append(el('span', { class: 'hint' }, ['请上传 MP3，或切回原版音乐。']));
+    row.append(el('p', { class: 'hint', style: 'grid-column:1/-1' }, ['仅作用于本任务，操作音效不受影响。更换音乐后请重新打包。']));
+    return row;
+  }
   function renderConfig(){
     document.getElementById('config-hint').textContent='选择已构建的图案模板；本任务的开局模式与随机种子在「关卡生成与校验」步骤中设置，第二关的开局在其专属设置区。';
     const root=document.getElementById('config-grid');root.textContent='';
@@ -75,6 +112,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     // 存在片尾视频才允许增加第二个 playable。
     if(config().outro?.enabled)toggles.push(checkbox('增加第二个 playable','secondPlayable','enabled',config().secondPlayable?.enabled===true));
     wrap.append(el('div',{class:'dragon-config-grid'},toggles));
+    wrap.append(musicControls());
     root.append(wrap);
   }
   function stateChip(id) {

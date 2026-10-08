@@ -3,9 +3,11 @@ import path from 'node:path';
 import { requireFiles } from '../../../core/lib/helpers.mjs';
 import { coloreverLevel, coloreverPhase2, coloreverHtml } from '../lib.mjs';
 
+import { taskGameScript } from '../music.mjs';
+
 export function prerequisites(config) {
   const generated = ['level.json'];
-  const uploads = [];
+  const uploads = config?.music?.source === 'custom' ? ['background-music'] : [];
   if (config?.intro?.enabled === true) { uploads.push('intro-video'); generated.push('poster.webp', 'intro-video.mp4'); }
   if (config?.background?.enabled === true) generated.push('background.webp');
   if (config?.secondPlayable?.enabled === true && config?.outro?.enabled === true) {
@@ -42,9 +44,10 @@ export async function run(ctx) {
   requireFiles(files.map(([source]) => source));
   const built = await coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, outroVideo: enabled.outro ? 'outro-video.mp4' : null, hudLeft: hudMedia.left ?? null, hudRight: hudMedia.right ?? null, background: enabled.background ? 'background.webp' : null, background2: enabled.background2 ? 'background2.webp' : null } });
   enabled.hud = built.injection.hudEnabled;
+  const gameScript = taskGameScript(ctx.templateRoot, ctx.config, ctx.uploads['background-music']);
   fs.rmSync(ctx.resultDir, { recursive: true, force: true });
   fs.mkdirSync(ctx.resultDir, { recursive: true });
-  fs.copyFileSync(path.join(ctx.templateRoot, 'game/game.js'), path.join(ctx.resultDir, 'game.js'));
+  fs.writeFileSync(path.join(ctx.resultDir, 'game.js'), gameScript);
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
   for (const [source, name] of files) fs.copyFileSync(source, path.join(ctx.resultDir, name));
   const packageFiles = fs.readdirSync(ctx.resultDir).sort();

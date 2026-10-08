@@ -7,7 +7,7 @@ import { PLUGINS_ROOT, TEMPLATES_ROOT, registry } from './registry.mjs';
 // editor server 启动与 `npm run validate` 共用同一实现。
 
 const STEP_ID_RE = /^[a-z][a-z0-9-]*$/;
-const SUPPORTED_MAGIC = new Set(['mp4', 'jpg', 'png', 'webp']);
+const SUPPORTED_MAGIC = new Set(['mp4', 'mp3', 'jpg', 'png', 'webp']);
 
 export function validateRegistry() {
   const errors = [];
