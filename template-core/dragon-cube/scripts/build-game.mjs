@@ -23,8 +23,7 @@ for (const level of levels) {
   const json = JSON.stringify(level).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
   const page = html
     .replace(entry, `<script>window.__DRAGON_CUBE_LEVEL__=${json};</script>\n  ${entry}`)
-    .replace('<title>DragonCube Playable</title>', `<title>DragonCube · 第 ${level.Index} 关</title>`)
-    .replace('<strong id="level-number">1</strong>', `<strong id="level-number">${level.Index}</strong>`);
+    .replace('<title>DragonCube Playable</title>', `<title>DragonCube · 第 ${level.Index} 关</title>`);
   fs.writeFileSync(path.join(out, `level${level.Index}.html`), page);
 }
 fs.copyFileSync(path.join(root, 'src', 'style.css'), path.join(out, 'style.css'));

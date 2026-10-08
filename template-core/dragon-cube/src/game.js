@@ -25,12 +25,21 @@
   var canvas = document.getElementById('board');
   var ctx = canvas.getContext('2d');
   var wrap = document.getElementById('board-wrap');
-  var timerNode = document.getElementById('timer');
   var hintNode = document.getElementById('hint');
   var resultNode = document.getElementById('win');
-  var state, layout, drag = null, tick = null, particles = [], ghosts = [];
+  var state, layout, drag = null, particles = [], ghosts = [];
   var directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
-  document.getElementById('level-number').textContent = level.Index;
+  // 顶栏即 HUD 标题(替代旧 LEVEL 角标):第一关用注入的 hud 配置,第二关在
+  // 页内换关时换成 secondPlayable.hud。未注入(裸包试玩)时保留静态默认文案。
+  var hudTitleLine1 = document.getElementById('hud-title-line1');
+  var hudTitleLine2 = document.getElementById('hud-title-line2');
+  function applyHudTitle(title) {
+    var line1 = title && title.titleLine1 != null ? String(title.titleLine1).trim() : '';
+    var line2 = title && title.titleLine2 != null ? String(title.titleLine2).trim() : '';
+    if (line1 && hudTitleLine1) hudTitleLine1.textContent = line1;
+    if (hudTitleLine2) { hudTitleLine2.textContent = line2; hudTitleLine2.hidden = !line2; }
+  }
+  applyHudTitle(window.__DRAGON_CUBE_HUD_TITLE__);
 
   // —— 双 playable 与转化时机:第二关数据/策略由广告任务内联注入。单 playable
   // 且无片尾时第一关策略武装(complete=完成跳转;steps=第 N 次有效拖放跳转,
@@ -50,8 +59,8 @@
   }
 
   // ---- 音效：WebAudio 优先（http(s) 环境），HTMLAudio 兜底（file://）；iOS 需首次手势解锁 ----
-  var SFX_NAMES = ['click', 'drop', 'collect', 'coin', 'win', 'fail'];
-  var audio = { ctx: null, muted: false, unlocked: false, music: null, buffers: {}, elems: {}, volumes: { click: .55, drop: .9, collect: .8, coin: .65, win: 1, fail: .9 } };
+  var SFX_NAMES = ['click', 'drop', 'collect', 'coin', 'win'];
+  var audio = { ctx: null, muted: false, unlocked: false, music: null, buffers: {}, elems: {}, volumes: { click: .55, drop: .9, collect: .8, coin: .65, win: 1 } };
   function sfxUrl(name) { return new URL('sfx/' + name + '.m4a', assetRoot).href; }
   function initAudio() {
     if (audio.elems.click) return;
@@ -237,18 +246,15 @@
         h: maxOy - minOy + 1, dying: 0
       };
     });
-    return { cells: cells, cats: cats, blocks: blocks, boxes: boxes, left: Math.max(1, level.TimeLimit), total: cats.length + blocks.reduce(function (n, b) { return n + b.queue.length; }, 0), collected: 0, started: false, finished: false };
+    return { cells: cells, cats: cats, blocks: blocks, boxes: boxes, total: cats.length + blocks.reduce(function (n, b) { return n + b.queue.length; }, 0), collected: 0, finished: false };
   }
   function reset() {
-    if (tick) clearInterval(tick);
-    tick = null;
     state = initialState();
     drag = null;
     particles = [];
     ghosts = [];
     resultNode.hidden = true;
     hintNode.textContent = '拖动色块，收集同色小猫';
-    timerNode.textContent = formatTime(state.left);
     render(performance.now());
     fire('novvy:hud-progress', { percent: 0 });
   }
@@ -257,35 +263,47 @@
   function loadLevel(data) {
     level = data;
     boardBounds = bounds();
-    document.getElementById('level-number').textContent = level.Index;
     resize();
     reset();
   }
-  function formatTime(seconds) { return String(Math.floor(seconds / 60)).padStart(2, '0') + ':' + String(seconds % 60).padStart(2, '0'); }
-  function startTimer() {
-    if (state.started || state.finished) return;
-    state.started = true;
-    tick = setInterval(function () {
-      if (state.finished) return;
-      state.left -= 1;
-      timerNode.textContent = formatTime(state.left);
-      if (state.left <= 0) finish(false);
-    }, 1000);
+  // 倒计时已移除:关卡不再限时失败,首次拿起色块只上报一次开局信号。
+  var startAnnounced = false;
+  function markStarted() {
+    if (startAnnounced) return;
+    startAnnounced = true;
     fire('dragon-cube:start', { levelId: level.Index });
   }
-  function finish(won) {
+  // 胜利音乐(约 5 秒)播完再宣告胜利:片尾视频/结算转化/第二关换关都等音乐
+  // 收尾再接管画面,不掐断成功反馈;静音时立即放行。
+  function playWinThen(next) {
+    play('win');
+    if (audio.muted) { next(); return; }
+    var buf = audio.buffers.win;
+    var el = audio.elems.win;
+    var seconds = buf && buf.duration > 0 ? buf.duration : (el && el.duration > 0 ? el.duration : 5.2);
+    var settled = false;
+    var settle = function () {
+      if (settled) return;
+      settled = true;
+      if (el) el.removeEventListener('ended', settle);
+      next();
+    };
+    if (el) el.addEventListener('ended', settle);
+    setTimeout(settle, seconds * 1000 + 400);
+  }
+  function finish() {
     if (state.finished) return;
     state.finished = true;
-    if (tick) clearInterval(tick);
-    play(won ? 'win' : 'fail');
-    document.getElementById('result-title').textContent = won ? '关卡完成！' : '时间到！';
-    document.getElementById('result-copy').textContent = won ? '所有小猫都回家了' : '再试一次，收集所有小猫';
+    var snapshot = state;
+    document.getElementById('result-title').textContent = '关卡完成！';
+    document.getElementById('result-copy').textContent = '所有小猫都回家了';
     resultNode.hidden = false;
-    if (won) {
-      fire('novvy:victory', { levelId: level.Index, collected: state.collected });
-      // complete 策略的兜底转化时刻(steps 策略在 registerStep 里命中)。
-      if (armedPolicy && armedPolicy.mode === 'complete') announceCtaMoment();
-    } else fire('dragon-cube:fail', { levelId: level.Index });
+    playWinThen(function () {
+      if (state !== snapshot) return; // 音乐期间被重开:放弃这次结算
+      fire('novvy:victory', { levelId: level.Index, collected: snapshot.collected });
+      // 武装策略的转化时刻:complete 的主时刻,也是 steps 完成时未满 N 步的兜底。
+      if (armedPolicy) announceCtaMoment();
+    });
   }
   function bounds() {
     var xs = level.Cells.map(function (cell) { return cell.Index.x; });
@@ -378,7 +396,7 @@
     }
     if (!state.finished && state.boxes.every(function (b) { return b.remaining <= 0; })) {
       var snapshot = state;
-      setTimeout(function () { if (state === snapshot) finish(true); }, 300);
+      setTimeout(function () { if (state === snapshot) finish(); }, 300);
     }
   }
   function move(box, x, y) {
@@ -394,7 +412,7 @@
     var point = boardPoint(event.clientX, event.clientY);
     var found = state.boxes.slice().reverse().find(function (box) { return box.remaining > 0 && boxCells(box).some(function (part) { return part.x === point.x && part.y === point.y; }); });
     if (!found) return;
-    startTimer();
+    markStarted();
     haptics.trigger('light');
     drag = { id: found.id, x: point.x, y: point.y, originX: found.x, originY: found.y };
     canvas.setPointerCapture(event.pointerId);
@@ -555,6 +573,7 @@
       armedPolicy = phase2Spec.cta || null;
       ctaAnnounced = false;
       dragSteps = 0;
+      applyHudTitle(phase2Spec.hud);
       loadLevel(phase2Spec.level);
       fire('novvy:phase2-start', { hud: phase2Spec.hud });
     });
@@ -568,7 +587,7 @@
   window.DragonCube = {
     reset: reset,
     setMuted: setMuted,
-    getState: function () { return { levelId: level.Index, left: state.left, collected: state.collected, total: state.total, boxes: state.boxes.filter(function (b) { return b.remaining > 0; }).length, finished: state.finished }; }
+    getState: function () { return { levelId: level.Index, collected: state.collected, total: state.total, boxes: state.boxes.filter(function (b) { return b.remaining > 0; }).length, finished: state.finished }; }
   };
   reset();
   resize();

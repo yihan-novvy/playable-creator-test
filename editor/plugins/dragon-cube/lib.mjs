@@ -74,7 +74,7 @@ export function dragonHtml({ root, overlaysRoot, template, level, config, media,
   // 壳内结算卡与底部按钮在广告形态下让位:第一关的结算就是片尾/服务结算
   // 卡片(双 playable 时片尾之后还有第二关)。
   const extra = `<style data-dragon-shell>#game-shell{position:relative;z-index:1;background:transparent}#novvy-dom-bg{z-index:0}.bottom-ui{visibility:hidden}#win{display:none!important}${injection.hudEnabled ? '.top-ui{visibility:hidden}' : ''}</style>`;
-  const configScript = `<script>window.__DRAGON_CUBE_LEVEL__=${inline(level)};window.__DRAGON_CUBE_CTA_URL__='';window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__DRAGON_CUBE_CTA_POLICY__=${inline(ctaPolicy)};window.__DRAGON_CUBE_PHASE2__=${inline(phase2)};</script>`;
+  const configScript = `<script>window.__DRAGON_CUBE_LEVEL__=${inline(level)};window.__DRAGON_CUBE_CTA_URL__='';window.__DRAGON_CUBE_HUD_TITLE__=${inline({ titleLine1: String(config?.hud?.titleLine1 ?? ''), titleLine2: String(config?.hud?.titleLine2 ?? '') })};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__DRAGON_CUBE_CTA_POLICY__=${inline(ctaPolicy)};window.__DRAGON_CUBE_PHASE2__=${inline(phase2)};</script>`;
   const gameScript = preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT;
   if (preview) html = html.replace('href="style.css"', `href="/templates/${template.id}/game/style.css"`);
   html = html.replace('</head>', `${[...injection.headStyles, extra, ...injection.headScripts].join('\n')}\n</head>`)

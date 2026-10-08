@@ -40,6 +40,11 @@ export default async function run(assert) {
   const shell = fs.readFileSync(path.join(templateRoot, 'game', 'game.js'), 'utf8');
   assert.check(shell.includes('function loadLevel') && shell.includes('novvy:cta-moment') && shell.includes('novvy:phase2-start'), '页内换关与转化时机契约进入引擎');
   assert.check(shell.includes('haptic') && shell.includes("play('coin')"), '震动反馈契约进入引擎');
+  assert.check(!shell.includes('timer-pill') && !shell.includes('formatTime') && !shell.includes('state.left'), '右上角倒计时不进引擎（限时失败一并移除）');
+  assert.check(shell.includes('playWinThen') && /playWinThen[\s\S]*?novvy:victory/.test(shell), '胜利音乐播完才派发 novvy:victory');
+  assert.check(/if \(armedPolicy\) announceCtaMoment\(\)/.test(shell), 'steps 策略完成时兜底派发转化时刻');
+  assert.check(!shell.includes('level-number') && shell.includes('applyHudTitle') && shell.includes('hud-title-line1'), '顶栏 LEVEL 角标已换成 HUD 标题（第二关换关时切换）');
+  assert.check(preview.includes('window.__DRAGON_CUBE_HUD_TITLE__={"titleLine1":"DragonCube"'), 'HUD 标题配置注入预览');
 
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'dragon-cube-test-'));
   let server = null, id = null, phase2Temp = null;
@@ -89,12 +94,14 @@ export default async function run(assert) {
     assert.check(packed.includes('window.__novvyTwoPhase=true'), '交付包内联双 playable 开关');
     assert.check(packed.includes('window.__DRAGON_CUBE_PHASE2__={"levelId":2'), '交付包内联第二关数据');
     assert.check(packed.includes('"mode":"steps","afterSteps":5'), '第二关转化时机进入内联数据');
+    assert.check(packed.includes('window.__DRAGON_CUBE_HUD_TITLE__'), 'HUD 标题配置进入交付包');
     assert.check(packed.includes('data-novvy-cta-bridge') && packed.includes('__DRAGON_CUBE_CTA_URL__'), '转化桥进入交付包');
     assert.check(!packed.includes('data-novvy-analytics') && !packed.includes('data-novvy-cta>'), '纯净包：埋点组与旧下载卡片组不随包');
     assert.check(packed.includes('id="novvy-video-outro"'), '片尾覆盖层进入交付包');
     assert.check((await fetch(base + `/result/${id}/assets/bg-default.jpg`)).status === 200, '包内默认底图随交付包分发');
     const packedCss = await (await fetch(base + `/result/${id}/style.css`)).text();
     assert.check(packedCss.includes('assets/bg-default.jpg'), '默认底图由壳样式引用');
+    assert.check(!packedCss.includes('timer-pill'), '倒计时样式不进交付包');
     const livePreview = await (await fetch(base + `/api/tasks/${id}/preview`)).text();
     assert.check(livePreview.includes('src="/templates/dragon-cube/game/game.js"'), '在线预览可用（工作台试玩按钮修复）');
   } finally {
