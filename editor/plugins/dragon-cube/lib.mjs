@@ -25,7 +25,11 @@ function dragonPhase2(root, config, outroActive) {
   if (!outroActive || config?.secondPlayable?.enabled !== true) return null;
   const level = dragonLevel(root, config.secondPlayable?.levelId ?? 2);
   const title = config.secondPlayable?.hud;
-  const hud = { titleLine1: String(title?.titleLine1 ?? ''), titleLine2: String(title?.titleLine2 ?? '') };
+  // 第二关标题同样尊重 titleEnabled=false(colorever 同款):显式关闭时不带文案。
+  const hud = {
+    titleLine1: title?.titleEnabled === false ? '' : String(title?.titleLine1 ?? ''),
+    titleLine2: title?.titleEnabled === false ? '' : String(title?.titleLine2 ?? ''),
+  };
   return { levelId: level.Index, level, hud, cta: normalizeCtaPolicy(config.secondPlayable?.cta, 'steps') };
 }
 
@@ -38,7 +42,11 @@ export function dragonHtml({ root, overlaysRoot, template, level, config, media,
   const mediaWithoutCard = { ...media, ctaIcon: null };
   const outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
   const phase2 = dragonPhase2(root, config, outroEnabled);
-  const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config, media: mediaWithoutCard, analytics: false });
+  // HUD 标题与立绘解耦(colorever 同款):titleEnabled 独立于立绘开关,标题可
+  // 单独存在;双 playable 时第二关强制可展示标题,但第一关未启用标题则不带空文案。
+  const firstTitleEnabled = config?.hud?.titleEnabled ?? [config?.hud?.titleLine1, config?.hud?.titleLine2].some(value => String(value ?? '').trim());
+  const overlayConfig = phase2 ? { ...config, hud: { ...config.hud, titleEnabled: true, titleLine1: firstTitleEnabled ? config?.hud?.titleLine1 : '', titleLine2: firstTitleEnabled ? config?.hud?.titleLine2 : '' } } : config;
+  const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config: overlayConfig, media: mediaWithoutCard, optionalHudPortraits: true, analytics: false });
   // 转化桥永远注入:胜利/片尾/CTA 时刻的转化时序 + 注入引擎结算卡片显露
   // (showEndCard)。桥文件在 core/overlays 共享(colorever 同一份);占位符
   // 注入时替换成本模板的 URL 变量名,SDK 包内恒空 —— 落地页由 SDK 取
@@ -72,7 +80,8 @@ export function dragonHtml({ root, overlaysRoot, template, level, config, media,
   injection.background2Enabled = background2Enabled;
   const ctaPolicy = injection.outroEnabled ? null : normalizeCtaPolicy(config?.playableCta, 'complete');
   // 壳内结算卡与底部按钮在广告形态下让位:第一关的结算就是片尾/服务结算
-  // 卡片(双 playable 时片尾之后还有第二关)。
+  // 卡片(双 playable 时片尾之后还有第二关)。HUD 叠层(立绘或仅标题)在场时
+  // 收起引擎原生顶栏标题卡,避免双标题。
   const extra = `<style data-dragon-shell>#game-shell{position:relative;z-index:1;background:transparent}#novvy-dom-bg{z-index:0}.bottom-ui{visibility:hidden}#win{display:none!important}${injection.hudEnabled ? '.top-ui{visibility:hidden}' : ''}</style>`;
   const configScript = `<script>window.__DRAGON_CUBE_LEVEL__=${inline(level)};window.__DRAGON_CUBE_CTA_URL__='';window.__DRAGON_CUBE_HUD_TITLE__=${inline({ titleLine1: String(config?.hud?.titleLine1 ?? ''), titleLine2: String(config?.hud?.titleLine2 ?? '') })};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__DRAGON_CUBE_CTA_POLICY__=${inline(ctaPolicy)};window.__DRAGON_CUBE_PHASE2__=${inline(phase2)};</script>`;
   const gameScript = preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT;

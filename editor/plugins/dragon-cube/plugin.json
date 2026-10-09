@@ -5,8 +5,8 @@
   "workbench": "dragon-cube",
   "steps": [
     { "id": "intro", "runner": "core:intro" },
+    { "id": "hud", "runner": "./steps/hud.mjs" },
     { "id": "outro", "runner": "./steps/outro.mjs" },
-    { "id": "hud", "runner": "core:hud" },
     { "id": "background", "runner": "core:background" },
     { "id": "background2", "runner": "./steps/background2.mjs" },
     { "id": "level", "runner": "./steps/level.mjs" },
@@ -33,7 +33,7 @@
     "levelId": 1,
     "intro": { "enabled": false, "ariaLabel": "" },
     "outro": { "enabled": false },
-    "hud": { "enabled": false, "titleLine1": "DragonCube", "titleLine2": "", "ariaLabel": "" },
+    "hud": { "enabled": false, "titleEnabled": null, "titleLine1": "DragonCube", "titleLine2": "", "ariaLabel": "" },
     "background": { "enabled": false, "blurSigma": 12 },
     "playableCta": { "mode": "complete", "afterSteps": 8 },
     "secondPlayable": { "enabled": false, "levelId": 2, "background": { "enabled": false, "source": "video-last", "blurSigma": 12 }, "cta": { "mode": "steps", "afterSteps": 8 } }

@@ -17,11 +17,15 @@ window.PlayablePlugins = window.PlayablePlugins || {};
   function field(label, control) {
     return el('label', { class: 'dragon-field' }, [el('span', {}, [label]), control]);
   }
-  function checkbox(label, key, subkey) {
+  function checkbox(label, key, subkey, checked = config()[key]?.[subkey] === true) {
     const input = el('input', { type: 'checkbox' });
-    input.checked = config()[key]?.[subkey] === true;
+    input.checked = checked;
     input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.checked } }); await refresh(true); });
     return field(label, input);
+  }
+  // 标题独立于立绘(colorever 同款):默认跟随两行标题文案是否有内容。
+  function titleEnabled() {
+    return config().hud?.titleEnabled ?? [config().hud?.titleLine1, config().hud?.titleLine2].some(value => String(value ?? '').trim());
   }
   function textField(label, key, subkey, value, placeholder = '') {
     const input = el('input', { type: 'text', placeholder }); input.value = value || '';
@@ -58,7 +62,8 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     wrap.append(field('选择原版关卡', select));
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
       checkbox('使用开场视频', 'intro', 'enabled'),
-      checkbox('使用顶部 HUD', 'hud', 'enabled'),
+      checkbox('使用顶部 HUD 立绘', 'hud', 'enabled'),
+      checkbox('显示顶部 HUD title', 'hud', 'titleEnabled', titleEnabled()),
       checkbox('使用自定义背景', 'background', 'enabled'),
       checkbox('使用片尾视频', 'outro', 'enabled'),
     ]));

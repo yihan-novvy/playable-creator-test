@@ -6,8 +6,8 @@
 
   // Package mode ships the shell byte-identical across tasks: the title, aria
   // texts and the start percent live in the window.__NOVVY_UI__ head script
-  // and are applied here. (Water-sort variant: no paced fallback — the game
-  // reports the real homed-color fraction, see the listener below.)
+  // and are applied here. (Dragon-cube variant: percent-only progress — the
+  // engine reports the homed-color fraction, see the listener below.)
   var ui = window.__NOVVY_UI__ && window.__NOVVY_UI__.hud;
   if (ui && typeof ui.progressStart === 'number') START = ui.progressStart;
   progress = START;
@@ -18,6 +18,24 @@
     if (line2 && typeof ui.titleLine2 === 'string') line2.textContent = ui.titleLine2;
     if (typeof ui.ariaLabel === 'string') root.setAttribute('aria-label', ui.ariaLabel);
   }
+
+  // 双 playable:第二关就绪时换标题,进度回到起点(新关卡重新计数)。
+  // 标题交换在进度守卫之前,仅标题模式(进度节点被剥离)也能换标题。
+  window.addEventListener('novvy:phase2-start', function (event) {
+    var title = event.detail && event.detail.hud;
+    if (title) {
+      var line1 = document.getElementById('novvy-hud-title-line1');
+      var line2 = document.getElementById('novvy-hud-title-line2');
+      if (line1) line1.textContent = title.titleLine1 || '';
+      if (line2) line2.textContent = title.titleLine2 || '';
+    }
+    if (!root || !label) return;
+    progress = START;
+    render();
+  });
+
+  // 仅标题模式(data-title-only 剥离进度节点):没有进度控制器,到此为止。
+  if (!root || !label) return;
 
   function render() {
     var shown = Math.round(progress);
@@ -46,18 +64,6 @@
 
   window.addEventListener('novvy:hud-progress', onHudProgress);
   window.addEventListener('novvy:victory', snapComplete);
-  // 双 playable:第二关就绪时换标题,进度回到起点(新关卡重新计数)。
-  window.addEventListener('novvy:phase2-start', function (event) {
-    var title = event.detail && event.detail.hud;
-    if (title) {
-      var line1 = document.getElementById('novvy-hud-title-line1');
-      var line2 = document.getElementById('novvy-hud-title-line2');
-      if (line1) line1.textContent = title.titleLine1 || '';
-      if (line2) line2.textContent = title.titleLine2 || '';
-    }
-    progress = START;
-    render();
-  });
   window.novvyTrainingProgress = {
     get: function () { return Math.round(progress); },
     complete: snapComplete,
