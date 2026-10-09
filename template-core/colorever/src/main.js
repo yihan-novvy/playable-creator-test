@@ -233,7 +233,7 @@ function afterFlights(now){
   const colors=[...new Set(target.filter(Boolean))].filter(c=>!completedColors.has(c)&&puzzle.isColorComplete(c));
   let end=now;
   for(const c of colors){completedColors.add(c);const start=end+400;effects.color(c,start);const indices=[...cells].filter(([i])=>target[i]===c).map(([i])=>i);for(let k=0;k<indices.length;k+=Math.max(1,Math.floor(indices.length/12)))effects.spark(indices[k],start+80);pendingColors.push({color:c,start,announced:false});end=start+900;}
-  if(puzzle.complete){const start=end+250;completion={start,end:effects.full(start),announced:false};busy=true;}
+  if(puzzle.complete){const start=end+250;completion={start,end:effects.full(start),announced:false};busy=true;document.dispatchEvent(new CustomEvent('novvy:playable-complete',{bubbles:true}));}
   else busy=colors.length>0;
   updateUI();
 }

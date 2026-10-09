@@ -5,9 +5,11 @@
    语义约定:卡片 DOM 由模板随包自带(core/overlays/cta-card,服务零 UI
    侵入契约),桥只派发 novvy:cta-card 显示事件 —— 单 playable 在第一次
    进入试玩时亮出底部常驻条并全程常驻;双 playable(__novvyTwoPhase)第一关
-   同样亮底部条,主动跳转与全屏接管(takeover)推迟到引擎的 novvy:cta-moment
-   (第 N 步或完成兜底),片尾只是两关之间的过渡。卡片点击经 novvy:cta-interact
-   回到桥,与胜利/片尾自动跳转共享同一 converted 闩锁。
+   同样亮底部条。转化时机:引擎派发 novvy:playable-complete(最后一步完成,
+   不等胜利扫光/片尾音乐收尾)即主动跳转一次;双 playable 进第二关
+   (novvy:phase2-start)重置闩锁,第二关的 novvy:cta-moment(第 N 步或完成
+   兜底)升级全屏接管并再次转化。卡片点击经 novvy:cta-interact 回到桥,与
+   上述时机共享同一分相 converted 闩锁,同一关内只转化一次。
    本文件由各模板插件共享注入;注入时必须把 __CTA_URL_KEY__ 替换成模板
    自己的 CTA URL 全局名(如 __COLOREVER_CTA_URL__),SDK 包内该值恒为空 ——
    落地页由 SDK 取 adm.clicktrack,URL 只服务编辑器预览的裸兜底链。 */
@@ -32,7 +34,9 @@
     if (STORE_URL) window.open(STORE_URL, '_blank');
   }
 
-  function convert() {
+  function convert(reason) {
+    /* 测试可见性:预览环境无法真正跳转,控制台标出每次转化触发与来源。 */
+    console.log('[NovvyCTA] CTA 转化触发 → 跳转商店 (' + (reason || 'unknown') + ')');
     /* 注入引擎在场:走统一 primary_cta 上报 + 跳转 + 防重/冷却护栏;
        预览环境:裸兜底链。 */
     if (typeof window.novvyHandleAdClick === 'function') {
@@ -51,12 +55,12 @@
     try { window.dispatchEvent(new CustomEvent('novvy:cta-card', { detail: { phase: phase } })); } catch (e) {}
   }
 
-  /* 卡片点击/全屏接管态的任意点击都汇到这里:与胜利/片尾自动跳转共享
-     converted 闩锁,整局只转化一次。 */
+  /* 卡片点击/全屏接管态的任意点击都汇到这里:与完成/胜利/片尾自动跳转
+     共享同一分相 converted 闩锁,同一关内只转化一次。 */
   window.addEventListener('novvy:cta-interact', function () {
     if (converted) return;
     converted = true;
-    convert();
+    convert('cta-card');
   });
 
   /* 试玩开始:亮出底部常驻卡(双 playable 第一关同样亮);随后请服务做
@@ -83,7 +87,7 @@
       timer = null;
       remaining = 0;
       waitingForOutroJump = false;
-      convert();
+      convert('outro-finished');
     }, remaining);
   }
   var waitingForOutroJump = false;
@@ -101,14 +105,23 @@
   });
   document.addEventListener('visibilitychange', onVisibility);
 
+  /* 闩锁按 playable 分相:双 playable 进第二关(novvy:phase2-start)时重置,
+     第二关的完成/触发步数时刻重新可转化;同一关内首次触发后不再重复。 */
+  window.addEventListener('novvy:phase2-start', function () {
+    converted = false;
+  });
+  /* 第一个 playable 最后一步完成(playable-complete)即主动转化:不等胜利
+     扫光/片尾音乐收尾,请求与结算显露都在这一刻发生。victory 保留为兜底
+     (未派发新事件的旧素材),两者经同一闩锁只转化一次。 */
+  window.addEventListener('novvy:playable-complete', function () {
+    if (converted) return;
+    converted = true;
+    convert('playable-complete');
+  });
   window.addEventListener('novvy:victory', function () {
-    /* 第一个 playable 完成操作即主动转化(单/双、有无片尾一致)：请求与
-       结算显露都在这一刻发生，片尾/第二关只是跳转后的本地延续；
-       converted 闩锁保证整局只触发一次。 */
-    if (!converted) {
-      converted = true;
-      convert();
-    }
+    if (converted) return;
+    converted = true;
+    convert('victory');
   });
   window.addEventListener('novvy:outro-finished', function (event) {
     var reason = event && event.detail && event.detail.reason;
@@ -120,7 +133,7 @@
       waitingForOutroJump = true;
       remaining = 1000;
       armOutroJump();
-    } else convert();
+    } else convert('outro-finished');
   });
 
   /* CTA 时刻(引擎在武装策略命中时派发:第 N 步,或完成兜底):
@@ -134,7 +147,7 @@
     if (typeof window.showEndCard === 'function') {
       try { window.showEndCard(); } catch (e) {}
     }
-    convert();
+    convert('cta-moment');
   });
 
   /* 试玩开始的判定:有片头覆盖层时等 intro 派发 novvy:intro-finished

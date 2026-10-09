@@ -24,12 +24,12 @@
 
 #novvy-cta[hidden] { display: none !important; }
 
-/* 接管态:整屏压暗,卡片仍贴底(bar→takeover 无布局跳变),任意点击转化;
-   压暗已提供层次,卡片投影在此模式下关闭。 */
+/* 接管态:遮罩全透明(不遮挡游戏画面),卡片仍贴底,任意点击转化;
+   卡片投影在此模式下关闭。 */
 #novvy-cta.novvy-cta-takeover {
   top: 0;
   z-index: 40;
-  background: rgba(0, 0, 0, .72);
+  background: transparent;
   pointer-events: auto;
 }
 

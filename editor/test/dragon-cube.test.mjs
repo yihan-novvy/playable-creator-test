@@ -42,6 +42,7 @@ export default async function run(assert) {
   assert.check(shell.includes('haptic') && shell.includes("play('coin')"), '震动反馈契约进入引擎');
   assert.check(!shell.includes('timer-pill') && !shell.includes('formatTime') && !shell.includes('state.left'), '右上角倒计时不进引擎（限时失败一并移除）');
   assert.check(shell.includes('playWinThen') && /playWinThen[\s\S]*?novvy:victory/.test(shell), '胜利音乐播完才派发 novvy:victory');
+  assert.check(shell.includes("fire('novvy:playable-complete'") && /novvy:playable-complete[\s\S]*?playWinThen/.test(shell), '最后一步完成即派发 novvy:playable-complete（先于胜利音乐收尾）');
   assert.check(/if \(armedPolicy\) announceCtaMoment\(\)/.test(shell), 'steps 策略完成时兜底派发转化时刻');
   assert.check(!shell.includes('level-number') && shell.includes('applyHudTitle') && shell.includes('hud-title-line1'), '顶栏 LEVEL 角标已换成 HUD 标题（第二关换关时切换）');
   assert.check(preview.includes('window.__DRAGON_CUBE_HUD_TITLE__={"titleLine1":"DragonCube"'), 'HUD 标题配置注入预览');

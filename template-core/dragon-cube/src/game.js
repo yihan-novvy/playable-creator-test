@@ -294,6 +294,9 @@
   function finish() {
     if (state.finished) return;
     state.finished = true;
+    // 最后一步完成即宣告可转化(不等胜利音乐收尾):novvy:playable-complete
+    // 先于 novvy:victory,转化桥取前者;胜利音乐与结算反馈照常播完。
+    fire('novvy:playable-complete', { levelId: level.Index, collected: state.collected });
     var snapshot = state;
     document.getElementById('result-title').textContent = '关卡完成！';
     document.getElementById('result-copy').textContent = '所有小猫都回家了';
