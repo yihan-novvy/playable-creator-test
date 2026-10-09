@@ -24,13 +24,16 @@
 
 #novvy-cta[hidden] { display: none !important; }
 
-/* 接管态:整屏压暗,卡片仍贴底(bar→takeover 无布局跳变),任意点击转化。 */
+/* 接管态:整屏压暗,卡片仍贴底(bar→takeover 无布局跳变),任意点击转化;
+   压暗已提供层次,卡片投影在此模式下关闭。 */
 #novvy-cta.novvy-cta-takeover {
   top: 0;
   z-index: 40;
   background: rgba(0, 0, 0, .72);
   pointer-events: auto;
 }
+
+#novvy-cta.novvy-cta-takeover .novvy-cta-card { box-shadow: none; }
 
 #novvy-cta.novvy-cta-visible {
   opacity: 1;

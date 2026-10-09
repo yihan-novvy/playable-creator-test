@@ -102,8 +102,10 @@
   document.addEventListener('visibilitychange', onVisibility);
 
   window.addEventListener('novvy:victory', function () {
-    /* 无片尾配置:胜利即主动转化。有片尾时交给 outro 事件链。 */
-    if (!window.__novvyOutroEnabled && !converted) {
+    /* 第一个 playable 完成操作即主动转化(单/双、有无片尾一致)：请求与
+       结算显露都在这一刻发生，片尾/第二关只是跳转后的本地延续；
+       converted 闩锁保证整局只触发一次。 */
+    if (!converted) {
       converted = true;
       convert();
     }
