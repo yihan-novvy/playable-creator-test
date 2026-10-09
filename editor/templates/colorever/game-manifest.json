@@ -118,10 +118,25 @@
       "id": "keble-quarterback-2",
       "name": "keble-四分卫-2",
       "path": "game/patterns/keble-quarterback-2.json"
+    },
+    {
+      "id": "rebirth-phoenix",
+      "name": "红金涅槃凤凰",
+      "path": "game/patterns/rebirth-phoenix.json"
+    },
+    {
+      "id": "runway-gown",
+      "name": "蓝银拖尾礼服",
+      "path": "game/patterns/runway-gown.json"
+    },
+    {
+      "id": "gemstone-phoenix",
+      "name": "彩宝展翼凤凰",
+      "path": "game/patterns/gemstone-phoenix.json"
     }
   ],
   "constants": {
-    "engineSha256": "d555046cb64cb4baaa18de3abfd0fffd0874e6632561c0c2ef3cd6b84099439e",
+    "engineSha256": "df6f22bcbdffaed09b585732d77b18aba0d38ea7418364f6c21a7971b18a0f23",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"

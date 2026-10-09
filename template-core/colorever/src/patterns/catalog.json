@@ -231,5 +231,26 @@
     "description": "绿色球场与白色边线，底部持球四分卫沿黄色弯曲路线避开两个红色障碍，通向右上方目标框",
     "level": "keble-quarterback-2.json",
     "module": "keble-quarterback-2.js"
+  },
+  {
+    "id": "rebirth-phoenix",
+    "name": "红金涅槃凤凰",
+    "description": "参考凤凰刺绣：酒红与金色左翼、象牙白金边右翼，搭配冠羽、弯曲长颈、钩喙和层叠卷曲长尾",
+    "level": "rebirth-phoenix.json",
+    "module": "rebirth-phoenix.js"
+  },
+  {
+    "id": "runway-gown",
+    "name": "蓝银拖尾礼服",
+    "description": "参考秀场礼服：象牙白双肩带与收腰上身，宝蓝藏蓝裙摆、银白花纹和向两侧展开的宽大拖尾",
+    "level": "runway-gown.json",
+    "module": "runway-gown.js"
+  },
+  {
+    "id": "gemstone-phoenix",
+    "name": "彩宝展翼凤凰",
+    "description": "参考彩色宝石鸟：珍珠银白头身、红粉左翼与青绿右翼，以及金黄、粉红、紫蓝多列宝石长尾",
+    "level": "gemstone-phoenix.json",
+    "module": "gemstone-phoenix.js"
   }
 ]

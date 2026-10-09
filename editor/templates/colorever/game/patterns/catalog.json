@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "d555046cb64cb4baaa18de3abfd0fffd0874e6632561c0c2ef3cd6b84099439e",
+  "engineSha256": "df6f22bcbdffaed09b585732d77b18aba0d38ea7418364f6c21a7971b18a0f23",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
@@ -164,6 +164,27 @@
       "description": "绿色球场与白色边线，底部持球四分卫沿黄色弯曲路线避开两个红色障碍，通向右上方目标框",
       "level": "keble-quarterback-2.json",
       "templateSha256": "f1adf11a6eb88511afecc1992d72e0aa2490388dee6b351b1c02d44ea9ee60c3"
+    },
+    {
+      "id": "rebirth-phoenix",
+      "name": "红金涅槃凤凰",
+      "description": "参考凤凰刺绣：酒红与金色左翼、象牙白金边右翼，搭配冠羽、弯曲长颈、钩喙和层叠卷曲长尾",
+      "level": "rebirth-phoenix.json",
+      "templateSha256": "a792e2164d0f85d38e985e99bf86c96f36ca3a1efdffc5abca52750fb7788468"
+    },
+    {
+      "id": "runway-gown",
+      "name": "蓝银拖尾礼服",
+      "description": "参考秀场礼服：象牙白双肩带与收腰上身，宝蓝藏蓝裙摆、银白花纹和向两侧展开的宽大拖尾",
+      "level": "runway-gown.json",
+      "templateSha256": "850e2abae0f87cd54a7d1a0b280c8079b2a25b48c35af0d02f2a19bbdf367228"
+    },
+    {
+      "id": "gemstone-phoenix",
+      "name": "彩宝展翼凤凰",
+      "description": "参考彩色宝石鸟：珍珠银白头身、红粉左翼与青绿右翼，以及金黄、粉红、紫蓝多列宝石长尾",
+      "level": "gemstone-phoenix.json",
+      "templateSha256": "8c93b96d4ede1c45c4a1cec54b599d077f56a38dfa0bcd42cbf0d353787ab28a"
     }
   ]
 }
