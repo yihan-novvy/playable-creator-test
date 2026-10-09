@@ -315,7 +315,7 @@ async function handleApi(req, res, url) {
       return sendError(res, 400, '该任务模板不支持在线预览');
     }
     try {
-      const html = fixedViewportHtml(await lib.previewHtml({ plugin: linked.plugin, task, taskId }));
+      const html = fixedViewportHtml(await lib.previewHtml({ plugin: linked.plugin, task, taskId, previewView: url.searchParams.get('view') }));
       res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(html);
     } catch (error) {

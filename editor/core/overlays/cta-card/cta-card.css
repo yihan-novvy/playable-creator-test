@@ -1,7 +1,7 @@
 /* 自有下载卡(随包)—— 样式基底取自 colorever-gemsort 的底部卡,改为小值
    层级契约(colorever 家族:背景 0 < 画布 1 < 本卡 9 < HUD 10 < 片头 20 <
    片尾 30 < 接管态 40;999999 留给落地页服务结算卡)。注入即 hidden,由桥的
-   novvy-cta-card 事件点亮:bar=底部常驻条;takeover=整屏压暗接管(双 playable
+   novvy-cta-card 事件点亮:bar=底部常驻条;takeover=整屏压暗与文案浮层(双 playable
    的 CTA 时刻)。[hidden] 规则必须压过 display:grid 作者样式——落地页服务按
    offsetParent 轮询识别卡片可见性,亮卡前必须保持 display:none。 */
 #novvy-cta {
@@ -24,16 +24,114 @@
 
 #novvy-cta[hidden] { display: none !important; }
 
-/* 接管态:遮罩全透明(不遮挡游戏画面),卡片仍贴底,任意点击转化;
-   卡片投影在此模式下关闭。 */
+/* 接管态:压暗游戏并展示两段文案,底部下载卡保留,任意点击仍由 root 转化。 */
 #novvy-cta.novvy-cta-takeover {
   top: 0;
   z-index: 40;
-  background: transparent;
+  background: radial-gradient(ellipse at 50% 40%, rgba(207, 165, 87, .10), transparent 55%),
+    linear-gradient(180deg, rgba(7, 12, 22, .48), rgba(7, 12, 22, .70) 62%, rgba(7, 12, 22, .90));
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   pointer-events: auto;
 }
 
-#novvy-cta.novvy-cta-takeover .novvy-cta-card { box-shadow: none; }
+#novvy-cta.novvy-cta-takeover.novvy-cta-visible .novvy-cta-card {
+  border-color: rgba(240, 210, 152, .18);
+  border-radius: 16px;
+  background: rgba(13, 21, 33, .94);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, .24);
+  animation: none;
+}
+
+#novvy-cta.novvy-cta-takeover .novvy-cta-btn {
+  border-radius: 9px;
+  background: linear-gradient(135deg, #f8d99b, #dfad60);
+  color: #241d13;
+  box-shadow: 0 4px 16px rgba(224, 172, 85, .16);
+}
+
+.novvy-cta-message { display: none; }
+
+#novvy-cta.novvy-cta-takeover .novvy-cta-message {
+  position: absolute;
+  top: 44%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-sizing: border-box;
+  width: min(calc(100% - 48px), 420px);
+  max-height: 62%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: clamp(28px, 5vh, 42px) 28px 28px;
+  border: 1px solid rgba(240, 210, 152, .25);
+  border-radius: 24px;
+  background: radial-gradient(ellipse at 50% 0, rgba(235, 192, 117, .10), transparent 65%),
+    linear-gradient(150deg, rgba(24, 33, 48, .97), rgba(10, 17, 29, .98));
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .40), inset 0 1px 0 rgba(255, 255, 255, .06);
+  text-align: center;
+  cursor: pointer;
+  animation: novvyCtaMessageIn .35s ease-out;
+}
+
+#novvy-cta.novvy-cta-takeover .novvy-cta-message::before {
+  content: '';
+  flex: 0 0 auto;
+  width: 40px;
+  height: 3px;
+  border-radius: 3px;
+  background: #edc986;
+  box-shadow: 0 0 20px rgba(237, 201, 134, .3);
+}
+
+.novvy-cta-message-text,
+.novvy-cta-message-action {
+  width: 100%;
+  white-space: pre-wrap;
+  text-wrap: balance;
+  overflow-wrap: anywhere;
+}
+
+.novvy-cta-message-text {
+  color: #fff8ed;
+  font-size: clamp(28px, 9vw, 42px);
+  line-height: 1.12;
+  font-weight: 900;
+  letter-spacing: -.025em;
+}
+
+/* 第二段是强调文字,没有按钮背景、边框或独立点击逻辑。 */
+.novvy-cta-message-action {
+  box-sizing: border-box;
+  padding-top: 22px;
+  border-top: 1px solid rgba(240, 210, 152, .14);
+  color: #edc986;
+  font-size: clamp(16px, 4.7vw, 20px);
+  line-height: 1.5;
+  font-weight: 600;
+  letter-spacing: .01em;
+}
+
+.novvy-cta-message-action::after {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin: 0 0 2px 10px;
+  border-top: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  transform: rotate(45deg);
+}
+
+.novvy-cta-message-text:empty,
+.novvy-cta-message-action:empty { display: none; }
+
+@keyframes novvyCtaMessageIn {
+  from { opacity: 0; transform: translate(-50%, -45%) scale(.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
 
 #novvy-cta.novvy-cta-visible {
   opacity: 1;
@@ -41,6 +139,7 @@
 }
 
 .novvy-cta-card {
+  box-sizing: border-box;
   pointer-events: auto;
   cursor: pointer;
   width: min(100%, 410px);
@@ -136,8 +235,30 @@
 
 .novvy-cta-btn:active { transform: scale(0.96); }
 
+@media (max-width: 360px) {
+  .novvy-cta-card { grid-template-columns: 48px minmax(0, 1fr) auto; gap: 8px; padding: 10px; }
+  .novvy-cta-icon { width: 48px; height: 48px; }
+  .novvy-cta-rating { font-size: 11px; letter-spacing: 0; gap: 3px; }
+  .novvy-cta-btn { padding: 0 10px; font-size: 12px; }
+}
+
 @media (orientation: landscape) {
   #novvy-cta { padding: 10px 14px max(10px, env(safe-area-inset-bottom)); }
   .novvy-cta-card { min-height: 72px; }
   .novvy-cta-icon { width: 48px; height: 48px; }
+  #novvy-cta.novvy-cta-takeover .novvy-cta-message {
+    top: 34%;
+    max-height: 50%;
+    gap: 12px;
+    padding: 18px 26px;
+    border-radius: 20px;
+  }
+  .novvy-cta-message-text { font-size: 26px; }
+  .novvy-cta-message-action { font-size: 16px; padding-top: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #novvy-cta { transition: none; }
+  #novvy-cta.novvy-cta-visible .novvy-cta-card,
+  #novvy-cta.novvy-cta-takeover .novvy-cta-message { animation: none; }
 }

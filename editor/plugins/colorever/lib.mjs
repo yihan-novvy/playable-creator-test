@@ -83,6 +83,23 @@ export async function coloreverPhase2(root, config, template, outroActive) {
 }
 
 const inline = (value) => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
+const escapeHtml = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+
+function ctaCardAssets(config, icon) {
+  const cardDir = fileURLToPath(new URL('../../core/overlays/cta-card/', import.meta.url));
+  const readCard = name => fs.readFileSync(path.join(cardDir, name), 'utf8');
+  const values = {
+    __CTA_ICON__: escapeHtml(icon),
+    __CTA_NAME__: 'Colorever',
+    __CTA_TAKEOVER_TEXT__: escapeHtml(config?.cta?.takeoverText ?? '还想继续挑战？\n更多精彩等你体验'),
+    __CTA_TAKEOVER_ACTION_TEXT__: escapeHtml(config?.cta?.takeoverActionText ?? '点击屏幕，继续体验'),
+  };
+  return {
+    style: `<style data-novvy-cta-card>${readCard('cta-card.css')}</style>`,
+    dom: readCard('cta-card.html').replace(/__CTA_(?:ICON|NAME|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]),
+    script: `<script data-novvy-cta-card>${readCard('cta-card.js')}</script>`,
+  };
+}
 
 export async function coloreverHtml({ root, overlaysRoot, template, level, config, media = {}, preview = false, gameScriptUrl = null }) {
   let html = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
@@ -105,12 +122,10 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const ctaCardEnabled = config?.cta?.enabled !== false && !!media.ctaIcon;
   injection.ctaCardEnabled = ctaCardEnabled;
   if (ctaCardEnabled) {
-    const cardDir = fileURLToPath(new URL('../../core/overlays/cta-card/', import.meta.url));
-    const readCard = name => fs.readFileSync(path.join(cardDir, name), 'utf8');
-    const iconUrl = String(media.ctaIcon).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
-    injection.headStyles.push(`<style data-novvy-cta-card>${readCard('cta-card.css')}</style>`);
-    injection.bodyDom.push(readCard('cta-card.html').replaceAll('__CTA_ICON__', iconUrl).replaceAll('__CTA_NAME__', 'Colorever'));
-    injection.bodyScripts.push(`<script data-novvy-cta-card>${readCard('cta-card.js')}</script>`);
+    const card = ctaCardAssets(config, media.ctaIcon);
+    injection.headStyles.push(card.style);
+    injection.bodyDom.push(card.dom);
+    injection.bodyScripts.push(card.script);
   }
   // 转化桥永远注入:胜利/片尾/CTA 时刻的转化时序 + 卡片显示事件的派发源 +
   // 服务结算时刻上报(showEndCard)。桥文件在 core/overlays 共享(colorever/
@@ -161,11 +176,19 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
 }
 
 // 在线试玩预览（server /api/tasks/:id/preview 的插件钩子）。
-export async function previewHtml({ plugin: entry, task, taskId }) {
+export async function previewHtml({ plugin: entry, task, taskId, previewView }) {
   const root = entry.templateDir;
   const config = effectiveConfig(entry.template, task.config);
-  const { level } = await coloreverLevel(root, config, entry.template);
   const generated = (name) => fs.existsSync(path.join(taskGeneratedDir(taskId), name)) ? `/project/${taskId}/generated/${name}` : null;
+  // 文案预览复用随包资产,不加载游戏、片头或转化桥,无需实际玩到第二关。
+  if (previewView === 'cta') {
+    const icon = `/plugins/${entry.id}/${entry.template.overlays.cta}/icon.png`;
+    const card = ctaCardAssets(config, icon);
+    const background = (config.secondPlayable?.background?.enabled && generated('background2.webp')) || (config.background?.enabled && generated('background.webp'));
+    const backdrop = background ? `<img src="${escapeHtml(background)}" alt="" style="position:fixed;inset:0;width:100%;height:100%;object-fit:cover">` : '';
+    return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CTA 遮罩预览</title><style>html,body{margin:0;min-height:100%;background:radial-gradient(ellipse at 25% 20%,#d9f6ed,transparent 60%),linear-gradient(150deg,#d6eaf6,#adc7db)}</style>${card.style}</head><body>${backdrop}${config.cta?.enabled !== false ? card.dom : ''}<script>window.__novvyCtaCardPhase='takeover';</script>${card.script}</body></html>`;
+  }
+  const { level } = await coloreverLevel(root, config, entry.template);
   const intro = config.intro?.enabled === true, hud = config.hud?.enabled === true, bg = config.background?.enabled === true;
   const media = {
     introVideo: intro && fs.existsSync(path.join(taskUploadsDir(taskId), 'intro-video.mp4')) ? `/project/${taskId}/uploads/intro-video.mp4` : null,

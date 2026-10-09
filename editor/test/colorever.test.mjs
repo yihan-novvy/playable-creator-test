@@ -168,6 +168,11 @@ export default async function run(assert){
  const injection=(await coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}})).html;
  for(const marker of ['id="novvy-video-intro"','id="novvy-training-hud"','id="novvy-dom-bg"','data-novvy-cta-bridge','__COLOREVER_CTA_URL__','id="novvy-cta"','data-novvy-cta-card','src="app-icon.png"'])assert.check(injection.includes(marker),`叠层 ${marker} 注入`);
  assert.check(!injection.includes('data-novvy-analytics')&&!injection.includes('data-novvy-cta>'),'埋点组与 water-sort 专用卡片组不随包，自有下载卡走 core 资产');
+ const copyHtml=(await coloreverHtml({...overlayArgs,config:{cta:{takeoverText:'第一行\n第二行 <script>bad()</script> __CTA_NAME__',takeoverActionText:'继续 & 体验'}},media:{ctaIcon:'app-icon.png'}})).html;
+ assert.check(copyHtml.includes('第一行\n第二行 &lt;script&gt;bad()&lt;/script&gt; __CTA_NAME__')&&copyHtml.includes('继续 &amp; 体验'),'遮罩两段文案保留换行并转义 HTML，不递归替换文案中的占位符');
+ assert.check(!copyHtml.includes('<script>bad()</script>')&&!copyHtml.includes('__CTA_TAKEOVER_TEXT__'),'用户文案不能注入 HTML，遮罩模板占位符已填充');
+ const emptyCopyHtml=(await coloreverHtml({...overlayArgs,config:{cta:{takeoverText:'',takeoverActionText:''}},media:{ctaIcon:'app-icon.png'}})).html;
+ assert.check(emptyCopyHtml.includes('class="novvy-cta-message-text"></div>')&&emptyCopyHtml.includes('class="novvy-cta-message-action"></div>'),'显式清空遮罩文案不会回填默认文字');
  const cardOffHtml=(await coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{cta:{enabled:false}},media:{ctaIcon:'app-icon.png'}})).html;
  assert.check(!cardOffHtml.includes('id="novvy-cta"')&&!cardOffHtml.includes('data-novvy-cta-card')&&cardOffHtml.includes('data-novvy-cta-bridge'),'关闭 cta 开关后卡片组不随包，转化桥保留');
  const noIconHtml=(await coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{},media:{}})).html;
@@ -242,6 +247,14 @@ export default async function run(assert){
   results=await api(`/api/tasks/${id}/run`,{step:'all'});assert.check(results.status===200&&results.body.every(r=>r.ok),'小屋模板七步通过');
   assert.check(results.body.find(r=>r.stepId==='level').metrics.solvable,'实际解法回放验证完成');
   const packed=await(await fetch(base+`/result/${id}/index.html`)).text();assert.check(packed.includes('"width":20')&&packed.includes('__COLOREVER_PATTERN_ID__="house"'),'交付选择相同图案模块');
+  const copyPatch=await api(`/api/tasks/${id}`,{config:{cta:{takeoverText:'主文案\n可换行',takeoverActionText:'立即体验'}}},'PATCH');
+  assert.equal([copyPatch.body.config.cta.takeoverText,copyPatch.body.config.cta.takeoverActionText],['主文案\n可换行','立即体验'],'editor API 保存两段遮罩文案');
+  assert.check(!copyPatch.body.steps.pack&&!!copyPatch.body.steps.level,'修改遮罩文案仅使打包过期，关卡校验保留');
+  const copyPreview=await(await fetch(base+`/api/tasks/${id}/preview`)).text();
+  assert.check(copyPreview.includes('主文案\n可换行')&&copyPreview.includes('立即体验'),'editor 保存文案进入即时预览');
+  const takeoverPreview=await(await fetch(base+`/api/tasks/${id}/preview?view=cta`)).text();
+  assert.check(takeoverPreview.includes('主文案\n可换行')&&takeoverPreview.includes("__novvyCtaCardPhase='takeover'"),'editor 独立预览直接展示接管态和已保存文案');
+  assert.check(!takeoverPreview.includes('data-novvy-cta-bridge')&&!takeoverPreview.includes('/game/game.js'),'独立遮罩预览不加载游戏和转化桥');
   assert.check(packed.includes('user-scalable=no')&&packed.includes('data-novvy-fixed-viewport'),'导出页面应用与预览一致的视口和手势锁定');
   for (const enabled of [false, true]) {
    await api(`/api/tasks/${id}`,{config:{hud:{enabled,titleLine1:'只显示主标题',titleLine2:'无需立绘'}}},'PATCH');
@@ -280,7 +293,7 @@ export default async function run(assert){
   const sourceCatalog=JSON.parse(fs.readFileSync(path.join(root,'template-core/colorever/src/patterns/catalog.json'),'utf8'));
   assert.equal(catalog.map(p=>p.id),sourceCatalog.map(p=>p.id),'广告项目只列出已构建的成品选项');
   assert.check(!catalog[0].editableParts,'广告项目不公开作者编辑参数');
-  for(const patternId of ['axe','torch','contract','bank','phoenix','chick','tree','backpack','rafflesia','portrait','portrait-frown','yellow-code','phoenix-feather','portrait-woman','bearing','gear','cottage','diamond']){
+  for(const patternId of ['axe','torch','contract','bank','phoenix','chick','tree','backpack','rafflesia','portrait','portrait-frown','yellow-code','phoenix-feather','portrait-woman','bearing','gear','cottage','diamond','keble-quarterback-1','keble-quarterback-2']){
    const selected=await api(`/api/tasks/${id}`,{config:{patternId}},'PATCH');assert.equal(selected.body.config.patternId,patternId,'任务可选择新增图案');
    const response=await fetch(base+`/api/tasks/${id}/preview`),text=await response.text();
    assert.check(response.status===200&&text.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'新增图案即时预览');

@@ -202,10 +202,11 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       style: 'max-height:360px', title: 'background.webp（海报或上传图高斯模糊）',
     }));
   }
-  function mountPlayPreview(container, url) {
+  function mountPlayPreview(container, url, takeover = false) {
     container.querySelector('.phone-scale')?.remove();
     const scale = el('div', { class: 'phone-scale' }); const frame = el('div', { class: 'phone-frame' });
-    frame.append(el('iframe', { src: url, allow: 'autoplay' })); scale.append(frame); container.append(scale);
+    const iframe = el('iframe', { src: url, allow: 'autoplay', title: takeover ? 'CTA 遮罩预览' : '游戏预览' });
+    frame.append(iframe); scale.append(frame); container.append(scale);
   }
   function renderSteps() {
     const root = document.getElementById('steps'); root.textContent = '';
@@ -279,6 +280,28 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       el('p',{class:'hint'},['仅在未使用片尾视频时生效：完成后自动跳转，或玩到第 N 步时亮出下载卡并自动跳转一次。']),
       ctaTimingControls(()=>config().playableCta,patch=>({playableCta:patch})),
     ]);
+    const ctaCopy = el('section', { class: 'step-card', id: 'cta-copy-settings' }, [
+      el('h3', {}, ['CTA 遮罩文案']),
+      el('p', { class: 'hint' }, ['第二个 playable 到达转化时刻后，压暗背景并显示文案浮层。底部强调文案为纯文字，点击屏幕任意位置仍可跳转。']),
+      checkbox('显示下载卡与遮罩', 'cta', 'enabled', config().cta?.enabled !== false),
+      el('div', { class: 'dragon-config-grid' }, [
+        ['takeoverText', '中间主文案', '还想继续挑战？\n更多精彩等你体验'],
+        ['takeoverActionText', '底部强调文案', '点击屏幕，继续体验'],
+      ].map(([key, label, fallback]) => {
+        const input = el('textarea', { rows: 3, 'aria-label': label, style: 'width:100%;box-sizing:border-box;resize:vertical;font:inherit;padding:10px;border:1px solid var(--border);border-radius:8px' });
+        input.value = config().cta?.[key] ?? fallback;
+        input.onchange = () => { saving = save({ cta: { [key]: input.value } }).then(() => refresh(true)); };
+        return el('label', { style: 'display:flex;flex-direction:column;gap:8px' }, [el('span', {}, [label]), input]);
+      })),
+      el('p', { class: 'hint' }, ['支持换行；修改后自动保存，重新打包后写入 ZIP。']),
+    ]);
+    const ctaPreview = el('div', { id: 'cta-copy-preview' });
+    const previewCtaButton = el('button', { onclick: async () => {
+      await saving;
+      mountPlayPreview(document.getElementById('cta-copy-preview'), `/api/tasks/${taskId}/preview?view=cta&v=${Date.now()}`, true);
+    } }, ['预览遮罩']);
+    previewCtaButton.disabled = config().cta?.enabled === false;
+    ctaCopy.append(previewCtaButton, ctaPreview);
     const hudInputs = [upload('portrait-src-left', '左立绘', 'image/png,image/jpeg'), upload('portrait-src-right', '右立绘', 'image/png,image/jpeg')];
     if (config().hud?.enabled && config().intro?.enabled) {
       hudInputs.push(el('button', { onclick: async () => { await save({ hudImageSource: { left: 'poster', right: 'poster' } }); await refresh(true); } }, ['两侧使用视频海报']));
@@ -324,6 +347,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     if(config().outro?.enabled){root.append(outro);if(secondPlayable)root.append(secondPlayable);if(secondBackground)root.append(secondBackground);}
     root.append(progressStyle);
     if(!config().outro?.enabled)root.append(ctaTiming);
+    root.append(ctaCopy);
     root.append(level,pack);
     let number=0;
     for(const section of root.children){const badge=section.querySelector('.step-num');if(badge)badge.textContent=String(++number);}
