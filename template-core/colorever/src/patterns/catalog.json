@@ -168,5 +168,54 @@
     "description": "金黄色 032363FF / 18478327 两行字符居中排列，搭配深蓝底色与蓝色边框",
     "level": "yellow-code.json",
     "module": "yellow-code.js"
+  },
+  {
+    "id": "phoenix-feather",
+    "name": "金焰凤凰羽毛",
+    "description": "左下羽根与右上羽尖之间的弯曲浅金羽轴，搭配圆润饱满的明黄羽片、橙金层次与细朱橙羽纹，保留靛蓝底色",
+    "level": "phoenix-feather.json",
+    "module": "phoenix-feather.js"
+  },
+  {
+    "id": "portrait-woman",
+    "name": "金发女生",
+    "description": "清晰参考图比例的24×40侧转金发女生，合并为10色，保留两种肤色并强化鼻梁和鼻翼轮廓",
+    "level": "portrait-woman.json",
+    "module": "portrait-woman.js"
+  },
+  {
+    "id": "boy",
+    "name": "蓝发男生",
+    "description": "直接采样已确认的像素头像，保留蓝发、五官和脸型；30×40 等比例网格，10 色简化配色，三种肤色",
+    "level": "boy.json",
+    "module": "boy.js"
+  },
+  {
+    "id": "bearing",
+    "name": "银灰滚珠轴承",
+    "description": "银灰内外钢环、八颗高光滚珠和深色滚道，中心孔镂空的立体拼珠轴承",
+    "level": "bearing.json",
+    "module": "bearing.js"
+  },
+  {
+    "id": "gear",
+    "name": "立体钢齿轮",
+    "description": "参考屏幕中的银灰环形齿轮：十四个宽齿、加大的镂空轴孔、同心抛光钢环与亮边，内孔侧壁和偏移侧面表现厚度",
+    "level": "gear.json",
+    "module": "gear.js"
+  },
+  {
+    "id": "cottage",
+    "name": "红顶田园小屋",
+    "description": "参考手机里的小房子：红粉瓦顶、烟囱、金黄色墙面、蓝色门窗与绿色草地，带侧墙透视的立体拼珠图案",
+    "level": "cottage.json",
+    "module": "cottage.js"
+  },
+  {
+    "id": "diamond",
+    "name": "彩光钻石",
+    "description": "参考手机中房子下方的钻石：深靛紫轮廓、蓝紫切面、粉紫冠部与金橙反光，宽冠部和尖底组成的立体拼珠图案",
+    "level": "diamond.json",
+    "module": "diamond.js"
   }
 ]

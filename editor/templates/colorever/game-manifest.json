@@ -73,10 +73,45 @@
       "id": "yellow-code",
       "name": "黄色编号 032363FF18478327",
       "path": "game/patterns/yellow-code.json"
+    },
+    {
+      "id": "phoenix-feather",
+      "name": "金焰凤凰羽毛",
+      "path": "game/patterns/phoenix-feather.json"
+    },
+    {
+      "id": "portrait-woman",
+      "name": "金发女生",
+      "path": "game/patterns/portrait-woman.json"
+    },
+    {
+      "id": "boy",
+      "name": "蓝发男生",
+      "path": "game/patterns/boy.json"
+    },
+    {
+      "id": "bearing",
+      "name": "银灰滚珠轴承",
+      "path": "game/patterns/bearing.json"
+    },
+    {
+      "id": "gear",
+      "name": "立体钢齿轮",
+      "path": "game/patterns/gear.json"
+    },
+    {
+      "id": "cottage",
+      "name": "红顶田园小屋",
+      "path": "game/patterns/cottage.json"
+    },
+    {
+      "id": "diamond",
+      "name": "彩光钻石",
+      "path": "game/patterns/diamond.json"
     }
   ],
   "constants": {
-    "engineSha256": "f5d33a8f23f26757b4f5e4e7fee713e2698679254f6bd36025a14362bd3700b6",
+    "engineSha256": "fd431d53885d4a21e03a44db9a03ab3ac698686891936943f1ff3333560dfcb6",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"
