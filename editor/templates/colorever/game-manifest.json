@@ -108,10 +108,20 @@
       "id": "diamond",
       "name": "彩光钻石",
       "path": "game/patterns/diamond.json"
+    },
+    {
+      "id": "keble-quarterback-1",
+      "name": "keble-四分卫-1",
+      "path": "game/patterns/keble-quarterback-1.json"
+    },
+    {
+      "id": "keble-quarterback-2",
+      "name": "keble-四分卫-2",
+      "path": "game/patterns/keble-quarterback-2.json"
     }
   ],
   "constants": {
-    "engineSha256": "9df3ec833a570eca2340ad37732f1fde3a88de5cee040bbf89002d8fdb12257e",
+    "engineSha256": "d555046cb64cb4baaa18de3abfd0fffd0874e6632561c0c2ef3cd6b84099439e",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"

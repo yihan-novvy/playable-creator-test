@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "9df3ec833a570eca2340ad37732f1fde3a88de5cee040bbf89002d8fdb12257e",
+  "engineSha256": "d555046cb64cb4baaa18de3abfd0fffd0874e6632561c0c2ef3cd6b84099439e",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
@@ -150,6 +150,20 @@
       "description": "参考手机中房子下方的钻石：深靛紫轮廓、蓝紫切面、粉紫冠部与金橙反光，宽冠部和尖底组成的立体拼珠图案",
       "level": "diamond.json",
       "templateSha256": "fdd92d470ed114ffee2984596f8628030c2f35ba7950ecc046dc1147d290e61f"
+    },
+    {
+      "id": "keble-quarterback-1",
+      "name": "keble-四分卫-1",
+      "description": "参考证据修复图：炭灰镂空剪刀手柄、银灰剪刃与斜向剪断的深蓝织带，保留银白标记和散落碎片",
+      "level": "keble-quarterback-1.json",
+      "templateSha256": "2c372f81a21df26cb2be8fc57104488825cdc06ed9e99e93dafd2e6428bdbed6"
+    },
+    {
+      "id": "keble-quarterback-2",
+      "name": "keble-四分卫-2",
+      "description": "绿色球场与白色边线，底部持球四分卫沿黄色弯曲路线避开两个红色障碍，通向右上方目标框",
+      "level": "keble-quarterback-2.json",
+      "templateSha256": "f1adf11a6eb88511afecc1992d72e0aa2490388dee6b351b1c02d44ea9ee60c3"
     }
   ]
 }

@@ -217,5 +217,19 @@
     "description": "参考手机中房子下方的钻石：深靛紫轮廓、蓝紫切面、粉紫冠部与金橙反光，宽冠部和尖底组成的立体拼珠图案",
     "level": "diamond.json",
     "module": "diamond.js"
+  },
+  {
+    "id": "keble-quarterback-1",
+    "name": "keble-四分卫-1",
+    "description": "参考证据修复图：炭灰镂空剪刀手柄、银灰剪刃与斜向剪断的深蓝织带，保留银白标记和散落碎片",
+    "level": "keble-quarterback-1.json",
+    "module": "keble-quarterback-1.js"
+  },
+  {
+    "id": "keble-quarterback-2",
+    "name": "keble-四分卫-2",
+    "description": "绿色球场与白色边线，底部持球四分卫沿黄色弯曲路线避开两个红色障碍，通向右上方目标框",
+    "level": "keble-quarterback-2.json",
+    "module": "keble-quarterback-2.js"
   }
 ]
