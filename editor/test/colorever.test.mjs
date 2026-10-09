@@ -73,14 +73,18 @@ export default async function run(assert){
  takeoverOnly.emit('novvy:cta-moment');
  assert.equal(takeoverOnly.counts(),{endCards:1,engineClicks:1,opens:0},'双 playable：未完成先到 CTA 时刻仍首亮上报并转化');
  assert.check(takeoverOnly.cardPhases().join()==='bar,takeover','双 playable：CTA 时刻升级为全屏接管');
+ takeoverOnly.emit('novvy:cta-interact',{phase:'takeover'});
+ assert.equal(takeoverOnly.counts().engineClicks,2,'接管态遮罩点击绕过闩锁，再次转化');
+ takeoverOnly.emit('novvy:cta-interact',{phase:'takeover'});
+ assert.equal(takeoverOnly.counts().engineClicks,3,'接管态每一击遮罩点击都是一次转化');
  const twoPhasePreview=bridgeRun({engine:false,twoPhase:true});
  twoPhasePreview.emit('novvy:cta-moment');
  assert.equal(twoPhasePreview.counts().opens,1,'双 playable 预览：CTA 时刻走裸兜底链跳转');
  const cardClick=bridgeRun({engine:false});
- cardClick.emit('novvy:cta-interact');
+ cardClick.emit('novvy:cta-interact',{phase:'bar'});
  assert.equal(cardClick.counts().opens,1,'预览环境卡片点击经桥闩锁走裸兜底链跳转');
- cardClick.emit('novvy:cta-interact');cardClick.emit('novvy:victory');
- assert.equal(cardClick.counts().opens,1,'卡片点击后重复交互与胜利都不二次转化');
+ cardClick.emit('novvy:cta-interact',{phase:'bar'});cardClick.emit('novvy:victory');
+ assert.equal(cardClick.counts().opens,1,'底部条点击后重复交互与胜利都不二次转化');
  // 自有下载卡(随包):纯展示与交互信号 —— hidden/visible/takeover 状态切换、
  // 同步属性追平、点击派发 novvy:cta-interact;转化/上报不在卡片内。
  const cardAsset=fs.readFileSync(path.join(root,'editor/core/overlays/cta-card/cta-card.js'),'utf8');

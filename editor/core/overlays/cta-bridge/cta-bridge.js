@@ -55,10 +55,12 @@
     try { window.dispatchEvent(new CustomEvent('novvy:cta-card', { detail: { phase: phase } })); } catch (e) {}
   }
 
-  /* 卡片点击/全屏接管态的任意点击都汇到这里:与完成/胜利/片尾自动跳转
-     共享同一分相 converted 闩锁,同一关内只转化一次。 */
-  window.addEventListener('novvy:cta-interact', function () {
-    if (converted) return;
+  /* 卡片点击汇到这里。底部条模式与完成/胜利等时机共享分相 converted 闩锁
+     (同关一次);接管态(detail.phase==='takeover')的整屏点击绕过闩锁 ——
+     遮罩在场的每一击都是一次转化,快速连点由服务端冷却护栏去重。 */
+  window.addEventListener('novvy:cta-interact', function (event) {
+    var takeover = !!(event && event.detail && event.detail.phase === 'takeover');
+    if (converted && !takeover) return;
     converted = true;
     convert('cta-card');
   });

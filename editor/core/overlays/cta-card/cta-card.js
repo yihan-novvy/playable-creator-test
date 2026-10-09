@@ -21,10 +21,10 @@
   /* 按钮必须自带监听:落地页服务会在按钮上 capture+stopPropagation,拦掉
      冒泡到 root 的路径。bar 模式压暗层 pointer-events:none 点不到,点击都
      来自卡片;takeover 模式 root 覆盖整屏,target===root 也走到这里——
-     "任意点击转化一次"。 */
+     任意点击都转化,事件携带当前 phase 供桥区分接管态。 */
   function interact(event) {
     if (event && event.stopPropagation) event.stopPropagation();
-    window.dispatchEvent(new CustomEvent('novvy:cta-interact'));
+    window.dispatchEvent(new CustomEvent('novvy:cta-interact', { detail: { phase: phase } }));
   }
   var btn = document.getElementById('novvy-cta-btn');
   if (btn) btn.addEventListener('click', interact);
