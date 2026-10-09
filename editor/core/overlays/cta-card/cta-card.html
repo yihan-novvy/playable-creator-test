@@ -1,0 +1,15 @@
+<!-- 自有下载卡(随包):初始 hidden,由转化桥 novvy:cta-card 事件点亮。
+     按钮选择器(button.cta/.download/[data-novvy-cta]/[data-action=download])
+     与落地页服务 hookCtaButtons、checkExistingEndCards 轮询对齐;转化不在此处
+     发生——卡片只派发 novvy:cta-interact,跳转/上报/防重全在桥的闩锁内。 -->
+<div id="novvy-cta" hidden aria-label="Download __CTA_NAME__">
+  <section class="novvy-cta-card">
+    <div class="novvy-cta-icon"><img src="__CTA_ICON__" alt=""></div>
+    <div class="novvy-cta-details">
+      <div class="novvy-cta-name">__CTA_NAME__</div>
+      <div class="novvy-cta-rating"><span>★★★★★</span><small>4.8</small></div>
+      <div class="novvy-cta-copy">Download and enjoy for free</div>
+    </div>
+    <button id="novvy-cta-btn" class="novvy-cta-btn cta download" type="button" data-novvy-cta data-action="download"><span>Download</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px;display:inline-block;vertical-align:-1px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg></button>
+  </section>
+</div>

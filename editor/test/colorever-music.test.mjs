@@ -46,7 +46,7 @@ export default async function run(assert) {
     assert.check(Buffer.from(await res.arrayBuffer()).equals(replacement), '新音乐试听与任务脚本一致');
     const packed = await runStep('pack');
     assert.check(packed.body.ok, '自定义音乐任务打包成功');
-    assert.equal(fs.readdirSync(taskResultDir(id)).sort(), ['game.js', 'index.html'], '不额外打包音乐文件');
+    assert.equal(fs.readdirSync(taskResultDir(id)).sort(), ['app-icon.png', 'game.js', 'index.html'], '不额外打包音乐文件');
     assert.equal(fs.readFileSync(path.join(taskResultDir(id), 'game.js'), 'utf8'), preview, '预览与导出游戏脚本逐字节一致');
     assert.equal(fs.readFileSync(path.join(template, 'game/game.js'), 'utf8'), original, '共享模版未修改');
     await api(url, { config: { music: { source: 'original' } } }, 'PATCH');

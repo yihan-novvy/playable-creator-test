@@ -54,6 +54,7 @@ export default async function run(assert){
  const p=playback();
  assert.equal(p.counts().plays,0,'片尾在页面加载时不播放');
  assert.check(p.counts().cards===1,'无片头时加载即请服务亮出结算卡片');
+ assert.check(p.window.__novvyCtaCardPhase==='bar','底部常驻卡自试玩开始亮出');
  p.emit('novvy:hud-progress',{percent:100,correct:270,total:270});
  assert.check(p.nodes['novvy-video-outro'].hidden&&p.counts().plays===0,'达到 100% 时等待完成效果，不提前播放');
  p.emit('novvy:victory');await flush();
@@ -96,6 +97,10 @@ export default async function run(assert){
  assert.equal([bare.counts().opens,bare.counts().resets],[1,0],'终态之后返回与重复胜利不再重复跳转，也没有重开链路');
  const engine=playback({enabled:false,withEngine:true});engine.emit('novvy:victory');
  assert.equal([engine.counts().cards,engine.counts().engineClicks,engine.counts().opens],[1,1,1],'注入引擎在场时终态转化经引擎统一上报并跳转，不重复调用');
+ const cardEngine=playback({enabled:false,withEngine:true});cardEngine.emit('novvy:cta-interact');
+ assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[1,1],'卡片点击经桥统一转化入口，一次点击一次转化');
+ cardEngine.emit('novvy:cta-interact');cardEngine.emit('novvy:victory');
+ assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[1,1],'卡片点击后重复交互与胜利不再二次转化');
  const interrupted=playback();interrupted.emit('novvy:victory');await flush();interrupted.video.emit('ended');
  assert.check(interrupted.counts().cards>=1,'短于 5 秒的片尾结束时也显露结算卡片');
  interrupted.document.hidden=true;interrupted.emit('document:visibilitychange');
@@ -119,6 +124,7 @@ export default async function run(assert){
  assert.equal(two.counts().plays,1,'双 playable：第二关进度回落与胜利不重播片尾');
  two.emit('novvy:cta-moment');
  assert.equal([two.counts().cards,two.counts().opens],[1,1],'双 playable：CTA 时刻首亮结算卡片并跳转一次');
+ assert.check(two.window.__novvyCtaCardPhase==='takeover','双 playable：CTA 时刻卡片升级为全屏接管');
  two.emit('novvy:cta-moment');two.emit('novvy:victory');
  assert.equal([two.counts().cards,two.counts().opens],[1,1],'双 playable：重复 CTA 时刻与第二关胜利不二次跳转');
  two.emit('novvy:phase2-start');
@@ -236,7 +242,7 @@ export default async function run(assert){
   const outroMetrics=built.body.find(r=>r.stepId==='outro').metrics;
   assert.check(built.status===200&&built.body.every(r=>r.ok)&&outroMetrics.durationSec>0,'片尾视频进入有效性校验与完整构建');
   assert.check(outroMetrics.videoPackagedBytes>0&&outroMetrics.packagedWidth===32&&outroMetrics.packagedHeight===32,'片尾步骤产出转码产物(小尺寸源不放大)');
-  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html','outro-video.mp4'],'交付包包含可选片尾视频');
+  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['app-icon.png','game.js','index.html','outro-video.mp4'],'交付包包含可选片尾视频');
   preview=await(await fetch(base+`/api/tasks/${id}/preview`)).text();
   assert.check(preview.includes('id="novvy-video-outro" hidden')&&preview.includes(`/project/${id}/uploads/outro-video.mp4`),'即时预览注入隐藏片尾，使用相同的上传视频');
   const packed=await(await fetch(base+`/result/${id}/index.html`)).text();
@@ -249,7 +255,7 @@ export default async function run(assert){
   await api(`/api/tasks/${id}`,{config:{secondPlayable:{enabled:true,patternId:'axe',opening:{mode:'medium',seed:9},hud:{titleLine1:'第二关专属 </script>',titleLine2:'小块挑战'},cta:{mode:'steps',afterSteps:8}}}},'PATCH');
   built=await api(`/api/tasks/${id}/run`,{step:'all'});
   assert.check(built.status===200&&built.body.every(r=>r.ok),'双 playable 配置完整构建通过');
-  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html','outro-video.mp4'],'双 playable 数据内联,打包文件列表不变');
+  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['app-icon.png','game.js','index.html','outro-video.mp4'],'双 playable 数据内联,打包文件列表不变');
   assert.equal(built.body.find(r=>r.stepId==='pack').metrics.phase2,'axe','第二关图案进入打包指标');
   const twoPhasePacked=await(await fetch(base+`/result/${id}/index.html`)).text();
   assert.check(twoPhasePacked.includes('__novvyTwoPhase=true')&&twoPhasePacked.includes('"patternId":"axe"'),'交付包内联第二关数据与标记');
@@ -270,7 +276,7 @@ export default async function run(assert){
   assert.check(built.status===200&&built.body.every(r=>r.ok),'两关独立背景完整构建通过');
   assert.equal(built.body.find(r=>r.stepId==='background2').metrics.source,'video-last','第二关背景从片尾尾帧获取');
   assert.equal(built.body.find(r=>r.stepId==='background2').metrics.sigma,4,'第二关背景使用独立模糊参数');
-  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['background.webp','background2.webp','game.js','index.html','outro-video.mp4'],'两张背景分别进入交付包');
+  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['app-icon.png','background.webp','background2.webp','game.js','index.html','outro-video.mp4'],'两张背景分别进入交付包');
   const firstBytes=Buffer.from(await(await fetch(base+`/result/${id}/background.webp`)).arrayBuffer());
   const secondBytes=Buffer.from(await(await fetch(base+`/result/${id}/background2.webp`)).arrayBuffer());
   assert.check(!firstBytes.equals(secondBytes),'片尾背景与第一关上传背景彼此独立');
@@ -297,7 +303,7 @@ export default async function run(assert){
   assert.check(built.body.every(r=>r.ok)&&!built.body.find(r=>r.stepId==='pack').metrics.packageFiles.includes('background2.webp'),'关闭第二关背景后旧素材不进入交付包');
   await api(`/api/tasks/${id}`,{config:{outro:{enabled:false}}},'PATCH');
   built=await api(`/api/tasks/${id}/run`,{step:'all'});
-  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html'],'关闭片尾后不再打入视频');
+  assert.equal(built.body.find(r=>r.stepId==='pack').metrics.packageFiles,['app-icon.png','game.js','index.html'],'关闭片尾后不再打入视频');
   await api(`/api/tasks/${id}`,{config:{outro:{enabled:true}}},'PATCH');
   await api(`/api/tasks/${id}/run`,{step:'all'});
   const removed=await fetch(base+`/api/tasks/${id}/uploads/outro-video`,{method:'DELETE'});

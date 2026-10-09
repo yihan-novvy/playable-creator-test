@@ -88,20 +88,34 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   let html = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
   for (const anchor of [SCRIPT, '</head>', '<body>', '</body>']) if (html.split(anchor).length !== 2) throw new Error(`Colorever New 基础壳缺少唯一锚点 ${anchor}`);
   const url = '';
-  // 下载卡片不随包:结算卡片、点击上报与商店跳转由落地页打包服务的注入引擎
-  // 负责(novvy_landing_page_service /api/interactive-zip/generate)。强制置空
-  // ctaIcon,任务里遗留的 cta 配置不再能唤起卡片组。
-  const mediaWithoutCard = { ...media, ctaIcon: null };
+  // ws 组不感知 colorever 卡片:它的 cta 组是 water-sort 专用(还带 footer#hud
+  // 壳层收缩样式),colorever 的自有卡片走 core/overlays/cta-card(下方注入),
+  // 因此传给 ws 组的 media 始终剥掉 ctaIcon。
+  const wsMedia = { ...media, ctaIcon: null };
   const outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
   const phase2 = await coloreverPhase2(root, config, template, outroEnabled);
   // Keep the title shell available when only the second playable needs a title.
   const firstTitleEnabled = config?.hud?.titleEnabled ?? [config?.hud?.titleLine1, config?.hud?.titleLine2].some(value => String(value ?? '').trim());
   const overlayConfig = phase2 ? { ...config, hud: { ...config.hud, titleEnabled: true, titleLine1: firstTitleEnabled ? config?.hud?.titleLine1 : '', titleLine2: firstTitleEnabled ? config?.hud?.titleLine2 : '' } } : config;
-  const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config: overlayConfig, media: mediaWithoutCard, optionalHudPortraits: true, analytics: false });
-  // 转化桥永远注入:游戏期下载按钮(#downloadBtn)+ 胜利/片尾转化时序 +
-  // 注入引擎结算卡片显露(showEndCard)。旧 cta.js 的行为语义全部迁入桥内。
-  // 桥文件在 core/overlays 共享(colorever/dragon-cube 同一份),占位符在
-  // 注入时替换成本模板的 URL 变量名,保证包产物逐字节不变。
+  const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config: overlayConfig, media: wsMedia, optionalHudPortraits: true, analytics: false });
+  // 自有下载卡随包(服务零 UI 侵入契约:结算 UI 由素材自带):底部常驻条 +
+  // 双 playable CTA 时刻的全屏接管,由桥的 novvy:cta-card 事件驱动显示。
+  // 图标是插件资产(overlays/cta/icon.png),预览走 /plugins/ 静态路由,
+  // 打包是 index.html 的兄弟文件 app-icon.png。
+  const ctaCardEnabled = config?.cta?.enabled !== false && !!media.ctaIcon;
+  injection.ctaCardEnabled = ctaCardEnabled;
+  if (ctaCardEnabled) {
+    const cardDir = fileURLToPath(new URL('../../core/overlays/cta-card/', import.meta.url));
+    const readCard = name => fs.readFileSync(path.join(cardDir, name), 'utf8');
+    const iconUrl = String(media.ctaIcon).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+    injection.headStyles.push(`<style data-novvy-cta-card>${readCard('cta-card.css')}</style>`);
+    injection.bodyDom.push(readCard('cta-card.html').replaceAll('__CTA_ICON__', iconUrl).replaceAll('__CTA_NAME__', 'Colorever'));
+    injection.bodyScripts.push(`<script data-novvy-cta-card>${readCard('cta-card.js')}</script>`);
+  }
+  // 转化桥永远注入:胜利/片尾/CTA 时刻的转化时序 + 卡片显示事件的派发源 +
+  // 服务结算时刻上报(showEndCard)。桥文件在 core/overlays 共享(colorever/
+  // dragon-cube 同一份),占位符在注入时替换成本模板的 URL 变量名;排在卡片
+  // 脚本之后,保证亮卡事件不会先于卡片监听注册。
   const bridgeFile = fileURLToPath(new URL('../../core/overlays/cta-bridge/cta-bridge.js', import.meta.url));
   const bridge = fs.readFileSync(bridgeFile, 'utf8').replaceAll('__CTA_URL_KEY__', '__COLOREVER_CTA_URL__');
   injection.bodyScripts.push(`<script data-novvy-cta-bridge>${bridge}</script>`);
@@ -130,8 +144,8 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   injection.background2Enabled = background2Enabled;
   const ctaPolicy = injection.outroEnabled ? null : normalizeCtaPolicy(config?.playableCta, 'complete');
   const portraitHudEnabled = injection.hudEnabled && config?.hud?.enabled === true;
-  // 下载卡片移除后,画布不再需要为底部卡片留白。
-  const top = portraitHudEnabled ? '.18' : '0', bottom = '0';
+  // 底部卡在画布上方叠放,开启时画布上移留出卡位,托盘不被卡片盖住。
+  const top = portraitHudEnabled ? '.18' : '0', bottom = injection.ctaCardEnabled ? '.16' : '0';
   // Only hex colors enter CSS; legacy/invalid values use the existing palette.
   const color = (key, fallback) => /^#[0-9a-f]{6}$/i.test(config?.hud?.[key] ?? '') ? config.hud[key] : fallback;
   const nativeColors = `--colorever-progress-text:${color('progressTextColor','#326b83')};--colorever-progress-fill:${color('progressFillColor','#329fc2')};--colorever-progress-track:${color('progressTrackColor','#dff3fc')}`;
@@ -161,6 +175,9 @@ export async function previewHtml({ plugin: entry, task, taskId }) {
     hudRight: hud ? generated('hud-right.webp') : null,
     background: bg ? generated('background.webp') : null,
     background2: config.secondPlayable?.background?.enabled === true ? generated('background2.webp') : null,
+    // CTA 图标是插件自带文件(非任务产物),按 /plugins/ 绝对 URL 注入。
+    ctaIcon: config.cta?.enabled !== false && entry.template.overlays?.cta && fs.existsSync(path.join(entry.dir, entry.template.overlays.cta, 'icon.png'))
+      ? `/plugins/${entry.id}/${entry.template.overlays.cta}/icon.png` : null,
   };
   return (await coloreverHtml({ root, overlaysRoot: entry.dir, template: entry.template, level, config, preview: true, media, gameScriptUrl: config.music?.source === 'custom' ? `/api/tasks/${taskId}/preview-game.js` : null })).html;
 }

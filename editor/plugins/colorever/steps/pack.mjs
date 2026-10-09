@@ -41,8 +41,14 @@ export async function run(ctx) {
   }
   if (enabled.background) files.push([path.join(ctx.generatedDir, 'background.webp'), 'background.webp']);
   if (enabled.background2) files.push([path.join(ctx.generatedDir, 'background2.webp'), 'background2.webp']);
+  // 自有下载卡(服务零 UI 侵入契约):图标随插件交付,拷成 index.html 的兄弟
+  // 文件 app-icon.png;缺图标由 requireFiles 掷错,不静默降级。
+  const ctaOverlayDir = ctx.template.overlays?.cta;
+  const ctaIconSource = ctaOverlayDir ? path.join(ctx.pluginDir, ctaOverlayDir, 'icon.png') : null;
+  const ctaEnabled = ctx.config.cta?.enabled !== false && !!ctaIconSource && fs.existsSync(ctaIconSource);
+  if (ctaEnabled) files.push([ctaIconSource, 'app-icon.png']);
   requireFiles(files.map(([source]) => source));
-  const built = await coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, outroVideo: enabled.outro ? 'outro-video.mp4' : null, hudLeft: hudMedia.left ?? null, hudRight: hudMedia.right ?? null, background: enabled.background ? 'background.webp' : null, background2: enabled.background2 ? 'background2.webp' : null } });
+  const built = await coloreverHtml({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media: { introVideo: enabled.intro ? 'tail-ad-video.mp4' : null, introPoster: enabled.intro ? 'poster.webp' : null, outroVideo: enabled.outro ? 'outro-video.mp4' : null, hudLeft: hudMedia.left ?? null, hudRight: hudMedia.right ?? null, background: enabled.background ? 'background.webp' : null, background2: enabled.background2 ? 'background2.webp' : null, ctaIcon: ctaEnabled ? 'app-icon.png' : null } });
   enabled.hud = built.injection.hudEnabled;
   const gameScript = taskGameScript(ctx.templateRoot, ctx.config, ctx.uploads['background-music']);
   fs.rmSync(ctx.resultDir, { recursive: true, force: true });
@@ -51,5 +57,5 @@ export async function run(ctx) {
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
   for (const [source, name] of files) fs.copyFileSync(source, path.join(ctx.resultDir, name));
   const packageFiles = fs.readdirSync(ctx.resultDir).sort();
-  return { metrics: { packageFiles, outputBytes: packageFiles.reduce((n, name) => n + fs.statSync(path.join(ctx.resultDir, name)).size, 0), overlays: enabled, level: level.name, phase2: phase2 ? phase2.patternId : null }, warnings: [] };
+  return { metrics: { packageFiles, outputBytes: packageFiles.reduce((n, name) => n + fs.statSync(path.join(ctx.resultDir, name)).size, 0), overlays: { ...enabled, cta: built.injection.ctaCardEnabled }, level: level.name, phase2: phase2 ? phase2.patternId : null }, warnings: [] };
 }

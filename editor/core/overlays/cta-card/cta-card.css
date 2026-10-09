@@ -1,0 +1,140 @@
+/* 自有下载卡(随包)—— 样式基底取自 colorever-gemsort 的底部卡,改为小值
+   层级契约(colorever 家族:背景 0 < 画布 1 < 本卡 9 < HUD 10 < 片头 20 <
+   片尾 30 < 接管态 40;999999 留给落地页服务结算卡)。注入即 hidden,由桥的
+   novvy-cta-card 事件点亮:bar=底部常驻条;takeover=整屏压暗接管(双 playable
+   的 CTA 时刻)。[hidden] 规则必须压过 display:grid 作者样式——落地页服务按
+   offsetParent 轮询识别卡片可见性,亮卡前必须保持 display:none。 */
+#novvy-cta {
+  position: fixed;
+  z-index: 9;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: end center;
+  padding: 18px 14px max(18px, env(safe-area-inset-bottom));
+  background: linear-gradient(transparent 52%, rgba(4, 9, 17, .78));
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity .3s ease, transform .3s ease;
+  pointer-events: none;
+  user-select: none;
+  font-family: Arial, sans-serif;
+}
+
+#novvy-cta[hidden] { display: none !important; }
+
+/* 接管态:整屏压暗,卡片仍贴底(bar→takeover 无布局跳变),任意点击转化。 */
+#novvy-cta.novvy-cta-takeover {
+  top: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, .72);
+  pointer-events: auto;
+}
+
+#novvy-cta.novvy-cta-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.novvy-cta-card {
+  pointer-events: auto;
+  cursor: pointer;
+  width: min(100%, 410px);
+  min-height: 88px;
+  display: grid;
+  grid-template-columns: 60px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 11px;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .19);
+  border-radius: 8px;
+  background: rgba(18, 29, 42, .96);
+  box-shadow: 0 12px 34px rgba(0, 0, 0, .48);
+}
+
+#novvy-cta.novvy-cta-visible .novvy-cta-card {
+  animation: novvyCtaFloat 1.45s ease-in-out infinite;
+}
+
+@keyframes novvyCtaFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+.novvy-cta-icon {
+  width: 60px;
+  height: 60px;
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.novvy-cta-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.novvy-cta-details {
+  min-width: 0;
+  text-align: left;
+}
+
+.novvy-cta-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #fff;
+  font-size: 15px;
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+.novvy-cta-rating {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 3px;
+  color: #ffc84a;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+.novvy-cta-rating small {
+  color: #d4dce5;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.novvy-cta-copy {
+  margin-top: 3px;
+  color: #d4dce5;
+  font-size: 11px;
+  line-height: 1.25;
+}
+
+.novvy-cta-btn {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  transition: transform .15s ease;
+}
+
+.novvy-cta-btn:active { transform: scale(0.96); }
+
+@media (orientation: landscape) {
+  #novvy-cta { padding: 10px 14px max(10px, env(safe-area-inset-bottom)); }
+  .novvy-cta-card { min-height: 72px; }
+  .novvy-cta-icon { width: 48px; height: 48px; }
+}

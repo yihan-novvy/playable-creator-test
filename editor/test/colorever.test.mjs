@@ -15,19 +15,23 @@ export default async function run(assert){
  const bridgeSource=fs.readFileSync(path.join(root,'editor/core/overlays/cta-bridge/cta-bridge.js'),'utf8').replaceAll('__CTA_URL_KEY__','__COLOREVER_CTA_URL__');
  assert.check(!bridgeSource.includes('novvyEndCard')&&!bridgeSource.includes('downloadBtn')&&!bridgeSource.includes('pointer-events'),'转化桥零 DOM 耦合：不引用服务卡片与任何元素结构');
  function bridgeRun({intro=false,engine=true,outro=false,twoPhase=false}={}){
-  const listeners=new Map();let endCards=0,engineClicks=0,opens=0;
-  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener(){}},setTimeout(){},clearTimeout(){}};
+  const listeners=new Map();let endCards=0,engineClicks=0,opens=0;const cardEvents=[];
+  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),dispatchEvent:event=>{if(event.type==='novvy:cta-card')cardEvents.push(event.detail&&event.detail.phase);for(const fn of listeners.get(event.type)||[])fn(event);},showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener(){}},setTimeout(){},clearTimeout(){},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
   vm.runInNewContext(bridgeSource,sandbox);
-  return {counts:()=>({endCards,engineClicks,opens}),emit:(name,detail)=>{for(const fn of listeners.get(name)||[])fn({detail});}};
+  return {counts:()=>({endCards,engineClicks,opens}),cardPhases:()=>cardEvents,phase:()=>sandbox.window.__novvyCtaCardPhase,emit:(name,detail)=>{for(const fn of listeners.get(name)||[])fn({detail});}};
  }
  const plain=bridgeRun();
  assert.equal(plain.counts(),{endCards:1,engineClicks:0,opens:0},'无片头时加载即经服务公开 API 亮出结算卡片');
+ assert.check(plain.phase()==='bar'&&plain.cardPhases().join()==='bar','试玩开始派发底部常驻卡显示事件');
  plain.emit('novvy:victory');
  assert.equal(plain.counts(),{endCards:1,engineClicks:1,opens:0},'胜利经注入引擎统一转化，不重复亮卡');
+ assert.check(plain.cardPhases().join()==='bar','单 playable 胜利转化不升级全屏接管');
  const gated=bridgeRun({intro:true});
  assert.equal(gated.counts().endCards,0,'片头期间不亮卡片');
+ assert.check(gated.cardPhases().length===0,'片头期间不派发卡片显示事件');
  gated.emit('novvy:intro-finished',{reason:'video_ended'});
  assert.equal(gated.counts().endCards,1,'片头播完进入试玩时亮出结算卡片');
+ assert.check(gated.phase()==='bar'&&gated.cardPhases().join()==='bar','片头播完后派发底部常驻卡显示事件');
  const withOutro=bridgeRun({intro:true,outro:true});
  withOutro.emit('novvy:intro-finished',{reason:'video_ended'});
  assert.equal(withOutro.counts().endCards,1,'有片尾时试玩开始同样亮卡');
@@ -42,22 +46,58 @@ export default async function run(assert){
  const stepsPolicy=bridgeRun();
  stepsPolicy.emit('novvy:cta-moment');
  assert.equal(stepsPolicy.counts().engineClicks,1,'单 playable steps 策略：CTA 时刻即转化');
+ assert.check(stepsPolicy.cardPhases().join()==='bar','单 playable CTA 时刻不升级全屏接管，底部卡保持常驻');
  stepsPolicy.emit('novvy:victory');
  assert.equal(stepsPolicy.counts().engineClicks,1,'单 playable steps 策略：后续胜利不二次转化');
  const twoPhase=bridgeRun({intro:true,outro:true,twoPhase:true});
  twoPhase.emit('novvy:intro-finished',{reason:'video_ended'});
- assert.equal(twoPhase.counts().endCards,0,'双 playable：试玩开始不亮卡，推迟到 CTA 时刻');
+ assert.equal(twoPhase.counts().endCards,0,'双 playable：试玩开始不亮服务结算上报，推迟到 CTA 时刻');
+ assert.check(twoPhase.phase()==='bar'&&twoPhase.cardPhases().join()==='bar','双 playable：第一关试玩开始同样亮底部常驻卡');
  twoPhase.emit('novvy:victory');
  assert.equal(twoPhase.counts().engineClicks,0,'双 playable：第一关胜利交给片尾链');
  twoPhase.emit('novvy:outro-finished',{reason:'video_ended'});
  assert.equal(twoPhase.counts().engineClicks,0,'双 playable：片尾播完不自动转化，时机移交 CTA 时刻');
  twoPhase.emit('novvy:cta-moment');
  assert.equal(twoPhase.counts(),{endCards:1,engineClicks:1,opens:0},'双 playable：CTA 时刻首亮结算卡片并转化一次');
+ assert.check(twoPhase.cardPhases().join()==='bar,takeover','双 playable：CTA 时刻升级为全屏接管');
  twoPhase.emit('novvy:cta-moment');twoPhase.emit('novvy:victory');
  assert.equal(twoPhase.counts(),{endCards:1,engineClicks:1,opens:0},'双 playable：重复 CTA 时刻与第二关胜利不二次转化');
+ assert.check(twoPhase.cardPhases().join()==='bar,takeover','双 playable：接管事件只派发一次');
  const twoPhasePreview=bridgeRun({engine:false,twoPhase:true});
  twoPhasePreview.emit('novvy:cta-moment');
  assert.equal(twoPhasePreview.counts().opens,1,'双 playable 预览：CTA 时刻走裸兜底链跳转');
+ const cardClick=bridgeRun({engine:false});
+ cardClick.emit('novvy:cta-interact');
+ assert.equal(cardClick.counts().opens,1,'预览环境卡片点击经桥闩锁走裸兜底链跳转');
+ cardClick.emit('novvy:cta-interact');cardClick.emit('novvy:victory');
+ assert.equal(cardClick.counts().opens,1,'卡片点击后重复交互与胜利都不二次转化');
+ // 自有下载卡(随包):纯展示与交互信号 —— hidden/visible/takeover 状态切换、
+ // 同步属性追平、点击派发 novvy:cta-interact;转化/上报不在卡片内。
+ const cardAsset=fs.readFileSync(path.join(root,'editor/core/overlays/cta-card/cta-card.js'),'utf8');
+ const cardCss=fs.readFileSync(path.join(root,'editor/core/overlays/cta-card/cta-card.css'),'utf8');
+ assert.check(!/novvy\.open|super_html|mraid|NovvyAnalytics/.test(cardAsset),'下载卡零转化链零埋点：跳转与上报全部在桥内');
+ assert.check(cardCss.includes('#novvy-cta[hidden]')&&cardCss.includes('novvy-cta-takeover')&&!/2147482|2147483|2147483646/.test(cardCss),'卡片样式遵守小值层级契约，亮卡前保持暗态');
+ function cardRun(initialPhase){
+  const winListeners=new Map();
+  const node=()=>{const listeners=new Map(),classes=new Set();return {hidden:true,classes,classList:{add:c=>classes.add(c),has:c=>classes.has(c)},addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),emit:(name,event)=>{for(const fn of listeners.get(name)||[])fn(event);}};};
+  const nodes={'novvy-cta':node(),'novvy-cta-btn':node()};let interacts=0;
+  const sandbox={window:{__novvyCtaCardPhase:initialPhase||'',addEventListener:(name,fn)=>winListeners.set(name,[...(winListeners.get(name)||[]),fn]),dispatchEvent:event=>{if(event.type==='novvy:cta-interact')interacts+=1;for(const fn of winListeners.get(event.type)||[])fn(event);}},document:{getElementById:id=>nodes[id]||null},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
+  vm.runInNewContext(cardAsset,sandbox);
+  return {root:nodes['novvy-cta'],btn:nodes['novvy-cta-btn'],winListeners,interacts:()=>interacts};
+ }
+ const cardLate=cardRun('takeover');
+ assert.check(cardLate.root.hidden===false&&cardLate.root.classes.has('novvy-cta-visible')&&cardLate.root.classes.has('novvy-cta-takeover'),'桥先派发时卡片脚本晚注入也经同步属性追平接管态');
+ const card=cardRun();
+ assert.check(card.root.hidden===true,'卡片加载即注入但保持暗态');
+ const cardEmit=(name,detail)=>{for(const fn of card.winListeners.get(name)||[])fn({detail});};
+ cardEmit('novvy:cta-card',{phase:'bar'});
+ assert.check(card.root.hidden===false&&card.root.classes.has('novvy-cta-visible')&&!card.root.classes.has('novvy-cta-takeover'),'bar 事件亮出底部卡且不进入接管态');
+ cardEmit('novvy:cta-card',{phase:'takeover'});
+ assert.check(card.root.classes.has('novvy-cta-takeover'),'takeover 事件把卡片升级为全屏遮罩');
+ card.btn.emit('click',{stopPropagation(){}});
+ assert.equal(card.interacts(),1,'按钮点击派发交互信号');
+ card.root.emit('click',{});
+ assert.equal(card.interacts(),2,'接管态整屏点击同样派发交互信号');
  const hudListeners=new Map(),hudNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-progress-label','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',style:{setProperty(){}},setAttribute(){}}]));
  const hudSandbox={window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}},addEventListener:(event,fn)=>hudListeners.set(event,fn)},document:{getElementById:id=>hudNodes[id]}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),hudSandbox);
@@ -112,8 +152,12 @@ export default async function run(assert){
  assert.equal([titleOnlyNodes['novvy-hud-title-line1'].textContent,titleOnlyNodes['novvy-hud-title-line2'].textContent],['主标题','副标题'],'仅标题模式没有进度节点也可正常显示两行文字');
  level.name=custom().name;
  const injection=(await coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{hud:{enabled:true},intro:{enabled:true},background:{enabled:true},cta:{enabled:true,destinationUrl:'https://example.com/app'}},media:{hudLeft:'left.webp',hudRight:'right.webp',introVideo:'video.mp4',introPoster:'poster.webp',background:'background.webp',ctaIcon:'app-icon.png'}})).html;
- for(const marker of ['id="novvy-video-intro"','id="novvy-training-hud"','id="novvy-dom-bg"','data-novvy-cta-bridge','__COLOREVER_CTA_URL__'])assert.check(injection.includes(marker),`叠层 ${marker} 注入`);
- assert.check(!injection.includes('id="novvy-cta"')&&!injection.includes('data-novvy-analytics')&&!injection.includes('data-novvy-cta>'),'下载卡片与埋点组不再随包，遗留 cta 配置不生效');
+ for(const marker of ['id="novvy-video-intro"','id="novvy-training-hud"','id="novvy-dom-bg"','data-novvy-cta-bridge','__COLOREVER_CTA_URL__','id="novvy-cta"','data-novvy-cta-card','src="app-icon.png"'])assert.check(injection.includes(marker),`叠层 ${marker} 注入`);
+ assert.check(!injection.includes('data-novvy-analytics')&&!injection.includes('data-novvy-cta>'),'埋点组与 water-sort 专用卡片组不随包，自有下载卡走 core 资产');
+ const cardOffHtml=(await coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{cta:{enabled:false}},media:{ctaIcon:'app-icon.png'}})).html;
+ assert.check(!cardOffHtml.includes('id="novvy-cta"')&&!cardOffHtml.includes('data-novvy-cta-card')&&cardOffHtml.includes('data-novvy-cta-bridge'),'关闭 cta 开关后卡片组不随包，转化桥保留');
+ const noIconHtml=(await coloreverHtml({root:templateRoot,overlaysRoot:path.join(root,'editor/plugins/colorever'),template,level,config:{},media:{}})).html;
+ assert.check(!noIconHtml.includes('id="novvy-cta"')&&!noIconHtml.includes('data-novvy-cta-card')&&noIconHtml.includes('data-novvy-cta-bridge'),'缺图标时不注入卡片，转化桥兜底');
  assert.check(injection.includes('\\u003c/script>')&&!injection.includes('<script>bad()'),'作者字段不能逃逸内联脚本');
  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'colorever-media-test-'));
  try{
@@ -126,13 +170,14 @@ export default async function run(assert){
   fs.writeFileSync(path.join(generated,'intro-video.mp4'),'fixture');
   const result=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},cta:{enabled:true}}});
   assert.check(result.ok,`全叠层打包成功 ${result.error||''}`);
-  assert.equal(result.metrics.packageFiles,['background.webp','game.js','hud-left.webp','hud-right.webp','index.html','poster.webp','tail-ad-video.mp4'],'下载卡片图标(app-icon.png)不再进入交付包,由落地页服务补齐');
+  assert.equal(result.metrics.packageFiles,['app-icon.png','background.webp','game.js','hud-left.webp','hud-right.webp','index.html','poster.webp','tail-ad-video.mp4'],'自有下载卡图标(app-icon.png)随包交付');
+  assert.equal(result.metrics.overlays.cta,true,'卡片启用状态进入打包指标');
   fs.writeFileSync(path.join(generated,'level2.json'),JSON.stringify((await coloreverLevel(templateRoot,{patternId:'axe'},template)).level));
   fs.writeFileSync(path.join(temp,'uploads/outro-video.mp4'),'fixture');
   fs.writeFileSync(path.join(generated,'outro-video.mp4'),'fixture');
   const twoPhasePack=await runStep({taskId:'fixture',templateRoot,scriptsRoot:path.join(root,'editor/core/scripts'),projectRoot:temp,resultRoot:path.join(temp,'dist'),stepId:'pack',config:{patternId:'house',intro:{enabled:true},hud:{enabled:true},background:{enabled:true},outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe'}}});
   assert.check(twoPhasePack.ok,`双 playable 打包成功 ${twoPhasePack.error||''}`);
-  assert.equal(twoPhasePack.metrics.packageFiles,['background.webp','game.js','hud-left.webp','hud-right.webp','index.html','outro-video.mp4','poster.webp','tail-ad-video.mp4'],'双 playable 数据内联,打包文件只多片尾视频本身');
+  assert.equal(twoPhasePack.metrics.packageFiles,['app-icon.png','background.webp','game.js','hud-left.webp','hud-right.webp','index.html','outro-video.mp4','poster.webp','tail-ad-video.mp4'],'双 playable 数据内联,打包文件只多片尾视频本身');
   assert.equal(twoPhasePack.metrics.phase2,'axe','第二关图案进入打包指标');
   assert.check(fs.readFileSync(path.join(temp,'dist/index.html'),'utf8').includes('__novvyTwoPhase=true'),'双 playable 打包产物注入两关标记');
   fs.rmSync(path.join(temp,'uploads/outro-video.mp4'));fs.rmSync(path.join(generated,'level2.json'));
@@ -191,7 +236,7 @@ export default async function run(assert){
    assert.check(!/<img[^>]*class="novvy-hud-dragon/.test(titlePreview)&&!titlePreview.includes('__HUD_LEFT_DRAGON__'),'无图片时不渲染空立绘');
    const titleBuild=await api(`/api/tasks/${id}/run`,{step:'all'});
    assert.check(titleBuild.status===200&&titleBuild.body.every(r=>r.ok),'没有上传立绘时全部步骤成功，立绘开关 '+enabled);
-   assert.equal(titleBuild.body.find(r=>r.stepId==='pack').metrics.packageFiles,['game.js','index.html'],'标题模式打包不依赖立绘素材');
+   assert.equal(titleBuild.body.find(r=>r.stepId==='pack').metrics.packageFiles,['app-icon.png','game.js','index.html'],'标题模式打包不依赖立绘素材');
    const titleOutput=await(await fetch(base+`/result/${id}/index.html`)).text();
    assert.check(titleOutput.includes('id="novvy-training-hud"')&&titleOutput.includes('"titleLine1":"只显示主标题"')&&!/<img[^>]*class="novvy-hud-dragon/.test(titleOutput),'标题独立进入交付包');
   }
@@ -251,7 +296,7 @@ export default async function run(assert){
   assert.check(!fs.existsSync(path.join(templateRoot,'logic'))&&!fs.existsSync(path.join(templateRoot,'patterns')),'交付模板不携带图案生成器和装饰源码');
   await api(`/api/tasks/${id}`,{config:{cta:{enabled:true,destinationUrl:'javascript:bad()'}}},'PATCH');
   const unsafePreview=await fetch(base+`/api/tasks/${id}/preview`);assert.equal(unsafePreview.status,200,'Colorever 不消费 CTA 自定义地址');
-  const sdkOnlyPreview=await unsafePreview.text();assert.check(!sdkOnlyPreview.includes('javascript:bad()')&&sdkOnlyPreview.includes('__COLOREVER_CTA_URL__=""'),'CTA 交付只使用 SDK 跳转，不注入自定义地址');
+  const sdkOnlyPreview=await unsafePreview.text();assert.check(!sdkOnlyPreview.includes('javascript:bad()')&&sdkOnlyPreview.includes('__COLOREVER_CTA_URL__=""')&&sdkOnlyPreview.includes('id="novvy-cta"'),'CTA 交付只使用 SDK 跳转，不注入自定义地址');
   await api(`/api/tasks/${id}`,{config:{outro:{enabled:true},secondPlayable:{enabled:true,patternId:'axe',cta:{mode:'steps',afterSteps:8}}}},'PATCH');
   const noVideoRun=await api(`/api/tasks/${id}/run`,{step:'all'});
   assert.check(noVideoRun.status===200&&noVideoRun.body.every(r=>r.ok),'无片尾视频时双 playable 配置不阻塞构建');
