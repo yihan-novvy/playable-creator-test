@@ -23,6 +23,30 @@ test('Automatic tutorial follows legal exchanges for every pattern and stops aft
  }
 });
 
+test('Persistent tutorial (two-playable first level) keeps guiding past the first board placement',()=>{
+ const level=JSON.parse(fs.readFileSync(new URL('../src/patterns/cat.json',import.meta.url)));
+ const puzzle=new Puzzle({...level,openingBoard:level.opening}),tutorial=new GameTutorial();
+ assert.equal(tutorial.persistent,false,'默认常规引导:首次归位即关闭');
+ tutorial.persistent=true;
+ let placements=0;
+ for(let step=0;step<40&&placements<3;step++){
+  const hint=tutorial.hint(puzzle);assert.ok(hint,'持久引导始终给出下一步合法动作');
+  if(hint.action==='pick')assert.ok(puzzle.pick(hint.region,hint.index));
+  else{assert.ok(puzzle.place(hint.region,hint.index));tutorial.placed(hint.region);if(hint.region==='board')placements++;}
+ }
+ assert.ok(placements>=3);assert.equal(tutorial.active,true,'多次归位后引导仍常驻');
+ tutorial.persistent=false;tutorial.reset();
+ const hint=tutorial.hint(puzzle);assert.ok(hint);
+ if(hint.action==='pick')assert.ok(puzzle.pick(hint.region,hint.index));
+ else{assert.ok(puzzle.place(hint.region,hint.index));tutorial.placed(hint.region);}
+ for(let step=0;step<20&&tutorial.active;step++){
+  const next=tutorial.hint(puzzle);assert.ok(next);
+  if(next.action==='pick')assert.ok(puzzle.pick(next.region,next.index));
+  else{assert.ok(puzzle.place(next.region,next.index));tutorial.placed(next.region);}
+ }
+ assert.equal(tutorial.active,false,'关闭持久态后恢复首次归位即关闭的常规行为');
+});
+
 test('Haptics match gemsort styles, throttle bead bursts and preserve the success beat',()=>{
  let now=0;const received=[],host={novvy:{haptic:style=>received.push(style)}};
  const haptics=new GameHaptics({host,now:()=>now});

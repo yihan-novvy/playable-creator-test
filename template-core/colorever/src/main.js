@@ -51,6 +51,8 @@ let wasWon=false;
 const phase2Spec=globalThis.__COLOREVER_PHASE2__??null;
 let armedPolicy=phase2Spec?null:(globalThis.__COLOREVER_CTA_POLICY__??null);
 let ctaAnnounced=false;
+/* 双 playable:第一关手势提示全程常驻(首次归位不关闭),页内换关进第二关时恢复常规引导。 */
+tutorial.persistent=!!phase2Spec;
 function announceCtaMoment(){
   if(ctaAnnounced)return;
   ctaAnnounced=true;
@@ -263,6 +265,7 @@ if(phase2Spec){
     switched=true;
     buildLevel(level2,pattern2,phase2Spec.patternId);
     armedPolicy=phase2Spec.cta??null;
+    tutorial.persistent=false;
     tutorial.reset();
     refresh();
     if(puzzle.complete)afterFlights(performance.now());
