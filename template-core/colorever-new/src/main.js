@@ -8,14 +8,14 @@ import {GameHaptics} from './game-haptics.js';
 import {guidePosition} from './guide-position.js';
 import guideHand from './assets/guide-hand.png?inline';
 import {trayLayout} from './tray-layout.js';
+import {createReferenceTray} from './reference-tray.js';
 import {actionableCell,resolveTouchTarget} from './touch-target.js';
 import * as THREE from 'three';
-import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {patterns} from './patterns/index.js';
 import {validateLevel} from './level.js';
 import {createBeadParts,BEAD_WIDTH} from './bead-reference.js';
 import {lightBeadStudio} from './studio-reference.js';
-import {createMosaicSockets,createRecessShading} from './mosaic-sockets.js';
+import {createMosaicSockets} from './mosaic-sockets.js';
 
 const patternId=globalThis.__COLOREVER_PATTERN_ID__??'cat';
 const pattern=patterns[patternId];
@@ -42,7 +42,7 @@ $('guide-hand').src=guideHand;
 
 /* —— 每关会话:buildLevel 重赋值;渲染器/相机/音频/引导等单例不重建 —— */
 let session=null,puzzle=null,groups=[],cells=new Map(),target=[],capacity=48,trayCols=12,pitch=1,rowPitch=1,trayPoint=()=>new THREE.Vector3(),point=()=>new THREE.Vector3(),boardScale=1,trayScale=1,colorNames={},effects={clear(){}},ambientSheen={update(){},enabled:false};
-let bodyGeometry=null,bodyMaterials={},letters={};
+let bodyGeometry=null,bodyMaterials={},letters={},trayContacts=null;
 let busy=false,flights=[],hint=null,down=null,selectionStart=0,completion=null,completedColors=new Set(),pendingColors=[];
 let wasWon=false;
 
@@ -103,31 +103,11 @@ function buildLevel(level,pattern,patternId){
   reference.beads.filter(b=>b.row>=0).forEach((b,i)=>{dummy.position.copy(at(b.x,b.y,.002));dummy.scale.setScalar(bs);dummy.updateMatrix();occlusion.setMatrixAt(i,dummy.matrix);});
   sessionGroup.add(occlusion);
   pattern.decorate({scene:sessionGroup,at,level,boardScale:bs});
-  // Compact square pockets sized just above the beads, in a fitted warm shell.
   const trayCenter=at(761,2425,-.02);
-  const shellMaterial=new THREE.MeshPhysicalMaterial({color:'#fff0e0',roughness:.38,clearcoat:.3,clearcoatRoughness:.26,envMapIntensity:.25});
-  const pocketMaterial=new THREE.MeshStandardMaterial({color:'#d4b296',roughness:.72});
-  const base=new THREE.Mesh(new THREE.ExtrudeGeometry(rounded(tray.width, tray.height,.6),{depth:.25,bevelSize:.13,bevelThickness:.11,bevelSegments:6,curveSegments:20}),shellMaterial);
-  base.position.set(0,trayCenter.y,-.27);base.castShadow=true;base.receiveShadow=true;sessionGroup.add(base);
-  const rimShape=rounded(tray.width-.1,tray.height-.1,.55);rimShape.holes.push(rounded(tray.width-.65,tray.height-.65,.3));
-  const rim=new THREE.Mesh(new THREE.ExtrudeGeometry(rimShape,{depth:.37,bevelSize:.18,bevelThickness:.14,bevelSegments:6,curveSegments:20}),shellMaterial);
-  rim.position.set(0,trayCenter.y,.04);rim.castShadow=true;rim.receiveShadow=true;sessionGroup.add(rim);
+  const cacheTray=createReferenceTray(tray,trayCenter,cap);
+  sessionGroup.add(cacheTray.group);trayContacts=cacheTray.contacts;
   pitch=tray.pitch;rowPitch=pitch;
   const tp=(col,row)=>new THREE.Vector3((col-(tc-1)/2)*pitch,trayCenter.y+((trayRows-1)/2-row)*rowPitch,.21);
-  const insetShape=rounded(tray.width-.9,tray.height-.9,.25);
-  const pocketShading=createRecessShading(tray.pocketWidth,.09,cap);
-  for(let row=0;row<trayRows;row++)for(let col=0;col<tc;col++){
-    if(row*tc+col>=cap)continue;
-    const position=tp(col,row);
-    insetShape.holes.push(rounded(tray.pocketWidth,tray.pocketWidth,.09,position.x,position.y-trayCenter.y));
-    const floor=new THREE.Mesh(new RoundedBoxGeometry(tray.pocketWidth+.06,tray.pocketWidth+.06,.09,4,.035),pocketMaterial);
-    floor.position.set(position.x,position.y,.09);floor.receiveShadow=true;sessionGroup.add(floor);
-    // Keep the well surface below the bead even in tightly packed trays.
-    dummy.position.set(position.x,position.y,.141);dummy.scale.setScalar(1);dummy.updateMatrix();pocketShading.setMatrixAt(row*tc+col,dummy.matrix);
-  }
-  sessionGroup.add(pocketShading);
-  const inset=new THREE.Mesh(new THREE.ExtrudeGeometry(insetShape,{depth:.21,bevelSize:.065,bevelThickness:.065,bevelSegments:4,curveSegments:12}),shellMaterial);
-  inset.position.set(0,trayCenter.y,.085);inset.castShadow=true;inset.receiveShadow=true;sessionGroup.add(inset);
   cells=cellsMap;target=tgt;capacity=cap;trayCols=tc;
   trayPoint=tp;boardScale=bs;trayScale=ts;
   colorNames=level.colorNames;
@@ -162,6 +142,9 @@ const outlineGeometry=new THREE.ShapeGeometry(outline),outlineMaterial=new THREE
 buildLevel(level,pattern,patternId);
 function refresh(){
   for(const g of groups){g.entries=[];for(const region of ['board','tray'])puzzle[region].forEach((color,index)=>{if(color===g.color){g.entries.push({region,index,point:point(region,index),lift:0});}});g.mesh.count=g.entries.length;}
+  let stored=0;
+  puzzle.tray.forEach((color,index)=>{if(!color)return;dummy.position.copy(point('tray',index));dummy.position.z=.184;dummy.scale.setScalar(1);dummy.updateMatrix();trayContacts.setMatrixAt(stored++,dummy.matrix);});
+  trayContacts.count=stored;trayContacts.instanceMatrix.needsUpdate=true;
   while(markers.children.length)markers.remove(markers.children[0]);
   for(const [index]of cells)if(puzzle.board[index]&&puzzle.board[index]!==target[index]){const m=new THREE.Mesh(outlineGeometry,outlineMaterial);m.position.copy(point('board',index));m.position.z=.5;m.scale.setScalar(boardScale);markers.add(m);}
   updateUI();
