@@ -25,28 +25,29 @@
   };
 
   /* —— 进入 playable 前的 3-2-1 倒计时:取视频真实剩余时间,最后 3 秒逐秒
-     亮出白色浮字;数字 3 为中等震动、2 为重震动、1 为两拍重震动(桥 haptic,预览退回 vibrate),
+     亮出白色浮字;数字 3 为重震动、2 为 error 连拍、1 为 error + 150ms 后补一记 heavy
+     (error/双端 SDK 都有原生实现,是不改 SDK 的最强震动;桥 haptic,预览退回 vibrate),
      配合数字的缩放回落动画提醒用户 playable 马上开始。 —— */
   let countdownPulse = null, browserPulse = false;
   const cancelPulse = () => {
     if (countdownPulse !== null) { clearTimeout(countdownPulse); countdownPulse = null; }
     if (browserPulse) { try { navigator.vibrate?.(0); } catch (_) {} browserPulse = false; }
   };
-  // Build anticipation: medium on 3, heavy on 2, two heavy beats on 1.
+  // Build anticipation: heavy on 3, error pulse on 2, error + heavy follow-up on 1.
   const buzz = n => {
     cancelPulse();
     try {
       if (typeof window.novvy?.haptic === 'function') {
-        window.novvy.haptic(n === 3 ? 'medium' : 'heavy');
+        window.novvy.haptic(n === 3 ? 'heavy' : 'error');
         if (n === 1) countdownPulse = setTimeout(() => {
           countdownPulse = null;
           if (countdownShown !== 1 || document.hidden || video.paused || video.ended) return;
           try { window.novvy.haptic('heavy'); } catch (_) {}
-        }, 120);
+        }, 150);
         return;
       }
     } catch (_) {}
-    try { navigator.vibrate?.(n === 3 ? 40 : n === 2 ? 65 : [65, 70, 85]); browserPulse = n === 1; } catch (_) {}
+    try { navigator.vibrate?.(n === 3 ? 65 : n === 2 ? [65, 50] : [65, 50, 65, 120]); browserPulse = n === 1; } catch (_) {}
   };
   let countdownShown = 0;
   function hideCountdown() {
