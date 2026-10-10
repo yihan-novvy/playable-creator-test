@@ -293,7 +293,7 @@ export default async function run(assert){
   const sourceCatalog=JSON.parse(fs.readFileSync(path.join(root,'template-core/colorever/src/patterns/catalog.json'),'utf8'));
   assert.equal(catalog.map(p=>p.id),sourceCatalog.map(p=>p.id),'广告项目只列出已构建的成品选项');
   assert.check(!catalog[0].editableParts,'广告项目不公开作者编辑参数');
-  for(const patternId of ['axe','torch','contract','bank','phoenix','chick','tree','backpack','rafflesia','portrait','portrait-frown','yellow-code','phoenix-feather','portrait-woman','bearing','gear','cottage','diamond','keble-quarterback-1','keble-quarterback-2','rebirth-phoenix','runway-gown','gemstone-phoenix']){
+  for(const patternId of ['axe','torch','contract','bank','phoenix','chick','tree','backpack','rafflesia','portrait','portrait-frown','yellow-code','phoenix-feather','portrait-woman','bearing','gear','cottage','diamond','keble-quarterback-1','keble-quarterback-2','rebirth-phoenix','runway-gown','gemstone-phoenix','rainbow-lightning','wolf-shield','gem-wheel','butterfly-key','fox-key']){
    const selected=await api(`/api/tasks/${id}`,{config:{patternId}},'PATCH');assert.equal(selected.body.config.patternId,patternId,'任务可选择新增图案');
    const response=await fetch(base+`/api/tasks/${id}/preview`),text=await response.text();
    assert.check(response.status===200&&text.includes(`__COLOREVER_PATTERN_ID__="${patternId}"`),'新增图案即时预览');

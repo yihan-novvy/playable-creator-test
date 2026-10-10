@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "df6f22bcbdffaed09b585732d77b18aba0d38ea7418364f6c21a7971b18a0f23",
+  "engineSha256": "62f42d0aa974172e73ffb378f6f54b8d83809fb65ec82841030270ffa21e2b02",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
@@ -185,6 +185,41 @@
       "description": "参考彩色宝石鸟：珍珠银白头身、红粉左翼与青绿右翼，以及金黄、粉红、紫蓝多列宝石长尾",
       "level": "gemstone-phoenix.json",
       "templateSha256": "8c93b96d4ede1c45c4a1cec54b599d077f56a38dfa0bcd42cbf0d353787ab28a"
+    },
+    {
+      "id": "rainbow-lightning",
+      "name": "彩虹闪电",
+      "description": "红金、青蓝、紫粉交叠的锯齿闪电，象牙白高光，不带背景底板",
+      "level": "rainbow-lightning.json",
+      "templateSha256": "1750d927c5dbe1577bb42e3a923b200a78f561165cfb4fe8d897c49e51afeb5a"
+    },
+    {
+      "id": "wolf-shield",
+      "name": "双色狼头盾徽",
+      "description": "金色盾框内的双色狼头：左侧金白暖色、右侧蓝银冷色，搭配橙金与紫色宝石",
+      "level": "wolf-shield.json",
+      "templateSha256": "2fbe25d0595b70b95e601af388e40dbc91577d36dd336743efbb1abcd45ecf4c"
+    },
+    {
+      "id": "gem-wheel",
+      "name": "裂纹宝石圆盘",
+      "description": "8 色古金圆环与六种宝石分区，合并同色系深浅，保留金属隔条、链饰、断裂接缝和中心缺口",
+      "level": "gem-wheel.json",
+      "templateSha256": "44d525fa9821cb149f544ed1c67343b571d1a645e21ad02dc0110af2c8765692"
+    },
+    {
+      "id": "butterfly-key",
+      "name": "宝石蝴蝶与金钥匙",
+      "description": "黑银珍珠羽片与红蓝绿紫宝石蝴蝶，搭配完整金色花形柄钥匙，8 色同框",
+      "level": "butterfly-key.json",
+      "templateSha256": "dd1b1ab337dc7915eb9d18251ef437ddf3e36b078bbfe3811cd4964e9ed3a8ee"
+    },
+    {
+      "id": "fox-key",
+      "name": "红狐挂饰与金钥匙",
+      "description": "红狐白色面纹、双环红绳与绳结，搭配三环柄金钥匙，6 色同框",
+      "level": "fox-key.json",
+      "templateSha256": "ea3b68316799704e543eaef45590e7d80916e3cadec3fbbc23fd3bcaf3ecebcd"
     }
   ]
 }
