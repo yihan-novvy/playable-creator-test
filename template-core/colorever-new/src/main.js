@@ -15,7 +15,7 @@ import {patterns} from './patterns/index.js';
 import {validateLevel} from './level.js';
 import {createBeadParts,BEAD_WIDTH} from './bead-reference.js';
 import {lightBeadStudio} from './studio-reference.js';
-import {createMosaicSockets} from './mosaic-sockets.js';
+import {createMosaicSockets,createRecessShading} from './mosaic-sockets.js';
 
 const patternId=globalThis.__COLOREVER_PATTERN_ID__??'cat';
 const pattern=patterns[patternId];
@@ -115,13 +115,17 @@ function buildLevel(level,pattern,patternId){
   pitch=tray.pitch;rowPitch=pitch;
   const tp=(col,row)=>new THREE.Vector3((col-(tc-1)/2)*pitch,trayCenter.y+((trayRows-1)/2-row)*rowPitch,.21);
   const insetShape=rounded(tray.width-.9,tray.height-.9,.25);
+  const pocketShading=createRecessShading(tray.pocketWidth,.09,cap);
   for(let row=0;row<trayRows;row++)for(let col=0;col<tc;col++){
     if(row*tc+col>=cap)continue;
     const position=tp(col,row);
     insetShape.holes.push(rounded(tray.pocketWidth,tray.pocketWidth,.09,position.x,position.y-trayCenter.y));
     const floor=new THREE.Mesh(new RoundedBoxGeometry(tray.pocketWidth+.06,tray.pocketWidth+.06,.09,4,.035),pocketMaterial);
     floor.position.set(position.x,position.y,.09);floor.receiveShadow=true;sessionGroup.add(floor);
+    // Keep the well surface below the bead even in tightly packed trays.
+    dummy.position.set(position.x,position.y,.141);dummy.scale.setScalar(1);dummy.updateMatrix();pocketShading.setMatrixAt(row*tc+col,dummy.matrix);
   }
+  sessionGroup.add(pocketShading);
   const inset=new THREE.Mesh(new THREE.ExtrudeGeometry(insetShape,{depth:.21,bevelSize:.065,bevelThickness:.065,bevelSegments:4,curveSegments:12}),shellMaterial);
   inset.position.set(0,trayCenter.y,.085);inset.castShadow=true;inset.receiveShadow=true;sessionGroup.add(inset);
   cells=cellsMap;target=tgt;capacity=cap;trayCols=tc;

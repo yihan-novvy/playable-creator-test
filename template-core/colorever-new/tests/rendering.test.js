@@ -44,7 +44,12 @@ test('The visible substrate stores the authored target color independently of th
   assert.ok(Math.max(Math.abs(color.r-target.r),Math.abs(color.g-target.g),Math.abs(color.b-target.b))<1e-7);
   assert.ok(floor.material.isMeshBasicMaterial,'lighting must not change the target-color cue');
   assert.equal(floor.material.toneMapped,false,'target colors must also bypass tone mapping');
-  const margin=(floor.geometry.parameters.width-BEAD_WIDTH)/2;
-  assert.ok(margin>.075,'the increased target-color margin remains visible with a bead in place');
+  for(const mesh of board.children){
+    const color=new THREE.Color();mesh.getColorAt(0,color);
+    assert.ok(Math.max(Math.abs(color.r-target.r),Math.abs(color.g-target.g),Math.abs(color.b-target.b))<1e-7,'the plate, walls, floor and shading all inherit the target color');
+    assert.equal(mesh.material.toneMapped,false);
+  }
+  const margin=(board.children[1].geometry.parameters.width-BEAD_WIDTH)/2;
+  assert.ok(margin>.09,'the colored plate leaves the target hue visible around a bead');
   board.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
 });
