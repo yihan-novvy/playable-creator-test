@@ -13,7 +13,7 @@ import * as THREE from 'three';
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js';
 import {patterns} from './patterns/index.js';
 import {validateLevel} from './level.js';
-import {createBeadParts} from './bead-reference.js';
+import {createBeadParts,BEAD_WIDTH} from './bead-reference.js';
 import {lightBeadStudio} from './studio-reference.js';
 import {createMosaicSockets} from './mosaic-sockets.js';
 
@@ -153,7 +153,7 @@ updateSound();
 $('sheen').onclick=()=>{ambientSheen.enabled=!ambientSheen.enabled;$('sheen').setAttribute('aria-pressed',String(ambientSheen.enabled));$('sheen').setAttribute('aria-label',ambientSheen.enabled?'关闭常驻反光':'打开常驻反光');};
 const markers=new THREE.Group();scene.add(markers);
 // Keep the wrong-bead cue on the bead, leaving its target-colored margin clear.
-const outline=rounded(.654,.654,.05);outline.holes.push(rounded(.626,.626,.04));
+const outline=rounded(BEAD_WIDTH+.012,BEAD_WIDTH+.012,.107);outline.holes.push(rounded(BEAD_WIDTH-.014,BEAD_WIDTH-.014,.094));
 const outlineGeometry=new THREE.ShapeGeometry(outline),outlineMaterial=new THREE.MeshBasicMaterial({color:'#ffc526',depthTest:false,transparent:true,opacity:.9});
 buildLevel(level,pattern,patternId);
 function refresh(){

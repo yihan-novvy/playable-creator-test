@@ -18,7 +18,7 @@ export function createMosaicSockets(beads,at,palette,scale=1){
   const shellMaterial=new THREE.MeshStandardMaterial({color:'#fff5e7',roughness:.72,envMapIntensity:.12});
   // Unlit target colors remain legible under the raised bead's shadow. They are
   // fixed to the authored target, never recolored by the current board contents.
-  const floorMaterial=new THREE.MeshBasicMaterial({color:'#ffffff'});
+  const floorMaterial=new THREE.MeshBasicMaterial({color:'#ffffff',toneMapped:false});
   const walls=new THREE.InstancedMesh(wallsGeometry,shellMaterial,beads.length);
   const base=new THREE.InstancedMesh(new THREE.BoxGeometry(SOCKET_PITCH,SOCKET_PITCH,.13),shellMaterial,beads.length);
   const floors=new THREE.InstancedMesh(new THREE.PlaneGeometry(SOCKET_OPENING,SOCKET_OPENING),floorMaterial,beads.length);

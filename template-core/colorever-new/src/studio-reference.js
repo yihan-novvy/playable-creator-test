@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-// One broad softbox for the upper-left lip; a subdued fill keeps the opposite edge soft.
+// An overhead key separates the four pyramid faces; soft fill preserves their color.
 export function lightBeadStudio(renderer,scene,bounds={left:-23,right:23,top:31,bottom:-31}){
   const studio=new THREE.Scene();studio.background=new THREE.Color('#171717');
   // One compact upper-left softbox gives a corner highlight, with a dim fill.
@@ -11,9 +11,9 @@ export function lightBeadStudio(renderer,scene,bounds={left:-23,right:23,top:31,
   const pmrem=new THREE.PMREMGenerator(renderer);const environment=pmrem.fromScene(studio,.025);
   scene.environment=environment.texture;scene.environmentIntensity=.45;pmrem.dispose();
   studio.traverse(o=>{o.geometry?.dispose();o.material?.dispose();});
-  const ambient=new THREE.HemisphereLight(0xffffff,0x9b9b9b,1.0);
+  const ambient=new THREE.HemisphereLight(0xffffff,0x9b9b9b,1.7);
   ambient.position.set(0,0,1);scene.add(ambient);
-  const key=new THREE.DirectionalLight(0xffffff,2.0);key.position.set(-18,25,32);key.castShadow=true;
+  const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(-5,24,50);key.castShadow=true;
   key.shadow.mapSize.set(2048,2048);Object.assign(key.shadow.camera,{...bounds,near:1,far:100});
   key.shadow.bias=-.0001;key.shadow.normalBias=.015;key.shadow.radius=2.5;scene.add(key);
   const fill=new THREE.DirectionalLight(0xffffff,.28);fill.position.set(18,-9,30);scene.add(fill);
