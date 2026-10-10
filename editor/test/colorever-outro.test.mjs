@@ -157,14 +157,14 @@ export default async function run(assert){
  introCd.video.currentTime=6.96;introCd.emit('timeupdate');
  assert.check(introCd.nodes['novvy-intro-countdown'].hidden&&introCd.buzzes.length===0,'片头剩余 3.04 秒不闪现 4');
  introCd.video.currentTime=7;introCd.emit('timeupdate');
- assert.equal([introCd.nodes['novvy-intro-countdown'].innerHTML,introCd.buzzes.length],['<span>3</span>',1],'片头最后 3 秒亮出倒计时 3 并伴随中等震动');
+ assert.equal([introCd.nodes['novvy-intro-countdown'].innerHTML,introCd.buzzes.length],['<span>3</span>',1],'片头最后 3 秒亮出倒计时 3 并伴随重震动');
  introCd.video.currentTime=8;introCd.emit('timeupdate');
  introCd.video.currentTime=9;introCd.emit('timeupdate');
  assert.equal([introCd.nodes['novvy-intro-countdown'].innerHTML,introCd.buzzes.length],['<span>1</span>',3],'片头倒计时逐秒切换 2→1，每次数字都震动');
- assert.equal(introCd.buzzes,['medium','heavy','heavy'],'片头倒计时同样逐步增强震动');
- const lastPulse=introCd.timers.findLast(timer=>timer.ms===120);
+ assert.equal(introCd.buzzes,['heavy','error','error'],'片头倒计时 3 为重震动、2 与 1 为 error 连拍(桥 haptic 最强档)');
+ const lastPulse=introCd.timers.findLast(timer=>timer.ms===150);
  introCd.video.paused=false;lastPulse.fn();
- assert.equal(introCd.buzzes,['medium','heavy','heavy','heavy'],'片头最后一秒同样使用两拍重震动');
+ assert.equal(introCd.buzzes,['heavy','error','error','heavy'],'片头最后一秒在 error 之后 150ms 补一记重震动');
  const stopped=playback({twoPhase:true});stopped.emit('novvy:victory');await flush();
  stopped.video.duration=10;stopped.video.currentTime=9;stopped.video.emit('timeupdate');
  stopped.video.ended=true;stopped.video.emit('ended');
