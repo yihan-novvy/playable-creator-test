@@ -158,10 +158,15 @@
       "id": "fox-key",
       "name": "红狐挂饰与金钥匙",
       "path": "game/patterns/fox-key.json"
+    },
+    {
+      "id": "orange-pixel-cat",
+      "name": "橙色像素猫",
+      "path": "game/patterns/orange-pixel-cat.json"
     }
   ],
   "constants": {
-    "engineSha256": "62f42d0aa974172e73ffb378f6f54b8d83809fb65ec82841030270ffa21e2b02",
+    "engineSha256": "8164fe59895be0e88f6a02fcc2fb20557a2c6c60c36800f17a7ca6c12b3ac354",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"

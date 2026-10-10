@@ -287,5 +287,12 @@
     "description": "红狐白色面纹、双环红绳与绳结，搭配三环柄金钥匙，6 色同框",
     "level": "fox-key.json",
     "module": "fox-key.js"
+  },
+  {
+    "id": "orange-pixel-cat",
+    "name": "橙色像素猫",
+    "description": "橙棕像素猫，保留竖耳、卷起的尾巴、奶白胸口与脚尖，7 色珠子",
+    "level": "orange-pixel-cat.json",
+    "module": "orange-pixel-cat.js"
   }
 ]
