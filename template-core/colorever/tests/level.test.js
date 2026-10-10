@@ -35,7 +35,7 @@ test('Picture-specific transforms survive normalization and reject invalid range
 });
 
 test('Easy mode has four connected patches and completes in five or six placements across seeds',()=>{
- for(const id of ['cat','house','axe','torch','contract','bank','phoenix','tree','backpack','rafflesia','portrait','portrait-frown','yellow-code','phoenix-feather','portrait-woman','bearing','gear','cottage','diamond','keble-quarterback-1','keble-quarterback-2','rebirth-phoenix','runway-gown','gemstone-phoenix','rainbow-lightning','wolf-shield','gem-wheel','butterfly-key','fox-key','orange-pixel-cat']){
+ for(const id of ['cat','house','axe','torch','contract','bank','phoenix','tree','backpack','rafflesia','portrait','portrait-frown','yellow-code','phoenix-feather','portrait-woman','bearing','gear','cottage','diamond','keble-quarterback-1','keble-quarterback-2','rebirth-phoenix','runway-gown','gemstone-phoenix','rainbow-lightning','wolf-shield','gem-wheel','butterfly-key','fox-key','orange-pixel-cat','star-shield']){
   const source=JSON.parse(fs.readFileSync(new URL(`../src/patterns/${id}.json`,import.meta.url)));
   for(let seed=0;seed<30;seed++){
    const input={...source,opening:null,openingMode:'easy',seed};
@@ -62,7 +62,7 @@ test('Scattered mode remains the default, easy mode rejects unsupported pictures
 });
 
 test('Medium openings use ten connected small patches with conserved, reproducible solutions',()=>{
- for(const id of ['cat','chick','phoenix','house','axe','torch','contract','bank','tree','backpack','rafflesia','portrait','portrait-frown','yellow-code','phoenix-feather','portrait-woman','bearing','gear','cottage','diamond','keble-quarterback-1','keble-quarterback-2','rebirth-phoenix','runway-gown','gemstone-phoenix','rainbow-lightning','wolf-shield','gem-wheel','butterfly-key','fox-key','orange-pixel-cat']){
+ for(const id of ['cat','chick','phoenix','house','axe','torch','contract','bank','tree','backpack','rafflesia','portrait','portrait-frown','yellow-code','phoenix-feather','portrait-woman','bearing','gear','cottage','diamond','keble-quarterback-1','keble-quarterback-2','rebirth-phoenix','runway-gown','gemstone-phoenix','rainbow-lightning','wolf-shield','gem-wheel','butterfly-key','fox-key','orange-pixel-cat','star-shield']){
   const source=JSON.parse(fs.readFileSync(new URL(`../src/patterns/${id}.json`,import.meta.url)));
   for(let seed=0;seed<30;seed++){
    const input={...source,opening:null,openingMode:'medium',seed};

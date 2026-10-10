@@ -294,5 +294,12 @@
     "description": "橙棕像素猫，保留竖耳、卷起的尾巴、奶白胸口与脚尖，7 色珠子",
     "level": "orange-pixel-cat.json",
     "module": "orange-pixel-cat.js"
+  },
+  {
+    "id": "star-shield",
+    "name": "星冠麦穗盾徽",
+    "description": "星冠、红蓝四分盾面、中央金色羽翼与麦穗环绕，6 色珠子盾徽",
+    "level": "star-shield.json",
+    "module": "star-shield.js"
   }
 ]

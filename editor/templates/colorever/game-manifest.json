@@ -163,10 +163,15 @@
       "id": "orange-pixel-cat",
       "name": "橙色像素猫",
       "path": "game/patterns/orange-pixel-cat.json"
+    },
+    {
+      "id": "star-shield",
+      "name": "星冠麦穗盾徽",
+      "path": "game/patterns/star-shield.json"
     }
   ],
   "constants": {
-    "engineSha256": "8164fe59895be0e88f6a02fcc2fb20557a2c6c60c36800f17a7ca6c12b3ac354",
+    "engineSha256": "8b69f664298d892f21ad51dea818695e61118f353a843a36a4036b7c3d63c872",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"
