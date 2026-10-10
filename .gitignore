@@ -6,3 +6,4 @@ result/
 !.env.example
 __pycache__/
 .DS_Store
+output
