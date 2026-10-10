@@ -39,6 +39,9 @@
   let customCloseRequested = false;
   let creativeStarted = false;
   let playbackBlocked = false;
+  // True while the SDK lifecycle (or finish) paused the video on purpose —
+  // the self-heal below must never fight an intentional pause.
+  let ownerPaused = false;
 
   // reason maps onto the spec's playable_entry payload: video_ended (natural
   // end or decode error) and timer_reached (the failsafe) are dispatched;
@@ -50,6 +53,7 @@
     finished = true;
     let switchSeconds = 0;
     try { switchSeconds = Math.round(video.currentTime || 0); } catch (_error) {}
+    ownerPaused = true;
     try { video.pause(); } catch (_error) {}
     teardown(reason || 'video_ended'); // release close BEFORE playable_entry lands
     window.__novvyIntroFinished = true;
@@ -100,7 +104,7 @@
     }
     // Template-only addition (the reference recovers a blocked video through
     // its end card; we have none): an unmute tap is a gesture, so let it kick
-    // a frozen video too — restoreSound only fixes the muted-but-rolling case.
+    // a frozen video too.
     if (!video.muted && video.paused && !video.ended) playVideo();
   });
 
@@ -119,7 +123,9 @@
 
   function restoreSound() {
     if (soundLocked || video.ended) { stopSoundWatch(); return; }
-    if (!video.muted || video.paused) return; // nothing to fix, or not rolling yet
+    if (ownerPaused || document.hidden || !creativeStarted) return; // lifecycle owns playback
+    if (video.paused) { resumeSilently(); return; } // frozen — see the pause self-heal below
+    if (!video.muted) return; // rolling with sound — nothing to fix
     video.muted = false;
     updateSoundControl();
     const playback = video.play();
@@ -130,14 +136,30 @@
     setTimeout(() => {
       if (video.muted) return; // the user muted it themselves in the meantime
       if (!video.paused || video.ended) { track('sound_restored'); return; }
-      video.muted = true;
-      updateSoundControl();
-      const retry = video.play();
-      if (retry && retry.catch) retry.catch(() => {});
+      resumeSilently();
     }, 120);
   }
 
+  // Silent playback always stays legal (muted autoplay), so it is the recovery
+  // path for any pause the platform forced on us: the unmute fight above can
+  // lose the race twice — WebKit's pause can land after the verify window has
+  // given up (it then logs sound_restored and walks away), and a rejected
+  // re-play fires no event at all.  Either way the video used to sit frozen
+  // until a tap; a muted ad is bad, a frozen one is worse.  Tracked once per
+  // intro so the funnel shows how often platforms force the pause.
+  let selfHealTracked = false;
+  function resumeSilently() {
+    if (!video.muted) {
+      video.muted = true;
+      updateSoundControl();
+    }
+    if (!selfHealTracked) { selfHealTracked = true; track('playback_self_healed'); }
+    const resume = video.play();
+    if (resume && resume.catch) resume.catch(() => {});
+  }
+
   function playVideo() {
+    ownerPaused = false; // any owner path resuming here reclaims playback
     const playback = video.play();
     if (!playback || typeof playback.catch !== 'function') return;
     playback.catch(() => {
@@ -201,6 +223,7 @@
     track('creative_started');
   }
   function pauseCreative() {
+    ownerPaused = true;
     video.pause();
     track('creative_paused');
     freezeFailsafe();
@@ -272,6 +295,19 @@
     video.requestVideoFrameCallback(dropPoster);
   }
   video.addEventListener('playing', dropPoster, { once: true });
+
+  // Instant self-heal: a platform-forced pause fires 'pause' the moment it
+  // lands, so recover here instead of waiting for the next 500ms watch tick —
+  // that gap is a visible stall, and before this handler existed nothing
+  // recovered at all except the tap-to-focus handler, which is why frozen
+  // intros needed a tap to continue.  Intentional pauses (lifecycle, finish)
+  // are excluded via ownerPaused; a soundLocked user keeps their explicit
+  // mute choice.
+  video.addEventListener('pause', () => {
+    if (finished || video.ended || ownerPaused || document.hidden) return;
+    if (!soundLocked) resumeSilently();
+    else playVideo();
+  });
 
   video.addEventListener('ended', () => finish('video_ended'), { once: true });
   video.addEventListener('error', () => finish('video_ended'), { once: true });
