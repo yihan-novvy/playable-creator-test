@@ -121,6 +121,20 @@ export function isColoreverTemplate(templateId) {
   return templateId === 'colorever' || templateId === 'colorever-new';
 }
 
+export function updateColoreverTemplate(id, templateId) {
+  const doc = readTask(id);
+  if (!doc) return null;
+  if (!isColoreverTemplate(doc.templateId) || !isColoreverTemplate(templateId)) {
+    throw new Error('只能在 Colorever 和 Colorever New 之间切换');
+  }
+  if (doc.templateId === templateId) return doc;
+  doc.templateId = templateId;
+  // The server verifies that both renderers produce identical levels. Keep
+  // validated levels and media; only the bundled game engine needs rebuilding.
+  delete doc.steps.pack;
+  return writeTask(doc);
+}
+
 export function configWhitelistFor(templateId) {
   return CONFIG_WHITELISTS.get(isColoreverTemplate(templateId) ? 'colorever' : templateId) || CONFIG_PATCH_WHITELIST;
 }

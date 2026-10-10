@@ -3,6 +3,7 @@ import http from 'node:http';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDeepStrictEqual } from 'node:util';
 import {
   ROOT,
   PUBLIC_ROOT,
@@ -35,6 +36,7 @@ import {
   computeStatus,
   stepInputFilesFor,
   isColoreverTemplate,
+  updateColoreverTemplate,
 } from './lib/store.mjs';
 import { STEP_IDS, runStep, runAll, templateSteps, stepPrerequisites, effectiveConfig } from './core/runner.mjs';
 import { getEntry, listEntries, importStepModule, getLib } from './core/registry.mjs';
@@ -179,6 +181,39 @@ async function handleApi(req, res, url) {
     if (req.method === 'DELETE') {
       deleteTask(taskId);
       return sendJson(res, 200, { deleted: taskId });
+    }
+  }
+
+  if (rest.length === 1 && rest[0] === 'template' && req.method === 'PATCH') {
+    const body = await readJsonBody(req);
+    const templateId = body.templateId;
+    if (!isColoreverTemplate(task.templateId) || !isColoreverTemplate(templateId)) {
+      return sendError(res, 400, '只能在 Colorever 和 Colorever New 之间切换');
+    }
+    try {
+      const updated = await withTaskLock(taskId, async () => {
+        const current = readTask(taskId);
+        if (current.templateId === templateId) return current;
+        const before = templateById(current.templateId), after = templateById(templateId);
+        if (!before || !after) throw new Error('游戏版本未安装');
+        const libs = await Promise.all([getLib(before.plugin), getLib(after.plugin)]);
+        const config = effectiveConfig(before.template, current.config);
+        const levels = [config];
+        if (config.secondPlayable?.patternId) levels.push({ patternId: config.secondPlayable.patternId, opening: config.secondPlayable.opening });
+        // Reject missing or divergent patterns instead of silently resetting
+        // either playable's selected pattern, colors, or deterministic opening.
+        for (const levelConfig of levels) {
+          const [a, b] = await Promise.all([
+            libs[0].coloreverLevel(before.root, levelConfig, before.template),
+            libs[1].coloreverLevel(after.root, levelConfig, after.template),
+          ]);
+          if (!isDeepStrictEqual(a.level, b.level)) throw new Error('两个版本的图案数据或开局不一致，请先同步构建图案后再切换');
+        }
+        return updateColoreverTemplate(taskId, templateId);
+      });
+      return sendJson(res, 200, updated);
+    } catch (error) {
+      return sendError(res, 400, error.message);
     }
   }
 
@@ -332,6 +367,9 @@ async function handleApi(req, res, url) {
   // 目录里可能存在的历史 *.zip,避免把旧导出打进新导出。
   if (rest[0] === 'export' && req.method === 'GET') {
     const patched = readTask(taskId);
+    if (isColoreverTemplate(patched.templateId) && !patched.steps.pack?.ok) {
+      return sendError(res, 409, '当前游戏效果尚未打包，请先重新运行打包');
+    }
     const resultDir = taskResultDir(taskId);
     if (!fs.existsSync(path.join(resultDir, 'index.html'))) {
       return sendError(res, 404, '该任务还没有打包产物,请先执行 pack');

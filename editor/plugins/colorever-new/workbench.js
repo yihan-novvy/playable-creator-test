@@ -101,6 +101,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     document.getElementById('config-hint').textContent='选择已构建的图案模板；本任务的开局模式与随机种子在「关卡生成与校验」步骤中设置，第二关的开局在其专属设置区。';
     const root=document.getElementById('config-grid');root.textContent='';
     const wrap=el('div',{class:'dragon-config',style:'grid-column:1/-1'});
+    wrap.append(coloreverTemplateSwitch(),el('p',{class:'hint'},['切换作用于当前项目的试玩和打包，图案、开局与上传素材保留。切换后请重新打包。']));
     const select=el('select',{'aria-label':'图案模板'});
     for(const p of pictures)select.append(el('option',{value:p.id},[p.name]));
     select.value=config().patternId??'cat';
@@ -336,6 +337,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     else backgroundInputs.push(upload('background','背景图片 PNG / JPG','image/png,image/jpeg'));
     const background = card('background', 4, '自定义背景', config().background?.enabled ? '选择上传图片或片头视频的首帧、尾帧，调整模糊程度后运行。' : '已关闭：游戏使用自带纯色底。', backgroundInputs, renderBackgroundPreview);
     const level = card('level', 5, '关卡生成与校验', '选择开局模式与随机种子，从所选图案生成开局，并以真实解法回放验证可完成。换种子即换一个开局。', [openingControls(()=>config().opening,patch=>({opening:patch}))], (right) => {
+      right.append(coloreverTemplateSwitch());
       right.append(el('button', { onclick: () => mountPlayPreview(right, `/api/tasks/${taskId}/preview?v=${Date.now()}`) }, ['试玩当前关卡']));
     });
     const pack = card('pack', 6, '打包', '组合游戏、所选关卡与已启用素材，生成可导出的 H5 ZIP。', [], (right) => {
@@ -358,5 +360,5 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     let number=0;
     for(const section of root.children){const badge=section.querySelector('.step-num');if(badge)badge.textContent=String(++number);}
   }
-  window.PlayablePlugins['colorever-new'] = { render: async () => { try { pictures=await fetchJson('/api/colorever-options?templateId=colorever-new'); renderConfig(); renderSteps(); } catch(error){alert(error.message);} }, saveAll: saveLevel };
+  window.PlayablePlugins['colorever-new'] = { render: async () => { try { pictures=await fetchJson('/api/colorever-options?templateId=colorever-new'); renderConfig(); renderSteps(); } catch(error){alert(error.message);} }, saveAll: saveLevel, previewCurrentLevel: () => mountPlayPreview(document.getElementById('step-level-preview'), `/api/tasks/${taskId}/preview?v=${Date.now()}`) };
 })();

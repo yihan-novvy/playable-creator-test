@@ -244,6 +244,45 @@ async function saveAllConfig(button) {
 function pluginUi() {
   return templateInfo ? (window.PlayablePlugins || {})[templateInfo.id] || null : null;
 }
+
+const COLOREVER_VERSIONS = { colorever: 'Colorever（原版）', 'colorever-new': 'Colorever New（立体）' };
+let templateSwitchPending = false;
+function coloreverTemplateSwitch() {
+  const group = el('div', { class: 'row colorever-template-switch', role: 'group', 'aria-label': '游戏效果', 'aria-busy': String(templateSwitchPending) }, [el('span', { class: 'hint' }, ['游戏效果'])]);
+  for (const [id, name] of Object.entries(COLOREVER_VERSIONS)) {
+    const button = el('button', { class: taskDoc.templateId === id ? 'primary' : '', 'aria-pressed': String(taskDoc.templateId === id), onclick: () => switchColoreverTemplate(id) }, [name]);
+    button.disabled = templateSwitchPending;
+    group.append(button);
+  }
+  return group;
+}
+
+async function switchColoreverTemplate(templateId) {
+  if (templateSwitchPending || templateId === taskDoc.templateId) return;
+  templateSwitchPending = true;
+  document.querySelectorAll('.colorever-template-switch button').forEach(button => { button.disabled = true; });
+  const state = document.getElementById('config-save-state');
+  state.textContent = '正在切换游戏效果…';
+  try {
+    await pluginUi()?.saveAll?.();
+    taskDoc = await fetchJson(`/api/tasks/${taskId}/template`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ templateId }),
+    });
+    document.querySelectorAll('#config-grid audio').forEach(audio => audio.pause());
+    await refresh(true);
+    pluginUi()?.previewCurrentLevel?.();
+    state.textContent = `已切换为 ${COLOREVER_VERSIONS[templateId]}，重新打包后可导出`;
+  } catch (error) {
+    state.textContent = '切换失败：' + error.message;
+  } finally {
+    templateSwitchPending = false;
+    document.querySelectorAll('.colorever-template-switch').forEach(group => {
+      group.setAttribute('aria-busy', 'false');
+      group.querySelectorAll('button').forEach(button => { button.disabled = false; });
+    });
+  }
+}
+
 document.getElementById('save-config').addEventListener('click', (event) => {
   const ui = pluginUi();
   if (ui?.saveAll) { Promise.resolve(ui.saveAll(event.target)).catch(error => alert(error.message)); return; }
@@ -266,9 +305,9 @@ function renderSteps() {
 
 // 有专用工作台的模板由 plugins/<id>/workbench.js 接管(PlayablePlugins 注册);
 // 其余模板维持通用的配置卡 + 步骤卡分工。
-function renderWorkbench(rerender) {
+async function renderWorkbench(rerender) {
   const ui = pluginUi();
-  if (ui?.render) { ui.render(); return; }
+  if (ui?.render) { await ui.render(); return; }
   if (rerender) {
     renderSteps();
   } else {
@@ -1389,13 +1428,18 @@ async function refresh(rerender) {
     document.getElementById('task-title').textContent = '任务不存在';
     throw new Error('task missing');
   }
-  statusInfo = (await statusRes.json()).status;
-  taskDoc = await fetchJson(`/api/tasks/${taskId}`);
+  taskDoc = await statusRes.json();
+  statusInfo = taskDoc.status;
+  if (templateInfo?.id !== taskDoc.templateId) {
+    const templates = await fetchJson('/api/templates');
+    templateInfo = templates.find(t => t.id === taskDoc.templateId);
+    if (templateInfo) await loadWorkbenchScript(templateInfo.id);
+  }
   document.getElementById('task-title').textContent = taskDoc.name;
-  if (rerender) renderWorkbench(rerender);
+  if (rerender) await renderWorkbench(rerender);
   else {
     // light refresh: update state chips + metrics + previews in place
-    renderWorkbench(rerender);
+    await renderWorkbench(rerender);
   }
   window.scrollTo(0, scrollY);
 }
@@ -1403,6 +1447,7 @@ async function refresh(rerender) {
 
 // 按任务所属插件动态加载工作台脚本(plugin.json 扫描出的注册表,前端不硬编码)。
 function loadWorkbenchScript(pluginId) {
+  if (window.PlayablePlugins?.[pluginId]) return Promise.resolve();
   return new Promise((resolve) => {
     const script = document.createElement('script');
     script.src = `/plugins/${encodeURIComponent(pluginId)}/workbench.js`;
@@ -1429,5 +1474,5 @@ function loadWorkbenchScript(pluginId) {
   templateInfo = templates.find((t) => t.id === taskDoc.templateId);
   if (templateInfo) await loadWorkbenchScript(templateInfo.id);
   document.getElementById('task-title').textContent = taskDoc.name;
-  renderWorkbench(false);
+  await renderWorkbench(false);
 })();

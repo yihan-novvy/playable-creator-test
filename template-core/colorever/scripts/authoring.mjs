@@ -5,7 +5,7 @@ import {prepareLevel,validateLevel} from '../src/level.js';
 const sourceRoot=fileURLToPath(new URL('../',import.meta.url));
 const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store'});res.end(JSON.stringify(value));};
 async function body(req){let text='';for await(const chunk of req){text+=chunk;if(text.length>1024*1024)throw new Error('图案数据超过 1 MB');}return JSON.parse(text);}
-export function authoringPlugin({root=sourceRoot}={}){return {name:'colorever-authoring',configureServer(server){
+export function authoringPlugin({root=sourceRoot,previewRoots={original:root,new:path.resolve(sourceRoot,'../colorever-new')}}={}){return {name:'colorever-authoring',configureServer(server){
  server.middlewares.use(async(req,res,next)=>{
   const url=new URL(req.url,'http://localhost');if(!url.pathname.startsWith('/api/patterns'))return next();
   try{
@@ -26,13 +26,20 @@ export function authoringPlugin({root=sourceRoot}={}){return {name:'colorever-au
      const temp=file+'.tmp';await fs.writeFile(temp,JSON.stringify(level,null,2)+'\n');await fs.rename(temp,file);
      return json(res,200,level);
     }
+    const renderer=url.searchParams.get('renderer')||'original';
+    if(!Object.hasOwn(previewRoots,renderer))throw new Error('未知预览版本');
+    const previewRoot=previewRoots[renderer];
     const {level,proof}=prepareLevel(input);
     if(url.searchParams.get('completed')==='1')level.opening=[...level.target];
     const inline=value=>JSON.stringify(value).replaceAll('<','\\u003c');
-    let html=await fs.readFile(path.join(root,'index.html'),'utf8');
-    html=html.replace('</head>',`<script>globalThis.__COLOREVER_PATTERN_ID__=${inline(picture.id)};globalThis.__COLOREVER_LEVEL__=${inline(level)};</script>${url.searchParams.get('completed')==='1'?'<style>#win{display:none!important}</style>':''}</head>`);
+    let html=await fs.readFile(path.join(previewRoot,'index.html'),'utf8');
+    // Both renderers consume the same prepared draft. Vite serves a sibling
+    // renderer from this server, without requiring another localhost port.
+    if(path.resolve(previewRoot)!==path.resolve(root))html=html.replace('src="/src/main.js"',`src="/@fs/${encodeURI(path.join(previewRoot,'src/main.js').replaceAll(path.sep,'/'))}"`);
+    html=html.replace('<body>',`<body data-colorever-renderer="${renderer}">`);
+    html=html.replace('</head>',`<base href="/"><script>globalThis.__COLOREVER_PATTERN_ID__=${inline(picture.id)};globalThis.__COLOREVER_LEVEL__=${inline(level)};</script>${url.searchParams.get('completed')==='1'?'<style>#win{display:none!important}</style>':''}</head>`);
     html=await server.transformIndexHtml('/index.html',html);
-    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Colorever-Solution-Moves':String(proof.moves)});return res.end(html);
+    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-store','X-Colorever-Solution-Moves':String(proof.moves),'X-Colorever-Renderer':renderer});return res.end(html);
    }
    return json(res,405,{error:{message:'不支持此操作'}});
   }catch(error){return json(res,400,{error:{message:error.message}});}

@@ -30,6 +30,7 @@ GET    /api/tasks                                  任务列表
 POST   /api/tasks                                  {name, templateId} 建任务
 GET    /api/tasks/:id                              任务详情 + 步骤状态/过期标记
 PATCH  /api/tasks/:id                              {config: {...}} 更新配置
+PATCH  /api/tasks/:id/template                     {templateId: "colorever|colorever-new"} 切换游戏效果
 DELETE /api/tasks/:id                              删除任务(project+dist)
 PUT    /api/tasks/:id/uploads/:slot                原始字节上传(≤100MB,魔数校验)
 GET    /api/tasks/:id/uploads/:slot                下载/回看
@@ -81,6 +82,8 @@ pack 步骤同时会重写两份游戏内配置(见 `src/lib/meta-patch.mjs`):Gl
 server 启动时扫描 plugins 并校验注册表（`npm run validate` 同一实现）：contract 损坏拒绝启动，template-core 与已入库产物的版本不一致给出重建警告。步骤实现既可复用 core steps（`core:intro/hud/background`），也可以是插件私有模块（导出 `run(ctx)` 与可选 `prerequisites(config)`）。
 
 ## 与手工流程的对应
+
+Colorever 与 Colorever New 的现有项目可在「任务配置」或「关卡生成与校验」的游戏效果按钮中切换。切换保存到当前项目，试玩立即使用所选版本；图案、两关开局、广告配置、上传素材、已生成的媒体和关卡校验状态保留。切换仅清除打包的运行状态，重新打包后才可导出。若两个版本的所选图案或开局数据不一致，切换会报错并保留当前版本。
 
 手工流程(`playable-examples/.../tools/`)被参数化移植为 `src/scripts/`:`repack-assets.mjs`→`repack.mjs`、`blur-game-background.mjs`→`blur-background.mjs`、`dragon-image-to-pattern.py`→`image-to-pattern.py`、`replace-opening-levels-with-dragon.mjs`→`write-levels.mjs`(改为产出数据工件,关卡落盘在打包工作区)、`recolor-hud-portraits.py`→`recolor-portraits.py`。未移植:`extract-assets.mjs`(一次性)、`catalog-assets.mjs`(文档生成)、`generate-minimax-intro.py`(外部 AI infra,改为直接上传成品视频)、`replace-opening-levels-with-bottle.mjs`(被图案流程取代)。
 
