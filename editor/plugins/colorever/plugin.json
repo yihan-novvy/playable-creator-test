@@ -37,7 +37,7 @@
     "outro": { "enabled": false },
     "hud": { "enabled": false, "titleEnabled": null, "titleLine1": "", "titleLine2": "", "ariaLabel": "" },
     "background": { "enabled": false, "blurSigma": 12, "source": "auto" },
-    "cta": { "enabled": true, "takeoverText": "还想继续挑战？\n更多精彩等你体验", "takeoverActionText": "点击屏幕，继续体验" },
+    "cta": { "enabled": true, "endMask": false, "takeoverText": "还想继续挑战？\n更多精彩等你体验", "takeoverActionText": "点击屏幕，继续体验" },
     "hudImageSource": { "left": "upload", "right": "upload" },
     "patternId": "cat",
     "opening": { "mode": "easy", "difficulty": 21, "seed": 1 },

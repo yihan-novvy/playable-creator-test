@@ -14,11 +14,11 @@ export default async function run(assert){
  // 桥文件在 core/overlays 共享;与 lib.mjs 注入同款占位符替换,保证沙箱字节忠实。
  const bridgeSource=fs.readFileSync(path.join(root,'editor/core/overlays/cta-bridge/cta-bridge.js'),'utf8').replaceAll('__CTA_URL_KEY__','__COLOREVER_CTA_URL__');
  assert.check(!bridgeSource.includes('novvyEndCard')&&!bridgeSource.includes('downloadBtn')&&!bridgeSource.includes('pointer-events'),'转化桥零 DOM 耦合：不引用服务卡片与任何元素结构');
- function bridgeRun({intro=false,engine=true,outro=false,twoPhase=false}={}){
-  const listeners=new Map();let endCards=0,engineClicks=0,opens=0;const cardEvents=[];
-  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),dispatchEvent:event=>{if(event.type==='novvy:cta-card')cardEvents.push(event.detail&&event.detail.phase);for(const fn of listeners.get(event.type)||[])fn(event);},showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener(){}},setTimeout(){},clearTimeout(){},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
+ function bridgeRun({intro=false,engine=true,outro=false,twoPhase=false,endMask}={}){
+  const listeners=new Map();let endCards=0,engineClicks=0,opens=0;const cardEvents=[];let clock=0;const pointerHandlers=[];
+  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,...(endMask===undefined?{}:{__NOVVY_CTA_END_MASK__:endMask}),novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),dispatchEvent:event=>{if(event.type==='novvy:cta-card')cardEvents.push(event.detail&&event.detail.phase);for(const fn of listeners.get(event.type)||[])fn(event);},showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener:(name,fn)=>{if(name==='pointerdown')pointerHandlers.push(fn);}},Date:{now:()=>clock},setTimeout(){},clearTimeout(){},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
   vm.runInNewContext(bridgeSource,sandbox);
-  return {counts:()=>({endCards,engineClicks,opens}),cardPhases:()=>cardEvents,phase:()=>sandbox.window.__novvyCtaCardPhase,emit:(name,detail)=>{for(const fn of listeners.get(name)||[])fn({detail});}};
+  return {counts:()=>({endCards,engineClicks,opens}),cardPhases:()=>cardEvents,phase:()=>sandbox.window.__novvyCtaCardPhase,emit:(name,detail)=>{for(const fn of listeners.get(name)||[])fn({detail});},tap:(gap=400)=>{clock+=gap;for(const fn of pointerHandlers)fn({});}};
  }
  const plain=bridgeRun();
  assert.equal(plain.counts(),{endCards:1,engineClicks:0,opens:0},'无片头时加载即经服务公开 API 亮出结算卡片');
@@ -77,6 +77,35 @@ export default async function run(assert){
  assert.equal(takeoverOnly.counts().engineClicks,2,'接管态遮罩点击绕过闩锁，再次转化');
  takeoverOnly.emit('novvy:cta-interact',{phase:'takeover'});
  assert.equal(takeoverOnly.counts().engineClicks,3,'接管态每一击遮罩点击都是一次转化');
+ // 结束遮罩关闭(cta.endMask=false,__NOVVY_CTA_END_MASK__=false):CTA 时刻不再
+ // 升级全屏接管,直接转化一次;之后每一次触压(document 捕获段 pointerdown)
+ // 都再触发一次转化 —— 用户从商店切回来后继续玩,每击同时激发跳转。
+ const maskOn=bridgeRun({twoPhase:true,endMask:true});
+ maskOn.emit('novvy:cta-moment');
+ assert.check(maskOn.cardPhases().join()==='bar,takeover','显式开启结束遮罩与未注入全局(存量包)行为一致');
+ const noMask=bridgeRun({twoPhase:true,endMask:false});
+ noMask.emit('novvy:cta-moment');
+ assert.equal(noMask.counts(),{endCards:1,engineClicks:1,opens:0},'遮罩关闭：CTA 时刻仍首亮上报并主动转化一次');
+ assert.check(noMask.cardPhases().join()==='bar','遮罩关闭：CTA 时刻不升级全屏接管');
+ noMask.tap();
+ assert.equal(noMask.counts().engineClicks,2,'遮罩关闭：转化后第一次触压即再转化(回访每击转化)');
+ noMask.tap();
+ assert.equal(noMask.counts().engineClicks,3,'遮罩关闭：去抖窗口外的每一次触压都是一次转化请求');
+ noMask.emit('novvy:victory');noMask.emit('novvy:cta-moment');
+ assert.equal(noMask.counts().engineClicks,3,'遮罩关闭：主动转化闩锁仍生效，触压之外的重复时刻不额外跳转');
+ const noMaskSingle=bridgeRun({endMask:false});
+ noMaskSingle.emit('novvy:playable-complete');
+ assert.equal(noMaskSingle.counts().engineClicks,1,'遮罩关闭：单 playable 完成即主动转化(原语义不变)');
+ noMaskSingle.tap(0);
+ assert.equal(noMaskSingle.counts().engineClicks,2,'遮罩关闭：完成后第一次触压即再转化');
+ noMaskSingle.tap(0);noMaskSingle.tap(0);
+ assert.equal(noMaskSingle.counts().engineClicks,2,'300ms 去抖窗口内的同拍连点只计一次转化');
+ const armedLate=bridgeRun({endMask:false});
+ armedLate.emit('novvy:victory');
+ armedLate.emit('novvy:cta-moment');
+ assert.equal(armedLate.counts().engineClicks,1,'遮罩关闭：闩锁拦下重复时刻，不重复主动转化');
+ armedLate.tap();
+ assert.equal(armedLate.counts().engineClicks,2,'遮罩关闭：目标时刻即使被闩锁拦截也完成武装，触压照常转化');
  const twoPhasePreview=bridgeRun({engine:false,twoPhase:true});
  twoPhasePreview.emit('novvy:cta-moment');
  assert.equal(twoPhasePreview.counts().opens,1,'双 playable 预览：CTA 时刻走裸兜底链跳转');
@@ -161,6 +190,9 @@ export default async function run(assert){
  assert.check(phase2OffHtml.includes('__novvyTwoPhase=false')&&phase2OffHtml.includes('__COLOREVER_PHASE2__=null'),'存在片尾视频才允许第二个 playable 生效');
  const policyHtml=(await coloreverHtml({...overlayArgs,config:{playableCta:{mode:'steps',afterSteps:8}}})).html;
  assert.check(policyHtml.includes('__COLOREVER_CTA_POLICY__={"mode":"steps","afterSteps":8}')&&policyHtml.includes('__novvyTwoPhase=false'),'无片尾时第一关 CTA 策略注入');
+ assert.check(policyHtml.includes('__NOVVY_CTA_END_MASK__=false'),'结束遮罩默认关闭：到达转化时刻直接跳转并武装回访每击转化');
+ const endMaskHtml=(await coloreverHtml({...overlayArgs,config:{cta:{endMask:true}}})).html;
+ assert.check(endMaskHtml.includes('__NOVVY_CTA_END_MASK__=true'),'勾选结束后全屏遮罩时注入 true，保留 CTA 时刻全屏接管');
  const titleOnlyNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',setAttribute(){}}]));
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),{window:{addEventListener(){},__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}}},document:{getElementById:id=>titleOnlyNodes[id]}});
  assert.equal([titleOnlyNodes['novvy-hud-title-line1'].textContent,titleOnlyNodes['novvy-hud-title-line2'].textContent],['主标题','副标题'],'仅标题模式没有进度节点也可正常显示两行文字');

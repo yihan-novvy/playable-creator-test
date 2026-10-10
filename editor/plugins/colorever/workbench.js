@@ -280,28 +280,34 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       el('p',{class:'hint'},['仅在未使用片尾视频时生效：完成后自动跳转，或玩到第 N 步时亮出下载卡并自动跳转一次。']),
       ctaTimingControls(()=>config().playableCta,patch=>({playableCta:patch})),
     ]);
+    const endMaskOn = config().cta?.endMask === true;
     const ctaCopy = el('section', { class: 'step-card', id: 'cta-copy-settings' }, [
       el('h3', {}, ['CTA 遮罩文案']),
-      el('p', { class: 'hint' }, ['第二个 playable 到达转化时刻后，压暗背景并显示文案浮层。底部强调文案为纯文字，点击屏幕任意位置仍可跳转。']),
-      checkbox('显示下载卡与遮罩', 'cta', 'enabled', config().cta?.enabled !== false),
-      el('div', { class: 'dragon-config-grid' }, [
-        ['takeoverText', '中间主文案', '还想继续挑战？\n更多精彩等你体验'],
-        ['takeoverActionText', '底部强调文案', '点击屏幕，继续体验'],
-      ].map(([key, label, fallback]) => {
-        const input = el('textarea', { rows: 3, 'aria-label': label, style: 'width:100%;box-sizing:border-box;resize:vertical;font:inherit;padding:10px;border:1px solid var(--border);border-radius:8px' });
-        input.value = config().cta?.[key] ?? fallback;
-        input.onchange = () => { saving = save({ cta: { [key]: input.value } }).then(() => refresh(true)); };
-        return el('label', { style: 'display:flex;flex-direction:column;gap:8px' }, [el('span', {}, [label]), input]);
-      })),
-      el('p', { class: 'hint' }, ['支持换行；修改后自动保存，重新打包后写入 ZIP。']),
+      el('p', { class: 'hint' }, ['不勾选（默认）：到达转化时刻直接跳转商店；用户从商店切回来后可继续试玩，但每次点击都会同时再触发一次跳转。勾选：第二个 playable 到达转化时刻后压暗全屏并显示文案浮层，点击屏幕任意位置跳转。']),
+      checkbox('显示底部下载卡', 'cta', 'enabled', config().cta?.enabled !== false),
+      checkbox('结束后全屏遮罩', 'cta', 'endMask', endMaskOn),
     ]);
-    const ctaPreview = el('div', { id: 'cta-copy-preview' });
-    const previewCtaButton = el('button', { onclick: async () => {
-      await saving;
-      mountPlayPreview(document.getElementById('cta-copy-preview'), `/api/tasks/${taskId}/preview?view=cta&v=${Date.now()}`, true);
-    } }, ['预览遮罩']);
-    previewCtaButton.disabled = config().cta?.enabled === false;
-    ctaCopy.append(previewCtaButton, ctaPreview);
+    if (endMaskOn) {
+      ctaCopy.append(
+        el('div', { class: 'dragon-config-grid' }, [
+          ['takeoverText', '中间主文案', '还想继续挑战？\n更多精彩等你体验'],
+          ['takeoverActionText', '底部强调文案', '点击屏幕，继续体验'],
+        ].map(([key, label, fallback]) => {
+          const input = el('textarea', { rows: 3, 'aria-label': label, style: 'width:100%;box-sizing:border-box;resize:vertical;font:inherit;padding:10px;border:1px solid var(--border);border-radius:8px' });
+          input.value = config().cta?.[key] ?? fallback;
+          input.onchange = () => { saving = save({ cta: { [key]: input.value } }).then(() => refresh(true)); };
+          return el('label', { style: 'display:flex;flex-direction:column;gap:8px' }, [el('span', {}, [label]), input]);
+        })),
+        el('p', { class: 'hint' }, ['支持换行；修改后自动保存，重新打包后写入 ZIP。']),
+      );
+      const ctaPreview = el('div', { id: 'cta-copy-preview' });
+      const previewCtaButton = el('button', { onclick: async () => {
+        await saving;
+        mountPlayPreview(document.getElementById('cta-copy-preview'), `/api/tasks/${taskId}/preview?view=cta&v=${Date.now()}`, true);
+      } }, ['预览遮罩']);
+      previewCtaButton.disabled = config().cta?.enabled === false;
+      ctaCopy.append(previewCtaButton, ctaPreview);
+    }
     const hudInputs = [upload('portrait-src-left', '左立绘', 'image/png,image/jpeg'), upload('portrait-src-right', '右立绘', 'image/png,image/jpeg')];
     if (config().hud?.enabled && config().intro?.enabled) {
       hudInputs.push(el('button', { onclick: async () => { await save({ hudImageSource: { left: 'poster', right: 'poster' } }); await refresh(true); } }, ['两侧使用视频海报']));

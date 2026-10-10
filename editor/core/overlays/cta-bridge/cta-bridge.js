@@ -10,11 +10,18 @@
    (novvy:phase2-start)重置闩锁,第二关的 novvy:cta-moment(第 N 步或完成
    兜底)升级全屏接管并再次转化。卡片点击经 novvy:cta-interact 回到桥,与
    上述时机共享同一分相 converted 闩锁,同一关内只转化一次。
+   结束遮罩(colorever 注入 __NOVVY_CTA_END_MASK__):false = 到转化时刻不再
+   弹全屏接管,直接跳转,并武装"回访每击转化"—— 用户从商店切回来后,每一次
+   触压既操作 playable、也再触发一次跳转(takeover"每一击都是一次转化"的
+   语义搬到无遮罩形态,连点由 SDK 冷却护栏去重);未注入或 true = 保持遮罩。
    本文件由各模板插件共享注入;注入时必须把 __CTA_URL_KEY__ 替换成模板
    自己的 CTA URL 全局名(如 __COLOREVER_CTA_URL__),SDK 包内该值恒为空 ——
    落地页由 SDK 取 adm.clicktrack,URL 只服务编辑器预览的裸兜底链。 */
 (function () {
   var STORE_URL = window.__CTA_URL_KEY__ || '';
+  /* 结束遮罩开关:仅显式注入 false 时关闭(colorever 的 cta.endMask);
+     未注入的模板/存量包保持全屏接管现状。 */
+  var END_MASK = window.__NOVVY_CTA_END_MASK__ !== false;
 
   /* 跳转兜底链(仅编辑器预览会走到):与旧 cta.js 同链。
      Novvy SDK 桥只发点击信号,落地页由 SDK 取 adm.clicktrack,不传 URL。 */
@@ -65,6 +72,24 @@
     convert('cta-card');
   });
 
+  /* 遮罩关闭形态的"回访每击转化":转化时刻(主动跳转)过后,用户从商店切
+     回来,每一次触压既继续操作 playable、也再触发一次跳转。捕获段监听且不
+     preventDefault —— 游戏输入零感知;不设闩锁,每次触压都是一次转化请求,
+     连点交给 SDK 的冷却护栏;300ms 去抖只过滤同一次触压的多发事件。
+     武装点见各转化终点(目标时刻已到即武装,即使 converted 闩锁拦下了重复
+     跳转)。 */
+  var interactArmed = false, lastInteractAt = -1e9;
+  function armInteractConvert() {
+    if (interactArmed) return;
+    interactArmed = true;
+    document.addEventListener('pointerdown', function () {
+      var now = Date.now();
+      if (now - lastInteractAt < 300) return;
+      lastInteractAt = now;
+      convert('post-complete-interact');
+    }, true);
+  }
+
   /* 试玩开始:亮出底部常驻卡(双 playable 第一关同样亮);随后请服务做
      结算时刻上报(公开 API;预览环境无此导出,自动降级)。双 playable 的
      showEndCard 与主动跳转仍推迟到 CTA 时刻(引擎 novvy:cta-moment)。 */
@@ -89,6 +114,7 @@
       timer = null;
       remaining = 0;
       waitingForOutroJump = false;
+      if (!END_MASK) armInteractConvert();
       convert('outro-finished');
     }, remaining);
   }
@@ -116,11 +142,13 @@
      扫光/片尾音乐收尾,请求与结算显露都在这一刻发生。victory 保留为兜底
      (未派发新事件的旧素材),两者经同一闩锁只转化一次。 */
   window.addEventListener('novvy:playable-complete', function () {
+    if (!END_MASK) armInteractConvert();
     if (converted) return;
     converted = true;
     convert('playable-complete');
   });
   window.addEventListener('novvy:victory', function () {
+    if (!END_MASK) armInteractConvert();
     if (converted) return;
     converted = true;
     convert('victory');
@@ -139,13 +167,14 @@
   });
 
   /* CTA 时刻(引擎在武装策略命中时派发:第 N 步,或完成兜底):
-     双 playable 升级为全屏接管;随后首亮上报与主动转化一次;
-     converted 闩锁保证整组动作只发生一次。单 playable 不接管 ——
-     底部卡自试玩起常驻,这里只补主动转化。 */
+     遮罩开启时双 playable 升级为全屏接管;关闭时不弹遮罩,只主动转化一次,
+     并交由回访每击转化接管后续。converted 闩锁保证主动转化只发生一次。
+     单 playable 不接管 —— 底部卡自试玩起常驻,这里只补主动转化。 */
   window.addEventListener('novvy:cta-moment', function () {
+    if (!END_MASK) armInteractConvert();
     if (converted) return;
     converted = true;
-    if (window.__novvyTwoPhase === true) showCard('takeover');
+    if (window.__novvyTwoPhase === true && END_MASK) showCard('takeover');
     if (typeof window.showEndCard === 'function') {
       try { window.showEndCard(); } catch (e) {}
     }
