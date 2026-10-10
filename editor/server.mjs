@@ -34,6 +34,7 @@ import {
   resultIndexPath,
   computeStatus,
   stepInputFilesFor,
+  isColoreverTemplate,
 } from './lib/store.mjs';
 import { STEP_IDS, runStep, runAll, templateSteps, stepPrerequisites, effectiveConfig } from './core/runner.mjs';
 import { getEntry, listEntries, importStepModule, getLib } from './core/registry.mjs';
@@ -127,7 +128,8 @@ async function handleApi(req, res, url) {
   }
 
   if(pathname==='/api/colorever-options'&&req.method==='GET'){
-    const linked=templateById('colorever');
+    const templateId=url.searchParams.get('templateId') || 'colorever';
+    const linked=isColoreverTemplate(templateId) ? templateById(templateId) : null;
     if(!linked)return sendError(res,404,'未知模板');
     const lib=await getLib(linked.plugin);
     if(!lib||typeof lib.patterns!=='function')return sendError(res,404,'该模板不提供图案列表');
@@ -183,7 +185,7 @@ async function handleApi(req, res, url) {
   if (rest[0] === 'uploads') {
     const slot = rest[1];
     if (!UPLOAD_SLOTS.includes(slot)) return sendError(res, 400, `未知上传槽位: ${slot}`);
-    if (slot === 'background-music' && task.templateId !== 'colorever') return sendError(res, 400, '该模板不支持背景音乐上传');
+    if (slot === 'background-music' && !isColoreverTemplate(task.templateId)) return sendError(res, 400, '该模板不支持背景音乐上传');
     const slotPath = uploadPath(taskId, slot);
     if (req.method === 'PUT') {
       const declaredType = (req.headers['content-type'] || '').split(';')[0];
@@ -290,7 +292,7 @@ async function handleApi(req, res, url) {
 
   // Task-specific music never mutates the shared template bundle.
   if (['preview-game.js', 'music'].includes(rest[0]) && req.method === 'GET') {
-    if (task.templateId !== 'colorever') return sendError(res, 400, '该模板不支持任务音乐');
+    if (!isColoreverTemplate(task.templateId)) return sendError(res, 400, '该模板不支持任务音乐');
     const linked = templateById(task.templateId);
     const lib = await getLib(linked.plugin);
     try {

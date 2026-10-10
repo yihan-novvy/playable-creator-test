@@ -1,0 +1,232 @@
+{
+  "version": 2,
+  "engineSha256": "f06e4d3bc2076fa37b6ab7966d7823a84719a20678c27874b2845fd1bec249da",
+  "levelEngine": "level-engine.mjs",
+  "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
+  "patterns": [
+    {
+      "id": "cat",
+      "name": "蝴蝶结猫咪",
+      "description": "方形珠子搭配立体眼睛、鼻子、嘴巴、胡须和蝴蝶结",
+      "level": "cat.json",
+      "templateSha256": "17dd8436c727823a0c2bc81cab4aab6856a05d6c7361fc9c918ffdda1985dfb8"
+    },
+    {
+      "id": "house",
+      "name": "彩色小屋",
+      "description": "固定小屋图案，可独立增加门窗等装饰",
+      "level": "house.json",
+      "templateSha256": "121aebec393979f49153c281bf5639c93608fc2b706c77aa78b45e821f8d9a9f"
+    },
+    {
+      "id": "axe",
+      "name": "双刃斧子",
+      "description": "银灰双刃与棕色长柄，沿用立体拼珠材质",
+      "level": "axe.json",
+      "templateSha256": "a4c64114b8331361fc6746b9587c12fc7c671802adb2c2ecfb59924a9ff74170"
+    },
+    {
+      "id": "torch",
+      "name": "火把",
+      "description": "红橙黄火焰、银灰托环与棕色握柄组成的立体拼珠图案",
+      "level": "torch.json",
+      "templateSha256": "26b59d19f1a82648453a0b0072b89983c197f8dff4e264c195e4d393f320304d"
+    },
+    {
+      "id": "contract",
+      "name": "协议合同",
+      "description": "白色折角纸页、英文 PACT 标题、勾选条款与英文 SIGN 签字栏组成的立体拼珠协议",
+      "level": "contract.json",
+      "templateSha256": "2d61cbec104d293d06d1eca18478c75d4af3178b2e51577378710b137c2d5ac7"
+    },
+    {
+      "id": "bank",
+      "name": "银行账户余额",
+      "description": "深蓝手机屏幕、英文 BANK 标题、绿色美元余额卡片与账户明细组成的立体拼珠图案",
+      "level": "bank.json",
+      "templateSha256": "caa113496dc0174e73a19f490cfb9f4fd78fc7cfd2c4b9d5979691b7b0d43261"
+    },
+    {
+      "id": "phoenix",
+      "name": "金羽凤凰",
+      "description": "分层金白羽翼搭配朱红羽根、绛红羽影和橙红尾羽，保留原本轮廓并配专属圆润亮眼与尖喙",
+      "level": "phoenix.json",
+      "templateSha256": "57680d8ea498b077fa16050a1194f31177fa7c71a5c603febf9db8f24f96a4b8"
+    },
+    {
+      "id": "chick",
+      "name": "金黄小鸡",
+      "description": "斜额头、奶油黄圆腹和金橙色翘翼，搭配立体亮眼、圆润双瓣嘴与三趾脚爪",
+      "level": "chick.json",
+      "templateSha256": "35b6f7e94e10ac540cf72d9ddac841de61456bf1b53dfe94852fe81802fb4fcf"
+    },
+    {
+      "id": "tree",
+      "name": "彩饰圣诞树",
+      "description": "阶梯形绿色树冠、金黄星顶与装饰带，搭配红色彩带、蓝色方块和红色树底的立体拼珠图案",
+      "level": "tree.json",
+      "templateSha256": "decbc27d37719afe20d6dccb1519a5c24899bd11790e16e222e9cac38f1550bf"
+    },
+    {
+      "id": "backpack",
+      "name": "橙黄书包",
+      "description": "橙黄包身和侧袋，搭配深灰轮廓、粉色翻盖、奶白提手与扣带的立体拼珠书包",
+      "level": "backpack.json",
+      "templateSha256": "0ed60b7e59119604287a5d394712b9c1c1fd9069b9a5de74ecb5301aac24301e"
+    },
+    {
+      "id": "portrait",
+      "name": "短发人像",
+      "description": "正面短发人脸、对称眉眼与深蓝衣领，脸部采用三种肤色和简洁明暗分区",
+      "level": "portrait.json",
+      "templateSha256": "a20142c14c1b609e4e94803ea947420f7e271b1a0498a1642eba2c394051fabe"
+    },
+    {
+      "id": "rafflesia",
+      "name": "粉瓣霸王花",
+      "description": "粉红与蜜桃色五瓣花、橙黄花心和嫩绿叶片，搭配墨绿色拼珠底色、青绿边缘与金黄底边",
+      "level": "rafflesia.json",
+      "templateSha256": "f52362727d464fcc627af4a9715815417eb8ae66590575d754db4757aa2f3933"
+    },
+    {
+      "id": "portrait-frown",
+      "name": "皱眉人像",
+      "description": "正面深色短发、皱眉与微张嘴表情，搭配深色翻领外套，脸部仅使用三种肤色",
+      "level": "portrait-frown.json",
+      "templateSha256": "6d520cf2024ea12c59faa14d5c3a8ddf979bd5b85fa4229118024ac100c0c47b"
+    },
+    {
+      "id": "yellow-code",
+      "name": "黄色编号 032363FF18478327",
+      "description": "金黄色 032363FF / 18478327 两行字符居中排列，搭配深蓝底色与蓝色边框",
+      "level": "yellow-code.json",
+      "templateSha256": "2be0be8456d18b73dc94c484d7e968d942d791ba1486539c62e4b89f16423ef8"
+    },
+    {
+      "id": "phoenix-feather",
+      "name": "金焰凤凰羽毛",
+      "description": "左下羽根与右上羽尖之间的弯曲浅金羽轴，搭配圆润饱满的明黄羽片、橙金层次与细朱橙羽纹，保留靛蓝底色",
+      "level": "phoenix-feather.json",
+      "templateSha256": "79e38d3369610a20d069960491ad7cbfef29036fba42f62ea1e38976c6f521cf"
+    },
+    {
+      "id": "portrait-woman",
+      "name": "金发女生",
+      "description": "清晰参考图比例的24×40侧转金发女生，合并为10色，保留两种肤色并强化鼻梁和鼻翼轮廓",
+      "level": "portrait-woman.json",
+      "templateSha256": "ca23efe394aa0fd527b9722a8b213b9ebc446b80df4f469e7a7e809450f81a7a"
+    },
+    {
+      "id": "boy",
+      "name": "蓝发男生",
+      "description": "直接采样已确认的像素头像，保留蓝发、五官和脸型；30×40 等比例网格，10 色简化配色，三种肤色",
+      "level": "boy.json",
+      "templateSha256": "461b47540a052a5928c66e8a1b873aac4248d156018d9d199e6475cd4c2077a6"
+    },
+    {
+      "id": "bearing",
+      "name": "银灰滚珠轴承",
+      "description": "银灰内外钢环、八颗高光滚珠和深色滚道，中心孔镂空的立体拼珠轴承",
+      "level": "bearing.json",
+      "templateSha256": "6f371fc150df7a6f7217ab9f1dd4726f38538fb09f1323b3c455ecdb7e5d4240"
+    },
+    {
+      "id": "gear",
+      "name": "立体钢齿轮",
+      "description": "参考屏幕中的银灰环形齿轮：十四个宽齿、加大的镂空轴孔、同心抛光钢环与亮边，内孔侧壁和偏移侧面表现厚度",
+      "level": "gear.json",
+      "templateSha256": "18c619502b5c051081b9c2b13e6645e87011c2d8b299ddaaf723b899358d1dcb"
+    },
+    {
+      "id": "cottage",
+      "name": "红顶田园小屋",
+      "description": "参考手机里的小房子：红粉瓦顶、烟囱、金黄色墙面、蓝色门窗与绿色草地，带侧墙透视的立体拼珠图案",
+      "level": "cottage.json",
+      "templateSha256": "2143eac965ba0eb1079e2fc1d982d6a4a2128dd1a3ea1a811e6184f051cec17c"
+    },
+    {
+      "id": "diamond",
+      "name": "彩光钻石",
+      "description": "参考手机中房子下方的钻石：深靛紫轮廓、蓝紫切面、粉紫冠部与金橙反光，宽冠部和尖底组成的立体拼珠图案",
+      "level": "diamond.json",
+      "templateSha256": "fdd92d470ed114ffee2984596f8628030c2f35ba7950ecc046dc1147d290e61f"
+    },
+    {
+      "id": "keble-quarterback-1",
+      "name": "keble-四分卫-1",
+      "description": "参考证据修复图：炭灰镂空剪刀手柄、银灰剪刃与斜向剪断的深蓝织带，保留银白标记和散落碎片",
+      "level": "keble-quarterback-1.json",
+      "templateSha256": "2c372f81a21df26cb2be8fc57104488825cdc06ed9e99e93dafd2e6428bdbed6"
+    },
+    {
+      "id": "keble-quarterback-2",
+      "name": "keble-四分卫-2",
+      "description": "绿色球场与白色边线，底部持球四分卫沿黄色弯曲路线避开两个红色障碍，通向右上方目标框",
+      "level": "keble-quarterback-2.json",
+      "templateSha256": "f1adf11a6eb88511afecc1992d72e0aa2490388dee6b351b1c02d44ea9ee60c3"
+    },
+    {
+      "id": "rebirth-phoenix",
+      "name": "红金涅槃凤凰",
+      "description": "参考凤凰刺绣：酒红与金色左翼、象牙白金边右翼，搭配冠羽、弯曲长颈、钩喙和层叠卷曲长尾",
+      "level": "rebirth-phoenix.json",
+      "templateSha256": "a792e2164d0f85d38e985e99bf86c96f36ca3a1efdffc5abca52750fb7788468"
+    },
+    {
+      "id": "runway-gown",
+      "name": "蓝银拖尾礼服",
+      "description": "参考秀场礼服：象牙白双肩带与收腰上身，宝蓝藏蓝裙摆、银白花纹和向两侧展开的宽大拖尾",
+      "level": "runway-gown.json",
+      "templateSha256": "850e2abae0f87cd54a7d1a0b280c8079b2a25b48c35af0d02f2a19bbdf367228"
+    },
+    {
+      "id": "gemstone-phoenix",
+      "name": "彩宝展翼凤凰",
+      "description": "参考彩色宝石鸟：珍珠银白头身、红粉左翼与青绿右翼，以及金黄、粉红、紫蓝多列宝石长尾",
+      "level": "gemstone-phoenix.json",
+      "templateSha256": "8c93b96d4ede1c45c4a1cec54b599d077f56a38dfa0bcd42cbf0d353787ab28a"
+    },
+    {
+      "id": "rainbow-lightning",
+      "name": "彩虹闪电",
+      "description": "红金、青蓝、紫粉交叠的锯齿闪电，象牙白高光，不带背景底板",
+      "level": "rainbow-lightning.json",
+      "templateSha256": "1750d927c5dbe1577bb42e3a923b200a78f561165cfb4fe8d897c49e51afeb5a"
+    },
+    {
+      "id": "wolf-shield",
+      "name": "双色狼头盾徽",
+      "description": "金色盾框内的双色狼头：左侧金白暖色、右侧蓝银冷色，搭配橙金与紫色宝石",
+      "level": "wolf-shield.json",
+      "templateSha256": "2fbe25d0595b70b95e601af388e40dbc91577d36dd336743efbb1abcd45ecf4c"
+    },
+    {
+      "id": "gem-wheel",
+      "name": "裂纹宝石圆盘",
+      "description": "8 色古金圆环与六种宝石分区，合并同色系深浅，保留金属隔条、链饰、断裂接缝和中心缺口",
+      "level": "gem-wheel.json",
+      "templateSha256": "44d525fa9821cb149f544ed1c67343b571d1a645e21ad02dc0110af2c8765692"
+    },
+    {
+      "id": "butterfly-key",
+      "name": "宝石蝴蝶与金钥匙",
+      "description": "黑银珍珠羽片与红蓝绿紫宝石蝴蝶，搭配完整金色花形柄钥匙，8 色同框",
+      "level": "butterfly-key.json",
+      "templateSha256": "dd1b1ab337dc7915eb9d18251ef437ddf3e36b078bbfe3811cd4964e9ed3a8ee"
+    },
+    {
+      "id": "fox-key",
+      "name": "红狐挂饰与金钥匙",
+      "description": "红狐白色面纹、双环红绳与绳结，搭配三环柄金钥匙，6 色同框",
+      "level": "fox-key.json",
+      "templateSha256": "ea3b68316799704e543eaef45590e7d80916e3cadec3fbbc23fd3bcaf3ecebcd"
+    },
+    {
+      "id": "orange-pixel-cat",
+      "name": "橙色像素猫",
+      "description": "橙棕像素猫，保留竖耳、卷起的尾巴、奶白胸口与脚尖，7 色珠子",
+      "level": "orange-pixel-cat.json",
+      "templateSha256": "142ab51cb0af8159aefe753e25d9cc50d310f9e2c7f5c1e713a7493afd9544aa"
+    }
+  ]
+}

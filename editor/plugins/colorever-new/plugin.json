@@ -1,0 +1,159 @@
+{
+  "id": "colorever-new",
+  "name": "Colorever New（立体宝石）",
+  "template": "colorever-new",
+  "workbench": "colorever-new",
+  "steps": [
+    {
+      "id": "intro",
+      "runner": "core:intro"
+    },
+    {
+      "id": "outro",
+      "runner": "./steps/outro.mjs"
+    },
+    {
+      "id": "hud",
+      "runner": "./steps/hud.mjs"
+    },
+    {
+      "id": "background",
+      "runner": "./steps/background.mjs"
+    },
+    {
+      "id": "background2",
+      "runner": "./steps/background2.mjs"
+    },
+    {
+      "id": "level",
+      "runner": "./steps/level.mjs"
+    },
+    {
+      "id": "pack",
+      "runner": "./steps/pack.mjs"
+    }
+  ],
+  "uploads": {
+    "background-music": {
+      "file": "background-music.mp3",
+      "magic": "mp3"
+    },
+    "intro-video": {
+      "file": "intro-video.mp4",
+      "magic": "mp4"
+    },
+    "outro-video": {
+      "file": "outro-video.mp4",
+      "magic": "mp4"
+    },
+    "intro-poster": {
+      "file": "intro-poster.jpg",
+      "magic": "jpg"
+    },
+    "background": {
+      "file": "background.png",
+      "magic": [
+        "png",
+        "jpg"
+      ]
+    },
+    "background2": {
+      "file": "background2.png",
+      "magic": [
+        "png",
+        "jpg"
+      ]
+    },
+    "portrait-src-left": {
+      "file": "portrait-src-left.png",
+      "magic": [
+        "png",
+        "jpg"
+      ]
+    },
+    "portrait-src-right": {
+      "file": "portrait-src-right.png",
+      "magic": [
+        "png",
+        "jpg"
+      ]
+    }
+  },
+  "overlays": {
+    "hud": "overlays/hud",
+    "intro": "overlays/intro",
+    "outro": "overlays/outro",
+    "background": "overlays/background",
+    "cta": "overlays/cta"
+  },
+  "background": {
+    "width": 1560,
+    "height": 2598,
+    "defaultSigma": 12
+  },
+  "patterns": {
+    "catalog": "game/patterns/catalog.json"
+  },
+  "defaults": {
+    "music": {
+      "source": "original"
+    },
+    "intro": {
+      "enabled": false,
+      "ariaLabel": ""
+    },
+    "outro": {
+      "enabled": false
+    },
+    "hud": {
+      "enabled": false,
+      "titleEnabled": null,
+      "titleLine1": "",
+      "titleLine2": "",
+      "ariaLabel": ""
+    },
+    "background": {
+      "enabled": false,
+      "blurSigma": 12,
+      "source": "auto"
+    },
+    "cta": {
+      "enabled": true,
+      "endMask": false,
+      "takeoverText": "还想继续挑战？\n更多精彩等你体验",
+      "takeoverActionText": "点击屏幕，继续体验"
+    },
+    "hudImageSource": {
+      "left": "upload",
+      "right": "upload"
+    },
+    "patternId": "cat",
+    "opening": {
+      "mode": "easy",
+      "difficulty": 21,
+      "seed": 1
+    },
+    "playableCta": {
+      "mode": "complete",
+      "afterSteps": 8
+    },
+    "secondPlayable": {
+      "enabled": false,
+      "patternId": "house",
+      "background": {
+        "enabled": false,
+        "source": "video-last",
+        "blurSigma": 12
+      },
+      "opening": {
+        "mode": "easy",
+        "difficulty": 21,
+        "seed": 1
+      },
+      "cta": {
+        "mode": "steps",
+        "afterSteps": 8
+      }
+    }
+  }
+}

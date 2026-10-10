@@ -117,8 +117,12 @@ const CONFIG_WHITELISTS = new Map([
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable'])],
 ]);
 
+export function isColoreverTemplate(templateId) {
+  return templateId === 'colorever' || templateId === 'colorever-new';
+}
+
 export function configWhitelistFor(templateId) {
-  return CONFIG_WHITELISTS.get(templateId) || CONFIG_PATCH_WHITELIST;
+  return CONFIG_WHITELISTS.get(isColoreverTemplate(templateId) ? 'colorever' : templateId) || CONFIG_PATCH_WHITELIST;
 }
 
 // 前端逐字段保存(如 PATCH {hud:{titleLine1:'…'}}):对象深合并,避免同
@@ -136,11 +140,11 @@ export function updateTaskConfig(id, patch) {
   if (!doc) return null;
   doc.config = doc.config || {};
   const whitelist = configWhitelistFor(doc.templateId);
-  if(doc.templateId==='colorever'){
+  if(isColoreverTemplate(doc.templateId)){
     if ('music' in (patch || {}) && (!patch.music || !['original', 'custom'].includes(patch.music.source))) throw new Error('未知背景音乐来源');
     if('level' in (patch||{}))throw new Error('图案和玩法参数只能在 colorever 源项目修改，任务仅选择已构建的 patternId');
     if('patternId' in (patch||{})){
-      const catalog=JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../editor/templates/colorever/game/patterns/catalog.json'),'utf8'));
+      const catalog=JSON.parse(fs.readFileSync(path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../../editor/templates',doc.templateId,'game/patterns/catalog.json'),'utf8'));
       if(!catalog.patterns.some(p=>p.id===patch.patternId))throw new Error('未知图案模板');
       delete doc.config.level;delete doc.steps.level;delete doc.steps.pack;
     }
@@ -173,14 +177,14 @@ export function updateTaskConfig(id, patch) {
     delete doc.steps.level;
     delete doc.steps.pack;
   }
-  if (['dragon-cube','colorever'].includes(doc.templateId)) {
+  if (doc.templateId === 'dragon-cube' || isColoreverTemplate(doc.templateId)) {
     if ('intro' in (patch || {})) { delete doc.steps.intro; delete doc.steps.hud; delete doc.steps.background; delete doc.steps.pack; }
     if ('outro' in (patch || {})) { delete doc.steps.outro; delete doc.steps.pack; delete doc.steps.background2; }
     if ('hud' in (patch || {}) || 'hudImageSource' in (patch || {}) || 'hudCrop' in (patch || {})) { delete doc.steps.hud; delete doc.steps.pack; }
     if ('background' in (patch || {})) { delete doc.steps.background; delete doc.steps.pack; }
     if ('cta' in (patch || {})) delete doc.steps.pack;
   }
-  if (doc.templateId === 'colorever' && doc.config.cta) delete doc.config.cta.destinationUrl;
+  if (isColoreverTemplate(doc.templateId) && doc.config.cta) delete doc.config.cta.destinationUrl;
   return writeTask(doc);
 }
 
@@ -191,8 +195,8 @@ export function recordUpload(id, slot, meta) {
   if (slot === 'background-music') delete doc.steps.pack;
   // 片尾视频/第二关背景的上传与清除,会让依赖它们的步骤过期(colorever 与
   // dragon-cube 的双 playable 管线同构)。
-  if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
-  if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
+  if ((isColoreverTemplate(doc.templateId) || doc.templateId === 'dragon-cube') && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
+  if ((isColoreverTemplate(doc.templateId) || doc.templateId === 'dragon-cube') && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -202,10 +206,10 @@ export function clearUpload(id, slot) {
   delete doc.uploads[slot];
   if (slot === 'background-music') {
     delete doc.steps.pack;
-    if (doc.templateId === 'colorever') { doc.config ||= {}; doc.config.music = { source: 'original' }; }
+    if (isColoreverTemplate(doc.templateId)) { doc.config ||= {}; doc.config.music = { source: 'original' }; }
   }
-  if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
-  if (['colorever','dragon-cube'].includes(doc.templateId) && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
+  if ((isColoreverTemplate(doc.templateId) || doc.templateId === 'dragon-cube') && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
+  if ((isColoreverTemplate(doc.templateId) || doc.templateId === 'dragon-cube') && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -360,7 +364,7 @@ const WATER_SORT_STEP_INPUT_FILES = {
 };
 
 export function stepInputFilesFor(templateId) {
-  if (templateId === 'colorever') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/background-music.mp3', 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
+  if (isColoreverTemplate(templateId)) return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/background-music.mp3', 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
   // dragon-cube 与 colorever 共用双 playable 管线(outro/background2/第二关);
   // 第一关背景维持现状(上传图或海报回退),不加片头视频帧来源。
   if (templateId === 'dragon-cube') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp', 'generated/level2.json'] };

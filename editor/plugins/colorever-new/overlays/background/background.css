@@ -1,0 +1,14 @@
+/* DOM 背景层:垫在透明 canvas 之下铺满屏幕。CSS 引用走浏览器原生图片加载,
+   file:// 下可用且不经过 WebGL(无跨源污染问题)。 */
+#novvy-dom-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: url("__NOVVY_BG_FILE__") center / cover no-repeat #070b12;
+}
+
+/* 游戏舞台抬到背景之上(壳里 #stage 是 fixed 但没有 z-index;#win=2、
+   HUD=10、intro=20 都在它之上)。 */
+#stage {
+  z-index: 1;
+}
