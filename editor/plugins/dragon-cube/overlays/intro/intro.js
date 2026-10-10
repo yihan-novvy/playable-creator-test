@@ -307,6 +307,20 @@
     if (!video.ended) playVideo(); // frozen video resumes; a rolling one no-ops
   });
 
+  // WebKit keeps the poster placeholder composited over the video even while
+  // it plays — frames decode (audio rolls, timeupdate fires) but the
+  // placeholder layer never swaps out, so the screen stays on the poster
+  // forever. The attribute's job (covering parse→first-frame while the engine
+  // boots) is done once a real frame exists: drop it on the first presented
+  // frame (rVFC), with 'playing' as the fallback — in the stuck state rVFC
+  // may never fire, and removing the poster is itself what un-sticks the
+  // compositor.
+  const dropPoster = () => video.removeAttribute('poster');
+  if (typeof video.requestVideoFrameCallback === 'function') {
+    video.requestVideoFrameCallback(dropPoster);
+  }
+  video.addEventListener('playing', dropPoster, { once: true });
+
   video.addEventListener('ended', () => finish('video_ended'), { once: true });
   video.addEventListener('error', () => finish('video_ended'), { once: true });
 
