@@ -8,7 +8,8 @@
     "hud": "overlays/hud",
     "intro": "overlays/intro",
     "outro": "overlays/outro",
-    "background": "overlays/background"
+    "background": "overlays/background",
+    "cta": "overlays/cta"
   },
   "level": { "directory": "levels", "min": 1, "max": 10 },
   "background": { "width": 1560, "height": 2598, "defaultSigma": 12 },
@@ -18,6 +19,7 @@
     "outro": { "enabled": false },
     "hud": { "enabled": false, "titleEnabled": null, "titleLine1": "DragonCube", "titleLine2": "", "ariaLabel": "" },
     "background": { "enabled": false, "blurSigma": 12 },
+    "cta": { "enabled": true, "endMask": false, "takeoverText": "还想继续挑战？\n更多精彩等你体验", "takeoverActionText": "点击屏幕，继续体验" },
     "playableCta": { "mode": "complete", "afterSteps": 8 },
     "secondPlayable": { "enabled": false, "levelId": 2, "background": { "enabled": false, "source": "video-last", "blurSigma": 12 }, "cta": { "mode": "steps", "afterSteps": 8 } }
   }

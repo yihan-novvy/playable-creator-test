@@ -71,7 +71,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'DragonCube'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2),
     ]));
-    wrap.append(el('p', { class: 'hint' }, ['下载卡片不随包：结算卡片、点击上报与商店跳转由落地页打包服务接管；存在片尾视频时可在步骤里增加第二个 playable。']));
+    wrap.append(el('p', { class: 'hint' }, ['片头结束后显示底部下载卡，第一个 playable 完成即跳转；存在片尾视频时可增加第二个 playable，按第二关的步数设置再次触发。']));
     root.append(wrap);
   }
   function stateChip(id) {
@@ -187,7 +187,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       select2.addEventListener('change', async () => { await save({ secondPlayable: { levelId: Number(select2.value) } }); await refresh(true); });
       secondPlayable = el('section', { class: 'step-card', id: 'second-playable-settings' }, [
         el('h3', {}, ['第二个 playable']),
-        el('p', { class: 'hint' }, ['第一个 playable 完成并播完片尾后，页内切换进入第二个 playable；下载卡与跳转按此关的转化时机触发。']),
+        el('p', { class: 'hint' }, ['第一个 playable 完成即跳转，片尾播完后进入第二个 playable；底部下载卡继续显示，达到本关步数后自动跳转，后续每次交互再次触发。']),
         el('div', { class: 'dragon-config-grid' }, [checkbox('启用第二个 playable', 'secondPlayable', 'enabled')]),
         field('第二关编号', select2),
         el('div', { class: 'dragon-config-grid' }, ['titleLine1', 'titleLine2'].map((key, index) => {
@@ -223,9 +223,31 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     // 第一关转化时机:仅无片尾时可配(有片尾时第一关只负责引出片尾)。
     const ctaTiming = el('section', { class: 'step-card', id: 'cta-timing-settings' }, [
       el('h3', {}, ['转化时机']),
-      el('p', { class: 'hint' }, ['仅在未使用片尾视频时生效：完成后自动跳转，或有效拖放满 N 次时亮出下载卡并自动跳转一次。']),
+      el('p', { class: 'hint' }, ['底部下载卡从试玩开始常驻；未使用片尾视频时可选择完成后跳转，或有效拖放满 N 次时跳转。']),
       ctaTimingControls(() => config().playableCta, patch => ({ playableCta: patch })),
     ]);
+    const endMaskOn = config().cta?.endMask === true;
+    const ctaCopy = el('section', { class: 'step-card', id: 'cta-copy-settings' }, [
+      el('h3', {}, ['CTA 下载卡与结束遮罩']),
+      el('p', { class: 'hint' }, ['默认不显示全屏遮罩：达到转化时刻自动跳转，返回后可继续试玩，每次交互再次触发跳转。开启遮罩后，第二个 playable 到达转化时刻时显示文案浮层，点击任意位置跳转。']),
+      checkbox('显示底部下载卡', 'cta', 'enabled', config().cta?.enabled !== false),
+      checkbox('结束后全屏遮罩', 'cta', 'endMask', endMaskOn),
+    ]);
+    if (endMaskOn) {
+      for (const [key, label, fallback] of [
+        ['takeoverText', '中间主文案', '还想继续挑战？\n更多精彩等你体验'],
+        ['takeoverActionText', '底部强调文案', '点击屏幕，继续体验'],
+      ]) {
+        const input = el('textarea', { rows: 3, 'aria-label': label, style: 'width:100%;box-sizing:border-box;resize:vertical' });
+        input.value = config().cta?.[key] ?? fallback;
+        input.addEventListener('change', async () => { await save({ cta: { [key]: input.value } }); await refresh(true); });
+        ctaCopy.append(field(label, input));
+      }
+      ctaCopy.append(el('button', { onclick: async () => {
+        await saving;
+        mountPlayPreview(ctaCopy, versioned(`/api/tasks/${taskId}/preview?view=cta`, Date.now()));
+      } }, ['预览 CTA 遮罩']));
+    }
     const phase2On = config().outro?.enabled && config().secondPlayable?.enabled;
     const levelDesc = `第 ${config().levelId} 关` + (phase2On ? ` + 第二关第 ${config().secondPlayable?.levelId ?? 2} 关 · 原版 JSON 校验与导出。` : ' · 原版 JSON 校验与导出。');
     const level = card('level', 6, '关卡', levelDesc, [], (right) => {
@@ -242,7 +264,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     root.append(intro, hud, background);
     if (config().outro?.enabled) { root.append(outro); if (secondPlayable) root.append(secondPlayable); if (secondBackground) root.append(secondBackground); }
     if (!config().outro?.enabled) root.append(ctaTiming);
-    root.append(level, pack);
+    root.append(ctaCopy, level, pack);
     let number = 0;
     for (const section of root.children) { const badge = section.querySelector('.step-num'); if (badge) badge.textContent = String(++number); }
   }

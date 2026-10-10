@@ -5,12 +5,14 @@ import vm from 'node:vm';
 
 const source = fs.readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
 const introSource = fs.readFileSync(new URL('../../../editor/plugins/dragon-cube/overlays/intro/intro.js', import.meta.url), 'utf8');
+const cardSource = fs.readFileSync(new URL('../../../editor/core/overlays/cta-card/cta-card.js', import.meta.url), 'utf8');
+const bridgeSource = fs.readFileSync(new URL('../../../editor/core/overlays/cta-bridge/cta-bridge.js', import.meta.url), 'utf8').replaceAll('__CTA_URL_KEY__', '__DRAGON_CUBE_CTA_URL__');
 const readLevel = id => JSON.parse(fs.readFileSync(new URL(`../src/levels/${id}.json`, import.meta.url)));
 const flush = () => new Promise(resolve => setImmediate(resolve));
 
 function game({ first = readLevel(4), second = readLevel(10), intro = false, extraImages = {} } = {}) {
   const images = [], canvases = [], frames = [], timers = new Map(), nodes = new Map();
-  let timerId = 0;
+  let timerId = 0, clock = 0;
   class Node extends EventTarget {
     constructor(id) {
       super(); this.id = id; this.style = {}; this.hidden = false;
@@ -51,6 +53,7 @@ function game({ first = readLevel(4), second = readLevel(10), intro = false, ext
   document.baseURI = 'https://example.test/index.html';
   document.currentScript = { src: 'https://example.test/game.js' };
   document.hidden = false;
+  document.readyState = 'complete';
   document.getElementById = id => nodes.get(id) || null;
   document.createElement = tag => tag === 'canvas' ? new Canvas() : new Node();
   for (const id of ['board-wrap', 'hint', 'win', 'hud-title-line1', 'hud-title-line2', 'result-title', 'result-copy', 'reset', 'result-reset']) nodes.set(id, new Node(id));
@@ -64,7 +67,7 @@ function game({ first = readLevel(4), second = readLevel(10), intro = false, ext
     __DRAGON_CUBE_IMAGES__: extraImages,
     devicePixelRatio: 2, setTimeout, clearTimeout,
   });
-  const context = vm.createContext({ window, document, Image, Audio: Node, URL, CustomEvent, Event, performance,
+  const context = vm.createContext({ window, document, Image, Audio: Node, URL, CustomEvent, Event, performance, Date: { now: () => clock },
     setTimeout, clearTimeout, setInterval: () => 0, clearInterval() {}, navigator: {},
     requestAnimationFrame: fn => { frames.push(fn); return frames.length; },
   });
@@ -73,6 +76,17 @@ function game({ first = readLevel(4), second = readLevel(10), intro = false, ext
   return {
     window, document, images, canvases, nodes, timers, boot,
     intro: () => vm.runInContext(introSource, context),
+    cta: ({ endMask = false } = {}) => {
+      nodes.set('novvy-cta', new Node('novvy-cta'));
+      nodes.set('novvy-cta-btn', new Node('novvy-cta-btn'));
+      nodes.get('novvy-cta').hidden = true;
+      window.__NOVVY_CTA_END_MASK__ = endMask;
+      window.__novvyTwoPhase = !!second;
+      window.__novvyOutroEnabled = !!second;
+      vm.runInContext(cardSource, context);
+      vm.runInContext(bridgeSource, context);
+    },
+    tick: (ms = 400) => { clock += ms; },
     emit: (type, detail) => window.dispatchEvent(new CustomEvent(type, { detail })),
     frame: () => { const callbacks = frames.splice(0); for (const callback of callbacks) callback(); },
     finish: list => { for (const image of list) { image.load(); image.finishDecode(); } },
@@ -224,8 +238,82 @@ test('游戏脚本未能启动时视频层有超时出口，不会永久遮住�
   g.runTimers(12000);
   assert.equal(entries, 1);
   assert.equal(g.window.__novvyIntroFinished, true);
+  g.cta();
+  assert.equal(g.nodes.get('novvy-cta').hidden, false, '片头已结束但 DOM 还在时，晚到的桥也能显示卡片');
   g.emit('dragon-cube:ready');
   assert.equal(entries, 1);
   g.runTimers(220);
   assert.equal(g.nodes.has('novvy-video-intro'), false);
+});
+
+test('共享 CTA 卡片在片头结束且游戏就绪后显示，第一关最后一步完成即跳转', async () => {
+  const first = {
+    Index: 1, TimeLimit: 60,
+    Cells: [0, 1].map(x => ({ Index: { x, y: 0 }, ...(x === 1 ? { Cat: { Color: 0 } } : {}) })),
+    Boxes: [{ Index: 0, Color: 0, Count: 1, Cells: [{ x: 0, y: 0 }] }],
+  };
+  const g = game({ first, second: null, intro: true });
+  let jumps = 0;
+  g.window.novvyHandleAdClick = () => jumps++;
+  g.cta(); g.intro();
+  const card = g.nodes.get('novvy-cta');
+  assert.equal(card.hidden, true);
+  g.nodes.get('novvy-intro-video').dispatchEvent(new Event('ended'));
+  assert.equal(card.hidden, true);
+  g.boot(); g.finish(g.images);
+  await g.window.DragonCube.ready;
+  assert.equal(card.hidden, false);
+  assert.equal(g.window.__novvyCtaCardPhase, 'bar');
+  assert.equal(jumps, 0, '显示卡片不会自动跳转');
+  const board = g.nodes.get('board');
+  for (const [type, clientX] of [['pointerdown', 163], ['pointermove', 227], ['pointerup', 227]]) {
+    const event = new Event(type, { cancelable: true });
+    Object.assign(event, { clientX, clientY: 320, pointerId: 1 });
+    board.dispatchEvent(event);
+  }
+  assert.equal(g.window.DragonCube.getState().collected, 1);
+  g.runTimers(300);
+  assert.equal(jumps, 1, '完成时即跳转，不等胜利音乐收尾');
+  g.runTimers(5600);
+  assert.equal(jumps, 1, '胜利事件不重复触发同一关的主动跳转');
+});
+
+test('第二关重置第一关转化状态，满 N 次有效拖放才跳转，后续每次交互再次触发', async () => {
+  const row = Index => ({
+    Index, TimeLimit: 60,
+    Cells: Array.from({ length: 5 }, (_, x) => ({ Index: { x, y: 0 }, ...([1, 2, 4].includes(x) ? { Cat: { Color: 0 } } : {}) })),
+    Boxes: [{ Index: 0, Color: 0, Count: 3, Cells: [{ x: 0, y: 0 }] }],
+  });
+  const g = game({ first: row(1), second: row(2) });
+  g.window.__DRAGON_CUBE_PHASE2__.cta.afterSteps = 2;
+  let jumps = 0;
+  g.window.novvyHandleAdClick = () => jumps++;
+  g.cta(); g.finish(g.images);
+  await g.window.DragonCube.ready;
+  const board = g.nodes.get('board');
+  const drag = (from, to) => {
+    g.tick();
+    for (const [type, x] of [['pointerdown', from], ['pointermove', to], ['pointerup', to]]) {
+      const event = new Event(type, { cancelable: true });
+      Object.assign(event, { clientX: 67 + 64 * x, clientY: 320, pointerId: 1 });
+      if (type === 'pointerdown') g.document.dispatchEvent(new Event(type));
+      board.dispatchEvent(event);
+    }
+  };
+  drag(0, 4);
+  g.runTimers(300);
+  assert.equal(jumps, 1);
+  g.emit('novvy:outro-finished', { reason: 'video_ended' });
+  await flush();
+  assert.equal(g.window.DragonCube.getState().levelId, 2);
+  drag(0, 0);
+  drag(0, 1);
+  assert.equal(jumps, 1, '无效拖放不计数，第二关第一步也不继承上一关的触压转化');
+  drag(1, 0);
+  assert.equal(jumps, 2, '达到第二关 N 步即自动转化');
+  assert.equal(g.window.__novvyCtaCardPhase, 'bar', '默认无遮罩，保留常驻下载条');
+  drag(0, 1);
+  assert.equal(jumps, 3);
+  drag(1, 2);
+  assert.equal(jumps, 4, '后续每次拖动继续触发，而非只跳转一次');
 });

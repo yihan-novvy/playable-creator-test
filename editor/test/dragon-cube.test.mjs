@@ -3,7 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { dragonLevel, dragonHtml } from '../plugins/dragon-cube/lib.mjs';
-import { runStep, loadTemplate } from '../core/runner.mjs';
+import { runStep, loadTemplate, effectiveConfig } from '../core/runner.mjs';
 import { createServer } from '../server.mjs';
 import { execFile } from '../core/lib/exec.mjs';
 import { deleteTask } from '../lib/store.mjs';
@@ -25,7 +25,7 @@ export default async function run(assert) {
   const preview = dragonHtml({
     root: templateRoot, template, level: dragonLevel(templateRoot, 8),
     config: template.defaults,
-    media: { ctaIcon: '/templates/dragon-cube/overlays/cta/icon.png' },
+    media: { ctaIcon: '/plugins/dragon-cube/overlays/cta/icon.png' },
     preview: true,
   }).html;
   assert.check(preview.includes('window.__DRAGON_CUBE_LEVEL__={"Index":8'), '预览注入所选第 8 关');
@@ -33,7 +33,10 @@ export default async function run(assert) {
   assert.check(preview.includes('href="/templates/dragon-cube/game/style.css"'), '预览使用绝对样式路径');
   assert.check(preview.includes('data-novvy-cta-bridge') && preview.includes('__DRAGON_CUBE_CTA_URL__'), '预览注入共享转化桥');
   assert.check(!preview.includes('data-novvy-analytics'), '纯净包：预览不注入埋点组');
-  assert.check(!preview.includes('data-novvy-cta>') && !preview.includes('novvy-cta-btn'), '下载卡片组不再随包，遗留 ctaIcon 配置不生效');
+  assert.check(!preview.includes('data-novvy-cta>') && preview.includes('id="novvy-cta-btn"') && preview.includes('data-novvy-cta-card'), '与 colorever 一样注入 core 下载卡，不注入 ws 旧卡片');
+  assert.check(preview.includes('window.__NOVVY_CTA_END_MASK__=false'), '默认直接跳转，之后每次交互再次触发 CTA');
+  assert.check(preview.indexOf('<script data-novvy-cta-card>') < preview.indexOf('<script data-novvy-cta-bridge>'), '卡片先监听，再由共享桥显示');
+  assert.check(preview.includes('min-height:calc(138px + env(safe-area-inset-bottom))'), '棋盘为底部卡片预留空间');
   assert.check(preview.includes('window.__novvyTwoPhase=false') && preview.includes('window.__DRAGON_CUBE_PHASE2__=null'), '默认配置无双 playable');
   assert.check(preview.includes('window.__DRAGON_CUBE_CTA_POLICY__={"mode":"complete","afterSteps":8}'), '默认第一关 CTA 策略注入');
   assert.check(!/2147483000|2147482000|2147483646/.test(preview), '小值层级契约替换旧 2^31 级 z-index');
@@ -52,7 +55,16 @@ export default async function run(assert) {
   assert.check(!shell.includes("addEventListener('novvy:intro-finished', startMusic)") && shell.includes('introMusicKick'), '片头结束自动起 BGM（补偿覆盖层 220ms 延迟移除）');
   assert.check(!/primeAudio\(\);\s*\n\s*reset\(\)/.test(shell), '开局不自动起声（仅视频播完切换 playable 时自动起播）');
   assert.check(/addEventListener\('novvy:phase2-start'[\s\S]*?primeAudio\(\); startMusic\(\)/.test(shell), '第二关就绪自动恢复 BGM');
-  assert.check(preview.includes('window.__DRAGON_CUBE_IMAGES__={"first":[],"second":[]}'), '未开启自定义图片时不添加无效预加载资源');
+  assert.check(preview.includes('window.__DRAGON_CUBE_IMAGES__={"first":["/plugins/dragon-cube/overlays/cta/icon.png"],"second":[]}'), '下载卡图标在视频交出画面前加载解码');
+  const cardOff = dragonHtml({ root: templateRoot, template, level: dragonLevel(templateRoot, 1), config: { cta: { enabled: false } }, media: { ctaIcon: 'app-icon.png' } }).html;
+  assert.check(!cardOff.includes('id="novvy-cta"') && cardOff.includes('data-novvy-cta-bridge'), '关闭下载卡不影响转化桥');
+  assert.check(cardOff.includes('window.__DRAGON_CUBE_IMAGES__={"first":[],"second":[]}'), '关闭下载卡不再加载图标');
+  const noIcon = dragonHtml({ root: templateRoot, template, level: dragonLevel(templateRoot, 1), config: {}, media: {} }).html;
+  assert.check(!noIcon.includes('id="novvy-cta"') && noIcon.includes('data-novvy-cta-bridge'), '缺少图标时保留转化桥兜底');
+  const copy = dragonHtml({ root: templateRoot, template, level: dragonLevel(templateRoot, 1), config: { cta: { endMask: true, takeoverText: '第一行\n<script>bad()</script> __CTA_NAME__ $&', takeoverActionText: '继续 & 体验' } }, media: { ctaIcon: 'app-icon.png' } }).html;
+  assert.check(copy.includes('window.__NOVVY_CTA_END_MASK__=true'), '显式开启全屏遮罩时沿用 colorever 接管流程');
+  assert.check(copy.includes('第一行\n&lt;script&gt;bad()&lt;/script&gt; __CTA_NAME__ $&') && copy.includes('继续 &amp; 体验'), 'CTA 文案保留换行和字面文本，转义 HTML');
+  assert.check(!copy.includes('<script>bad()</script>'), 'CTA 文案不会注入脚本');
 
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'dragon-cube-test-'));
   let server = null, id = null, phase2Temp = null;
@@ -73,7 +85,11 @@ export default async function run(assert) {
       assert.check(fs.existsSync(path.join(resultRoot, 'assets', 'bg-default.jpg')), '包内默认底图进入广告包');
       assert.check(!fs.readdirSync(resultRoot).some((name) => /^level\d+\.html$/.test(name)), '独立关卡入口不进广告包');
       assert.check(!fs.existsSync(path.join(resultRoot, 'assets', 'background.png')), '原版整图背景不进广告包(背景由 editor 模糊管线提供)');
+      assert.check(html.includes('id="novvy-cta"') && fs.existsSync(path.join(resultRoot, 'app-icon.png')), '单 playable 的卡片和图标进入交付包');
+      assert.equal(packResult.metrics.overlays.cta, true, '卡片启用状态进入打包指标');
     }
+    const cardOffPack = await runStep({ taskId: 'smoke', templateRoot, scriptsRoot: path.join(root, 'editor', 'core', 'scripts'), projectRoot, resultRoot, stepId: 'pack', config: { levelId: 8, cta: { enabled: false } }, engine: null });
+    assert.check(cardOffPack.ok && !fs.existsSync(path.join(resultRoot, 'app-icon.png')), '重新打包关闭卡片后清除旧图标');
 
     // —— 双 playable 端到端：建任务 → 开片尾与第二关 → 上传片尾 → 全流程构建 ——
     phase2Temp = fs.mkdtempSync(path.join(os.tmpdir(), 'dragon-cube-phase2-'));
@@ -86,6 +102,8 @@ export default async function run(assert) {
     };
     const created = await api('/api/tasks', { name: 'dragon-phase2-' + Date.now(), templateId: 'dragon-cube' });
     id = created.body.id;
+    const defaults = effectiveConfig(template, created.body.config);
+    assert.check(defaults.cta.enabled && defaults.cta.endMask === false, '新任务默认显示下载卡并关闭全屏遮罩');
     const patched = await api(`/api/tasks/${id}`, { config: { outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2, cta: { mode: 'steps', afterSteps: 5 } } } }, 'PATCH');
     assert.check(patched.status === 200 && patched.body.config.secondPlayable.enabled, '双 playable 与片尾设置可以保存');
     const videoPath = path.join(phase2Temp, 'outro.mp4');
@@ -96,7 +114,7 @@ export default async function run(assert) {
     assert.check(built.status === 200 && built.body.every((r) => r.ok), `双 playable 全流程构建成功: ${JSON.stringify(built.body.filter((r) => !r.ok).map((r) => r.stepId + ':' + r.error))}`);
     assert.equal(built.body.find((r) => r.stepId === 'level').metrics.phase2, 2, '关卡步骤导出第二关');
     const packMetrics = built.body.find((r) => r.stepId === 'pack').metrics;
-    assert.check(!packMetrics.packageFiles.includes('app-icon.png'), '下载卡片图标不再进入交付包');
+    assert.check(packMetrics.packageFiles.includes('app-icon.png') && packMetrics.overlays.cta, '双 playable 下载卡片图标随包');
     assert.equal(packMetrics.phase2, 2, '打包指标携带第二关编号');
     const packed = await (await fetch(base + `/result/${id}/index.html`)).text();
     assert.check(packed.includes('window.__novvyTwoPhase=true'), '交付包内联双 playable 开关');
@@ -104,6 +122,7 @@ export default async function run(assert) {
     assert.check(packed.includes('"mode":"steps","afterSteps":5'), '第二关转化时机进入内联数据');
     assert.check(packed.includes('window.__DRAGON_CUBE_HUD_TITLE__'), 'HUD 标题配置进入交付包');
     assert.check(packed.includes('data-novvy-cta-bridge') && packed.includes('__DRAGON_CUBE_CTA_URL__'), '转化桥进入交付包');
+    assert.check(packed.includes('id="novvy-cta"') && packed.includes('src="app-icon.png"'), '双 playable 注入与 colorever 相同的常驻卡片');
     assert.check(!packed.includes('data-novvy-analytics') && !packed.includes('data-novvy-cta>'), '纯净包：埋点组与旧下载卡片组不随包');
     assert.check(packed.includes('id="novvy-video-outro"'), '片尾覆盖层进入交付包');
     assert.check((await fetch(base + `/result/${id}/assets/bg-default.jpg`)).status === 200, '包内默认底图随交付包分发');
@@ -112,6 +131,15 @@ export default async function run(assert) {
     assert.check(!packedCss.includes('timer-pill'), '倒计时样式不进交付包');
     const livePreview = await (await fetch(base + `/api/tasks/${id}/preview`)).text();
     assert.check(livePreview.includes('src="/templates/dragon-cube/game/game.js"'), '在线预览可用（工作台试玩按钮修复）');
+    assert.check(livePreview.includes('id="novvy-cta"') && livePreview.includes('src="/plugins/dragon-cube/overlays/cta/icon.png"'), '在线预览也注入下载卡和可用图标路径');
+    assert.equal((await fetch(base + '/plugins/dragon-cube/overlays/cta/icon.png')).status, 200, '预览下载卡图标可访问');
+    const copyPatch = await api(`/api/tasks/${id}`, { config: { cta: { endMask: true, takeoverText: '主文案\n第二行', takeoverActionText: '立即体验' } } }, 'PATCH');
+    assert.check(copyPatch.status === 200 && effectiveConfig(template, copyPatch.body.config).cta.enabled && copyPatch.body.config.cta.endMask, '保存遮罩设置保留下载卡开关');
+    assert.check(!copyPatch.body.steps.pack && copyPatch.body.steps.level?.ok, '修改 CTA 只使打包失效，保留关卡校验');
+    const takeoverPreview = await (await fetch(base + `/api/tasks/${id}/preview?view=cta`)).text();
+    assert.check(takeoverPreview.includes("window.__novvyCtaCardPhase='takeover'") && takeoverPreview.includes('id="novvy-cta"'), '支持独立预览 CTA 全屏遮罩');
+    assert.check(takeoverPreview.includes('主文案\n第二行') && takeoverPreview.includes('立即体验'), '独立遮罩预览显示保存的两段文案');
+    assert.check(!takeoverPreview.includes('data-novvy-cta-bridge') && !takeoverPreview.includes('/game/game.js'), '遮罩预览不触发商店跳转或加载游戏');
   } finally {
     if (id) deleteTask(id);
     if (server) await new Promise((resolve) => server.close(resolve));

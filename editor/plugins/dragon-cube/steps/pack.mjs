@@ -38,6 +38,9 @@ export async function run(ctx) {
     background: ctx.config.background?.enabled === true,
   };
   enabled.background2 = phase2Level !== null && ctx.config.secondPlayable?.background?.enabled === true;
+  const ctaOverlayDir = ctx.template.overlays?.cta;
+  const ctaIconSource = ctaOverlayDir ? path.join(ctx.pluginDir, ctaOverlayDir, 'icon.png') : null;
+  enabled.cta = ctx.config.cta?.enabled !== false && !!ctaIconSource && fs.existsSync(ctaIconSource);
   const media = {
     introVideo: enabled.intro ? 'tail-ad-video.mp4' : null,
     introPoster: enabled.intro ? 'poster.webp' : null,
@@ -46,6 +49,7 @@ export async function run(ctx) {
     hudRight: enabled.hud ? 'hud-right.webp' : null,
     background: enabled.background ? 'background.webp' : null,
     background2: enabled.background2 ? 'background2.webp' : null,
+    ctaIcon: enabled.cta ? 'app-icon.png' : null,
   };
   const needed = [];
   if (enabled.intro) needed.push(ctx.uploads['intro-video'], path.join(ctx.generatedDir, 'poster.webp'), path.join(ctx.generatedDir, 'intro-video.mp4'));
@@ -74,6 +78,7 @@ export async function run(ctx) {
   }
   if (enabled.background) fs.copyFileSync(path.join(ctx.generatedDir, 'background.webp'), path.join(ctx.resultDir, 'background.webp'));
   if (enabled.background2) fs.copyFileSync(path.join(ctx.generatedDir, 'background2.webp'), path.join(ctx.resultDir, 'background2.webp'));
+  if (enabled.cta) fs.copyFileSync(ctaIconSource, path.join(ctx.resultDir, 'app-icon.png'));
   const packageFiles = fs.readdirSync(ctx.resultDir).sort();
   for (const file of ['index.html', 'game.js', 'style.css']) if (!packageFiles.includes(file)) throw new Error(`DragonCube 打包缺少 ${file}`);
   const sizeOf = (entry) => fs.statSync(entry).isDirectory()

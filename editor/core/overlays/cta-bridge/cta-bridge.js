@@ -78,11 +78,13 @@
      连点交给 SDK 的冷却护栏;300ms 去抖只过滤同一次触压的多发事件。
      武装点见各转化终点(目标时刻已到即武装,即使 converted 闩锁拦下了重复
      跳转)。 */
-  var interactArmed = false, lastInteractAt = -1e9;
+  var interactArmed = false, interactListening = false, lastInteractAt = -1e9;
   function armInteractConvert() {
-    if (interactArmed) return;
     interactArmed = true;
+    if (interactListening) return;
+    interactListening = true;
     document.addEventListener('pointerdown', function () {
+      if (!interactArmed) return;
       var now = Date.now();
       if (now - lastInteractAt < 300) return;
       lastInteractAt = now;
@@ -137,6 +139,9 @@
      第二关的完成/触发步数时刻重新可转化;同一关内首次触发后不再重复。 */
   window.addEventListener('novvy:phase2-start', function () {
     converted = false;
+    // 第一关完成后的回访触压不应越过第二关自己的步数门槛。
+    interactArmed = false;
+    lastInteractAt = -1e9;
   });
   /* 第一个 playable 最后一步完成(playable-complete)即主动转化:不等胜利
      扫光/片尾音乐收尾,请求与结算显露都在这一刻发生。victory 保留为兜底
@@ -184,7 +189,7 @@
   /* 试玩开始的判定:有片头覆盖层时等 intro 派发 novvy:intro-finished
      (播完/跳过/出错收场);未启用片头 = 加载即试玩。 */
   function boot() {
-    if (document.getElementById('novvy-video-intro')) {
+    if (document.getElementById('novvy-video-intro') && !window.__novvyIntroFinished) {
       window.addEventListener('novvy:intro-finished', playableStarted);
     } else {
       playableStarted();
