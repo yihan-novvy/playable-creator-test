@@ -10,7 +10,7 @@ function audioGame() {
     play() { this.paused = false; this.plays++; return Promise.resolve(); }
     pause() { this.paused = true; }
   }
-  const context = vm.createContext({ Audio, URL, window: {}, document: { hidden: false, getElementById: () => null }, assetRoot: 'http://localhost/assets/' });
+  const context = vm.createContext({ Audio, URL, window: {}, document: { hidden: false, getElementById: () => null }, introActive: false, outroActive: false, assetRoot: 'http://localhost/assets/' });
   vm.runInContext(source.slice(source.indexOf('  var SFX_NAMES'), source.indexOf('  function key(')), context);
   return context;
 }
@@ -64,4 +64,16 @@ test('静音同时控制音乐和音效，取消静音恢复音乐且不重置�
   const plays = g.audio.elems.drop.plays;
   g.play('drop');
   assert.equal(g.audio.elems.drop.plays, plays);
+});
+
+test('提前初始化音频不自动播放，片尾及换关等待期间不恢复 BGM', () => {
+  const g = audioGame();
+  g.initAudio();
+  assert.equal(g.audio.music.plays, 0);
+  g.outroActive = true;
+  g.primeAudio();
+  assert.equal(g.audio.music.plays, 0);
+  g.outroActive = false;
+  g.startMusic();
+  assert.equal(g.audio.music.plays, 1);
 });

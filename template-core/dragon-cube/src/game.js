@@ -6,21 +6,64 @@
   var names = ['Blue', 'Green', 'Lime', 'Orange', 'Pink', 'Purple', 'Red', 'Sky', 'White', 'Yellow'];
   var script = document.currentScript;
   var assetRoot = new URL('assets/', script && script.src || document.baseURI);
-  var sprites = names.map(function (name) {
+  var imageLoads = new Map();
+  var imageCache = new Map();
+  var floorDirty = true;
+  function assetImage(file) {
+    var url = new URL(file, assetRoot).href;
+    if (imageCache.has(url)) return imageCache.get(url);
     var image = new Image();
-    image.src = new URL('Cat_' + name + '.png', assetRoot).href;
+    image.decoding = 'async';
+    imageCache.set(url, image);
+    imageLoads.set(image, new Promise(function (resolve) {
+      var settled = false;
+      var timeout = setTimeout(function () { settle(false); }, 8000);
+      function settle(ok) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timeout);
+        image.removeEventListener('load', loaded);
+        image.removeEventListener('error', failed);
+        image.dragonDecoded = ok;
+        if (image === floorImg) floorDirty = true;
+        resolve(ok);
+      }
+      function failed() { settle(false); }
+      function loaded() {
+        if (typeof image.decode !== 'function') { settle(!!image.naturalWidth); return; }
+        image.decode().then(function () { settle(true); }, failed);
+      }
+      image.addEventListener('load', loaded);
+      image.addEventListener('error', failed);
+    }));
+    image.src = url;
     return image;
-  });
-  var floorImg = new Image();
-  floorImg.src = new URL('floor.png', assetRoot).href;
+  }
+  var sprites = [];
   var boxImgs = {};
+  var floorImg = assetImage('floor.png');
+  function catImage(color) {
+    if (!sprites[color]) sprites[color] = assetImage('Cat_' + names[color] + '.png');
+    return sprites[color];
+  }
   function boxImage(key) {
-    if (!boxImgs[key]) {
-      var image = new Image();
-      image.src = new URL('boxes/' + key + '.png', assetRoot).href;
-      boxImgs[key] = image;
-    }
+    if (!boxImgs[key]) boxImgs[key] = assetImage('boxes/' + key + '.png');
     return boxImgs[key];
+  }
+  // 只准备任务实际使用的关卡;图片请求和解码都在视频交出画面前完成。
+  function prepareLevelAssets(data, extraImages) {
+    var images = new Set([floorImg, assetImage('bg-default.jpg')]);
+    data.Cells.forEach(function (cell) {
+      if (cell.Cat) images.add(catImage(cell.Cat.Color));
+      if (cell.Block) cell.Block.Cats.forEach(function (cat) { images.add(catImage(cat.Color)); });
+    });
+    data.Boxes.forEach(function (box) {
+      images.add(boxImage(names[box.Color] + '/' + detectBoxType(box.Cells)));
+    });
+    (extraImages || []).forEach(function (url) {
+      if (url) images.add(assetImage(new URL(url, document.baseURI).href));
+    });
+    return Promise.all(Array.from(images, function (image) { return imageLoads.get(image); }));
   }
   var canvas = document.getElementById('board');
   var ctx = canvas.getContext('2d');
@@ -28,6 +71,11 @@
   var hintNode = document.getElementById('hint');
   var resultNode = document.getElementById('win');
   var state, layout, drag = null, particles = [], ghosts = [];
+  var floorCanvas = document.createElement('canvas');
+  var floorCtx = floorCanvas.getContext('2d');
+  var introActive = !!document.getElementById('novvy-video-intro') && !window.__novvyIntroFinished;
+  var outroActive = false;
+  var firstFrameReady = false;
   var directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
   // 顶栏即 HUD 标题(替代旧 LEVEL 角标):第一关用注入的 hud 配置,第二关在
   // 页内换关时换成 secondPlayable.hud。未注入(裸包试玩)时保留静态默认文案。
@@ -110,7 +158,7 @@
     // 片头视频还在播时不起 BGM(广告壳会注入 #novvy-video-intro 覆盖层):
     // 点跳过/静音属于视频阶段的手势,不该把游戏音乐漏出来盖过视频;
     // 视频结束(novvy:intro-finished)后再起。原版页面没有该元素,不受影响。
-    if (document.getElementById('novvy-video-intro')) return;
+    if (introActive || outroActive || document.getElementById('novvy-video-intro')) return;
     var p = audio.music.play();
     if (p && p.catch) p.catch(function () {});
   }
@@ -255,7 +303,6 @@
     ghosts = [];
     resultNode.hidden = true;
     hintNode.textContent = '拖动色块，收集同色小猫';
-    render(performance.now());
     fire('novvy:hud-progress', { percent: 0 });
   }
   // 页内换关(双 playable):换关卡数据后重算棋盘边界并重置局面;渲染器/
@@ -263,8 +310,9 @@
   function loadLevel(data) {
     level = data;
     boardBounds = bounds();
-    resize();
+    floorDirty = true;
     reset();
+    resize();
   }
   // 倒计时已移除:关卡不再限时失败,首次拿起色块只上报一次开局信号。
   var startAnnounced = false;
@@ -317,16 +365,22 @@
   function resize() {
     var rect = wrap.getBoundingClientRect();
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
-    canvas.width = Math.max(1, Math.round(rect.width * dpr));
-    canvas.height = Math.max(1, Math.round(rect.height * dpr));
+    var width = Math.max(1, Math.round(rect.width * dpr));
+    var height = Math.max(1, Math.round(rect.height * dpr));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+      floorCanvas.width = width;
+      floorCanvas.height = height;
+    }
     canvas.style.width = rect.width + 'px';
     canvas.style.height = rect.height + 'px';
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var columns = boardBounds.maxX - boardBounds.minX + 1;
     var rows = boardBounds.maxY - boardBounds.minY + 1;
     var cell = Math.min((rect.width - 26) / columns, (rect.height - 28) / rows, 64);
-    layout = { cell: cell, left: (rect.width - columns * cell) / 2, top: (rect.height - rows * cell) / 2, width: rect.width, height: rect.height };
-    render(performance.now());
+    layout = { cell: cell, left: (rect.width - columns * cell) / 2, top: (rect.height - rows * cell) / 2, width: rect.width, height: rect.height, dpr: dpr };
+    floorDirty = true;
   }
   function center(x, y) {
     return { x: layout.left + (x - boardBounds.minX + .5) * layout.cell, y: layout.top + (boardBounds.maxY - y + .5) * layout.cell };
@@ -336,13 +390,14 @@
     var x = clientX - rect.left, y = clientY - rect.top;
     return { x: boardBounds.minX + Math.floor((x - layout.left) / layout.cell), y: boardBounds.maxY - Math.floor((y - layout.top) / layout.cell), px: x, py: y };
   }
-  function roundRect(x, y, w, h, r) {
+  function roundRect(x, y, w, h, r, target) {
+    var paint = target || ctx;
     r = Math.min(r, w / 2, h / 2);
-    ctx.beginPath(); ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y); ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r); ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h); ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r); ctx.quadraticCurveTo(x, y, x + r, y); ctx.closePath();
+    paint.beginPath(); paint.moveTo(x + r, y);
+    paint.lineTo(x + w - r, y); paint.quadraticCurveTo(x + w, y, x + w, y + r);
+    paint.lineTo(x + w, y + h - r); paint.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    paint.lineTo(x + r, y + h); paint.quadraticCurveTo(x, y + h, x, y + h - r);
+    paint.lineTo(x, y + r); paint.quadraticCurveTo(x, y, x + r, y); paint.closePath();
   }
   function boxCells(box, nextX, nextY) {
     return box.offsets.map(function (part) { return { x: (nextX === undefined ? box.x : nextX) + part.x, y: (nextY === undefined ? box.y : nextY) + part.y }; });
@@ -406,12 +461,11 @@
     if (!valid(box, x, y)) return false;
     box.x = x; box.y = y;
     collect(box);
-    render(performance.now());
     return true;
   }
   function onDown(event) {
     primeAudio();
-    if (state.finished || !layout) return;
+    if (!firstFrameReady || introActive || outroActive || state.finished || !layout) return;
     var point = boardPoint(event.clientX, event.clientY);
     var found = state.boxes.slice().reverse().find(function (box) { return box.remaining > 0 && boxCells(box).some(function (part) { return part.x === point.x && part.y === point.y; }); });
     if (!found) return;
@@ -421,7 +475,6 @@
     canvas.setPointerCapture(event.pointerId);
     event.preventDefault();
     hintNode.textContent = '把色块移到同色小猫上';
-    render(performance.now());
   }
   function onMove(event) {
     if (!drag || state.finished) return;
@@ -443,27 +496,36 @@
     }
     event.preventDefault();
   }
-  function drawCell(cell) {
+  function drawCell(cell, paint) {
     var p = center(cell.Index.x, cell.Index.y), s = layout.cell;
-    ctx.save();
-    ctx.shadowColor = '#a9595b66'; ctx.shadowBlur = s * .08; ctx.shadowOffsetY = s * .045;
-    if (floorImg.complete && floorImg.naturalWidth) {
-      ctx.drawImage(floorImg, p.x - s * .5, p.y - s * .5, s, s);
+    paint.save();
+    paint.shadowColor = '#a9595b66'; paint.shadowBlur = s * .08; paint.shadowOffsetY = s * .045;
+    if (floorImg.dragonDecoded && floorImg.naturalWidth) {
+      paint.drawImage(floorImg, p.x - s * .5, p.y - s * .5, s, s);
     } else {
-      roundRect(p.x - s * .48, p.y - s * .48, s * .96, s * .96, s * .17);
-      ctx.fillStyle = '#a9595b55'; ctx.fill();
-      roundRect(p.x - s * .48, p.y - s * .52, s * .96, s * .91, s * .17);
-      ctx.fillStyle = '#fff3d8'; ctx.fill();
-      ctx.strokeStyle = '#f4d4ad'; ctx.lineWidth = Math.max(1, s * .035); ctx.stroke();
+      roundRect(p.x - s * .48, p.y - s * .48, s * .96, s * .96, s * .17, paint);
+      paint.fillStyle = '#a9595b55'; paint.fill();
+      roundRect(p.x - s * .48, p.y - s * .52, s * .96, s * .91, s * .17, paint);
+      paint.fillStyle = '#fff3d8'; paint.fill();
+      paint.strokeStyle = '#f4d4ad'; paint.lineWidth = Math.max(1, s * .035); paint.stroke();
     }
-    ctx.restore();
+    paint.restore();
+  }
+  function drawFloor() {
+    if (floorDirty) {
+      floorCtx.setTransform(layout.dpr, 0, 0, layout.dpr, 0, 0);
+      floorCtx.clearRect(0, 0, layout.width, layout.height);
+      for (var cell of level.Cells) drawCell(cell, floorCtx);
+      floorDirty = false;
+    }
+    ctx.drawImage(floorCanvas, 0, 0, layout.width, layout.height);
   }
   function drawCat(cat, scale) {
     var p = center(cat.x, cat.y);
     var s = layout.cell * (scale || .92);
     if (!scale) s *= 1 + .035 * Math.sin(performance.now() / 420 + cat.x * .7 + cat.y * 1.3); // 待机呼吸
-    var image = sprites[cat.color];
-    if (image && image.complete && image.naturalWidth) ctx.drawImage(image, p.x - s / 2, p.y - s / 2, s, s);
+    var image = catImage(cat.color);
+    if (image.dragonDecoded && image.naturalWidth) ctx.drawImage(image, p.x - s / 2, p.y - s / 2, s, s);
     else { ctx.fillStyle = colors[cat.color] || '#888'; ctx.beginPath(); ctx.arc(p.x, p.y, s * .34, 0, Math.PI * 2); ctx.fill(); }
   }
   function drawBox(box, now) {
@@ -483,7 +545,7 @@
     var cy = origin.y + (box.h - 1) * s / 2;
     ctx.save();
     ctx.shadowColor = '#79474b66'; ctx.shadowBlur = (selected ? 14 : 6) * scale; ctx.shadowOffsetY = (selected ? 6 : 3) * scale;
-    if (img.complete && img.naturalWidth) {
+    if (img.dragonDecoded && img.naturalWidth) {
       ctx.drawImage(img, cx - w / 2, cy - h / 2, w, h);
     } else {
       for (var part of boxCells(box)) {
@@ -504,7 +566,7 @@
   function render(now) {
     if (!layout || !state) return;
     ctx.clearRect(0, 0, layout.width, layout.height);
-    for (var cell of level.Cells) drawCell(cell);
+    drawFloor();
     for (var cat of state.cats) drawCat(cat);
     for (var block of state.blocks) {
       var p = center(block.x, block.y), s = layout.cell;
@@ -536,6 +598,8 @@
     }
   }
   function frame() {
+    requestAnimationFrame(frame);
+    if (!firstFrameReady || document.hidden || introActive || outroActive) return;
     var now = performance.now();
     ghosts = ghosts.filter(function (ghost) {
       if (now - ghost.born < 420) return true;
@@ -545,7 +609,6 @@
     });
     if (state) state.boxes = state.boxes.filter(function (box) { return !box.dying || now - box.dying < 220; });
     render(now);
-    requestAnimationFrame(frame);
   }
   canvas.addEventListener('pointerdown', onDown);
   canvas.addEventListener('pointermove', onMove);
@@ -569,6 +632,7 @@
   // 判定片头在场,这里错开一脚补起。
   var introMusicKick = null;
   function introFinishedAudio() {
+    introActive = false;
     primeAudio();
     if (introMusicKick !== null) clearTimeout(introMusicKick);
     introMusicKick = setTimeout(function () {
@@ -578,8 +642,11 @@
   }
   window.addEventListener('novvy:intro-finished', introFinishedAudio);
   // 片尾/第二关的音频协同:片尾起播压 BGM,第二关就绪后恢复(colorever 同款接线)。
-  window.addEventListener('novvy:outro-started', function () { if (audio.music) audio.music.pause(); });
-  window.addEventListener('novvy:phase2-start', function () { primeAudio(); startMusic(); });
+  window.addEventListener('novvy:outro-started', function () { outroActive = true; drag = null; if (audio.music) audio.music.pause(); });
+  window.addEventListener('novvy:outro-finished', function (event) {
+    if (!phase2Spec || !event.detail || event.detail.reason !== 'video_ended') outroActive = false;
+  });
+  window.addEventListener('novvy:phase2-start', function () { outroActive = false; primeAudio(); startMusic(); });
   if (phase2Spec) {
     // 双 playable:片尾播完(停在最后一帧收场)后页内换关,再把画面交给游戏。
     // 闩锁保证只换一次;换关同时换用第二关的转化策略并重置计数。
@@ -587,12 +654,16 @@
     window.addEventListener('novvy:outro-finished', function (event) {
       if (phase2Started || !event.detail || event.detail.reason !== 'video_ended') return;
       phase2Started = true;
-      armedPolicy = phase2Spec.cta || null;
-      ctaAnnounced = false;
-      dragSteps = 0;
-      applyHudTitle(phase2Spec.hud);
-      loadLevel(phase2Spec.level);
-      fire('novvy:phase2-start', { hud: phase2Spec.hud });
+      outroActive = true;
+      phase2AssetsReady.then(function () {
+        armedPolicy = phase2Spec.cta || null;
+        ctaAnnounced = false;
+        dragSteps = 0;
+        applyHudTitle(phase2Spec.hud);
+        loadLevel(phase2Spec.level);
+        render(performance.now());
+        fire('novvy:phase2-start', { hud: phase2Spec.hud });
+      });
     });
   }
   document.addEventListener('visibilitychange', function () {
@@ -608,5 +679,21 @@
   };
   reset();
   resize();
+  canvas.style.visibility = 'hidden';
+  var extraImages = window.__DRAGON_CUBE_IMAGES__ || {};
+  var firstAssetsReady = prepareLevelAssets(level, extraImages.first);
+  var phase2AssetsReady = phase2Spec ? firstAssetsReady.then(function () {
+    return prepareLevelAssets(phase2Spec.level, extraImages.second);
+  }) : null;
+  window.DragonCube.ready = firstAssetsReady.then(function () {
+    render(performance.now());
+    canvas.style.visibility = '';
+    firstFrameReady = true;
+    window.__DRAGON_CUBE_READY__ = true;
+    fire('dragon-cube:ready');
+    // 图片优先;音频节点及解码提前准备,播放仍由视频结束/用户手势解锁。
+    initAudio();
+    if (window.__novvyIntroFinished) introFinishedAudio();
+  });
   requestAnimationFrame(frame);
 })();

@@ -104,14 +104,28 @@
     try { video.pause(); } catch (_error) {}
     hideCountdown();
     teardown(reason || 'video_ended'); // release close BEFORE playable_entry lands
-    window.__novvyIntroFinished = true;
-    try {
-      window.dispatchEvent(new CustomEvent('novvy:intro-finished', {
-        detail: { reason: reason || 'video_ended', switch_seconds: switchSeconds },
-      }));
-    } catch (_error) {}
-    root.classList.add('is-finished');
-    window.setTimeout(() => root.remove(), 220);
+    // 保留视频最后一帧,直到图片解码且棋盘首帧已绘制;game.js 晚到也能接上。
+    let revealed = false, readyTimeout = null;
+    const reveal = () => {
+      if (revealed) return;
+      revealed = true;
+      window.removeEventListener('dragon-cube:ready', reveal);
+      if (readyTimeout !== null) window.clearTimeout(readyTimeout);
+      window.__novvyIntroFinished = true;
+      try {
+        window.dispatchEvent(new CustomEvent('novvy:intro-finished', {
+          detail: { reason: reason || 'video_ended', switch_seconds: switchSeconds },
+        }));
+      } catch (_error) {}
+      root.classList.add('is-finished');
+      window.setTimeout(() => root.remove(), 220);
+    };
+    if (window.__DRAGON_CUBE_READY__) reveal();
+    else {
+      window.addEventListener('dragon-cube:ready', reveal);
+      // 脚本本身下载失败时也不永久锁住广告;单张图片的超时/错误由引擎兜底。
+      readyTimeout = window.setTimeout(reveal, 12000);
+    }
   };
 
   function releaseCustomClose(reason) {

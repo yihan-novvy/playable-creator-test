@@ -51,7 +51,8 @@ export default async function run(assert) {
   assert.check(preview.includes('.top-ui{visibility:hidden}'), 'HUD 叠层在场时收起引擎原生顶栏标题卡，避免双标题');
   assert.check(!shell.includes("addEventListener('novvy:intro-finished', startMusic)") && shell.includes('introMusicKick'), '片头结束自动起 BGM（补偿覆盖层 220ms 延迟移除）');
   assert.check(!/primeAudio\(\);\s*\n\s*reset\(\)/.test(shell), '开局不自动起声（仅视频播完切换 playable 时自动起播）');
-  assert.check(shell.includes("addEventListener('novvy:phase2-start', function () { primeAudio(); startMusic(); })"), '第二关就绪自动恢复 BGM');
+  assert.check(/addEventListener\('novvy:phase2-start'[\s\S]*?primeAudio\(\); startMusic\(\)/.test(shell), '第二关就绪自动恢复 BGM');
+  assert.check(preview.includes('window.__DRAGON_CUBE_IMAGES__={"first":[],"second":[]}'), '未开启自定义图片时不添加无效预加载资源');
 
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'dragon-cube-test-'));
   let server = null, id = null, phase2Temp = null;
