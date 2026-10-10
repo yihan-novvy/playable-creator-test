@@ -79,7 +79,7 @@ function buildLevel(level,pattern,patternId){
   const ts=tray.scale;
   const reference={beads:level.target.flatMap((color,i)=>color?[{x:780+(i%width-(width-1)/2)*39.2*bs,y:1441+(Math.floor(i/width)-(height-1)/2)*39.2*bs,row:Math.floor(i/width),col:i%width,color}]:[])};
   const palette=level.colors;
-  const {bodyGeometry:geo,bodyMaterials:mats}=createBeadParts(palette);
+  const {bodyGeometry:geo,bodyMaterials:mats}=createBeadParts(palette,{includeStudyParts:false});
   sessionGroup.add(createMosaicSockets(reference.beads,at,palette,bs));
   const codes=Object.fromEntries(Object.keys(palette).map(c=>[c,Number(c)]));
   const lettersMap=Object.fromEntries(Object.entries(codes).map(([k,v])=>[v,k]));

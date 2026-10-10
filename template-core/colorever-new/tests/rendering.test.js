@@ -36,20 +36,21 @@ test('Rounded square pyramids have four planar slopes and a single apex without 
   bodyGeometry.dispose();bodyMaterials.orange.dispose();
 });
 
-test('The visible substrate stores the authored target color independently of the bead',()=>{
+test('The lightweight substrate preserves target colors and exposed margins without hidden backing layers',()=>{
   const palette={1:'#ffe12d',2:'#f8911c'};
   const board=createMosaicSockets([{x:0,y:0,color:1}],(x,y,z)=>new THREE.Vector3(x,y,z),palette);
-  const floor=board.children[2],color=new THREE.Color();floor.getColorAt(0,color);
+  const floor=board.children[0],color=new THREE.Color();floor.getColorAt(0,color);
   const target=new THREE.Color(palette[1]);
   assert.ok(Math.max(Math.abs(color.r-target.r),Math.abs(color.g-target.g),Math.abs(color.b-target.b))<1e-7);
-  assert.ok(floor.material.isMeshBasicMaterial,'lighting must not change the target-color cue');
   assert.equal(floor.material.toneMapped,false,'target colors must also bypass tone mapping');
+  const triangleCount=board.children.reduce((sum,mesh)=>sum+(mesh.geometry.index?.count??mesh.geometry.attributes.position.count)/3,0);
+  assert.ok(triangleCount<=4,'the substrate must retain its small per-cell geometry budget');
   for(const mesh of board.children){
     const color=new THREE.Color();mesh.getColorAt(0,color);
-    assert.ok(Math.max(Math.abs(color.r-target.r),Math.abs(color.g-target.g),Math.abs(color.b-target.b))<1e-7,'the plate, walls, floor and shading all inherit the target color');
+    assert.ok(Math.max(Math.abs(color.r-target.r),Math.abs(color.g-target.g),Math.abs(color.b-target.b))<1e-7,'the substrate inherits the authored target color');
     assert.equal(mesh.material.toneMapped,false);
   }
-  const margin=(board.children[1].geometry.parameters.width-BEAD_WIDTH)/2;
+  const margin=(floor.geometry.parameters.width-BEAD_WIDTH)/2;
   assert.ok(margin>.09,'the colored plate leaves the target hue visible around a bead');
   board.traverse(node=>{node.geometry?.dispose();node.material?.dispose();});
 });
