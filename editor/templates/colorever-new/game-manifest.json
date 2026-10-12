@@ -168,10 +168,20 @@
       "id": "star-shield",
       "name": "星冠麦穗盾徽",
       "path": "game/patterns/star-shield.json"
+    },
+    {
+      "id": "golden-dragon",
+      "name": "金色萌龙",
+      "path": "game/patterns/golden-dragon.json"
+    },
+    {
+      "id": "blue-dragon",
+      "name": "冰蓝翼龙",
+      "path": "game/patterns/blue-dragon.json"
     }
   ],
   "constants": {
-    "engineSha256": "faa8a7ce4684432103afb363e731e220aa620fcbcb81c6aed7b52fa580a35023",
+    "engineSha256": "6967c3ec75df0d0d3145bea87209f4bedbeb43865dfa1c5b3fdd9e4a3d8d9dd4",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "8b69f664298d892f21ad51dea818695e61118f353a843a36a4036b7c3d63c872",
+  "engineSha256": "e13d987b1ef9cad019ee0398780a01a94c69f9a37db5dffcd35fede658d7091f",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
@@ -234,6 +234,20 @@
       "description": "星冠、红蓝四分盾面、中央金色羽翼与麦穗环绕，6 色珠子盾徽",
       "level": "star-shield.json",
       "templateSha256": "c70a057826218fcb34c9e003dc72625c658b53250cfdb5de617da30f7a0f7e08"
+    },
+    {
+      "id": "golden-dragon",
+      "name": "金色萌龙",
+      "description": "参考金色拼豆小龙：分叉双角、尖耳、圆脸黑眼、白色口鼻与肚皮、金色小翼和上翘尾尖，7 色立体宝石图盘",
+      "level": "golden-dragon.json",
+      "templateSha256": "69e7e3121168ba7455902d611efe95064ddc6a8701e4523ebbd0f97188f42acd"
+    },
+    {
+      "id": "blue-dragon",
+      "name": "冰蓝翼龙",
+      "description": "参考蓝色拼豆小龙：白色双角、圆脸黑眼、冰蓝口鼻与白肚皮、右侧浅蓝翅膀和上翘尾巴，6 色立体宝石图案",
+      "level": "blue-dragon.json",
+      "templateSha256": "58f84a4a6d5328a1c9338c96d51755fd7ea38fec037c0d6d7c56b0917d86accc"
     }
   ]
 }

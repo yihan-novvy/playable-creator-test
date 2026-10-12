@@ -301,5 +301,19 @@
     "description": "星冠、红蓝四分盾面、中央金色羽翼与麦穗环绕，6 色珠子盾徽",
     "level": "star-shield.json",
     "module": "star-shield.js"
+  },
+  {
+    "id": "golden-dragon",
+    "name": "金色萌龙",
+    "description": "参考金色拼豆小龙：分叉双角、尖耳、圆脸黑眼、白色口鼻与肚皮、金色小翼和上翘尾尖，7 色立体宝石图盘",
+    "level": "golden-dragon.json",
+    "module": "golden-dragon.js"
+  },
+  {
+    "id": "blue-dragon",
+    "name": "冰蓝翼龙",
+    "description": "参考蓝色拼豆小龙：白色双角、圆脸黑眼、冰蓝口鼻与白肚皮、右侧浅蓝翅膀和上翘尾巴，6 色立体宝石图案",
+    "level": "blue-dragon.json",
+    "module": "blue-dragon.js"
   }
 ]
