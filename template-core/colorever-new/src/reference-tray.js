@@ -18,7 +18,7 @@ export function createReferenceTray(layout,center,capacity){
   const shell=new THREE.Mesh(new THREE.ExtrudeGeometry(roundedRectangle(layout.width,layout.height,.62),{
     depth:.24,bevelEnabled:false,curveSegments:12,
   }),new THREE.MeshBasicMaterial({color:'#d5c9bc',toneMapped:false}));
-  shell.position.set(center.x,center.y,-.065);shell.castShadow=true;group.add(shell);
+  shell.position.set(center.x,center.y,-.065);group.add(shell);
   const surface=new THREE.Mesh(new THREE.PlaneGeometry(layout.width,layout.height),new THREE.ShaderMaterial({
     toneMapped:false,
     uniforms:{halfSize:{value:new THREE.Vector2(layout.width/2,layout.height/2)},
@@ -51,17 +51,5 @@ export function createReferenceTray(layout,center,capacity){
   }
   wells.name='Cream tray rounded recesses';group.add(wells);
 
-  const contacts=new THREE.InstancedMesh(new THREE.PlaneGeometry(layout.beadWidth*1.16,layout.beadWidth*1.16),new THREE.ShaderMaterial({
-    transparent:true,depthWrite:false,toneMapped:false,
-    vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*viewMatrix*modelMatrix*instanceMatrix*vec4(position,1.);}`,
-    fragmentShader:`varying vec2 vUv;void main(){
-      vec2 q=abs(vUv-.5)-vec2(.30);
-      float d=length(max(q,0.))+min(max(q.x,q.y),0.)-.12;
-      float alpha=(1.-smoothstep(-.05,.07,d))*.17;
-      gl_FragColor=vec4(.24,.13,.065,alpha);
-      #include <colorspace_fragment>
-    }`,
-  }),capacity);
-  contacts.name='Occupied tray bead contact shadows';contacts.count=0;contacts.frustumCulled=false;group.add(contacts);
-  return {group,contacts};
+  return {group};
 }

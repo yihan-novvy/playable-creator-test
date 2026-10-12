@@ -75,9 +75,6 @@ export function createMosaicSockets(beads,at,palette,scale=1){
     surface.setColorAt(i,color);
     dummy.position.copy(at(bead.x,bead.y,.046));dummy.updateMatrix();surface.setMatrixAt(i,dummy.matrix);
   });
-  // The single-sided plate still needs to cast its silhouette from the key
-  // light; a depth pass must not cull the back of this zero-thickness surface.
-  surface.material.shadowSide=THREE.DoubleSide;
-  surface.frustumCulled=false;surface.castShadow=true;group.add(surface);
+  surface.frustumCulled=false;group.add(surface);
   return group;
 }

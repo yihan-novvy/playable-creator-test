@@ -26,14 +26,12 @@ if(!level.opening)throw new Error('Missing authored opening; generate it in the 
 const canvas=document.getElementById('game');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
-renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.shadowMap.enabled=false;
 renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=1.0;
 const scene=new THREE.Scene();
 const camera=new THREE.OrthographicCamera(-15.2,15.2,27.2,-27.2,.1,140);
 camera.position.set(0,-7.5,85);camera.lookAt(0,0,0);
 lightBeadStudio(renderer,scene);
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(80,100),new THREE.ShadowMaterial({color:'#285469',opacity:.14}));
-ground.position.z=-.45;ground.receiveShadow=true;scene.add(ground);
 const at=(x,y,z=.10)=>new THREE.Vector3((x-760)*.02,(1360-y)*.02,z);
 const $=id=>document.getElementById(id);
 const audio=new GameAudio();
@@ -42,7 +40,7 @@ $('guide-hand').src=guideHand;
 
 /* —— 每关会话:buildLevel 重赋值;渲染器/相机/音频/引导等单例不重建 —— */
 let session=null,puzzle=null,groups=[],cells=new Map(),target=[],capacity=48,trayCols=12,pitch=1,rowPitch=1,trayPoint=()=>new THREE.Vector3(),point=()=>new THREE.Vector3(),boardScale=1,trayScale=1,colorNames={},effects={clear(){}},ambientSheen={update(){},enabled:false};
-let bodyGeometry=null,bodyMaterials={},letters={},trayContacts=null;
+let bodyGeometry=null,bodyMaterials={},letters={};
 let busy=false,flights=[],hint=null,down=null,selectionStart=0,completion=null,completedColors=new Set(),pendingColors=[];
 let wasWon=false;
 
@@ -89,23 +87,14 @@ function buildLevel(level,pattern,patternId){
   const gList=[];
   for(const c of Object.keys(palette)){
     const mesh=new THREE.InstancedMesh(geo,mats[c],tgt.length+cap);
-    mesh.castShadow=true;mesh.receiveShadow=false;mesh.frustumCulled=false;mesh.count=0;
+    mesh.frustumCulled=false;mesh.count=0;
     gList.push({mesh,entries:[],color:codes[c]});sessionGroup.add(mesh);
   }
   groups=gList;bodyGeometry=geo;bodyMaterials=mats;letters=lettersMap;
-  // Small contact shadows join the pellets without drawing outlines on their faces.
-  const occlusionCanvas=document.createElement('canvas');occlusionCanvas.width=64;occlusionCanvas.height=64;
-  const ctx=occlusionCanvas.getContext('2d'),gradient=ctx.createRadialGradient(32,32,0,32,32,31);
-  gradient.addColorStop(0,'rgba(21,26,36,.24)');gradient.addColorStop(.65,'rgba(21,26,36,.20)');gradient.addColorStop(.83,'rgba(21,26,36,.08)');gradient.addColorStop(1,'rgba(21,26,36,0)');
-  ctx.fillStyle=gradient;ctx.fillRect(0,0,64,64);
-  const occlusion=new THREE.InstancedMesh(new THREE.PlaneGeometry(.87,.87),new THREE.MeshBasicMaterial({map:new THREE.CanvasTexture(occlusionCanvas),transparent:true,depthWrite:false}),reference.beads.filter(b=>b.row>=0).length);
-  occlusion.frustumCulled=false;
-  reference.beads.filter(b=>b.row>=0).forEach((b,i)=>{dummy.position.copy(at(b.x,b.y,.002));dummy.scale.setScalar(bs);dummy.updateMatrix();occlusion.setMatrixAt(i,dummy.matrix);});
-  sessionGroup.add(occlusion);
   pattern.decorate({scene:sessionGroup,at,level,boardScale:bs});
   const trayCenter=at(761,2425,-.02);
   const cacheTray=createReferenceTray(tray,trayCenter,cap);
-  sessionGroup.add(cacheTray.group);trayContacts=cacheTray.contacts;
+  sessionGroup.add(cacheTray.group);
   pitch=tray.pitch;rowPitch=pitch;
   const tp=(col,row)=>new THREE.Vector3((col-(tc-1)/2)*pitch,trayCenter.y+((trayRows-1)/2-row)*rowPitch,.21);
   cells=cellsMap;target=tgt;capacity=cap;trayCols=tc;
@@ -142,9 +131,6 @@ const outlineGeometry=new THREE.ShapeGeometry(outline),outlineMaterial=new THREE
 buildLevel(level,pattern,patternId);
 function refresh(){
   for(const g of groups){g.entries=[];for(const region of ['board','tray'])puzzle[region].forEach((color,index)=>{if(color===g.color){g.entries.push({region,index,point:point(region,index),lift:0});}});g.mesh.count=g.entries.length;}
-  let stored=0;
-  puzzle.tray.forEach((color,index)=>{if(!color)return;dummy.position.copy(point('tray',index));dummy.position.z=.184;dummy.scale.setScalar(1);dummy.updateMatrix();trayContacts.setMatrixAt(stored++,dummy.matrix);});
-  trayContacts.count=stored;trayContacts.instanceMatrix.needsUpdate=true;
   while(markers.children.length)markers.remove(markers.children[0]);
   for(const [index]of cells)if(puzzle.board[index]&&puzzle.board[index]!==target[index]){const m=new THREE.Mesh(outlineGeometry,outlineMaterial);m.position.copy(point('board',index));m.position.z=.5;m.scale.setScalar(boardScale);markers.add(m);}
   updateUI();
@@ -182,7 +168,7 @@ function activate(region,index){
   const selection=puzzle.selection;
   if(selection&&selection.region===region&&selection.indices.includes(index)){puzzle.selection=null;updateUI();return;}
   if(selection){const moved=puzzle.place(region,index);if(moved){tutorial.placed(region);busy=true;let order=0;const now=performance.now();
-    flights=moved.map(m=>{const mesh=new THREE.Mesh(bodyGeometry,bodyMaterials[letters[m.color]]);mesh.castShadow=true;scene.add(mesh);const a=point(m.fromRegion,m.from).clone();if(!m.shift)a.z+=.38;return{...m,mesh,start:now+(m.shift?0:order++*(region==='tray'?55:m.fromRegion==='tray'?65:50)),duration:m.shift?210:(m.fromRegion==='tray'||m.toRegion==='tray')?360:260,a,b:point(m.toRegion,m.to),landed:false};});
+    flights=moved.map(m=>{const mesh=new THREE.Mesh(bodyGeometry,bodyMaterials[letters[m.color]]);scene.add(mesh);const a=point(m.fromRegion,m.from).clone();if(!m.shift)a.z+=.38;return{...m,mesh,start:now+(m.shift?0:order++*(region==='tray'?55:m.fromRegion==='tray'?65:50)),duration:m.shift?210:(m.fromRegion==='tray'||m.toRegion==='tray')?360:260,a,b:point(m.toRegion,m.to),landed:false};});
     if(moved.some(m=>m.shift))play('store-move');refresh();return;}
 }
   if(puzzle.pick(region,index)){selectionStart=performance.now();play('pickup');updateUI();}else if(tutorial.active){updateUI();}else{$('instruction').textContent=region==='board'&&puzzle.board[index]===target[index]?'这颗已归位，不能移动':selection?'请选择同色空格，或盒子里的空格':'点金色边框的错珠开始';}
