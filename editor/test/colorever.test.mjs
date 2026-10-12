@@ -14,11 +14,11 @@ export default async function run(assert){
  // 桥文件在 core/overlays 共享;与 lib.mjs 注入同款占位符替换,保证沙箱字节忠实。
  const bridgeSource=fs.readFileSync(path.join(root,'editor/core/overlays/cta-bridge/cta-bridge.js'),'utf8').replaceAll('__CTA_URL_KEY__','__COLOREVER_CTA_URL__');
  assert.check(!bridgeSource.includes('novvyEndCard')&&!bridgeSource.includes('downloadBtn')&&!bridgeSource.includes('pointer-events'),'转化桥零 DOM 耦合：不引用服务卡片与任何元素结构');
- function bridgeRun({intro=false,engine=true,outro=false,twoPhase=false,endMask}={}){
-  const listeners=new Map();let endCards=0,engineClicks=0,opens=0;const cardEvents=[];let clock=0;const pointerHandlers=[];
-  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,...(endMask===undefined?{}:{__NOVVY_CTA_END_MASK__:endMask}),novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),dispatchEvent:event=>{if(event.type==='novvy:cta-card')cardEvents.push(event.detail&&event.detail.phase);for(const fn of listeners.get(event.type)||[])fn(event);},showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener:(name,fn)=>{if(name==='pointerdown')pointerHandlers.push(fn);}},Date:{now:()=>clock},setTimeout(){},clearTimeout(){},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
+ function bridgeRun({intro=false,engine=true,outro=false,twoPhase=false,endMask,rejectFirstClick=false}={}){
+  const listeners=new Map();let endCards=0,engineClicks=0,opens=0,engineDownloads=0;const cardEvents=[];let clock=0;const pointerHandlers=[];
+  const sandbox={window:{__COLOREVER_CTA_URL__:'',__novvyOutroEnabled:outro,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,...(endMask===undefined?{}:{__NOVVY_CTA_END_MASK__:endMask}),novvy:{open:()=>opens++},addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),dispatchEvent:event=>{if(event.type==='novvy:cta-card')cardEvents.push(event.detail&&event.detail.phase);for(const fn of listeners.get(event.type)||[])fn(event);},showEndCard:()=>{endCards+=1;},novvyHandleAdClick:engine?()=>{engineClicks+=1;if(rejectFirstClick&&engineClicks===1)return;engineDownloads+=1;}:undefined},document:{hidden:false,readyState:'complete',getElementById:id=>intro&&id==='novvy-video-intro'?{}:null,addEventListener:(name,fn)=>{if(name==='pointerdown')pointerHandlers.push(fn);}},Date:{now:()=>clock},setTimeout(){},clearTimeout(){},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
   vm.runInNewContext(bridgeSource,sandbox);
-  return {counts:()=>({endCards,engineClicks,opens}),cardPhases:()=>cardEvents,phase:()=>sandbox.window.__novvyCtaCardPhase,emit:(name,detail)=>{for(const fn of listeners.get(name)||[])fn({detail});},tap:(gap=400)=>{clock+=gap;for(const fn of pointerHandlers)fn({});}};
+  return {counts:()=>({endCards,engineClicks,opens}),downloads:()=>engineDownloads,cardPhases:()=>cardEvents,phase:()=>sandbox.window.__novvyCtaCardPhase,emit:(name,detail)=>{for(const fn of listeners.get(name)||[])fn({detail});},tap:(gap=400,target)=>{clock+=gap;for(const fn of pointerHandlers)fn({target});}};
  }
  const plain=bridgeRun();
  assert.equal(plain.counts(),{endCards:1,engineClicks:0,opens:0},'无片头时加载即经服务公开 API 亮出结算卡片');
@@ -111,22 +111,45 @@ export default async function run(assert){
  assert.equal(twoPhasePreview.counts().opens,1,'双 playable 预览：CTA 时刻走裸兜底链跳转');
  const cardClick=bridgeRun({engine:false});
  cardClick.emit('novvy:cta-interact',{phase:'bar'});
- assert.equal(cardClick.counts().opens,1,'预览环境卡片点击经桥闩锁走裸兜底链跳转');
- cardClick.emit('novvy:cta-interact',{phase:'bar'});cardClick.emit('novvy:victory');
- assert.equal(cardClick.counts().opens,1,'底部条点击后重复交互与胜利都不二次转化');
+ assert.equal(cardClick.counts().opens,1,'预览环境卡片点击走裸兜底链跳转');
+ cardClick.emit('novvy:cta-interact',{phase:'bar'});
+ assert.equal(cardClick.counts().opens,2,'底部条每次手动点击都可转化');
+ cardClick.emit('novvy:playable-complete');cardClick.emit('novvy:victory');
+ assert.equal(cardClick.counts().opens,3,'手动点击不消耗自动时机，完成与胜利仍只自动转化一次');
+ cardClick.emit('novvy:cta-interact',{phase:'bar'});
+ assert.equal(cardClick.counts().opens,4,'自动转化后底部条仍可手动转化');
+ const retryClick=bridgeRun({rejectFirstClick:true});
+ retryClick.emit('novvy:cta-interact',{phase:'bar'});
+ assert.equal(retryClick.downloads(),0,'注入引擎可因冷却/返回保护拒绝首次卡片点击');
+ retryClick.emit('novvy:cta-interact',{phase:'bar'});
+ assert.equal([retryClick.counts().engineClicks,retryClick.downloads()],[2,1],'首次点击被拦下后，后续卡片点击仍可重试');
+ const manualBeforeMoment=bridgeRun({twoPhase:true});
+ manualBeforeMoment.emit('novvy:cta-interact',{phase:'bar'});
+ manualBeforeMoment.emit('novvy:cta-moment');
+ assert.check(manualBeforeMoment.phase()==='takeover'&&manualBeforeMoment.counts().engineClicks===2,'提前点击卡片不阻止后续 CTA 时机与全屏接管');
+ const cardAfterComplete=bridgeRun({endMask:false});
+ cardAfterComplete.emit('novvy:playable-complete');
+ const ctaTarget={closest:selector=>selector==='#novvy-cta'?{}:null};
+ cardAfterComplete.tap(0,ctaTarget);
+ assert.equal(cardAfterComplete.counts().engineClicks,1,'完成后 CTA 区域的 pointerdown 不重复请求转化');
+ cardAfterComplete.emit('novvy:cta-interact',{phase:'bar'});
+ assert.equal(cardAfterComplete.counts().engineClicks,2,'完成后的卡片点击由 Download 交互入口转化一次');
+ cardAfterComplete.tap(0,{closest:()=>null});
+ assert.equal(cardAfterComplete.counts().engineClicks,3,'跳过 CTA 触压不消耗游戏区域的去抖窗口');
  // 自有下载卡(随包):纯展示与交互信号 —— hidden/visible/takeover 状态切换、
  // 同步属性追平、点击派发 novvy:cta-interact;转化/上报不在卡片内。
  const cardAsset=fs.readFileSync(path.join(root,'editor/core/overlays/cta-card/cta-card.js'),'utf8');
  const cardCss=fs.readFileSync(path.join(root,'editor/core/overlays/cta-card/cta-card.css'),'utf8');
  assert.check(!/novvy\.open|super_html|mraid|NovvyAnalytics/.test(cardAsset),'下载卡零转化链零埋点：跳转与上报全部在桥内');
  assert.check(cardCss.includes('#novvy-cta[hidden]')&&cardCss.includes('novvy-cta-takeover')&&!/2147482|2147483|2147483646/.test(cardCss),'卡片样式遵守小值层级契约，亮卡前保持暗态');
- function cardRun(initialPhase){
+ function cardRun(initialPhase,{downloadHook,button=true}={}){
   const winListeners=new Map();
-  const node=()=>{const listeners=new Map(),classes=new Set();return {hidden:true,classes,classList:{add:c=>classes.add(c),has:c=>classes.has(c)},addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),emit:(name,event)=>{for(const fn of listeners.get(name)||[])fn(event);}};};
-  const nodes={'novvy-cta':node(),'novvy-cta-btn':node()};let interacts=0;
+  const node=()=>{const listeners=new Map(),classes=new Set();const el={hidden:true,parent:null,classes,classList:{add:c=>classes.add(c),has:c=>classes.has(c)},contains:target=>{for(let current=target;current;current=current.parent)if(current===el)return true;return false;},addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),emit:(name,event)=>{for(const fn of listeners.get(name)||[])fn(event);}};return el;};
+  const nodes={'novvy-cta':node()};let interacts=0,downloadClicks=0;
+  if(button){nodes['novvy-cta-btn']=node();nodes['novvy-cta-btn'].parent=nodes['novvy-cta'];nodes['novvy-cta-btn'].click=()=>{downloadClicks++;if(downloadHook)downloadHook();else nodes['novvy-cta-btn'].emit('click',{target:nodes['novvy-cta-btn'],stopPropagation(){}});};}
   const sandbox={window:{__novvyCtaCardPhase:initialPhase||'',addEventListener:(name,fn)=>winListeners.set(name,[...(winListeners.get(name)||[]),fn]),dispatchEvent:event=>{if(event.type==='novvy:cta-interact')interacts+=1;for(const fn of winListeners.get(event.type)||[])fn(event);}},document:{getElementById:id=>nodes[id]||null},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
   vm.runInNewContext(cardAsset,sandbox);
-  return {root:nodes['novvy-cta'],btn:nodes['novvy-cta-btn'],winListeners,interacts:()=>interacts};
+  return {root:nodes['novvy-cta'],btn:nodes['novvy-cta-btn'],winListeners,interacts:()=>interacts,downloadClicks:()=>downloadClicks};
  }
  const cardLate=cardRun('takeover');
  assert.check(cardLate.root.hidden===false&&cardLate.root.classes.has('novvy-cta-visible')&&cardLate.root.classes.has('novvy-cta-takeover'),'桥先派发时卡片脚本晚注入也经同步属性追平接管态');
@@ -139,8 +162,22 @@ export default async function run(assert){
  assert.check(card.root.classes.has('novvy-cta-takeover'),'takeover 事件把卡片升级为全屏遮罩');
  card.btn.emit('click',{stopPropagation(){}});
  assert.equal(card.interacts(),1,'按钮点击派发交互信号');
- card.root.emit('click',{});
- assert.equal(card.interacts(),2,'接管态整屏点击同样派发交互信号');
+ card.root.emit('click',{target:card.root,stopPropagation(){}});
+ assert.equal([card.interacts(),card.downloadClicks()],[2,1],'接管态遮罩点击转发 Download 并派发一次兜底交互');
+ const barCard=cardRun('bar');
+ for(const area of ['icon','name','rating','copy','blank'])barCard.root.emit('click',{target:{area,parent:barCard.root},stopPropagation(){}});
+ assert.equal([barCard.downloadClicks(),barCard.interacts()],[5,5],'底部卡的图标/名称/评分/文案/空白处每次点击都转发 Download');
+ const buttonText={parent:barCard.btn},buttonSvg={parent:barCard.btn},buttonPath={parent:buttonSvg};
+ for(const target of [barCard.btn,buttonText,buttonSvg,buttonPath])barCard.root.emit('click',{target,stopPropagation(){}});
+ assert.equal([barCard.downloadClicks(),barCard.interacts()],[5,5],'按钮本身及嵌套文字/SVG 不被卡片根节点递归转发');
+ let injectedDownloads=0;
+ const hookedCard=cardRun('bar',{downloadHook:()=>injectedDownloads++});
+ hookedCard.root.emit('click',{target:{parent:hookedCard.root},stopPropagation(){}});
+ hookedCard.root.emit('click',{target:hookedCard.root,stopPropagation(){}});
+ assert.equal([injectedDownloads,hookedCard.interacts()],[2,0],'注入引擎接管 Download 时整卡复用该入口，不叠加转化桥兜底');
+ const noButton=cardRun('bar',{button:false});
+ noButton.root.emit('click',{target:noButton.root,stopPropagation(){}});
+ assert.equal(noButton.interacts(),1,'缺少 Download 节点时保留卡片交互兜底');
  const hudListeners=new Map(),hudNodes=Object.fromEntries(['novvy-training-hud','novvy-hud-progress-label','novvy-hud-title-line1','novvy-hud-title-line2'].map(id=>[id,{textContent:'',style:{setProperty(){}},setAttribute(){}}]));
  const hudSandbox={window:{__NOVVY_UI__:{hud:{titleLine1:'主标题',titleLine2:'副标题'}},addEventListener:(event,fn)=>hudListeners.set(event,fn)},document:{getElementById:id=>hudNodes[id]}};
  vm.runInNewContext(fs.readFileSync(path.join(root,'editor/plugins/colorever/overlays/hud/hud.js'),'utf8'),hudSandbox);

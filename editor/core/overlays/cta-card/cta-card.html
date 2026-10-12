@@ -1,7 +1,7 @@
 <!-- 自有下载卡(随包):初始 hidden,由转化桥 novvy:cta-card 事件点亮。
      按钮选择器(button.cta/.download/[data-novvy-cta]/[data-action=download])
-     与落地页服务 hookCtaButtons、checkExistingEndCards 轮询对齐;转化不在此处
-     发生——卡片只派发 novvy:cta-interact,跳转/上报/防重全在桥的闩锁内。 -->
+     与落地页服务 hookCtaButtons、checkExistingEndCards 轮询对齐;整卡点击
+     复用 Download,novvy:cta-interact 是无注入引擎时的转化桥兜底信号。 -->
 <div id="novvy-cta" hidden aria-label="Download __CTA_NAME__">
   <section class="novvy-cta-message" aria-label="体验引导">
     <div class="novvy-cta-message-text">__CTA_TAKEOVER_TEXT__</div>

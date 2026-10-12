@@ -8,8 +8,9 @@
    同样亮底部条。转化时机:引擎派发 novvy:playable-complete(最后一步完成,
    不等胜利扫光/片尾音乐收尾)即主动跳转一次;双 playable 进第二关
    (novvy:phase2-start)重置闩锁,第二关的 novvy:cta-moment(第 N 步或完成
-   兜底)升级全屏接管并再次转化。卡片点击经 novvy:cta-interact 回到桥,与
-   上述时机共享同一分相 converted 闩锁,同一关内只转化一次。
+   兜底)升级全屏接管并再次转化。自动时机经分相 autoConverted 闩锁去重;
+   手动点击统一复用 Download,预览兜底经 novvy:cta-interact 回到桥,
+   每次点击都可请求转化,不读写自动时机的闩锁。
    结束遮罩(colorever 注入 __NOVVY_CTA_END_MASK__):false = 到转化时刻不再
    弹全屏接管,直接跳转,并武装"回访每击转化"—— 用户从商店切回来后,每一次
    触压既操作 playable、也再触发一次跳转(takeover"每一击都是一次转化"的
@@ -62,13 +63,9 @@
     try { window.dispatchEvent(new CustomEvent('novvy:cta-card', { detail: { phase: phase } })); } catch (e) {}
   }
 
-  /* 卡片点击汇到这里。底部条模式与完成/胜利等时机共享分相 converted 闩锁
-     (同关一次);接管态(detail.phase==='takeover')的整屏点击绕过闩锁 ——
-     遮罩在场的每一击都是一次转化,快速连点由服务端冷却护栏去重。 */
-  window.addEventListener('novvy:cta-interact', function (event) {
-    var takeover = !!(event && event.detail && event.detail.phase === 'takeover');
-    if (converted && !takeover) return;
-    converted = true;
+  /* Download 的兜底交互入口:每次手动点击都请求转化,与自动时机去重独立。
+     注入引擎的冷却/返回保护不会锁死后续点击,也不会提前消耗 CTA 时机。 */
+  window.addEventListener('novvy:cta-interact', function () {
     convert('cta-card');
   });
 
@@ -76,15 +73,18 @@
      回来,每一次触压既继续操作 playable、也再触发一次跳转。捕获段监听且不
      preventDefault —— 游戏输入零感知;不设闩锁,每次触压都是一次转化请求,
      连点交给 SDK 的冷却护栏;300ms 去抖只过滤同一次触压的多发事件。
-     武装点见各转化终点(目标时刻已到即武装,即使 converted 闩锁拦下了重复
+     CTA 区域由 Download 处理,避免 pointerdown 与按钮 click 重复转化。
+     武装点见各转化终点(目标时刻已到即武装,即使自动闩锁拦下了重复
      跳转)。 */
   var interactArmed = false, interactListening = false, lastInteractAt = -1e9;
   function armInteractConvert() {
     interactArmed = true;
     if (interactListening) return;
     interactListening = true;
-    document.addEventListener('pointerdown', function () {
+    document.addEventListener('pointerdown', function (event) {
       if (!interactArmed) return;
+      var target = event && event.target;
+      if (target && target.closest && target.closest('#novvy-cta')) return;
       var now = Date.now();
       if (now - lastInteractAt < 300) return;
       lastInteractAt = now;
@@ -105,7 +105,7 @@
 
   /* —— 胜利/片尾的自动转化时序(自旧 cta.js 迁移;卡片已由 playableStarted
      常驻亮出,这里只负责补充"结算时刻主动跳转"的转化动作) —— */
-  var converted = false;
+  var autoConverted = false;
   var viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
   var timer = null, remaining = 1000, armedAt = 0;
   function visible() { return !document.hidden && viewable; }
@@ -136,9 +136,9 @@
   document.addEventListener('visibilitychange', onVisibility);
 
   /* 闩锁按 playable 分相:双 playable 进第二关(novvy:phase2-start)时重置,
-     第二关的完成/触发步数时刻重新可转化;同一关内首次触发后不再重复。 */
+     第二关的完成/触发步数时刻重新可自动转化;手动点击不受此闩锁限制。 */
   window.addEventListener('novvy:phase2-start', function () {
-    converted = false;
+    autoConverted = false;
     // 第一关完成后的回访触压不应越过第二关自己的步数门槛。
     interactArmed = false;
     lastInteractAt = -1e9;
@@ -148,21 +148,21 @@
      (未派发新事件的旧素材),两者经同一闩锁只转化一次。 */
   window.addEventListener('novvy:playable-complete', function () {
     if (!END_MASK) armInteractConvert();
-    if (converted) return;
-    converted = true;
+    if (autoConverted) return;
+    autoConverted = true;
     convert('playable-complete');
   });
   window.addEventListener('novvy:victory', function () {
     if (!END_MASK) armInteractConvert();
-    if (converted) return;
-    converted = true;
+    if (autoConverted) return;
+    autoConverted = true;
     convert('victory');
   });
   window.addEventListener('novvy:outro-finished', function (event) {
     var reason = event && event.detail && event.detail.reason;
     /* 双 playable:片尾只是两关之间的过渡,转化时机整体移交 novvy:cta-moment。 */
-    if (!window.__novvyOutroEnabled || window.__novvyTwoPhase === true || converted) return;
-    converted = true;
+    if (!window.__novvyOutroEnabled || window.__novvyTwoPhase === true || autoConverted) return;
+    autoConverted = true;
     if (reason === 'video_ended') {
       /* 片尾播完停留最后一帧,等待 1 秒(后台感知)再主动转化。 */
       waitingForOutroJump = true;
@@ -173,12 +173,12 @@
 
   /* CTA 时刻(引擎在武装策略命中时派发:第 N 步,或完成兜底):
      遮罩开启时双 playable 升级为全屏接管;关闭时不弹遮罩,只主动转化一次,
-     并交由回访每击转化接管后续。converted 闩锁保证主动转化只发生一次。
+     并交由回访每击转化接管后续。autoConverted 闩锁只对自动时机去重。
      单 playable 不接管 —— 底部卡自试玩起常驻,这里只补主动转化。 */
   window.addEventListener('novvy:cta-moment', function () {
     if (!END_MASK) armInteractConvert();
-    if (converted) return;
-    converted = true;
+    if (autoConverted) return;
+    autoConverted = true;
     if (window.__novvyTwoPhase === true && END_MASK) showCard('takeover');
     if (typeof window.showEndCard === 'function') {
       try { window.showEndCard(); } catch (e) {}

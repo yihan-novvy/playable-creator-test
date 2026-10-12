@@ -98,8 +98,12 @@ export default async function run(assert){
  assert.equal([engine.counts().cards,engine.counts().engineClicks,engine.counts().opens],[1,1,1],'注入引擎在场时终态转化经引擎统一上报并跳转，不重复调用');
  const cardEngine=playback({enabled:false,withEngine:true});cardEngine.emit('novvy:cta-interact');
  assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[1,1],'卡片点击经桥统一转化入口，一次点击一次转化');
- cardEngine.emit('novvy:cta-interact');cardEngine.emit('novvy:victory');
- assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[1,1],'卡片点击后重复交互与胜利不再二次转化');
+ cardEngine.emit('novvy:cta-interact');
+ assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[2,2],'卡片每次手动点击都可请求转化');
+ cardEngine.emit('novvy:victory');cardEngine.emit('novvy:playable-complete');
+ assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[3,3],'手动点击不消耗自动时机，胜利与完成仍只自动转化一次');
+ cardEngine.emit('novvy:cta-interact');
+ assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[4,4],'自动完成后仍可手动点击转化');
  const interrupted=playback();interrupted.emit('novvy:victory');await flush();interrupted.video.emit('ended');
  assert.check(interrupted.counts().cards>=1,'短于 5 秒的片尾结束时也显露结算卡片');
  assert.equal([interrupted.counts().opens,interrupted.timers.length],[1,0],'短片尾路径同样完成操作即转化，无遗留定时器');
