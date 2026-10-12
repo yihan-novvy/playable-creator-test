@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "e13d987b1ef9cad019ee0398780a01a94c69f9a37db5dffcd35fede658d7091f",
+  "engineSha256": "41528645b6903e7d6fc546249413a6b8c577dbf07fe8f611e66cefd000a2928e",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
@@ -238,16 +238,86 @@
     {
       "id": "golden-dragon",
       "name": "金色萌龙",
-      "description": "参考金色拼豆小龙：分叉双角、尖耳、圆脸黑眼、白色口鼻与肚皮、金色小翼和上翘尾尖，7 色立体宝石图盘",
+      "description": "金色双角、黑色珠子眼睛、白色口鼻与肚皮，保留前臂、后腿、小翼和翘尾的侧身坐姿，6 色纯珠子图盘",
       "level": "golden-dragon.json",
-      "templateSha256": "69e7e3121168ba7455902d611efe95064ddc6a8701e4523ebbd0f97188f42acd"
+      "templateSha256": "0dfd00c4dd5a637102fbc3e68310133dc5b3e4e29d74054f95904798b5637960"
     },
     {
       "id": "blue-dragon",
       "name": "冰蓝翼龙",
       "description": "参考蓝色拼豆小龙：白色双角、圆脸黑眼、冰蓝口鼻与白肚皮、右侧浅蓝翅膀和上翘尾巴，6 色立体宝石图案",
       "level": "blue-dragon.json",
-      "templateSha256": "58f84a4a6d5328a1c9338c96d51755fd7ea38fec037c0d6d7c56b0917d86accc"
+      "templateSha256": "11a6a353892c30348b38c4187302efcb41a556cc15ec8bc2d05658165eae957f"
+    },
+    {
+      "id": "flame",
+      "name": "炽焰之心",
+      "description": "参考玻璃球中的火焰：红橙外焰、弯曲火舌、圆润焰底和金黄色焰心，5 色立体宝石图案",
+      "level": "flame.json",
+      "templateSha256": "bd692d0d4c680f050e2f7044eac50246a1dfbab48e0e16723996764e7fd63a28"
+    },
+    {
+      "id": "curly-portrait",
+      "name": "卷发侧身人像",
+      "description": "参考玻璃球中的珠子人物：深棕卷发侧脸、灰色外套与暖色抱握手臂，保留侧身姿态和绿色珠子底座",
+      "level": "curly-portrait.json",
+      "templateSha256": "a95af2da971959a747a99c3d6430fe7d31407b3c54413034ecdfe5d3513258fd"
+    },
+    {
+      "id": "yellow-lightning",
+      "name": "黄色闪电",
+      "description": "参考黄色拼豆闪电：橙色包边、亮黄主体与浅黄亮面，保留斜顶、折角和修长尖底的立体宝石图案",
+      "level": "yellow-lightning.json",
+      "templateSha256": "0164e706fe750c8bf85d73178056c950e2c5b43e5cc29d6eed6e781c37b45c13"
+    },
+    {
+      "id": "white-dragon",
+      "name": "银白翼龙",
+      "description": "参考珍珠白拼豆小龙：短弯双角、黑色亮眼、白色身体与爪脚、从肩背展开的淡紫翅翼及卷尾，6 色立体宝石图案",
+      "level": "white-dragon.json",
+      "templateSha256": "3ac9b89bc8a86c3a724a9a4c2fe310b9988d2a99c9ccf988bb7a7c1e47bd8db7"
+    },
+    {
+      "id": "tricolor-lightning",
+      "name": "三色闪电",
+      "description": "按参考原图描绘的三枚闪电：中央宽平顶深蓝闪电、竖向天蓝与冰蓝色带、收窄短平底，两侧金黄尖形闪电和金色边框",
+      "level": "tricolor-lightning.json",
+      "templateSha256": "129e4c4e6c8ee8293d68daf91dfa52d18afb8b0f6bf15b06439011dfec48b6bb"
+    },
+    {
+      "id": "blue-lightning",
+      "name": "蓝色闪电",
+      "description": "参考蓝色闪电徽章：深蓝圆形底盘、冰蓝发光圆环与贯穿圆盘的青蓝双折闪电，带深蓝包边和浅色高光线",
+      "level": "blue-lightning.json",
+      "templateSha256": "0c84c1b4f93868a009dbcf3133a428f85f0f3d3429ae3aa41399a9848c7cd17f"
+    },
+    {
+      "id": "black-dragon",
+      "name": "曜黑幼龙",
+      "description": "参考黑色拼豆小龙：黑蓝圆头与短吻、后掠角刺、淡紫亮眼、右侧蝠翼、宽爪脚和卷尾，8 色立体宝石图案",
+      "level": "black-dragon.json",
+      "templateSha256": "d74c05adbf698c7cd0193449636eb424dfec5f535c15968d3a0ec669d39c8295"
+    },
+    {
+      "id": "silver-lightning",
+      "name": "银色闪电",
+      "description": "参考银色金属闪电：深炭灰底面、银白亮边、平行金属纹路和多层锯齿折面，保留修长尖底与宽折角",
+      "level": "silver-lightning.json",
+      "templateSha256": "6c0c51acbce224f5a21f32b6c989bade8cd315ddc46db1c1f87f6f8fa503dc3d"
+    },
+    {
+      "id": "blue-star-shield",
+      "name": "金星蓝盾",
+      "description": "参考蓝色拼豆盾牌：金色包边、浅蓝盾面与中央金色五角星，保留圆角肩部和对称尖底",
+      "level": "blue-star-shield.json",
+      "templateSha256": "dcee06d66ed30546c6c8e4ae73ed09f06e74b505d994e6c83ed7585c8581e99c"
+    },
+    {
+      "id": "heart-gold-shield",
+      "name": "爱心金盾",
+      "description": "参考金色爱心盾牌：左右明暗金色盾面、双层亮框与中央饱满红色爱心，保留对称肩部和尖底",
+      "level": "heart-gold-shield.json",
+      "templateSha256": "51727b6bc88c2611b6fa2ac083f5a579108f58ba016980c11a6f5e37bce2adc3"
     }
   ]
 }

@@ -305,7 +305,7 @@
   {
     "id": "golden-dragon",
     "name": "金色萌龙",
-    "description": "参考金色拼豆小龙：分叉双角、尖耳、圆脸黑眼、白色口鼻与肚皮、金色小翼和上翘尾尖，7 色立体宝石图盘",
+    "description": "金色双角、黑色珠子眼睛、白色口鼻与肚皮，保留前臂、后腿、小翼和翘尾的侧身坐姿，6 色纯珠子图盘",
     "level": "golden-dragon.json",
     "module": "golden-dragon.js"
   },
@@ -315,5 +315,75 @@
     "description": "参考蓝色拼豆小龙：白色双角、圆脸黑眼、冰蓝口鼻与白肚皮、右侧浅蓝翅膀和上翘尾巴，6 色立体宝石图案",
     "level": "blue-dragon.json",
     "module": "blue-dragon.js"
+  },
+  {
+    "id": "flame",
+    "name": "炽焰之心",
+    "description": "参考玻璃球中的火焰：红橙外焰、弯曲火舌、圆润焰底和金黄色焰心，5 色立体宝石图案",
+    "level": "flame.json",
+    "module": "flame.js"
+  },
+  {
+    "id": "curly-portrait",
+    "name": "卷发侧身人像",
+    "description": "参考玻璃球中的珠子人物：深棕卷发侧脸、灰色外套与暖色抱握手臂，保留侧身姿态和绿色珠子底座",
+    "level": "curly-portrait.json",
+    "module": "curly-portrait.js"
+  },
+  {
+    "id": "yellow-lightning",
+    "name": "黄色闪电",
+    "description": "参考黄色拼豆闪电：橙色包边、亮黄主体与浅黄亮面，保留斜顶、折角和修长尖底的立体宝石图案",
+    "level": "yellow-lightning.json",
+    "module": "yellow-lightning.js"
+  },
+  {
+    "id": "white-dragon",
+    "name": "银白翼龙",
+    "description": "参考珍珠白拼豆小龙：短弯双角、黑色亮眼、白色身体与爪脚、从肩背展开的淡紫翅翼及卷尾，6 色立体宝石图案",
+    "level": "white-dragon.json",
+    "module": "white-dragon.js"
+  },
+  {
+    "id": "tricolor-lightning",
+    "name": "三色闪电",
+    "description": "按参考原图描绘的三枚闪电：中央宽平顶深蓝闪电、竖向天蓝与冰蓝色带、收窄短平底，两侧金黄尖形闪电和金色边框",
+    "level": "tricolor-lightning.json",
+    "module": "tricolor-lightning.js"
+  },
+  {
+    "id": "blue-lightning",
+    "name": "蓝色闪电",
+    "description": "参考蓝色闪电徽章：深蓝圆形底盘、冰蓝发光圆环与贯穿圆盘的青蓝双折闪电，带深蓝包边和浅色高光线",
+    "level": "blue-lightning.json",
+    "module": "blue-lightning.js"
+  },
+  {
+    "id": "black-dragon",
+    "name": "曜黑幼龙",
+    "description": "参考黑色拼豆小龙：黑蓝圆头与短吻、后掠角刺、淡紫亮眼、右侧蝠翼、宽爪脚和卷尾，8 色立体宝石图案",
+    "level": "black-dragon.json",
+    "module": "black-dragon.js"
+  },
+  {
+    "id": "silver-lightning",
+    "name": "银色闪电",
+    "description": "参考银色金属闪电：深炭灰底面、银白亮边、平行金属纹路和多层锯齿折面，保留修长尖底与宽折角",
+    "level": "silver-lightning.json",
+    "module": "silver-lightning.js"
+  },
+  {
+    "id": "blue-star-shield",
+    "name": "金星蓝盾",
+    "description": "参考蓝色拼豆盾牌：金色包边、浅蓝盾面与中央金色五角星，保留圆角肩部和对称尖底",
+    "level": "blue-star-shield.json",
+    "module": "blue-star-shield.js"
+  },
+  {
+    "id": "heart-gold-shield",
+    "name": "爱心金盾",
+    "description": "参考金色爱心盾牌：左右明暗金色盾面、双层亮框与中央饱满红色爱心，保留对称肩部和尖底",
+    "level": "heart-gold-shield.json",
+    "module": "heart-gold-shield.js"
   }
 ]

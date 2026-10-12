@@ -178,10 +178,60 @@
       "id": "blue-dragon",
       "name": "冰蓝翼龙",
       "path": "game/patterns/blue-dragon.json"
+    },
+    {
+      "id": "flame",
+      "name": "炽焰之心",
+      "path": "game/patterns/flame.json"
+    },
+    {
+      "id": "curly-portrait",
+      "name": "卷发侧身人像",
+      "path": "game/patterns/curly-portrait.json"
+    },
+    {
+      "id": "yellow-lightning",
+      "name": "黄色闪电",
+      "path": "game/patterns/yellow-lightning.json"
+    },
+    {
+      "id": "white-dragon",
+      "name": "银白翼龙",
+      "path": "game/patterns/white-dragon.json"
+    },
+    {
+      "id": "tricolor-lightning",
+      "name": "三色闪电",
+      "path": "game/patterns/tricolor-lightning.json"
+    },
+    {
+      "id": "blue-lightning",
+      "name": "蓝色闪电",
+      "path": "game/patterns/blue-lightning.json"
+    },
+    {
+      "id": "black-dragon",
+      "name": "曜黑幼龙",
+      "path": "game/patterns/black-dragon.json"
+    },
+    {
+      "id": "silver-lightning",
+      "name": "银色闪电",
+      "path": "game/patterns/silver-lightning.json"
+    },
+    {
+      "id": "blue-star-shield",
+      "name": "金星蓝盾",
+      "path": "game/patterns/blue-star-shield.json"
+    },
+    {
+      "id": "heart-gold-shield",
+      "name": "爱心金盾",
+      "path": "game/patterns/heart-gold-shield.json"
     }
   ],
   "constants": {
-    "engineSha256": "6967c3ec75df0d0d3145bea87209f4bedbeb43865dfa1c5b3fdd9e4a3d8d9dd4",
+    "engineSha256": "431b5c2ee54839de81c6dbe33c5465c997f73e4e120e46f2d6561a9e3a8480bd",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"
