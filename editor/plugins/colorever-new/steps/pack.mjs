@@ -30,7 +30,7 @@ export async function run(ctx) {
     if (JSON.stringify(JSON.parse(fs.readFileSync(generated2, 'utf8'))) !== JSON.stringify(phase2.level)) throw new Error('第二关已改变，请重新运行关卡步骤');
   }
   enabled.background2 = phase2 !== null && ctx.config.secondPlayable?.background?.enabled === true;
-  // 视频 pack 只发 intro/outro 步骤转码出的 540p 产物(上传原片不进包)。
+  // 视频 pack 只发 intro/outro 步骤转码出的 720p 产物(上传原片不进包)。
   const files = [];
   if (enabled.intro) files.push([path.join(ctx.generatedDir, 'intro-video.mp4'), 'tail-ad-video.mp4'], [path.join(ctx.generatedDir, 'poster.webp'), 'poster.webp']);
   if (enabled.outro) files.push([path.join(ctx.generatedDir, 'outro-video.mp4'), 'outro-video.mp4']);

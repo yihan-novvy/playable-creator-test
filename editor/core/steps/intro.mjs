@@ -42,7 +42,7 @@ Image.open(sys.argv[1]).convert("RGB").save(sys.argv[2], "WEBP", quality=80, met
   }
 
   const videoMetrics = await probeVideo(videoPath);
-  // 打包视频统一转码(540p H.264 码率封顶,见 transcode-video.mjs):上传原片
+  // 打包视频统一转码(720p H.264 码率封顶,见 transcode-video.mjs):上传原片
   // 是剪辑近无损档位(11–12 Mbps),原样进包会把 zip 撑爆;pack 只发这个产物。
   const packagedPath = path.join(ctx.generatedDir, 'intro-video.mp4');
   await spawnRun('node', [

@@ -279,7 +279,7 @@ async function step(ctx) {
       repackArgs.push('--cta-icon', path.join(ctx.pluginDir, ctaOverlay, 'icon.png'));
     }
     if (config.intro.enabled) {
-      // 打包发的是 intro 步骤转码出的 540p 产物(上传原片不进包)。
+      // 打包发的是 intro 步骤转码出的 720p 产物(上传原片不进包)。
       repackArgs.push('--intro-video', generated('intro-video.mp4'));
       repackArgs.push('--intro-poster', generated('poster.webp'));
     }

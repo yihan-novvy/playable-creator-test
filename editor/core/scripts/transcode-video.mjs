@@ -7,14 +7,14 @@ import { fileURLToPath } from 'node:url';
 // playable-ads delivery needs H.264 (never HEVC/VP9/AV1), and uploaded
 // exports land at 11-12 Mbps — near-lossless editor presets that bloat the
 // zip far past the ~5 MB channel caps. The recipe caps the short side at
-// 540 px (playable quality), rate-caps bursts so high-motion content cannot
+// 720 px (playable quality), rate-caps bursts so high-motion content cannot
 // blow the budget, and collapses audio to mono 64k AAC.
 //
 //   node transcode-video.mjs --video <mp4> --out <mp4>
 //
 // Prints a JSON metrics line on stdout (last line): packaged dimensions.
 
-const SHORT_SIDE_CAP = 540;
+const SHORT_SIDE_CAP = 720;
 const FPS_CAP = 30;
 
 function flag(name) {
@@ -42,7 +42,7 @@ const probe = JSON.parse(probeJson);
 const stream = probe.streams?.[0];
 if (!stream) throw new Error(`No video stream found: ${videoPath}`);
 
-// Downscale only, capping the short side (540p portrait = 540x960). Long side
+// Downscale only, capping the short side (720p portrait = 720x1280). Long side
 // stays even — H.264 4:2:0 requires even dimensions.
 const width = stream.width;
 const height = stream.height;
@@ -64,7 +64,7 @@ execFileSync(
     ...scaleArgs,
     // Rate control: CRF for quality-scaled size, maxrate as the worst-case
     // ceiling (~700k video + 64k audio ≈ 95 KB/s ⇒ 30 s ≈ 2.9 MB hard cap).
-    '-c:v', 'libx264', '-preset', 'slow', '-crf', '27',
+    '-c:v', 'libx264', '-preset', 'slow', '-crf', '25',
     '-maxrate', '700k', '-bufsize', '1400k',
     // Webview-safe profile; yuv420p for cross-device chroma compatibility.
     '-profile:v', 'main', '-level', '4.0', '-pix_fmt', 'yuv420p',

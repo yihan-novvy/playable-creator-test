@@ -16,7 +16,7 @@ export async function run(ctx) {
     return { metrics: { skipped: true }, warnings: [] };
   }
   const video = await probeVideo(source);
-  // 与 intro 同一转码纪律:pack 发的是 generated 里的 540p 产物,不是上传原片。
+  // 与 intro 同一转码纪律:pack 发的是 generated 里的 720p 产物,不是上传原片。
   const packagedPath = path.join(ctx.generatedDir, 'outro-video.mp4');
   await spawnRun('node', [
     path.join(ctx.scriptsRoot, 'transcode-video.mjs'),

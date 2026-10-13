@@ -30,7 +30,7 @@ export async function run(ctx) {
   const backgroundPath = path.join(ctx.generatedDir, 'background.webp');
   const hudLeftPath = path.join(ctx.generatedDir, 'hud-left.webp');
   const hudRightPath = path.join(ctx.generatedDir, 'hud-right.webp');
-  // 打包发的是 intro 步骤转码出的 540p 产物(上传原片不进包)。
+  // 打包发的是 intro 步骤转码出的 720p 产物(上传原片不进包)。
   const introVideoPath = path.join(ctx.generatedDir, 'intro-video.mp4');
   const hudEnabled = config.hud?.enabled !== false;
   const introEnabled = config.intro?.enabled !== false;

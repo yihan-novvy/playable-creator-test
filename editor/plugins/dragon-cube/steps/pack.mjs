@@ -67,7 +67,7 @@ export async function run(ctx) {
     if (/^level\d+\.html$/.test(file)) fs.rmSync(path.join(ctx.resultDir, file));
   }
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
-  // 视频 pack 只发 intro/outro 步骤转码出的 540p 产物(上传原片不进包)。
+  // 视频 pack 只发 intro/outro 步骤转码出的 720p 产物(上传原片不进包)。
   if (enabled.intro) {
     fs.copyFileSync(path.join(ctx.generatedDir, 'intro-video.mp4'), path.join(ctx.resultDir, 'tail-ad-video.mp4'));
     fs.copyFileSync(path.join(ctx.generatedDir, 'poster.webp'), path.join(ctx.resultDir, 'poster.webp'));

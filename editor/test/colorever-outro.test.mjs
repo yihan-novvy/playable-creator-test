@@ -250,7 +250,7 @@ export default async function run(assert){
   assert.check(preview.includes('id="novvy-video-outro" hidden')&&preview.includes(`/project/${id}/uploads/outro-video.mp4`),'即时预览注入隐藏片尾，使用相同的上传视频');
   const packed=await(await fetch(base+`/result/${id}/index.html`)).text();
   assert.check(packed.includes('__novvyOutroEnabled=true')&&packed.includes('src="outro-video.mp4"'),'交付包启用片尾时引用包内视频');
-  // 打包发的是 outro 步骤的 540p 转码产物,与上传原片字节不同是预期行为。
+  // 打包发的是 outro 步骤的 720p 转码产物,与上传原片字节不同是预期行为。
   const delivered=new Uint8Array(await(await fetch(base+`/result/${id}/outro-video.mp4`)).arrayBuffer());
   const transcoded=new Uint8Array(await(await fetch(base+`/project/${id}/generated/outro-video.mp4`)).arrayBuffer());
   assert.check(Buffer.from(delivered).equals(transcoded),'打包片尾与转码产物逐字节一致');
