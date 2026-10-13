@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "431b5c2ee54839de81c6dbe33c5465c997f73e4e120e46f2d6561a9e3a8480bd",
+  "engineSha256": "70b36a8b8257c870797ae48c6c810add97595a72ba327cff2b7c4ca759b4f11f",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
@@ -318,6 +318,13 @@
       "description": "参考金色爱心盾牌：左右明暗金色盾面、双层亮框与中央饱满红色爱心，保留对称肩部和尖底",
       "level": "heart-gold-shield.json",
       "templateSha256": "51727b6bc88c2611b6fa2ac083f5a579108f58ba016980c11a6f5e37bce2adc3"
+    },
+    {
+      "id": "roast-meat",
+      "name": "衣服钉子",
+      "description": "参考衣服钉子珠子图案：银白钉杆、连贯铜棕主体和米金色弧形纹理，4 色纯珠子图案",
+      "level": "roast-meat.json",
+      "templateSha256": "44b0eee0c2bf87a431291fcf567e1855fd2a88590813756fabb47d813638c8ad"
     }
   ]
 }

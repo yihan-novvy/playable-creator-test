@@ -228,10 +228,15 @@
       "id": "heart-gold-shield",
       "name": "爱心金盾",
       "path": "game/patterns/heart-gold-shield.json"
+    },
+    {
+      "id": "roast-meat",
+      "name": "衣服钉子",
+      "path": "game/patterns/roast-meat.json"
     }
   ],
   "constants": {
-    "engineSha256": "431b5c2ee54839de81c6dbe33c5465c997f73e4e120e46f2d6561a9e3a8480bd",
+    "engineSha256": "70b36a8b8257c870797ae48c6c810add97595a72ba327cff2b7c4ca759b4f11f",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650"
