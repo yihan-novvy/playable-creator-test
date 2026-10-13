@@ -57,11 +57,20 @@ export function dragonHtml({ root, overlaysRoot, template, level, config, media,
   const mediaWithoutCard = { ...media, ctaIcon: null };
   const outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
   const phase2 = dragonPhase2(root, config, outroEnabled);
+  // 新事件规范(docs/original-zip-required-event-integration.md §2):段链打包时
+  // 定稿 —— intro/outro 各算独立 video 段、第二关算独立 playable 段;字面量
+  // 注入供静态预检与段桥(__novvyStageChain__)使用。
+  const stageChain = [...(media.introVideo ? ['video'] : []), 'playable', ...(outroEnabled ? ['video'] : []), ...(phase2 ? ['playable'] : [])];
   // HUD 标题与立绘解耦(colorever 同款):titleEnabled 独立于立绘开关,标题可
   // 单独存在;双 playable 时第二关强制可展示标题,但第一关未启用标题则不带空文案。
   const firstTitleEnabled = config?.hud?.titleEnabled ?? [config?.hud?.titleLine1, config?.hud?.titleLine2].some(value => String(value ?? '').trim());
   const overlayConfig = phase2 ? { ...config, hud: { ...config.hud, titleEnabled: true, titleLine1: firstTitleEnabled ? config?.hud?.titleLine1 : '', titleLine2: firstTitleEnabled ? config?.hud?.titleLine2 : '' } } : config;
   const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config: overlayConfig, media: mediaWithoutCard, optionalHudPortraits: true, analytics: false });
+  // 段桥必须最先执行(规范 §2:先声明段链与首段 setStage,再启动首段;媒体
+  // 注册亦须赶在各段播放之前):unshift 到 bodyScripts 首位,先于 intro.js
+  // 求值与 defer 的 game.js。
+  const playableBridgeFile = fileURLToPath(new URL('../../core/overlays/playable-bridge/playable-bridge.js', import.meta.url));
+  injection.bodyScripts.unshift(`<script data-novvy-playable-bridge>${fs.readFileSync(playableBridgeFile, 'utf8')}</script>`);
   injection.ctaCardEnabled = config?.cta?.enabled !== false && !!media.ctaIcon;
   if (injection.ctaCardEnabled) {
     const card = ctaCardAssets(config, media.ctaIcon);
@@ -71,8 +80,8 @@ export function dragonHtml({ root, overlaysRoot, template, level, config, media,
   }
   // 转化桥排在卡片脚本之后:片头结束亮底部条,完成/步数命中触发跳转。
   // 桥文件在 core/overlays 共享(colorever 同一份);占位符
-  // 注入时替换成本模板的 URL 变量名,SDK 包内恒空 —— 落地页由 SDK 取
-  // adm.clicktrack,URL 只服务编辑器预览的裸兜底链。
+  // 注入时替换成本模板的 URL 变量名,SDK 包内恒空 —— 跳转由统一 click API
+  // 上送,URL 只服务编辑器预览的裸兜底链。
   const bridgeFile = fileURLToPath(new URL('../../core/overlays/cta-bridge/cta-bridge.js', import.meta.url));
   const bridge = fs.readFileSync(bridgeFile, 'utf8').replaceAll('__CTA_URL_KEY__', '__DRAGON_CUBE_CTA_URL__');
   injection.bodyScripts.push(`<script data-novvy-cta-bridge>${bridge}</script>`);
@@ -109,7 +118,7 @@ export function dragonHtml({ root, overlaysRoot, template, level, config, media,
     first: [injection.backgroundEnabled && media.background, config?.hud?.enabled === true && media.hudLeft, config?.hud?.enabled === true && media.hudRight, injection.ctaCardEnabled && media.ctaIcon].filter(Boolean),
     second: background2Enabled ? [media.background2] : [],
   };
-  const configScript = `<script>window.__DRAGON_CUBE_LEVEL__=${inline(level)};window.__DRAGON_CUBE_CTA_URL__='';window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__DRAGON_CUBE_HUD_TITLE__=${inline({ titleLine1: String(config?.hud?.titleLine1 ?? ''), titleLine2: String(config?.hud?.titleLine2 ?? '') })};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__DRAGON_CUBE_CTA_POLICY__=${inline(ctaPolicy)};window.__DRAGON_CUBE_PHASE2__=${inline(phase2)};window.__DRAGON_CUBE_IMAGES__=${inline(images)};</script>`;
+  const configScript = `<script>window.__DRAGON_CUBE_LEVEL__=${inline(level)};window.__DRAGON_CUBE_CTA_URL__='';window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__DRAGON_CUBE_HUD_TITLE__=${inline({ titleLine1: String(config?.hud?.titleLine1 ?? ''), titleLine2: String(config?.hud?.titleLine2 ?? '') })};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__novvyStageChain__=${inline(stageChain)};window.__DRAGON_CUBE_CTA_POLICY__=${inline(ctaPolicy)};window.__DRAGON_CUBE_PHASE2__=${inline(phase2)};window.__DRAGON_CUBE_IMAGES__=${inline(images)};</script>`;
   const gameScript = preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT;
   if (preview) html = html.replace('href="style.css"', `href="/templates/${template.id}/game/style.css"`);
   html = html.replace('</head>', () => `${[...injection.headStyles, extra, ...injection.headScripts].join('\n')}\n</head>`)

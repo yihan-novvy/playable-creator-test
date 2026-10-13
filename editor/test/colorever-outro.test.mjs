@@ -17,21 +17,22 @@ function node(){
  // DOM 语义:同一事件的多个监听器并存,按注册顺序依次触发(桩不能只留最后一个)。
  return {hidden:true,textContent:'',id:'',classList:{add:name=>classes.add(name),remove:name=>classes.delete(name),contains:name=>classes.has(name)},setAttribute(){},addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),emit:(name,event={})=>{for(const fn of listeners.get(name)||[])fn(event);}};
 }
-function playback({enabled=true,rejectPlay=false,withEngine=false,twoPhase=false}={}){
+function playback({enabled=true,rejectPlay=false,preview=false,twoPhase=false}={}){
  const listeners=new Map(),nodes=Object.fromEntries(['novvy-video-outro','novvy-outro-video','novvy-outro-sound','novvy-outro-play','novvy-outro-countdown','reset'].map(id=>[id,node()]));
  const video=nodes['novvy-outro-video'];
- let plays=0,opens=0,resets=0,pauses=0,cards=0,engineClicks=0;const buzzes=[];
+ const clicks=[];let fallbacks=0;let plays=0,resets=0,pauses=0;const buzzes=[];
  const timers=[],delays=[];
  video.currentTime=0;video.paused=true;video.muted=false;
  video.play=()=>{plays++;video.paused=rejectPlay;return rejectPlay?Promise.reject(new Error('blocked')):Promise.resolve();};
  video.pause=()=>{video.paused=true;pauses++;};
  nodes.reset.click=()=>resets++;
  const document={hidden:false,readyState:'complete',getElementById:id=>nodes[id]||null,addEventListener:(name,fn)=>listeners.set('document:'+name,[...(listeners.get('document:'+name)||[]),fn]),createElement:()=>node(),head:null,body:{appendChild:el=>{if(el.id==='downloadBtn')nodes['downloadBtn']=el;}}};
- const window={__novvyOutroEnabled:enabled,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,__novvyViewable:true,novvy:{open:()=>opens++,haptic:style=>buzzes.push(style)},showEndCard:()=>{cards++;},novvyHandleAdClick:withEngine?()=>{engineClicks++;opens++;}:undefined,addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}};
+ // 转化出口:统一 click API(记录 click_source/scene);preview 时退回裸兜底链。
+ const window={__novvyOutroEnabled:enabled,__novvyTwoPhase:twoPhase,__novvyBridgeVersion:1,__novvyViewable:true,novvy:{haptic:style=>buzzes.push(style)},NovvyPlayable:preview?undefined:{click:call=>{clicks.push(call||{});}},super_html:{download:()=>{fallbacks++;}},addEventListener:(name,fn)=>listeners.set(name,[...(listeners.get(name)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}};
  const sandbox={document,window,setTimeout:(fn,delay)=>{delays.push(delay);timers.push(fn);return timers.length-1;},clearTimeout:id=>{timers[id]=null;},CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
  vm.runInNewContext(bridgeSource,sandbox);
  if(enabled)vm.runInNewContext(fs.readFileSync(path.join(overlay,'outro/outro.js'),'utf8'),sandbox);
- return {nodes,document,video,window,timers,delays,buzzes,counts:()=>({plays,opens,resets,pauses,cards,engineClicks,buzzes:buzzes.length}),emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
+ return {nodes,document,video,window,timers,delays,buzzes,clicks:()=>clicks,counts:()=>({plays,resets,pauses,clicks:clicks.length,forced:clicks.filter(c=>c&&c.click_source==='forced_click_to_appstore').length,manual:clicks.filter(c=>c&&c.click_source==='cta_click').length,fallbacks,buzzes:buzzes.length}),emit:(name,detail)=>window.dispatchEvent({type:name,detail})};
 }
 // 片头覆盖层沙箱:intro.js 加载即进入生命周期(run(true) → playVideo),
 // 用可编程 duration/currentTime 驱动 timeupdate 验证倒计时。
@@ -53,7 +54,7 @@ const flush=()=>new Promise(resolve=>setImmediate(resolve));
 export default async function run(assert){
  const p=playback();
  assert.equal(p.counts().plays,0,'片尾在页面加载时不播放');
- assert.check(p.counts().cards===1,'无片头时加载即请服务亮出结算卡片');
+ assert.check(p.counts().clicks===0,'无片头时加载不转化，旧结算上报已退场');
  assert.check(p.window.__novvyCtaCardPhase==='bar','底部常驻卡自试玩开始亮出');
  p.emit('novvy:hud-progress',{percent:100,correct:270,total:270});
  assert.check(p.nodes['novvy-video-outro'].hidden&&p.counts().plays===0,'达到 100% 时等待完成效果，不提前播放');
@@ -68,11 +69,11 @@ export default async function run(assert){
  assert.check(p.video.muted&&sound.innerHTML===soundOff,'点击片尾声音按钮静音并切换为片头同款静音图标');
  sound.emit('click',{stopPropagation(){}});
  assert.check(!p.video.muted&&sound.innerHTML===soundOn,'再次点击恢复声音和图标');
- assert.equal([p.counts().opens,p.timers.length],[1,0],'胜利即第一个 playable 完成操作转化，片尾播放前不安排重开');
- assert.equal(p.counts().cards,1,'结算卡片自试玩开始常驻亮出');
+ assert.equal([p.counts().clicks,p.timers.length],[1,0],'胜利即第一个 playable 完成操作转化，片尾播放前不安排重开');
+ assert.equal(p.clicks()[0].scene,'victory','胜利转化携带触发时机 scene，卡片自试玩起常驻亮出');
  p.video.currentTime=4.9;p.video.emit('timeupdate');
  p.video.currentTime=5;p.video.emit('timeupdate');
- assert.equal(p.counts().opens,1,'片尾播放中经闩锁不重复转化');
+ assert.equal(p.counts().clicks,1,'片尾播放中经闩锁不重复转化');
  p.emit('novvy:victory');await flush();
  assert.equal(p.counts().plays,1,'重复胜利事件不会重播或打断片尾');
  p.emit('novvy:viewablechange',{viewable:false});
@@ -85,53 +86,53 @@ export default async function run(assert){
  p.video.currentTime=10;p.video.ended=true;p.video.emit('ended');
  assert.check(!p.nodes['novvy-video-outro'].hidden&&p.video.paused,'片尾结束后保留最后一帧');
  assert.check(sound.hidden,'片尾结束后隐藏声音按钮');
- assert.equal([p.counts().opens,p.counts().resets,p.delays.length],[1,0,0],'片尾结束后不再安排延迟跳转，转化已在完成操作时发生');
+ assert.equal([p.counts().clicks,p.counts().resets,p.delays.length],[1,0,0],'片尾结束后不再安排延迟跳转，转化已在完成操作时发生');
  p.emit('novvy:viewablechange',{viewable:false});p.emit('novvy:viewablechange',{viewable:true});
  p.document.hidden=true;p.emit('document:visibilitychange');p.document.hidden=false;p.emit('document:visibilitychange');
  assert.check(!p.nodes['novvy-video-outro'].hidden&&p.video.currentTime===10&&p.counts().resets===0,'从 CTA 返回后停留片尾最后一帧，不重开');
- p.video.emit('ended');assert.equal(p.counts().opens,1,'重复结束事件只转化一次');
+ p.video.emit('ended');assert.equal(p.counts().clicks,1,'重复结束事件只转化一次');
  const bare=playback({enabled:false});bare.emit('novvy:victory');
- assert.equal([bare.counts().opens,bare.counts().cards,bare.timers.length],[1,1,0],'无片尾时胜利即主动转化，卡片自试玩起常驻亮出');
+ assert.equal([bare.counts().clicks,bare.timers.length],[1,0],'无片尾时胜利即主动转化，卡片自试玩起常驻亮出');
  bare.emit('novvy:viewablechange',{viewable:true});bare.emit('novvy:victory');
- assert.equal([bare.counts().opens,bare.counts().resets],[1,0],'终态之后返回与重复胜利不再重复跳转，也没有重开链路');
- const engine=playback({enabled:false,withEngine:true});engine.emit('novvy:victory');
- assert.equal([engine.counts().cards,engine.counts().engineClicks,engine.counts().opens],[1,1,1],'注入引擎在场时终态转化经引擎统一上报并跳转，不重复调用');
- const cardEngine=playback({enabled:false,withEngine:true});cardEngine.emit('novvy:cta-interact');
- assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[1,1],'卡片点击经桥统一转化入口，一次点击一次转化');
+ assert.equal([bare.counts().clicks,bare.counts().resets],[1,0],'终态之后返回与重复胜利不再重复跳转，也没有重开链路');
+ const engine=playback({enabled:false});engine.emit('novvy:victory');
+ assert.equal([engine.counts().clicks,engine.counts().fallbacks],[1,0],'统一 click API 在场时终态转化只发一次 click，不落入裸兜底');
+ const cardEngine=playback({enabled:false});cardEngine.emit('novvy:cta-interact');
+ assert.equal([cardEngine.counts().manual,cardEngine.counts().fallbacks],[1,0],'卡片点击经统一 click API，来源为 cta_click');
  cardEngine.emit('novvy:cta-interact');
- assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[2,2],'卡片每次手动点击都可请求转化');
+ assert.equal([cardEngine.counts().manual,cardEngine.counts().fallbacks],[2,0],'卡片每次手动点击都可请求转化');
  cardEngine.emit('novvy:victory');cardEngine.emit('novvy:playable-complete');
- assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[3,3],'手动点击不消耗自动时机，胜利与完成仍只自动转化一次');
+ assert.equal([cardEngine.counts().manual,cardEngine.counts().forced],[2,1],'手动点击不消耗自动时机，胜利与完成仍只自动转化一次');
  cardEngine.emit('novvy:cta-interact');
- assert.equal([cardEngine.counts().engineClicks,cardEngine.counts().opens],[4,4],'自动完成后仍可手动点击转化');
+ assert.equal(cardEngine.counts().manual,3,'自动完成后仍可手动点击转化');
  const interrupted=playback();interrupted.emit('novvy:victory');await flush();interrupted.video.emit('ended');
- assert.check(interrupted.counts().cards>=1,'短于 5 秒的片尾结束时也显露结算卡片');
- assert.equal([interrupted.counts().opens,interrupted.timers.length],[1,0],'短片尾路径同样完成操作即转化，无遗留定时器');
+ assert.check(interrupted.window.__novvyCtaCardPhase==='bar','短于 5 秒的片尾结束时也显露结算卡片');
+ assert.equal([interrupted.counts().clicks,interrupted.timers.length],[1,0],'短片尾路径同样完成操作即转化，无遗留定时器');
  const blocked=playback({rejectPlay:true});blocked.emit('novvy:victory');await flush();
  assert.check(blocked.video.muted&&!blocked.nodes['novvy-outro-play'].hidden,'自动播放被拒绝时提供播放按钮');
  assert.equal(blocked.nodes['novvy-outro-sound'].innerHTML,soundOff,'自动播放退回静音时同步显示静音图标');
- assert.equal(blocked.counts().opens,1,'播放被阻止时完成操作同样立即转化');
+ assert.equal(blocked.counts().clicks,1,'播放被阻止时完成操作同样立即转化');
  blocked.video.emit('error');
- assert.check(blocked.nodes['novvy-video-outro'].hidden&&blocked.counts().opens===1,'视频解码错误时退出片尾并继续完成流程');
+ assert.check(blocked.nodes['novvy-video-outro'].hidden&&blocked.counts().clicks===1,'视频解码错误时退出片尾并继续完成流程');
  const two=playback({twoPhase:true});
- assert.check(two.counts().cards===0,'双 playable：加载不亮服务结算上报，推迟到完成操作');
+ assert.check(two.counts().clicks===0,'双 playable：加载不转化，推迟到完成操作');
  two.emit('novvy:victory');await flush();
  assert.check(!two.nodes['novvy-video-outro'].hidden&&two.counts().plays===1,'双 playable：第一关胜利仍触发片尾');
  two.video.ended=true;two.video.emit('ended');
- assert.equal([two.counts().opens,two.timers.length],[1,0],'双 playable：第一关完成即转化，片尾播完不安排重复跳转');
+ assert.equal([two.counts().clicks,two.timers.length],[1,0],'双 playable：第一关完成即转化，片尾播完不安排重复跳转');
  two.emit('novvy:hud-progress',{percent:5,correct:1,total:20});
  two.emit('novvy:victory');await flush();
  assert.equal(two.counts().plays,1,'双 playable：第二关进度回落与胜利不重播片尾');
  two.emit('novvy:cta-moment');
- assert.equal([two.counts().cards,two.counts().opens],[0,1],'双 playable：同关内 CTA 时刻被第一关完成转化覆盖，不重复');
+ assert.equal(two.counts().clicks,1,'双 playable：同关内 CTA 时刻被第一关完成转化覆盖，不重复');
  assert.check(two.window.__novvyCtaCardPhase==='bar','双 playable：第一关内卡片保持底部常驻不升级接管');
  two.emit('novvy:phase2-start');
  assert.check(two.nodes['novvy-video-outro'].hidden,'双 playable：第二关就绪后收起片尾最后一帧');
  two.emit('novvy:cta-moment');
- assert.equal([two.counts().cards,two.counts().opens],[1,2],'双 playable：第二关触发步数的 CTA 时刻重新转化并首亮上报');
+ assert.equal(two.counts().clicks,2,'双 playable：第二关触发步数的 CTA 时刻重新转化');
  assert.check(two.window.__novvyCtaCardPhase==='takeover','双 playable：第二关 CTA 时刻卡片升级为全屏接管');
  two.emit('novvy:cta-moment');two.emit('novvy:victory');
- assert.equal([two.counts().cards,two.counts().opens],[1,2],'双 playable：第二关内重复时刻与胜利不三次跳转');
+ assert.equal(two.counts().clicks,2,'双 playable：第二关内重复时刻与胜利不三次跳转');
  const twoCd=playback({twoPhase:true});
  twoCd.emit('novvy:victory');await flush();
  twoCd.video.duration=10;

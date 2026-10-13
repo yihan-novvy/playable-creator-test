@@ -1,7 +1,10 @@
 /* 转化桥:把模板的转化时机翻译成结算卡片的显示/跳转时机。
-   只使用落地页注入引擎的公开导出 —— window.showEndCard(服务侧保留的
-   结算时刻上报,零 UI)与 window.novvyHandleAdClick(统一转化入口,自带
-   上报与防重护栏)。不触碰服务注入的任何 DOM,不引用任何埋点 API。
+   转化只走打包侧新事件规范(docs/original-zip-required-event-integration.md §6)
+   的统一入口 window.NovvyPlayable.click —— click_source 区分主动/被动跳转:
+   手动点击 CTA 区域(novvy:cta-interact)= cta_click;素材控制自行跳转
+   (完成/胜利/CTA 时刻/片尾结束/回访每击等自动时机)= forced_click_to_appstore;
+   scene 带触发时机名。SDK 缺失(编辑器预览)时退回裸兜底链;旧落地页注入引擎的
+   转化与结算上报契约已整体退场,不再引用。
    语义约定:卡片 DOM 由模板随包自带(core/overlays/cta-card,服务零 UI
    侵入契约),桥只派发 novvy:cta-card 显示事件 —— 单 playable 在第一次
    进入试玩时亮出底部常驻条并全程常驻;双 playable(__novvyTwoPhase)第一关
@@ -17,20 +20,15 @@
    语义搬到无遮罩形态,连点由 SDK 冷却护栏去重);未注入或 true = 保持遮罩。
    本文件由各模板插件共享注入;注入时必须把 __CTA_URL_KEY__ 替换成模板
    自己的 CTA URL 全局名(如 __COLOREVER_CTA_URL__),SDK 包内该值恒为空 ——
-   落地页由 SDK 取 adm.clicktrack,URL 只服务编辑器预览的裸兜底链。 */
+   跳转由 NovvyPlayable.click 统一上送,URL 只服务编辑器预览的裸兜底链。 */
 (function () {
   var STORE_URL = window.__CTA_URL_KEY__ || '';
   /* 结束遮罩开关:仅显式注入 false 时关闭(colorever 的 cta.endMask);
      未注入的模板/存量包保持全屏接管现状。 */
   var END_MASK = window.__NOVVY_CTA_END_MASK__ !== false;
 
-  /* 跳转兜底链(仅编辑器预览会走到):与旧 cta.js 同链。
-     Novvy SDK 桥只发点击信号,落地页由 SDK 取 adm.clicktrack,不传 URL。 */
+  /* 跳转兜底链(仅编辑器预览会走到):与旧 cta.js 同链,只服务预览的裸跳转。 */
   function openStoreFallback() {
-    if (window.__novvyBridgeVersion >= 1 && window.novvy && typeof window.novvy.open === 'function') {
-      window.novvy.open();
-      return;
-    }
     if (window.super_html && typeof window.super_html.download === 'function') {
       window.super_html.download(STORE_URL);
       return;
@@ -45,10 +43,15 @@
   function convert(reason) {
     /* 测试可见性:预览环境无法真正跳转,控制台标出每次转化触发与来源。 */
     console.log('[NovvyCTA] CTA 转化触发 → 跳转商店 (' + (reason || 'unknown') + ')');
-    /* 注入引擎在场:走统一 primary_cta 上报 + 跳转 + 防重/冷却护栏;
+    /* 注入桥在场:走统一 click API,click_source 区分主动/被动跳转(doc §6);
        预览环境:裸兜底链。 */
-    if (typeof window.novvyHandleAdClick === 'function') {
-      try { window.novvyHandleAdClick(); } catch (e) {}
+    if (window.NovvyPlayable && typeof window.NovvyPlayable.click === 'function') {
+      try {
+        window.NovvyPlayable.click({
+          click_source: reason === 'cta-card' ? 'cta_click' : 'forced_click_to_appstore',
+          scene: reason || 'unknown'
+        });
+      } catch (e) {}
       return;
     }
     openStoreFallback();
@@ -92,15 +95,10 @@
     }, true);
   }
 
-  /* 试玩开始:亮出底部常驻卡(双 playable 第一关同样亮);随后请服务做
-     结算时刻上报(公开 API;预览环境无此导出,自动降级)。双 playable 的
-     showEndCard 与主动跳转仍推迟到 CTA 时刻(引擎 novvy:cta-moment)。 */
+  /* 试玩开始:亮出底部常驻卡(双 playable 第一关同样亮)。双 playable 的
+     主动跳转推迟到 CTA 时刻(引擎 novvy:cta-moment)。 */
   function playableStarted() {
     showCard('bar');
-    if (window.__novvyTwoPhase === true) return;
-    if (typeof window.showEndCard === 'function') {
-      try { window.showEndCard(); } catch (e) {}
-    }
   }
 
   /* —— 胜利/片尾的自动转化时序(自旧 cta.js 迁移;卡片已由 playableStarted
@@ -180,9 +178,6 @@
     if (autoConverted) return;
     autoConverted = true;
     if (window.__novvyTwoPhase === true && END_MASK) showCard('takeover');
-    if (typeof window.showEndCard === 'function') {
-      try { window.showEndCard(); } catch (e) {}
-    }
     convert('cta-moment');
   });
 

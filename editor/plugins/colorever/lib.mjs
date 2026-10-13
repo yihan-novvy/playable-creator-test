@@ -111,10 +111,19 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const wsMedia = { ...media, ctaIcon: null };
   const outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
   const phase2 = await coloreverPhase2(root, config, template, outroEnabled);
+  // 新事件规范(docs/original-zip-required-event-integration.md §2):段链打包时
+  // 定稿 —— intro/outro 各算独立 video 段、第二关算独立 playable 段;字面量
+  // 注入供静态预检与段桥(__novvyStageChain__)使用。
+  const stageChain = [...(media.introVideo ? ['video'] : []), 'playable', ...(outroEnabled ? ['video'] : []), ...(phase2 ? ['playable'] : [])];
   // Keep the title shell available when only the second playable needs a title.
   const firstTitleEnabled = config?.hud?.titleEnabled ?? [config?.hud?.titleLine1, config?.hud?.titleLine2].some(value => String(value ?? '').trim());
   const overlayConfig = phase2 ? { ...config, hud: { ...config.hud, titleEnabled: true, titleLine1: firstTitleEnabled ? config?.hud?.titleLine1 : '', titleLine2: firstTitleEnabled ? config?.hud?.titleLine2 : '' } } : config;
   const injection = buildWsOverlayInjection({ overlaysRoot: overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template, config: overlayConfig, media: wsMedia, optionalHudPortraits: true, analytics: false });
+  // 段桥必须最先执行(规范 §2:先声明段链与首段 setStage,再启动首段;媒体
+  // 注册亦须赶在各段播放之前):unshift 到 bodyScripts 首位,先于 intro.js
+  // 求值与 defer 的 game.js。
+  const playableBridgeFile = fileURLToPath(new URL('../../core/overlays/playable-bridge/playable-bridge.js', import.meta.url));
+  injection.bodyScripts.unshift(`<script data-novvy-playable-bridge>${fs.readFileSync(playableBridgeFile, 'utf8')}</script>`);
   // 自有下载卡随包(服务零 UI 侵入契约:结算 UI 由素材自带):底部常驻条 +
   // 双 playable CTA 时刻的全屏接管,由桥的 novvy:cta-card 事件驱动显示。
   // 图标是插件资产(overlays/cta/icon.png),预览走 /plugins/ 静态路由,
@@ -127,10 +136,9 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
     injection.bodyDom.push(card.dom);
     injection.bodyScripts.push(card.script);
   }
-  // 转化桥永远注入:胜利/片尾/CTA 时刻的转化时序 + 卡片显示事件的派发源 +
-  // 服务结算时刻上报(showEndCard)。桥文件在 core/overlays 共享(colorever/
-  // dragon-cube 同一份),占位符在注入时替换成本模板的 URL 变量名;排在卡片
-  // 脚本之后,保证亮卡事件不会先于卡片监听注册。
+  // 转化桥永远注入:胜利/片尾/CTA 时刻的转化时序 + 卡片显示事件的派发源。
+  // 桥文件在 core/overlays 共享(colorever/dragon-cube 同一份),占位符在注入时
+  // 替换成本模板的 URL 变量名;排在卡片脚本之后,保证亮卡事件不会先于卡片监听注册。
   const bridgeFile = fileURLToPath(new URL('../../core/overlays/cta-bridge/cta-bridge.js', import.meta.url));
   const bridge = fs.readFileSync(bridgeFile, 'utf8').replaceAll('__CTA_URL_KEY__', '__COLOREVER_CTA_URL__');
   injection.bodyScripts.push(`<script data-novvy-cta-bridge>${bridge}</script>`);
@@ -167,7 +175,7 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const overlayColors = `--colorever-progress-text:${color('progressTextColor','#ffffff')};--colorever-progress-fill:${color('progressFillColor','#ffd91e')};--colorever-progress-track:${color('progressTrackColor','#b7834a')}`;
   injection.headStyles.push(`<style data-colorever-progress>.app{${nativeColors}}.app>.hud{top:15%;color:var(--colorever-progress-text)}.app progress{accent-color:var(--colorever-progress-fill);background:var(--colorever-progress-track)}.app progress::-webkit-progress-bar{background:var(--colorever-progress-track)}.app progress::-webkit-progress-value{background:var(--colorever-progress-fill)}.app progress::-moz-progress-bar{background:var(--colorever-progress-fill)}#novvy-training-hud{${overlayColors}}</style>`);
   const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root:not(.novvy-phase2),:root:not(.novvy-phase2) body,:root:not(.novvy-phase2) .app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
-  const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__COLOREVER_CTA_POLICY__=${inline(ctaPolicy)};window.__COLOREVER_PHASE2__=${inline(phase2)};</script>`;
+  const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__novvyStageChain__=${inline(stageChain)};window.__COLOREVER_CTA_POLICY__=${inline(ctaPolicy)};window.__COLOREVER_PHASE2__=${inline(phase2)};</script>`;
   html = html.replace('</head>', () => `${[...injection.headStyles, styles, ...injection.headScripts].join('\n')}</head>`)
     .replace(SCRIPT, () => `${injection.uiScript}${data}${preview ? `<script src="${gameScriptUrl || `/templates/${template.id}/game/game.js`}" defer></script>` : SCRIPT}`)
     .replace('<body>', () => `<body>${injection.bodyDom.join('\n')}`)

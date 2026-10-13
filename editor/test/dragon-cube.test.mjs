@@ -36,6 +36,12 @@ export default async function run(assert) {
   assert.check(!preview.includes('data-novvy-cta>') && preview.includes('id="novvy-cta-btn"') && preview.includes('data-novvy-cta-card'), '与 colorever 一样注入 core 下载卡，不注入 ws 旧卡片');
   assert.check(preview.includes('window.__NOVVY_CTA_END_MASK__=false'), '默认直接跳转，之后每次交互再次触发 CTA');
   assert.check(preview.indexOf('<script data-novvy-cta-card>') < preview.indexOf('<script data-novvy-cta-bridge>'), '卡片先监听，再由共享桥显示');
+  assert.check(preview.includes('data-novvy-playable-bridge') && preview.includes('window.__novvyStageChain__=["playable"]'), '段桥随包注入，默认单 playable 段链（新事件规范）');
+  assert.check(preview.indexOf('<script data-novvy-playable-bridge>') < preview.indexOf('<script data-novvy-cta-card>'), '段桥先于卡片与转化桥执行，先声明段链再启动首段');
+  const withIntro = dragonHtml({ root: templateRoot, template, level: dragonLevel(templateRoot, 1), config: { intro: { enabled: true }, outro: { enabled: true } }, media: { introVideo: 'tail-ad-video.mp4', outroVideo: 'outro-video.mp4', ctaIcon: 'app-icon.png' } }).html;
+  assert.check(withIntro.includes('window.__novvyStageChain__=["video","playable","video"]'), 'intro+outro 配置的段链含两段独立 video');
+  const noIntro = dragonHtml({ root: templateRoot, template, level: dragonLevel(templateRoot, 1), config: { outro: { enabled: true } }, media: { outroVideo: 'outro-video.mp4', ctaIcon: 'app-icon.png' } }).html;
+  assert.check(noIntro.includes('window.__novvyStageChain__=["playable","video"]'), '无 intro 时段链从 playable 段起');
   assert.check(preview.includes('min-height:calc(138px + env(safe-area-inset-bottom))'), '棋盘为底部卡片预留空间');
   assert.check(preview.includes('window.__novvyTwoPhase=false') && preview.includes('window.__DRAGON_CUBE_PHASE2__=null'), '默认配置无双 playable');
   assert.check(preview.includes('window.__DRAGON_CUBE_CTA_POLICY__={"mode":"complete","afterSteps":8}'), '默认第一关 CTA 策略注入');

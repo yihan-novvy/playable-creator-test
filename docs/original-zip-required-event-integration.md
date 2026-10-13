@@ -131,14 +131,13 @@ NovvyPlayable.endStage();
 
 | 值 | 含义 |
 |---|---|
-| `bottom_cta_card` | 真实底部卡片区域，包括背景、图标、文案和按钮 |
-| `other_area` | 明确来自底部卡片以外的下载入口 |
-| `unknown` | 无法识别来源；不能当成 other_area |
+| `cta_click` | 用户主动跳转：手动点击 CTA 区域（底部卡片，包括背景、图标、文案和按钮） |
+| `forced_click_to_appstore` | 被动跳转：素材控制自行跳转 —— 试玩完成、CTA 时刻、片尾播完等自动时机，以及转化后回访时用户触压屏幕（非点击下载入口）触发的再跳转 |
 
-DOM 方式：标记实际卡片容器，不能标整屏遮罩。
+DOM 方式：标记实际卡片容器，不能标整屏遮罩；标记后卡片区域内的点击归为 `cta_click`。
 
 ```html
-<div data-novvy-click-source="bottom_cta_card">
+<div data-novvy-click-source="cta_click">
   <button class="cta">立即下载</button>
 </div>
 ```
@@ -146,14 +145,19 @@ DOM 方式：标记实际卡片容器，不能标整屏遮罩。
 标准 `.cta` 按钮由注入桥绑定时，不再叠加第二套下载逻辑。自定义按钮、Canvas、异步操作或子页面显式调用：
 
 ```javascript
+// 用户点击下载入口：
 NovvyPlayable.click({
-  click_source: 'bottom_cta_card',
+  click_source: 'cta_click',
   scene: 'end_card'
 });
-// 其他入口将 click_source 改为 other_area。
+// 素材控制自行跳转（如试玩完成后主动跳商店）：
+NovvyPlayable.click({
+  click_source: 'forced_click_to_appstore',
+  scene: 'playable_complete'
+});
 ```
 
-要求：所有下载入口走统一 click API，不直接绕过它调用 `location.href` 等跳转；普通游戏操作不能调用 click API。一次真实下载动作只走一条路径，不能同时发送父页和子页点击。无法确定来源时传 unknown，不靠坐标猜测。
+要求：所有下载入口走统一 click API，不直接绕过它调用 `location.href` 等跳转；普通游戏操作不能调用 click API。一次真实下载动作只走一条路径，不能同时发送父页和子页点击。分不清主动与被动时不要编造来源。
 
 ## 7. iframe 与游戏引擎
 
