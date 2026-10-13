@@ -8,22 +8,26 @@
    和 defer 的 game.js 执行 —— 段链声明与首段 setStage 赶在首段播放前;媒体注册(doc §3)
    赶在该段切段监听之前。onStart 依赖 SDK 自动捕获不显式调用;素材无同段重玩,不提供
    endStage/onReplay。阶段下标 1 起,与 __novvyStageChain__ 一一对应:
-   ['video','playable','video','playable'] = intro → 试玩 → outro → 第二关。 */
+   ['video','playable','video','playable'] = intro → 试玩 → outro → 第二关。
+   命名约束:局部变量必须与全局同名( var NovvyPlayable = window.NovvyPlayable ),
+   调用点保持 NovvyPlayable.setStageList/setStage/onStep/onComplete 与
+   NovvyAnalytics.registerMedia 的字面签名 —— 打包侧静态预检按文档示例的
+   字面调用做文本匹配,别名化会让检查静默判"未发现调用"(测试有防回归断言)。 */
 (function () {
   var chain = window.__novvyStageChain__;
   if (!chain || !chain.length) return;
-  var playableApi = window.NovvyPlayable;
-  var analyticsApi = window.NovvyAnalytics;
+  var NovvyPlayable = window.NovvyPlayable;
+  var NovvyAnalytics = window.NovvyAnalytics;
 
   /* 切段:除首段外的每次切入都先 setStage 再继续,失败不阻断素材运行。 */
   function enter(index, type) {
-    if (!playableApi || typeof playableApi.setStage !== 'function') return;
-    try { playableApi.setStage(index, type); } catch (e) {}
+    if (!NovvyPlayable || typeof NovvyPlayable.setStage !== 'function') return;
+    try { NovvyPlayable.setStage(index, type); } catch (e) {}
   }
 
   function settle() {
-    if (!playableApi || typeof playableApi.onComplete !== 'function') return;
-    try { playableApi.onComplete({ result: 'win' }); } catch (e) {}
+    if (!NovvyPlayable || typeof NovvyPlayable.onComplete !== 'function') return;
+    try { NovvyPlayable.onComplete({ result: 'win' }); } catch (e) {}
   }
 
   /* 既有结构:chain = [intro?] playable [outro?] [phase2?]。阶段号 1 起:
@@ -38,16 +42,16 @@
   var phase2Index = outroIndex && chain[chain.length - 1] === 'playable' ? chain.length : 0;
 
   /* —— 启动:声明完整链路 + 首段切入 —— */
-  try { playableApi.setStageList(chain.slice()); } catch (e) {}
+  try { NovvyPlayable.setStageList(chain.slice()); } catch (e) {}
   enter(1, chain[0]);
 
   /* —— 媒体注册:标准 <video> 由 SDK 自动上报 media_* 事件(doc §3),
      注册赶在各自切段监听之前;元素缺失(intro/outro 未启用)自然跳过 —— */
-  if (analyticsApi && typeof analyticsApi.registerMedia === 'function') {
+  if (NovvyAnalytics && typeof NovvyAnalytics.registerMedia === 'function') {
     var introVideo = document.getElementById('novvy-intro-video');
     var outroVideo = document.getElementById('novvy-outro-video');
-    try { if (introVideo) analyticsApi.registerMedia(introVideo, { name: 'intro_video' }); } catch (e) {}
-    try { if (outroVideo) analyticsApi.registerMedia(outroVideo, { name: 'outro_video' }); } catch (e) {}
+    try { if (introVideo) NovvyAnalytics.registerMedia(introVideo, { name: 'intro_video' }); } catch (e) {}
+    try { if (outroVideo) NovvyAnalytics.registerMedia(outroVideo, { name: 'outro_video' }); } catch (e) {}
   }
 
   /* —— 有效步骤与真实进度(doc §4):hud-progress 每次交互都发(colorever 系
@@ -60,8 +64,8 @@
     if (typeof percent !== 'number' || !(percent > seenPercent) || percent > 100) return;
     seenPercent = percent;
     step += 1;
-    if (playableApi && typeof playableApi.onStep === 'function') {
-      try { playableApi.onStep(step, { progress: percent }); } catch (e) {}
+    if (NovvyPlayable && typeof NovvyPlayable.onStep === 'function') {
+      try { NovvyPlayable.onStep(step, { progress: percent }); } catch (e) {}
     }
   });
 

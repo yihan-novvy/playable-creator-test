@@ -105,6 +105,11 @@ export default async function run(assert){
  }
  const noVideo=bridgeRun({chain:['playable'],introVideo:false,outroVideo:false});
  assert.check(!noVideo.calls.some(([name])=>name==='registerMedia'),'未启用的视频段不注册媒体');
+ // 静态预检线索:桥源码必须按文档字面签名直呼 API,不得别名化 —— 打包侧按
+ // 文本匹配找调用线索,别名(如 var api = window.NovvyPlayable)会静默判"未发现"。
+ for(const clue of ['NovvyPlayable.setStageList(','NovvyPlayable.setStage(','NovvyPlayable.onStep(','NovvyPlayable.onComplete(','NovvyAnalytics.registerMedia(']){
+  assert.check(source.includes(clue),`静态预检字面调用保留：${clue}`);
+ }
  // 三个插件 lib.mjs 的接线:段桥 unshift 到 bodyScripts 首位、段链字面量注入
  // data 脚本(静态预检可见的调用线索)。
  for(const plugin of ['colorever','colorever-new','dragon-cube']){
