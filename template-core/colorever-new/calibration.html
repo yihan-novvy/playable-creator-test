@@ -1,1 +1,18 @@
-<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>方珠材质校准</title><style>body{margin:0;background:#dadde1;font:16px system-ui;color:#222}main{max-width:560px;margin:12px auto;padding:16px}h1{font-size:23px;margin:0 0 8px}p{margin:0 0 16px;color:#555}canvas{display:block;width:100%;aspect-ratio:1;background:#dedfe2;border-radius:12px}a{display:inline-block;margin-top:12px;color:#345}</style><main><h1>方珠材质校准</h1><p>与主拼图共用模型、材质和灯光。放大检查平顶、窄倒角、局部反射及同色凹槽。</p><canvas id="study"></canvas><a href="/">返回完整拼图</a></main><script type="module" src="/src/tile-calibration.js"></script></html>
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>珠子质感对照</title>
+<style>
+body{margin:0;background:#fff9ed;font:15px system-ui;color:#25364d}main{max-width:920px;margin:24px auto;padding:20px}h1{font-size:25px;margin:0 0 10px}h2{font-size:16px;margin:24px 0 10px}p{margin:0 0 18px;color:#6c7075;line-height:1.6}.reference,.labels{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}.chip{position:relative;overflow:hidden;aspect-ratio:1;border-radius:12px;background:#fff9ed}.chip img{position:absolute;width:2239.286%;max-width:none;left:calc(var(--x) * -100% / 56);top:calc(var(--y) * -100% / 56)}.labels{text-align:center;color:#6c7075;margin:8px 0}canvas{display:block;width:100%;aspect-ratio:4/1;background:#fff9ed}#picture{aspect-ratio:1;border:5px solid #edc3a8;border-radius:30px;box-sizing:border-box;background:#fffdf2}a{display:inline-block;margin-top:20px;color:#345d81}@media(max-width:600px){main{padding:12px}.reference,.labels{gap:8px}h1{font-size:21px}}
+</style></head>
+<body><main><h1>珠子质感对照</h1><p>对照参考图的红、黄、蓝、深蓝珠子，检查本色亮面、圆角和细反光。</p>
+<h2>效果图参考</h2><div class="reference">
+<div class="chip" style="--x:599;--y:205"><img src="/docs/gem-house-reference.png" alt="参考红色珠子"></div>
+<div class="chip" style="--x:453;--y:678"><img src="/docs/gem-house-reference.png" alt="参考黄色珠子"></div>
+<div class="chip" style="--x:252;--y:762"><img src="/docs/gem-house-reference.png" alt="参考蓝色珠子"></div>
+<div class="chip" style="--x:599;--y:62"><img src="/docs/gem-house-reference.png" alt="参考深蓝珠子"></div>
+</div><div class="labels"><span>红色</span><span>黄色</span><span>蓝色</span><span>深蓝</span></div>
+<h2>当前模板 · 实时渲染</h2><canvas id="study" aria-label="四种颜色的实际模板珠子"></canvas>
+<h2>珠子移走后的空槽</h2><canvas id="empty-study" aria-label="四种颜色的空容器凹槽"></canvas>
+<h2>整幅房子 · 放大预览</h2><canvas id="picture" aria-label="房子图案的实际珠子渲染"></canvas>
+<a href="/api/patterns/gem-house/preview?completed=1&amp;renderer=new">查看游戏模板中的效果</a>
+</main><script type="module" src="/src/tile-calibration.js"></script></body></html>

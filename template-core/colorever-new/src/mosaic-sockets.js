@@ -11,13 +11,14 @@ const recessFunctions=`
   }
   vec3 recessColor(vec2 p,float radius,float distanceToEdge,vec3 targetColor){
     float inset=-distanceToEdge;
-    float wall=exp(-pow((inset-.035)/.085,2.));
+    float wall=exp(-pow((inset-.035)/.095,2.));
     vec2 q=abs(p)-vec2(.5-radius),edgeNormal=max(q,0.);
     if(length(edgeNormal)<.00001)edgeNormal=abs(p.y)>abs(p.x)?vec2(0.,sign(p.y)):vec2(sign(p.x),0.);
     else edgeNormal=normalize(edgeNormal)*sign(p);
     float upperLeft=clamp(.5+.5*(edgeNormal.y-edgeNormal.x),0.,1.);
-    vec3 color=targetColor*(.88-wall*(.06+.30*upperLeft));
-    return mix(color,mix(targetColor,vec3(1.),.055),wall*(1.-upperLeft)*.40);
+    float floorShadow=smoothstep(.08,.30,inset)*clamp(.5+p.y,0.,1.);
+    vec3 color=targetColor*(.86-.06*floorShadow-wall*(.08+.40*upperLeft));
+    return mix(color,mix(targetColor,vec3(1.),.055),wall*(1.-upperLeft)*.44);
   }`;
 
 // A continuous rounded inner wall uses the pocket's own color. Soft shading

@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "8e654c39ff3ac3354818b9a0917904580797baddbb154890e1c5f2bf3b6992f3",
+  "engineSha256": "bbbf5d4041177df73e262e5c3d6e094a8d211eb5c0c975affa82f124dd0a81bc",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
   "patterns": [
@@ -325,6 +325,13 @@
       "description": "参考衣服钉子珠子图案：银白钉杆、连贯铜棕主体和米金色弧形纹理，4 色纯珠子图案",
       "level": "roast-meat.json",
       "templateSha256": "44b0eee0c2bf87a431291fcf567e1855fd2a88590813756fabb47d813638c8ad"
+    },
+    {
+      "id": "gem-house",
+      "name": "红顶金墙小屋",
+      "description": "25×25 粗网格、7 色宝石：珊瑚红三角屋顶、金黄墙体、奶白十字窗框与蓝色大窗、暖棕中门，搭配连续深蓝轮廓和蓝色底边。",
+      "level": "gem-house.json",
+      "templateSha256": "2e9f542407cf33a7303de9f66d819086b0c42a8b37b57a4958ac80f9af6516be"
     }
   ]
 }

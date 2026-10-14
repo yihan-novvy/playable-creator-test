@@ -385,5 +385,19 @@
     "description": "参考金色爱心盾牌：左右明暗金色盾面、双层亮框与中央饱满红色爱心，保留对称肩部和尖底",
     "level": "heart-gold-shield.json",
     "module": "heart-gold-shield.js"
+  },
+  {
+    "id": "roast-meat",
+    "name": "衣服钉子",
+    "description": "参考衣服钉子珠子图案：银白钉杆、连贯铜棕主体和米金色弧形纹理，4 色纯珠子图案",
+    "level": "roast-meat.json",
+    "module": "roast-meat.js"
+  },
+  {
+    "id": "gem-house",
+    "name": "红顶金墙小屋",
+    "description": "25×25 粗网格、7 色宝石：珊瑚红三角屋顶、金黄墙体、奶白十字窗框与蓝色大窗、暖棕中门，搭配连续深蓝轮廓和蓝色底边。",
+    "level": "gem-house.json",
+    "module": "gem-house.js"
   }
 ]
