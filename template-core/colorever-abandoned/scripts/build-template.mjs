@@ -47,7 +47,7 @@ await fs.writeFile(path.join(out,'patterns/catalog.json'),JSON.stringify(catalog
 // 游戏侧契约清单：plugin/editor 只经 manifest 消费图案与常量，不猜游戏内部路径。
 const {version}=JSON.parse(await fs.readFile(path.join(root,'package.json'),'utf8'));
 const manifest={
-  id:'colorever',
+  id:'colorever-abandoned',
   name:'Colorever',
   version,
   entry:'game/index.html',

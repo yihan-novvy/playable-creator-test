@@ -15,6 +15,3 @@ test('Curly portrait openings conserve every bead and replay to completion in al
   assert.ok(puzzle.complete);puzzle.reset();assert.deepEqual(puzzle.board,level.opening);
  }
 });
-test('Curly portrait source data and decoration are identical in both renderers',()=>{
- for(const file of ['curly-portrait.json','curly-portrait.js'])assert.ok(fs.readFileSync(new URL('../src/patterns/'+file,import.meta.url)).equals(fs.readFileSync(new URL('../../colorever/src/patterns/'+file,import.meta.url))));
-});

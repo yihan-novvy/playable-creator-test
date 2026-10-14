@@ -41,9 +41,8 @@ export function createAssert() {
 export const TESTS = [
   { name: 'colorever-new', file: path.join(TEST_DIR, 'colorever-new.test.mjs') },
   { name: 'fixed-viewport', file: path.join(TEST_DIR, 'fixed-viewport.test.mjs') },
-  { name: 'colorever-music', file: path.join(TEST_DIR, 'colorever-music.test.mjs') },
-  { name: 'colorever', file: path.join(TEST_DIR, 'colorever.test.mjs') },
-  { name: 'colorever-outro', file: path.join(TEST_DIR, 'colorever-outro.test.mjs') },
+  // 旧模板已废弃改名 colorever-abandoned,其专属套件(colorever/colorever-music/
+  // colorever-outro)退出常规套件;文件保留,需要时可按名单独运行。
   { name: 'playable-bridge', file: path.join(TEST_DIR, 'playable-bridge.test.mjs') },
   { name: 'pattern-colors', file: path.join(TEST_DIR, 'pattern-colors.test.mjs') },
   { name: 'editor-run-regressions', file: path.join(TEST_DIR, 'editor-run-regressions.test.mjs') },

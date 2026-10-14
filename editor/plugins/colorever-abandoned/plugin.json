@@ -1,7 +1,7 @@
 {
-  "id": "colorever",
+  "id": "colorever-abandoned",
   "name": "Colorever New（方形珠子）",
-  "template": "colorever",
+  "template": "colorever-abandoned",
   "workbench": "colorever-new",
   "steps": [
     { "id": "intro", "runner": "core:intro" },

@@ -15,6 +15,3 @@ test('Yellow lightning openings conserve every bead and replay to completion in 
   assert.ok(puzzle.complete);puzzle.reset();assert.deepEqual(puzzle.board,level.opening);
  }
 });
-test('Yellow lightning source data and decoration are identical in both renderers',()=>{
- for(const file of ['yellow-lightning.json','yellow-lightning.js'])assert.ok(fs.readFileSync(new URL('../src/patterns/'+file,import.meta.url)).equals(fs.readFileSync(new URL('../../colorever/src/patterns/'+file,import.meta.url))));
-});

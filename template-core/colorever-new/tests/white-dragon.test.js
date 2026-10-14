@@ -15,6 +15,3 @@ test('White dragon openings conserve every bead and replay to completion in all 
   assert.ok(puzzle.complete);puzzle.reset();assert.deepEqual(puzzle.board,level.opening);
  }
 });
-test('White dragon source data and decoration are identical in both renderers',()=>{
- for(const file of ['white-dragon.json','white-dragon.js'])assert.ok(fs.readFileSync(new URL('../src/patterns/'+file,import.meta.url)).equals(fs.readFileSync(new URL('../../colorever/src/patterns/'+file,import.meta.url))));
-});

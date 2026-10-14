@@ -130,7 +130,8 @@ async function handleApi(req, res, url) {
   }
 
   if(pathname==='/api/colorever-options'&&req.method==='GET'){
-    const templateId=url.searchParams.get('templateId') || 'colorever';
+    // 旧 colorever 已废弃改名:遗留端点的无参默认指向仍在线的新模板。
+    const templateId=url.searchParams.get('templateId') || 'colorever-new';
     const linked=isColoreverTemplate(templateId) ? templateById(templateId) : null;
     if(!linked)return sendError(res,404,'未知模板');
     const lib=await getLib(linked.plugin);

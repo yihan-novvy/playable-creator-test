@@ -112,7 +112,7 @@ export default async function run(assert){
  }
  // 三个插件 lib.mjs 的接线:段桥 unshift 到 bodyScripts 首位、段链字面量注入
  // data 脚本(静态预检可见的调用线索)。
- for(const plugin of ['colorever','colorever-new','dragon-cube']){
+ for(const plugin of ['colorever-new','colorever-abandoned','dragon-cube']){
   const lib=fs.readFileSync(path.join(root,`editor/plugins/${plugin}/lib.mjs`),'utf8');
   assert.check(lib.includes('data-novvy-playable-bridge')&&lib.indexOf('bodyScripts.unshift')<lib.indexOf('data-novvy-cta-bridge'),`${plugin}: 段桥先于转化桥注入 bodyScripts 首位`);
   assert.check(lib.includes('window.__novvyStageChain__='),`${plugin}: 段链字面量进打包/预览文档`);
