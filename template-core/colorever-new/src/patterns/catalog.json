@@ -410,7 +410,7 @@
   {
     "id": "liangshuo-2100421714782785537-1-2",
     "name": "liangshuo-2100421714782785537-1-2",
-    "description": "36×37 网格、8 色珠子：前后错开的四根床柱、红色垂幔与奶白弧形帘边、金边拱形床头、白边双蓝枕、向前展开的红色床面，以及带中央金色徽饰与两侧卷纹的木质前床板；保留奶油底色与蓝框。",
+    "description": "36×37 网格、8 色珠子：保留原来的正面角度，收短红金床幔、纤细木质床柱和低矮床头，搭配并排双蓝枕、折叠奶白床单、长红被面、床垫厚边与低床尾；柔和红金配色，保留奶油底色和蓝框。",
     "level": "liangshuo-2100421714782785537-1-2.json",
     "module": "liangshuo-2100421714782785537-1-2.js"
   },
@@ -424,14 +424,14 @@
   {
     "id": "liangshuo-2104824229023064066-2-1",
     "name": "liangshuo-2104824229023064066-2-1",
-    "description": "40×40 网格、8 色珠子：深蓝宫殿中的银灰尖拱宝座、蓝色软垫与金色钮饰、顶部金色鸢尾纹章、两侧红色垂幔和三头金烛台，以及向前展开的蓝色金边阶梯地毯；合并细碎金属纹理，保留清晰对称轮廓。",
+    "description": "40×40 网格、6 色珠子：仅保留放大的银灰尖拱王座、宝蓝靠背、扶手、座垫与椅脚，点缀少量金色钮饰；深蓝纯色背景，省去烛台、红帘、纹章与阶梯。",
     "level": "liangshuo-2104824229023064066-2-1.json",
     "module": "liangshuo-2104824229023064066-2-1.js"
   },
   {
     "id": "liangshuo-2104779750324973569-2-1",
     "name": "liangshuo-2104779750324973569-2-1",
-    "description": "25×25 网格、6 色珠子：保留原版红裙的双肩带、心形领口、展开肩部、收窄腰线、长裙摆与主要纵向裙褶；鲜红、珊瑚红、樱桃红和酒红组成连续色块，搭配奶油底色与宝蓝边框。",
+    "description": "30×40 网格、6 色珠子：参考红裙重绘双细肩带、心形领口、展开短袖、收腰及弧形长裙摆，以鲜红大色块、暖红亮面和连续石榴红裙褶表现缎面层次，保留奶油底色与宝蓝边框。",
     "level": "liangshuo-2104779750324973569-2-1.json",
     "module": "liangshuo-2104779750324973569-2-1.js"
   },
@@ -452,7 +452,7 @@
   {
     "id": "liangshuo-2101239560518004737-2-2",
     "name": "liangshuo-2101239560518004737-2-2",
-    "description": "31×31 网格、7 色珠子：展开的炭黑蝙蝠、酒红翼膜和红色双眼，搭配鲜红饱满嘴唇、成片珊瑚粉高光与两颗象牙白尖牙；保留红色星点、唇边血滴、奶油底色和宝蓝边框。",
+    "description": "40×40 网格、7 色珠子：放大展开的炭黑蝙蝠，强化尖耳、红色双眼、酒红翼膜与尖形翼缘，在蝙蝠和嘴唇之间保留奶油色间隔；搭配斜向红唇、珊瑚粉亮面与两颗象牙白尖牙，保留红色星点、血滴和宝蓝边框。",
     "level": "liangshuo-2101239560518004737-2-2.json",
     "module": "liangshuo-2101239560518004737-2-2.js"
   },
@@ -462,5 +462,91 @@
     "description": "36×40 网格、9 色珠子：聚焦原图脸部近景，按裁切区域原比例取样，保留倾斜脸型、侧分刘海、错落双眼、鼻尖与红唇；合并珠子细碎反光，用连续肤色表现面部明暗。",
     "level": "liangshuo-2101239560518004737-2-1.json",
     "module": "liangshuo-2101239560518004737-2-1.js"
+  },
+  {
+    "id": "golden-madonna",
+    "name": "金色四瓣花吊坠",
+    "description": "36×40 等间距网格、7 种金色珠子：保留完整吊环和椭圆金框，中央为饱满对称的四瓣花，四片圆润浅金花瓣围绕暖金花心，轮廓分明、色块连续，全部结构均可玩。",
+    "level": "golden-madonna.json",
+    "module": "golden-madonna.js"
+  },
+  {
+    "id": "blue-diamond-ring",
+    "name": "蓝钻金戒指",
+    "description": "26×32 等间距粗网格、8 色珠子：放大的蓝色切面钻石、浅金镶座与完整金色戒圈，保留青蓝分面和冰白 V 形亮纹，戒圈中央留空；所有结构均可玩，仅用于 colorever-new。",
+    "level": "blue-diamond-ring.json",
+    "module": "blue-diamond-ring.js"
+  },
+  {
+    "id": "jh-gold-ring",
+    "name": "J & H · 金色戒指",
+    "description": "32×28 等间距粗网格、6 色珠子：平放的金色戒指，保留椭圆指孔、后侧亮环边、古铜内壁、厚实前戒面与放大的深紫 J & H；所有结构均为可玩珠子，无额外装饰。",
+    "level": "jh-gold-ring.json",
+    "module": "jh-gold-ring.js"
+  },
+  {
+    "id": "golden-key",
+    "name": "金色圆环钥匙",
+    "description": "24×32 等间距粗网格、6 色金色系珠子：放大的镂空圆环、顶部小吊环与宝石、修长钥匙柄、圆形柄尾和右侧双齿；以连续金色大色块简化花纹，所有结构均由可玩的珠子组成。仅用于 colorever-new。",
+    "level": "golden-key.json",
+    "module": "golden-key.js"
+  },
+  {
+    "id": "round-flame",
+    "name": "圆盘红金火焰",
+    "description": "29 × 29 粗网格：象牙白圆盘、微弯火焰尖端、向外鼓起的弧形两侧与圆弧焰底，连续红橙黄焰心全部由可玩珠子组成",
+    "level": "round-flame.json",
+    "module": "round-flame.js"
+  },
+  {
+    "id": "golden-sword",
+    "name": "金柄银剑",
+    "description": "25 × 32 粗网格、7 色可玩珠子；圆形金色剑首、菱形宽护手、银灰剑柄与尖底长剑身，连续大色块和简洁留白。仅适用于 colorever-new。",
+    "level": "golden-sword.json",
+    "module": "golden-sword.js",
+    "editableParts": []
+  },
+  {
+    "id": "golden-retriever",
+    "name": "金毛胸背犬",
+    "description": "30 × 32 粗网格、7 色金毛犬：下垂耳朵、朝右的奶油色口鼻、短弧嘴线与浅色下巴、黑眼黑鼻、坐姿双前爪与深蓝胸背带，全部为可玩珠子",
+    "level": "golden-retriever.json",
+    "module": "golden-retriever.js"
+  },
+  {
+    "id": "justice-scales",
+    "name": "金色天平",
+    "description": "31 × 32 等间距粗网格、6 色金色珠子：放大的平直横梁、两侧镂空吊索和宽金盘、中央立柱与阶梯底座；省去文字和花边，所有结构均可玩，仅用于 colorever-new。",
+    "level": "justice-scales.json",
+    "module": "justice-scales.js",
+    "editableParts": []
+  },
+  {
+    "id": "medical-kit",
+    "name": "红白医药箱",
+    "description": "31 × 30 等间距粗网格、7 色珠子：镂空红提手、象牙白箱盖与放大的红十字、连续红色箱体、银白包边和中央金属锁扣；全部结构均可玩，四周留白，仅用于 colorever-new。",
+    "level": "medical-kit.json",
+    "module": "medical-kit.js"
+  },
+  {
+    "id": "ice-crystal-shield",
+    "name": "冰晶蓝盾",
+    "description": "29 × 32 等间距粗网格、7 色珠子：完整尖顶尖底冰蓝盾牌、双层冰白边框与放大的青蓝切面晶石，连续大色块、四周留白；所有主要结构均可玩，仅用于 colorever-new。",
+    "level": "ice-crystal-shield.json",
+    "module": "ice-crystal-shield.js"
+  },
+  {
+    "id": "ice-wolf",
+    "name": "冰蓝狼头",
+    "description": "40 × 40 等间距网格、7 色修长冰蓝正面狼头：银白直立尖耳、压低的斜眼、蓝色额纹、长口鼻与小鼻头；收窄两侧鬃毛、银灰脸颊和下颌，全部由可玩珠子组成，仅用于 colorever-new。",
+    "level": "ice-wolf.json",
+    "module": "ice-wolf.js"
+  },
+  {
+    "id": "ice-wolf-head",
+    "name": "冰晶狼头",
+    "description": "32 × 32 等间距粗网格、7 色修长冰蓝狼头：直立尖耳、内收冰青斜眼、收尖蓝额纹、细长雪白鼻梁、小鼻头与浅弧嘴线，楔形脸颊和逐层收窄的下颌及鬃毛全部由可玩珠子组成；仅用于 colorever-new。",
+    "level": "ice-wolf-head.json",
+    "module": "ice-wolf-head.js"
   }
 ]

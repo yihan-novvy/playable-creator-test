@@ -6,7 +6,7 @@ import {Puzzle} from '../src/model.js';
 
 const source=JSON.parse(fs.readFileSync(new URL('../src/patterns/liangshuo-2100421714782785537-1-2.json',import.meta.url)));
 
-test('Liangshuo canopy bed preserves every bead and solves in all opening modes',()=>{
+test('Liangshuo front-view canopy bed preserves every bead and solves in all opening modes',()=>{
   for(const openingMode of ['easy','medium','scattered'])for(const seed of [0,7,173]){
     const {level,proof}=prepareLevel({...source,openingMode,seed});
     assert.deepEqual([...level.opening].sort((a,b)=>a-b),[...level.target].sort((a,b)=>a-b));

@@ -283,6 +283,66 @@
       "id": "liangshuo-2101239560518004737-2-1",
       "name": "liangshuo-2101239560518004737-2-1",
       "path": "game/patterns/liangshuo-2101239560518004737-2-1.json"
+    },
+    {
+      "id": "golden-madonna",
+      "name": "金色四瓣花吊坠",
+      "path": "game/patterns/golden-madonna.json"
+    },
+    {
+      "id": "blue-diamond-ring",
+      "name": "蓝钻金戒指",
+      "path": "game/patterns/blue-diamond-ring.json"
+    },
+    {
+      "id": "jh-gold-ring",
+      "name": "J & H · 金色戒指",
+      "path": "game/patterns/jh-gold-ring.json"
+    },
+    {
+      "id": "golden-key",
+      "name": "金色圆环钥匙",
+      "path": "game/patterns/golden-key.json"
+    },
+    {
+      "id": "round-flame",
+      "name": "圆盘红金火焰",
+      "path": "game/patterns/round-flame.json"
+    },
+    {
+      "id": "golden-sword",
+      "name": "金柄银剑",
+      "path": "game/patterns/golden-sword.json"
+    },
+    {
+      "id": "golden-retriever",
+      "name": "金毛胸背犬",
+      "path": "game/patterns/golden-retriever.json"
+    },
+    {
+      "id": "justice-scales",
+      "name": "金色天平",
+      "path": "game/patterns/justice-scales.json"
+    },
+    {
+      "id": "medical-kit",
+      "name": "红白医药箱",
+      "path": "game/patterns/medical-kit.json"
+    },
+    {
+      "id": "ice-crystal-shield",
+      "name": "冰晶蓝盾",
+      "path": "game/patterns/ice-crystal-shield.json"
+    },
+    {
+      "id": "ice-wolf",
+      "name": "冰蓝狼头",
+      "path": "game/patterns/ice-wolf.json"
+    },
+    {
+      "id": "ice-wolf-head",
+      "name": "冰晶狼头",
+      "path": "game/patterns/ice-wolf-head.json"
     }
   ],
   "constants": {

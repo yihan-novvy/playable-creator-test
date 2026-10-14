@@ -24,6 +24,10 @@
       "file": "decorators/black-dragon.js",
       "sha256": "07c010ac1aa243515e2f41500920111fac44b9b3a24554e5d31d021298cb6e24"
     },
+    "blue-diamond-ring": {
+      "file": "decorators/blue-diamond-ring.js",
+      "sha256": "4f6db82e712f18b296a927abb501b4e30a8f9f469af652e6a585ccbe50b12a3c"
+    },
     "blue-dragon": {
       "file": "decorators/blue-dragon.js",
       "sha256": "1d5856c0195f88df12f74c64f8cfa19eb45d1d75976eca15eca2336d49b868ab"
@@ -96,6 +100,14 @@
       "file": "decorators/golden-dragon.js",
       "sha256": "f891172d313ea7431ccf9a5fce6a7d11061bb944959cfcd108d771affaf03bb7"
     },
+    "golden-key": {
+      "file": "decorators/golden-key.js",
+      "sha256": "8dd48b0181bd4edd2e884c2c1922fb2ef50f8e2242bf0d670652bf4537e99715"
+    },
+    "golden-madonna": {
+      "file": "decorators/golden-madonna.js",
+      "sha256": "e9927527d7d45e7e4fb74fef32de9dd10b86ed04d2970d3d7b293cc7fd3ad087"
+    },
     "heart-gold-shield": {
       "file": "decorators/heart-gold-shield.js",
       "sha256": "c144d53b05cd2c410225fbc76b99eaaf939c920158992de1415e0e6f499fb97e"
@@ -103,6 +115,10 @@
     "house": {
       "file": "decorators/house.js",
       "sha256": "d3cae3c3013fb9300c3648f5ea18dc395abcfd58c70593a868966d7d1092db6a"
+    },
+    "jh-gold-ring": {
+      "file": "decorators/jh-gold-ring.js",
+      "sha256": "fd1eb50720bca3eccc4075035bd39f4812c5bfd1aede9951e7be1a4c76f0a4c6"
     },
     "keble-quarterback-1": {
       "file": "decorators/keble-quarterback-1.js",
@@ -227,6 +243,38 @@
     "yellow-lightning": {
       "file": "decorators/yellow-lightning.js",
       "sha256": "70c0cbd5fd200b7f587ae9107ce2db84665d841ae92018d8db4a20db8f5f5492"
+    },
+    "round-flame": {
+      "file": "decorators/round-flame.js",
+      "sha256": "049e5d48cc040761dac6947e1baef3e589759b70f8e406d3c08d88b558c7f0d8"
+    },
+    "golden-sword": {
+      "file": "decorators/golden-sword.js",
+      "sha256": "a590c1dd082506f39d4de524c5cc21900eafaeea36ab1facdad93a7f7546057f"
+    },
+    "golden-retriever": {
+      "file": "decorators/golden-retriever.js",
+      "sha256": "eed4fdee5c81132af8392ab46808ab74fc99038c9ee56e4dea2193dd569d5066"
+    },
+    "justice-scales": {
+      "file": "decorators/justice-scales.js",
+      "sha256": "6519ee86b32a684ee509275d9047c9a25480a73cdaed64f99f38fb64825e6ea6"
+    },
+    "medical-kit": {
+      "file": "decorators/medical-kit.js",
+      "sha256": "00f441f549e0439e3ac01119f074492691f29fbdb437c1adfc44572b215c2937"
+    },
+    "ice-crystal-shield": {
+      "file": "decorators/ice-crystal-shield.js",
+      "sha256": "76d762e1d5f37cf0311384461f1692978f274b96c8daad582d5e3d040acf228e"
+    },
+    "ice-wolf": {
+      "file": "decorators/ice-wolf.js",
+      "sha256": "8263cdb99d49a6996dd9573e10dfa2efe736ba081f30893874487a11f36cab99"
+    },
+    "ice-wolf-head": {
+      "file": "decorators/ice-wolf-head.js",
+      "sha256": "b3cc31384811aa5c37f2b556dd18cb41d85a558f7b0ced0d0b44a47804f12a27"
     }
   },
   "patterns": [
@@ -564,14 +612,14 @@
       "name": "liangshuo-2100421714782785537-1-1",
       "description": "40×40 网格、8 色珠子：按原图重绘斜向尖耳的外形、C 形耳褶、浅杏耳廓亮边和珊瑚粉耳内凹陷，保留蓝色卷纹、银蓝圆环与星形点缀；耳朵适度放大，搭配奶油底色和宝蓝边框。",
       "level": "liangshuo-2100421714782785537-1-1.json",
-      "templateSha256": "3d63f97bb018278d6ad9f32b2e09872483b99f4709c53d5018a1bbf9d78772b8"
+      "templateSha256": "88e058aaeed6fb092cb6d35a25432ab1c49a58d8b1029bcf05fb04767fa95134"
     },
     {
       "id": "liangshuo-2100421714782785537-1-2",
       "name": "liangshuo-2100421714782785537-1-2",
-      "description": "36×37 网格、8 色珠子：前后错开的四根床柱、红色垂幔与奶白弧形帘边、金边拱形床头、白边双蓝枕、向前展开的红色床面，以及带中央金色徽饰与两侧卷纹的木质前床板；保留奶油底色与蓝框。",
+      "description": "36×37 网格、8 色珠子：保留原来的正面角度，收短红金床幔、纤细木质床柱和低矮床头，搭配并排双蓝枕、折叠奶白床单、长红被面、床垫厚边与低床尾；柔和红金配色，保留奶油底色和蓝框。",
       "level": "liangshuo-2100421714782785537-1-2.json",
-      "templateSha256": "ef7f32bafa97b9fe871601755b0f9dac37c1897e83f74e3c043ec814e31d0753"
+      "templateSha256": "7eae59cd95da1488f6de4b276bd5a65f5a803ceaed9ae085c98ea92c65243b77"
     },
     {
       "id": "liangshuo-2100421714782785537-2-1",
@@ -583,16 +631,16 @@
     {
       "id": "liangshuo-2104824229023064066-2-1",
       "name": "liangshuo-2104824229023064066-2-1",
-      "description": "40×40 网格、8 色珠子：深蓝宫殿中的银灰尖拱宝座、蓝色软垫与金色钮饰、顶部金色鸢尾纹章、两侧红色垂幔和三头金烛台，以及向前展开的蓝色金边阶梯地毯；合并细碎金属纹理，保留清晰对称轮廓。",
+      "description": "40×40 网格、6 色珠子：仅保留放大的银灰尖拱王座、宝蓝靠背、扶手、座垫与椅脚，点缀少量金色钮饰；深蓝纯色背景，省去烛台、红帘、纹章与阶梯。",
       "level": "liangshuo-2104824229023064066-2-1.json",
-      "templateSha256": "1527c2bf8ec4aba5072b2c5610b253dced3ca5e011ca1e7f59c71cb5793fe584"
+      "templateSha256": "8742b2b0f6e9c27b91f3b8f28e8aaea67335f8a3d5594b2594d24ee8785157ac"
     },
     {
       "id": "liangshuo-2104779750324973569-2-1",
       "name": "liangshuo-2104779750324973569-2-1",
-      "description": "25×25 网格、6 色珠子：保留原版红裙的双肩带、心形领口、展开肩部、收窄腰线、长裙摆与主要纵向裙褶；鲜红、珊瑚红、樱桃红和酒红组成连续色块，搭配奶油底色与宝蓝边框。",
+      "description": "30×40 网格、6 色珠子：参考红裙重绘双细肩带、心形领口、展开短袖、收腰及弧形长裙摆，以鲜红大色块、暖红亮面和连续石榴红裙褶表现缎面层次，保留奶油底色与宝蓝边框。",
       "level": "liangshuo-2104779750324973569-2-1.json",
-      "templateSha256": "3b03fb7be998c8f575248f72f6f6aab710abadc41dc2a9d1619b8a72dd2f95fc"
+      "templateSha256": "4fc54d0d6a1483ff256f2ff0f430b1a1528751da2a3ac30792cb637c028f0c9e"
     },
     {
       "id": "liangshuo-2104824229023064066-2-2",
@@ -611,9 +659,9 @@
     {
       "id": "liangshuo-2101239560518004737-2-2",
       "name": "liangshuo-2101239560518004737-2-2",
-      "description": "31×31 网格、7 色珠子：展开的炭黑蝙蝠、酒红翼膜和红色双眼，搭配鲜红饱满嘴唇、成片珊瑚粉高光与两颗象牙白尖牙；保留红色星点、唇边血滴、奶油底色和宝蓝边框。",
+      "description": "40×40 网格、7 色珠子：放大展开的炭黑蝙蝠，强化尖耳、红色双眼、酒红翼膜与尖形翼缘，在蝙蝠和嘴唇之间保留奶油色间隔；搭配斜向红唇、珊瑚粉亮面与两颗象牙白尖牙，保留红色星点、血滴和宝蓝边框。",
       "level": "liangshuo-2101239560518004737-2-2.json",
-      "templateSha256": "73afa88899416819677f8e2087b1e5afe01f42d7fe40f30363c7ce4b779f6a06"
+      "templateSha256": "d4fd64f4e82ef1cf2dc0590fd70e626a7e39517e1ddd20ce787cec5788b991f6"
     },
     {
       "id": "liangshuo-2101239560518004737-2-1",
@@ -621,6 +669,90 @@
       "description": "36×40 网格、9 色珠子：聚焦原图脸部近景，按裁切区域原比例取样，保留倾斜脸型、侧分刘海、错落双眼、鼻尖与红唇；合并珠子细碎反光，用连续肤色表现面部明暗。",
       "level": "liangshuo-2101239560518004737-2-1.json",
       "templateSha256": "7340d58dd4cd237b38cf2cfab1f351196d596e25d5c1ba5b6d6521a33b345cb3"
+    },
+    {
+      "id": "golden-madonna",
+      "name": "金色四瓣花吊坠",
+      "description": "36×40 等间距网格、7 种金色珠子：保留完整吊环和椭圆金框，中央为饱满对称的四瓣花，四片圆润浅金花瓣围绕暖金花心，轮廓分明、色块连续，全部结构均可玩。",
+      "level": "golden-madonna.json",
+      "templateSha256": "03796e5b7690d38a272590b42d0c3f9c19da1128c8bc63bcc8ce989676dd9f19"
+    },
+    {
+      "id": "blue-diamond-ring",
+      "name": "蓝钻金戒指",
+      "description": "26×32 等间距粗网格、8 色珠子：放大的蓝色切面钻石、浅金镶座与完整金色戒圈，保留青蓝分面和冰白 V 形亮纹，戒圈中央留空；所有结构均可玩，仅用于 colorever-new。",
+      "level": "blue-diamond-ring.json",
+      "templateSha256": "5f3483c5b82566528d0f44d4132b4908ac90ebbd04cb9383548a076ac11893e5"
+    },
+    {
+      "id": "jh-gold-ring",
+      "name": "J & H · 金色戒指",
+      "description": "32×28 等间距粗网格、6 色珠子：平放的金色戒指，保留椭圆指孔、后侧亮环边、古铜内壁、厚实前戒面与放大的深紫 J & H；所有结构均为可玩珠子，无额外装饰。",
+      "level": "jh-gold-ring.json",
+      "templateSha256": "879afde8555a9e54590d474bf001d3744d0d8429a0b3539a28cd0c88d7249c67"
+    },
+    {
+      "id": "golden-key",
+      "name": "金色圆环钥匙",
+      "description": "24×32 等间距粗网格、6 色金色系珠子：放大的镂空圆环、顶部小吊环与宝石、修长钥匙柄、圆形柄尾和右侧双齿；以连续金色大色块简化花纹，所有结构均由可玩的珠子组成。仅用于 colorever-new。",
+      "level": "golden-key.json",
+      "templateSha256": "88b1ba1c10547f22d1ac9debbc808b4396796e33410b75963dff652c2924ea86"
+    },
+    {
+      "id": "round-flame",
+      "name": "圆盘红金火焰",
+      "description": "29 × 29 粗网格：象牙白圆盘、微弯火焰尖端、向外鼓起的弧形两侧与圆弧焰底，连续红橙黄焰心全部由可玩珠子组成",
+      "level": "round-flame.json",
+      "templateSha256": "9bade6cadc97f1f7bd08e3a23d1496ab4ae1793b55088faef92ab09693562c71"
+    },
+    {
+      "id": "golden-sword",
+      "name": "金柄银剑",
+      "description": "25 × 32 粗网格、7 色可玩珠子；圆形金色剑首、菱形宽护手、银灰剑柄与尖底长剑身，连续大色块和简洁留白。仅适用于 colorever-new。",
+      "level": "golden-sword.json",
+      "templateSha256": "4875d0c4ce9ab09b546bf37ebb3f7a509420c88ac243d533d1c07b7b50843220"
+    },
+    {
+      "id": "golden-retriever",
+      "name": "金毛胸背犬",
+      "description": "30 × 32 粗网格、7 色金毛犬：下垂耳朵、朝右的奶油色口鼻、短弧嘴线与浅色下巴、黑眼黑鼻、坐姿双前爪与深蓝胸背带，全部为可玩珠子",
+      "level": "golden-retriever.json",
+      "templateSha256": "d807446fe0fe87a8f60db48da4930ae56387e1ece70740a162de150e4934e018"
+    },
+    {
+      "id": "justice-scales",
+      "name": "金色天平",
+      "description": "31 × 32 等间距粗网格、6 色金色珠子：放大的平直横梁、两侧镂空吊索和宽金盘、中央立柱与阶梯底座；省去文字和花边，所有结构均可玩，仅用于 colorever-new。",
+      "level": "justice-scales.json",
+      "templateSha256": "e0761ae09f3572aa0bb77688400b150bd8c1c15cf6c3d63aacf28f3bbbe5fa53"
+    },
+    {
+      "id": "medical-kit",
+      "name": "红白医药箱",
+      "description": "31 × 30 等间距粗网格、7 色珠子：镂空红提手、象牙白箱盖与放大的红十字、连续红色箱体、银白包边和中央金属锁扣；全部结构均可玩，四周留白，仅用于 colorever-new。",
+      "level": "medical-kit.json",
+      "templateSha256": "9bb3fd6e99526ff59ac121df7cd72ebf20a43549a218b30acb0b34e1df0d4137"
+    },
+    {
+      "id": "ice-crystal-shield",
+      "name": "冰晶蓝盾",
+      "description": "29 × 32 等间距粗网格、7 色珠子：完整尖顶尖底冰蓝盾牌、双层冰白边框与放大的青蓝切面晶石，连续大色块、四周留白；所有主要结构均可玩，仅用于 colorever-new。",
+      "level": "ice-crystal-shield.json",
+      "templateSha256": "d304e79ddd0e5b03dc6b5d293a53c125ac836d3387a5afc3efac1cd863d9c8ef"
+    },
+    {
+      "id": "ice-wolf",
+      "name": "冰蓝狼头",
+      "description": "40 × 40 等间距网格、7 色修长冰蓝正面狼头：银白直立尖耳、压低的斜眼、蓝色额纹、长口鼻与小鼻头；收窄两侧鬃毛、银灰脸颊和下颌，全部由可玩珠子组成，仅用于 colorever-new。",
+      "level": "ice-wolf.json",
+      "templateSha256": "92298357ee886ae0c648301b3be4aaee4b24cb4c9c0a45091d88df33413790f9"
+    },
+    {
+      "id": "ice-wolf-head",
+      "name": "冰晶狼头",
+      "description": "32 × 32 等间距粗网格、7 色修长冰蓝狼头：直立尖耳、内收冰青斜眼、收尖蓝额纹、细长雪白鼻梁、小鼻头与浅弧嘴线，楔形脸颊和逐层收窄的下颌及鬃毛全部由可玩珠子组成；仅用于 colorever-new。",
+      "level": "ice-wolf-head.json",
+      "templateSha256": "8da4aebdf144446e0b6c31c13502663b620385c1eb7e7b73364b552366a97ed0"
     }
   ]
 }
