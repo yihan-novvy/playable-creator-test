@@ -2,6 +2,7 @@ import {compilePatterns} from './pattern-artifact.mjs';
 import {createHash} from 'node:crypto';
 import {build} from 'vite';
 import {buildGameBundle} from './build-game-bundle.mjs';
+import {emitDecorators} from './build-decorators.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -10,7 +11,7 @@ if(args.length && (args.length!==2 || args[0]!=='--out' || !args[1]))throw new E
 const root=fileURLToPath(new URL('../',import.meta.url));
 const out=args.length?path.resolve(args[1]):path.join(root,'build/template');
 const pictures=await compilePatterns();
-const {js,css,audio,html:source}=await buildGameBundle(pictures);
+const {js,css,audio,html:source}=await buildGameBundle();
 const html=source.replace(/<script\s+type="module"[^>]*>[\s\S]*?<\/script>/g,'')
   .replace('</head>',()=>`<style>${css}</style></head>`)
   .replace('</body>',()=>'<script src="game.js" defer></script></body>');
@@ -34,7 +35,10 @@ if(/(?:^|[;\n])\s*import\s/.test(engine))throw new Error('Level engine retains e
 if(!/\bprepareLevel\b/.test(engine))throw new Error('Level engine lost its entry exports');
 await fs.writeFile(path.join(out,'level-engine.mjs'),engine);
 console.log(`${path.join(out,'level-engine.mjs')} (${Buffer.byteLength(engine).toLocaleString()} bytes)`);
-const catalog={version:2,engineSha256:hash(script),levelEngine:'level-engine.mjs',levelEngineSha256:hash(engine),patterns:[]};
+// 装饰代码按图案落盘为注册片段,sha 进 catalog 供广告编辑器完整性校验;
+// 引擎包零图案内容,engineSha256 只随引擎改造变化。
+const decorators=await emitDecorators(pictures,out);
+const catalog={version:2,engineSha256:hash(script),levelEngine:'level-engine.mjs',levelEngineSha256:hash(engine),decorators,patterns:[]};
 await fs.mkdir(path.join(out,'patterns'),{recursive:true});
 for(const picture of pictures){
  const file=picture.id+'.json',text=JSON.stringify(picture.level);

@@ -16,11 +16,15 @@ export async function compilePatterns(){
  }
  return result;
 }
-// 游戏包内嵌的兜底关卡(开发页与离线样例直开时无注入数据)在构建期用模板
-// 自带参数解析开局;广告包不走该兜底——广告任务注入的开局永远来自任务配置。
+// 离线样例的兜底关卡在构建期用模板自带参数解析开局;广告包不走该兜底——
+// 广告任务注入的开局永远来自任务配置。
 export function resolveOpenings(pictures){
  return pictures.map(picture=>({...picture,level:prepareLevel({...picture.level}).level}));
 }
-export function patternRegistry(pictures){
- return pictures.map((p,i)=>`import {decorate as decorate${i}} from ${JSON.stringify(path.join(root,'src/patterns',p.module))};`).join('\n')+'\nexport const patterns={'+pictures.map((p,i)=>`${JSON.stringify(p.id)}:{level:${JSON.stringify(p.level)},decorate:decorate${i}}`).join(',')+'};';
+// 引擎包不再携带任何图案数据与装饰代码:关卡由注入提供,装饰按选择以
+// decorators/<id>.js 片段内联(见 build-decorators.mjs)。构建期用空注册表
+// 遮蔽 src/patterns/index.js,保证真文件(54 份 import)永不进 game.js——
+// 新增图案不再改变引擎字节与 engineSha256。真实注册表仅服务 vite dev。
+export function patternRegistry(){
+ return 'export const patterns={};';
 }

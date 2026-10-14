@@ -1,8 +1,234 @@
 {
   "version": 2,
-  "engineSha256": "747f94e7c626c9424e1b737da6669d635a0e8a906a6b19d9b0e2818f5234ed71",
+  "engineSha256": "6f03c3933c629399c9be57c899aadff9f25693a119488c1a2f17e1d560f538c6",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "2db84cd5264ad78497ff21c51f53841ed906330d1b056e994f63a33a3dd75650",
+  "decorators": {
+    "axe": {
+      "file": "decorators/axe.js",
+      "sha256": "975b6ba6e7260844f340d1140707bb7ad5ba23891b7bb75ebf53411bf26f0cee"
+    },
+    "backpack": {
+      "file": "decorators/backpack.js",
+      "sha256": "4819ff289a215aeccc429cf0d41ff1b28dfe35ed68c34ef240d30f4f2094800c"
+    },
+    "bank": {
+      "file": "decorators/bank.js",
+      "sha256": "47bbbcefa83ddbb8fb83597673215378ab45736b0e70880512f1daefead1a39a"
+    },
+    "bearing": {
+      "file": "decorators/bearing.js",
+      "sha256": "957c490c2e95d2080b6b810fafba12f803fb15b5f62f8e46a80354f69bc9804c"
+    },
+    "black-dragon": {
+      "file": "decorators/black-dragon.js",
+      "sha256": "07c010ac1aa243515e2f41500920111fac44b9b3a24554e5d31d021298cb6e24"
+    },
+    "blue-dragon": {
+      "file": "decorators/blue-dragon.js",
+      "sha256": "1d5856c0195f88df12f74c64f8cfa19eb45d1d75976eca15eca2336d49b868ab"
+    },
+    "blue-lightning": {
+      "file": "decorators/blue-lightning.js",
+      "sha256": "07fc57d9a452b47bb52f38132e3ff97f4abfeac5b2a4d466274be18e92b9c40a"
+    },
+    "blue-star-shield": {
+      "file": "decorators/blue-star-shield.js",
+      "sha256": "adc5ee377e38a76b43b52a077f8f65c0332d668be206bcddfc0912cfa9a95adb"
+    },
+    "boy": {
+      "file": "decorators/boy.js",
+      "sha256": "386df5b06555734fde3831b1413d16d5885b27507c6679c519bbfe35e12775a3"
+    },
+    "butterfly-key": {
+      "file": "decorators/butterfly-key.js",
+      "sha256": "34f74c91c0b792c2f231ae825ae3e3e2d105ae05473f9ecef3e25db0037f7248"
+    },
+    "cat": {
+      "file": "decorators/cat.js",
+      "sha256": "97120bfec2ac8de5fbc29f1aa4e3b16348f2b1761640240e231b916afa3f37df"
+    },
+    "chick": {
+      "file": "decorators/chick.js",
+      "sha256": "3ce6bc0fd4692e598a61bbe6ef38977ea25fda58d845531a4aab310dfd7ef0a0"
+    },
+    "contract": {
+      "file": "decorators/contract.js",
+      "sha256": "69223a359aa5bc18b6e9a3be6277f15ef77a33711d27f17c143b68bd037f5172"
+    },
+    "cottage": {
+      "file": "decorators/cottage.js",
+      "sha256": "198aa9b91640ca098709ffa27d0ebab4d57ee694aa21a6058590280250dadb05"
+    },
+    "curly-portrait": {
+      "file": "decorators/curly-portrait.js",
+      "sha256": "7b89cd251f8174a58152f8ac2ec19139847be87382b892b86f6c3472c6d35f5f"
+    },
+    "diamond": {
+      "file": "decorators/diamond.js",
+      "sha256": "6d8af4b56b7485b2101b332e45e8f086a3fa1aa1e0afb58eb2d445d046c8467c"
+    },
+    "flame": {
+      "file": "decorators/flame.js",
+      "sha256": "c7e10ae2b93201dce6ca2dfca0e21d394dba5f66d063ca01608a88d2ab8dea76"
+    },
+    "fox-key": {
+      "file": "decorators/fox-key.js",
+      "sha256": "7072be5a9c8298083a15f9bc96f85a0ed0be2edfcad16ea16ec0337b6780dd0c"
+    },
+    "gear": {
+      "file": "decorators/gear.js",
+      "sha256": "9dce0e1253e05dee06f3a33d6b8612a73d6a9c316acd2442dbe360c9df9f627f"
+    },
+    "gem-house": {
+      "file": "decorators/gem-house.js",
+      "sha256": "fefbbecda84308d93aea3d8569fb4247545b52961bafb370e21fddb576942042"
+    },
+    "gem-wheel": {
+      "file": "decorators/gem-wheel.js",
+      "sha256": "19c0dabfa2025c994a77dd260eab00c65784c8858c6fe766ebc0c3a389183ae0"
+    },
+    "gemstone-phoenix": {
+      "file": "decorators/gemstone-phoenix.js",
+      "sha256": "4743ccaf3c6fc97cdd186968e5f1b489659ac2696cd2f1dc904b31c3951cf4c2"
+    },
+    "golden-dragon": {
+      "file": "decorators/golden-dragon.js",
+      "sha256": "f891172d313ea7431ccf9a5fce6a7d11061bb944959cfcd108d771affaf03bb7"
+    },
+    "heart-gold-shield": {
+      "file": "decorators/heart-gold-shield.js",
+      "sha256": "c144d53b05cd2c410225fbc76b99eaaf939c920158992de1415e0e6f499fb97e"
+    },
+    "house": {
+      "file": "decorators/house.js",
+      "sha256": "d3cae3c3013fb9300c3648f5ea18dc395abcfd58c70593a868966d7d1092db6a"
+    },
+    "keble-quarterback-1": {
+      "file": "decorators/keble-quarterback-1.js",
+      "sha256": "7eaea191ad360081262b993ea7719f3401cac8f12baf423e03a2f09276b10e11"
+    },
+    "keble-quarterback-2": {
+      "file": "decorators/keble-quarterback-2.js",
+      "sha256": "fdc421ac0f1b66872271ce5bd09cd9497191c53d6d2f3ef45669c526c6b5c868"
+    },
+    "liangshuo-2100421714782785537-1-1": {
+      "file": "decorators/liangshuo-2100421714782785537-1-1.js",
+      "sha256": "68017b2860865b888280ada16eaf8d279ff4eac28d298b9efb69ff92391ea80d"
+    },
+    "liangshuo-2100421714782785537-1-2": {
+      "file": "decorators/liangshuo-2100421714782785537-1-2.js",
+      "sha256": "5687bddcc1eba9140ae309abfea2f41405f5fd7a0bd533aef91750a13d11aef6"
+    },
+    "liangshuo-2100421714782785537-2-1": {
+      "file": "decorators/liangshuo-2100421714782785537-2-1.js",
+      "sha256": "fcd2a9ec4948fcfad3d19c585e9e1699744abee2ccd4c07b451dfcf0e3c52e63"
+    },
+    "liangshuo-2101239560518004737-2-1": {
+      "file": "decorators/liangshuo-2101239560518004737-2-1.js",
+      "sha256": "113007481b2a4e92bc7f33f20b0cf119df3839bca3f45e6cc878aabca86def9a"
+    },
+    "liangshuo-2101239560518004737-2-2": {
+      "file": "decorators/liangshuo-2101239560518004737-2-2.js",
+      "sha256": "a426612b2eb4b25620a6c2d0727bd252a4ad767964e4eea0d8fa5260cad6eeb4"
+    },
+    "liangshuo-2104779750324973569-2-1": {
+      "file": "decorators/liangshuo-2104779750324973569-2-1.js",
+      "sha256": "9ed8e850d765d9a7d0d6d6d8fba7be86bb4c4f7045e8972e89638578d05a81d3"
+    },
+    "liangshuo-2104779750324973569-2-2": {
+      "file": "decorators/liangshuo-2104779750324973569-2-2.js",
+      "sha256": "e67f6e426f05e88cf7cc90bd53897eb98bb50535dd1764556aed3d71f20713f2"
+    },
+    "liangshuo-2104824229023064066-2-1": {
+      "file": "decorators/liangshuo-2104824229023064066-2-1.js",
+      "sha256": "b997fc4b084154103b69dbef1c3a185404bf5ef07967d7728eacf3750afba0f7"
+    },
+    "liangshuo-2104824229023064066-2-2": {
+      "file": "decorators/liangshuo-2104824229023064066-2-2.js",
+      "sha256": "1b0477362162fff04b78af5757d6d5ff02c0fdd89a031fbd89702aff7aab990d"
+    },
+    "orange-pixel-cat": {
+      "file": "decorators/orange-pixel-cat.js",
+      "sha256": "8f28eefde1661f3b29002b6f3dd6dd7a18fce428fc1d9916d0f35e06d7278580"
+    },
+    "phoenix": {
+      "file": "decorators/phoenix.js",
+      "sha256": "7bf760e897c1dc845679a8c2eaefa26dc4598c4239e478a69f1fe087ce39f4b6"
+    },
+    "phoenix-feather": {
+      "file": "decorators/phoenix-feather.js",
+      "sha256": "ef7502ec9b1ef38d551200882974a7423566d355f4ac0db897146098d02cb2df"
+    },
+    "portrait": {
+      "file": "decorators/portrait.js",
+      "sha256": "6728e21b42a37cb7429e88af3a6619264611158b1a9f09c66b02ff5554cda901"
+    },
+    "portrait-frown": {
+      "file": "decorators/portrait-frown.js",
+      "sha256": "ad4a7ff133969636dceb23eefcd83f69c8c2f6255ef3b06d8bcfea91ffe711da"
+    },
+    "portrait-woman": {
+      "file": "decorators/portrait-woman.js",
+      "sha256": "26189e8340d17e98e21f0ac568cbe94a18d7f533d97f75265b55587bea007dcf"
+    },
+    "rafflesia": {
+      "file": "decorators/rafflesia.js",
+      "sha256": "7102ee9bc9e7680baf904c29c523d8e4a1bc5cffa30d89ea1ac911f4b05ee0ab"
+    },
+    "rainbow-lightning": {
+      "file": "decorators/rainbow-lightning.js",
+      "sha256": "41b32447b9aaf2e21f3fa2dbcf917eb60f8c5f48e47e32957acd8dc20701b35f"
+    },
+    "rebirth-phoenix": {
+      "file": "decorators/rebirth-phoenix.js",
+      "sha256": "c9d5f5c9f5bc68011aaff6cd1d650a6b4192aec61520547d628242462a466deb"
+    },
+    "roast-meat": {
+      "file": "decorators/roast-meat.js",
+      "sha256": "aec04bc11d76a6d97aad49224d1714d3e2b28308bf471b53705cc9a768fa314f"
+    },
+    "runway-gown": {
+      "file": "decorators/runway-gown.js",
+      "sha256": "aa99b47035edc7f65da1f8c4cfa36efe4bfa0272ea87542dfd91dd05550e70ef"
+    },
+    "silver-lightning": {
+      "file": "decorators/silver-lightning.js",
+      "sha256": "10bda789e206e5541336d413c81fa88bd20371365b3e6563f863b55412e09872"
+    },
+    "star-shield": {
+      "file": "decorators/star-shield.js",
+      "sha256": "d61ab04ac69c4ef0dd7aeb0a12dab3205036a5c7acf161812170415338f75f93"
+    },
+    "torch": {
+      "file": "decorators/torch.js",
+      "sha256": "bc4cda4b107b3bdcf860b4567b2285c3c3e5186daace707340acf194ef93f665"
+    },
+    "tree": {
+      "file": "decorators/tree.js",
+      "sha256": "40576d04bd0a9905f8f51dbf3ed15e9b47475beb095188e235aeb8c3b2fe5595"
+    },
+    "tricolor-lightning": {
+      "file": "decorators/tricolor-lightning.js",
+      "sha256": "c07db938920b89e639908c6008e0e4004661148041900e352db96dee52cd0173"
+    },
+    "white-dragon": {
+      "file": "decorators/white-dragon.js",
+      "sha256": "16695e2fce191f7e7b5df0bad6ea9acf142c06d86a31351f612bff05400bbd34"
+    },
+    "wolf-shield": {
+      "file": "decorators/wolf-shield.js",
+      "sha256": "5b396482f53eeb2b9d4c7fe54f9f78d31510545e132062844b155caa64c09353"
+    },
+    "yellow-code": {
+      "file": "decorators/yellow-code.js",
+      "sha256": "b1f226e7171f13761d0b4b7b2de946ef9760eb9cee880364b9177f5d9c98046d"
+    },
+    "yellow-lightning": {
+      "file": "decorators/yellow-lightning.js",
+      "sha256": "70c0cbd5fd200b7f587ae9107ce2db84665d841ae92018d8db4a20db8f5f5492"
+    }
+  },
   "patterns": [
     {
       "id": "cat",

@@ -19,6 +19,13 @@ function catalogFile(root, template) {
 function artifact(root, template) {
   const built = JSON.parse(fs.readFileSync(catalogFile(root, template), 'utf8'));
   if (built.version !== 2 || !Array.isArray(built.patterns) || typeof built.levelEngine !== 'string' || !/^[-a-z0-9]+\.mjs$/.test(built.levelEngine) || hash(fs.readFileSync(path.join(root, 'game/game.js'))) !== built.engineSha256) throw new Error('Colorever 构建产物不完整，请从源项目重新 build:template');
+  // 引擎包零装饰:装饰片段是交付物的一部分,与图案数据同级别 sha 锁定。
+  if (!built.decorators || typeof built.decorators !== 'object') throw new Error('Colorever 构建产物缺少装饰片段清单，请从源项目重新 build:template');
+  for (const [id, meta] of Object.entries(built.decorators)) {
+    if (!/^decorators\/[-a-z0-9]+\.js$/.test(meta?.file ?? '') || !/^[0-9a-f]{64}$/.test(meta?.sha256 ?? '')) throw new Error('装饰片段清单字段无效: ' + id);
+    const file = path.join(root, 'game', meta.file);
+    if (!fs.existsSync(file) || hash(fs.readFileSync(file, 'utf8')) !== meta.sha256) throw new Error('装饰模块与构建产物不匹配(' + id + ')，请从源项目重新 build:template');
+  }
   return built;
 }
 
@@ -124,6 +131,16 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   // 求值与 defer 的 game.js。
   const playableBridgeFile = fileURLToPath(new URL('../../core/overlays/playable-bridge/playable-bridge.js', import.meta.url));
   injection.bodyScripts.unshift(`<script data-novvy-playable-bridge>${fs.readFileSync(playableBridgeFile, 'utf8')}</script>`);
+  // 引擎包零装饰:装饰注册片段按选择内联(主关+第二关,去重)。片段已由
+  // artifact() 完成 sha 校验,选中图案缺片段即抛错,不静默降级成无装饰。
+  const decoratorIds = [...new Set([config?.patternId ?? 'cat', ...(phase2 ? [phase2.patternId] : [])])];
+  const builtDecorators = artifact(root, template).decorators;
+  const decoratorSources = decoratorIds.map((id) => {
+    const meta = builtDecorators[id];
+    if (!meta) throw new Error('缺少已构建装饰模块: ' + id);
+    return fs.readFileSync(path.join(root, 'game', meta.file), 'utf8');
+  });
+  injection.bodyScripts.unshift(`<script data-colorever-decorators>${decoratorSources.join('\n').replace(/<\/script/gi, '<\\/script')}</script>`);
   // 自有下载卡随包(服务零 UI 侵入契约:结算 UI 由素材自带):底部常驻条 +
   // 双 playable CTA 时刻的全屏接管,由桥的 novvy:cta-card 事件驱动显示。
   // 图标是插件资产(overlays/cta/icon.png),预览走 /plugins/ 静态路由,

@@ -31,6 +31,14 @@ node editor/test/run-all.mjs colorever-new
 
 图案画室使用本目录的 `npm run editor`，端口 5175。玩法源码和图案数据保存在本目录；构建只输出到 `editor/templates/colorever-new/`。不写入原版 colorever。
 
+### 产物分层不变量
+
+构建产物分三层，职责互不重叠：
+
+- `game/game.js` 是纯引擎：不含任何图案关卡数据与装饰代码。新增图案不会改变 game.js 的字节与 `engineSha256`，只有引擎源码（src 下非 patterns 目录）变化才会触发重建差异。
+- 图案关卡数据在 `game/patterns/<id>.json`（不含开局），广告任务在编辑器里按图案 + 开局配置经 `game/level-engine.mjs` 生成开局后，以 `window.__COLOREVER_LEVEL__`（第二关 `__COLOREVER_PHASE2__`）注入 index.html。
+- 装饰代码在 `game/decorators/<id>.js`（构建期从 `src/patterns/<id>.js` 打出的注册片段，sha 锁定在 `game/patterns/catalog.json` 顶层 `decorators`）。导出与预览只把所选图案（主关 + 第二关，去重）的片段内联进 index.html 的 `data-colorever-decorators` 脚本。
+
 ## Editor 兼容性
 
 `liangshuo-2101239560518004737-2-1` 使用 36 × 40 网格、1440 颗珠子（含边框）和 9 色配色。构图收紧为原图的脸部近景，裁切区域与网格内部保持相同宽高比例，保留倾斜脸型、侧分刘海、错落双眼、鼻尖与红唇；合并珠子细碎反光，以连续肤色表现面部明暗。省去衣服和肩部，所有结构均为可玩的珠子；同步原版数据，支持两版效果切换。上一版数据和截图保存在 docs 中。

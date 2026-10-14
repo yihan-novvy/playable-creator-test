@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {createServer} from '../server.mjs';
 import {getEntry} from '../core/registry.mjs';
@@ -25,6 +26,11 @@ export default async function run(assert){
   assert.equal(newCatalog.patterns,catalog.patterns,'全部图案 ID、名称、数据校验值一致');
   assert.check(fs.readFileSync(path.join(next.templateDir,'game/level-engine.mjs')).equals(fs.readFileSync(path.join(old.templateDir,'game/level-engine.mjs'))),'开局引擎逐字节一致');
   assert.equal(embeddedAudio(newScript).audio,embeddedAudio(originalScript).audio,'全部音乐与音效一致');
+  assert.check(!newScript.includes('"target":')&&!newScript.includes('"openingMode"')&&!newScript.includes('"colors":'),'引擎包不再内嵌图案数据');
+  assert.check(newCatalog.decorators&&typeof newCatalog.decorators==='object'&&Object.keys(newCatalog.decorators).length===catalog.patterns.length,'装饰片段清单与图案一一对应');
+  for(const [decoratorId,meta] of Object.entries(newCatalog.decorators)){
+    assert.check(/^decorators\/[-a-z0-9]+\.js$/.test(meta.file)&&createHash('sha256').update(fs.readFileSync(path.join(next.templateDir,'game',meta.file),'utf8')).digest('hex')===meta.sha256,`装饰片段在盘且校验值一致：${decoratorId}`);
+  }
   for(const picture of catalog.patterns){
     assert.check(fs.readFileSync(path.join(next.templateDir,'game/patterns',picture.level)).equals(fs.readFileSync(path.join(old.templateDir,'game/patterns',picture.level))),`图案数据逐字节一致：${picture.id}`);
     for(const mode of ['easy','medium','scattered']){
@@ -66,6 +72,11 @@ export default async function run(assert){
     assert.check(deepSaved.config.hud.titleLine1==='宝石拼图'&&deepSaved.config.hud.titleLine2==='目标颜色始终可见','逐字段保存保留兄弟字段');
     const preview=await(await fetch(base+url+'/preview')).text();
     assert.check(preview.includes('/templates/colorever-new/game/game.js')&&preview.includes('__COLOREVER_PATTERN_ID__="orange-pixel-cat"')&&preview.includes('data-novvy-fixed-viewport'),'即时预览使用新引擎、原版数据与视口约束');
+    assert.check(preview.includes('data-colorever-decorators')&&preview.includes('__COLOREVER_DECORATORS__')&&preview.includes('["orange-pixel-cat"]=function'),'预览按所选图案注入装饰片段');
+    await patch({patternId:'phoenix'});
+    const phoenixPreview=await(await fetch(base+url+'/preview')).text();
+    assert.check(phoenixPreview.includes('["phoenix"]=function')&&!phoenixPreview.includes('["orange-pixel-cat"]=function'),'真装饰图案只注入自身的装饰代码');
+    await patch({patternId:'orange-pixel-cat'});
     assert.check(preview.includes('宝石拼图')&&preview.includes('--colorever-progress-fill:#e76b32'),'HUD 文案和配色兼容');
     result=await api(url+'/run',{step:'all'});
     assert.check(result.body.every(x=>x.ok),'原版配置在新版本七步通过');
@@ -105,6 +116,7 @@ export default async function run(assert){
     assert.equal(second,(await oldLevel(old.templateDir,{patternId:'house',opening:task.config.secondPlayable.opening},old.template)).level,'第二关数据与原版一致');
     const packed=fs.readFileSync(path.join(taskResultDir(id),'index.html'),'utf8');
     assert.check(packed.includes('data-novvy-outro')&&packed.includes('__COLOREVER_PHASE2__')&&packed.includes('background2.webp')&&packed.includes('data-novvy-cta-bridge'),'沿用视频、换关、背景和 CTA 注入');
+    assert.check(packed.includes('data-colorever-decorators')&&packed.includes('["orange-pixel-cat"]=function')&&packed.includes('["house"]=function'),'双关各自的装饰片段去重注入');
     const beforeSwitch=readTask(id);
     const filesBeforeSwitch=[taskUploadsDir(id),taskGeneratedDir(id)].flatMap(dir=>fs.readdirSync(dir).map(name=>({file:path.join(dir,name),bytes:fs.readFileSync(path.join(dir,name))})));
     for(const renderer of ['colorever','colorever-new']){

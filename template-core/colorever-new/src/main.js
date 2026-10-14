@@ -18,10 +18,12 @@ import {lightBeadStudio} from './studio-reference.js';
 import {createMosaicSockets} from './mosaic-sockets.js';
 
 const patternId=globalThis.__COLOREVER_PATTERN_ID__??'cat';
-const pattern=patterns[patternId];
-if(!pattern)throw new Error('Unknown picture template: '+patternId);
-const level=validateLevel(globalThis.__COLOREVER_LEVEL__??pattern.level);
-if(!level.opening)throw new Error('Missing authored opening; generate it in the Colorever editor and build again');
+// 引擎包不携带图案数据与装饰代码:关卡一律来自注入(广告/预览/离线样例),
+// 装饰由 __COLOREVER_DECORATORS__ 按所选图案注册,dev 直连回退注册表模块。
+const level=validateLevel(globalThis.__COLOREVER_LEVEL__);
+if(!level.opening)throw new Error('Missing injected level (window.__COLOREVER_LEVEL__) with authored opening');
+const resolveDecorate=id=>globalThis.__COLOREVER_DECORATORS__?.[id]?.({THREE})??patterns[id]?.decorate??(()=>{});
+const pattern={decorate:resolveDecorate(patternId)};
 
 const canvas=document.getElementById('game');
 const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});
@@ -229,9 +231,8 @@ renderer.setAnimationLoop(render);$('loading').hidden=true;
 /* —— 双 playable:片尾播完后立即页内换关进入第二关。一次性闩锁;
    phase2-start 在新关卡就绪后派发,outro/audio 据此收尾。 —— */
 if(phase2Spec){
-  const pattern2=patterns[phase2Spec.patternId];
-  if(!pattern2)throw new Error('Unknown picture template: '+phase2Spec.patternId);
-  const level2=validateLevel(phase2Spec.level??pattern2.level);
+  const pattern2={decorate:resolveDecorate(phase2Spec.patternId)};
+  const level2=validateLevel(phase2Spec.level);
   if(!level2.opening)throw new Error('Missing authored opening in phase-2 level');
   let switched=false;
   window.addEventListener('novvy:outro-finished',event=>{
