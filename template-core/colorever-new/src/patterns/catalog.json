@@ -660,5 +660,68 @@
     "description": "紫金背景框中的玫红丝缎礼服，强化心形领口、细吊带、珍珠腰带与连贯的放射裙褶，浅蓝底影衬托裙摆",
     "level": "oct15-liangshuo-6-5-2.json",
     "module": "oct15-liangshuo-6-5-2.js"
+  },
+  {
+    "id": "oct15-b2-george-13-1-man",
+    "name": "10-15-george-13-1-帅哥",
+    "description": "34 × 40 格暖肤色青年半身像：斜分栗棕发束、清晰深棕眼睛、立体鼻梁与收尖下颌，双层海军蓝翻领衬衫衬托面部。",
+    "level": "oct15-b2-george-13-1-man.json",
+    "module": "oct15-b2-george-13-1-man.js"
+  },
+  {
+    "id": "oct15-b2-george-13-1-woman",
+    "name": "10-15-george-13-1-美女",
+    "description": "34 × 36 格棕发少女特写：弧形分缝、波浪长发、大眼与玫瑰微笑、珍珠耳饰；露肩粉裙保留浅粉缎面高光。",
+    "level": "oct15-b2-george-13-1-woman.json",
+    "module": "oct15-b2-george-13-1-woman.js"
+  },
+  {
+    "id": "oct15-b2-george-15-1-egg",
+    "name": "10-15-george-15-1-蓝色龙蛋",
+    "description": "30 × 40 格蓝宝石龙蛋：水滴状完整蛋壳、分组蓝青切面、蓝白宝石与立体侧脸龙纹，保留深蓝轮廓与明亮折射层次。",
+    "level": "oct15-b2-george-15-1-egg.json",
+    "module": "oct15-b2-george-15-1-egg.js"
+  },
+  {
+    "id": "oct15-b2-george-15-1-dragon",
+    "name": "10-15-george-15-1-黄色小龙",
+    "description": "36 × 40 格金色幼龙：双金角、大眼、前伸圆吻、奶油色分节肚甲、短爪与向上卷曲尾巴，朱红小背鳍和黄金明暗强化立体感。",
+    "level": "oct15-b2-george-15-1-dragon.json",
+    "module": "oct15-b2-george-15-1-dragon.js"
+  },
+  {
+    "id": "oct15-b2-george-2-1-crystal",
+    "name": "10-15-george-2-1-蓝色冰晶",
+    "description": "40 × 40 格六向蓝冰晶：修长尖晶主轴与成对钻形分枝组成对称雪花，中心六边宝石、冰蓝暗面、雪青与冰白大切面保留晶体结构，枝间自然留白。",
+    "level": "oct15-b2-george-2-1-crystal.json",
+    "module": "oct15-b2-george-2-1-crystal.js"
+  },
+  {
+    "id": "oct15-b2-george-2-2-crown",
+    "name": "10-15-george-2-2-宝石王冠",
+    "description": "40 × 32 格五峰黄金王冠：高低错落金珠冠尖、中央黑蓝宝石、两侧蓝宝石与中部红宝石冠带，深金内壁和双层亮金边表现厚度。",
+    "level": "oct15-b2-george-2-2-crown.json",
+    "module": "oct15-b2-george-2-2-crown.js"
+  },
+  {
+    "id": "oct15-b2-george-4-1-drumstick",
+    "name": "10-15-george-4-1-鸡腿",
+    "description": "32 × 38 格斜置酥烤鸡腿：饱满椭圆肉身与完整象牙色骨柄，焦糖轮廓、金黄酥皮、成片暖色烤痕与左上受光面。",
+    "level": "oct15-b2-george-4-1-drumstick.json",
+    "module": "oct15-b2-george-4-1-drumstick.js"
+  },
+  {
+    "id": "oct15-b2-george-4-2-roast",
+    "name": "10-15-george-4-2-烧鸡",
+    "description": "40 × 31 格蜂蜜金烧鸡：饱满鸡胸、折叠翅膀、前后两只抬起的鸡腿，焦糖结构线和连续奶油金亮面呈现酥香体积。",
+    "level": "oct15-b2-george-4-2-roast.json",
+    "module": "oct15-b2-george-4-2-roast.js"
+  },
+  {
+    "id": "oct15-b2-keble-1-1-scarf",
+    "name": "10-15-keble-1-1-蓝色丝巾",
+    "description": "34 × 40 格海军蓝宠物三角丝巾：侧向双飘带、立体双结、挖空领口、层叠布褶、沿斜边米色绣线和完整米白爪印，主体周围自然留白。",
+    "level": "oct15-b2-keble-1-1-scarf.json",
+    "module": "oct15-b2-keble-1-1-scarf.js"
   }
 ]

@@ -423,6 +423,51 @@
       "id": "oct15-liangshuo-6-5-2",
       "name": "10-15-liangshuo-6-5-2-红色裙子",
       "path": "game/patterns/oct15-liangshuo-6-5-2.json"
+    },
+    {
+      "id": "oct15-b2-george-13-1-man",
+      "name": "10-15-george-13-1-帅哥",
+      "path": "game/patterns/oct15-b2-george-13-1-man.json"
+    },
+    {
+      "id": "oct15-b2-george-13-1-woman",
+      "name": "10-15-george-13-1-美女",
+      "path": "game/patterns/oct15-b2-george-13-1-woman.json"
+    },
+    {
+      "id": "oct15-b2-george-15-1-egg",
+      "name": "10-15-george-15-1-蓝色龙蛋",
+      "path": "game/patterns/oct15-b2-george-15-1-egg.json"
+    },
+    {
+      "id": "oct15-b2-george-15-1-dragon",
+      "name": "10-15-george-15-1-黄色小龙",
+      "path": "game/patterns/oct15-b2-george-15-1-dragon.json"
+    },
+    {
+      "id": "oct15-b2-george-2-1-crystal",
+      "name": "10-15-george-2-1-蓝色冰晶",
+      "path": "game/patterns/oct15-b2-george-2-1-crystal.json"
+    },
+    {
+      "id": "oct15-b2-george-2-2-crown",
+      "name": "10-15-george-2-2-宝石王冠",
+      "path": "game/patterns/oct15-b2-george-2-2-crown.json"
+    },
+    {
+      "id": "oct15-b2-george-4-1-drumstick",
+      "name": "10-15-george-4-1-鸡腿",
+      "path": "game/patterns/oct15-b2-george-4-1-drumstick.json"
+    },
+    {
+      "id": "oct15-b2-george-4-2-roast",
+      "name": "10-15-george-4-2-烧鸡",
+      "path": "game/patterns/oct15-b2-george-4-2-roast.json"
+    },
+    {
+      "id": "oct15-b2-keble-1-1-scarf",
+      "name": "10-15-keble-1-1-蓝色丝巾",
+      "path": "game/patterns/oct15-b2-keble-1-1-scarf.json"
     }
   ],
   "constants": {

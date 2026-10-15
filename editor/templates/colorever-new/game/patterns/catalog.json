@@ -192,6 +192,42 @@
       "file": "decorators/medical-kit.js",
       "sha256": "00f441f549e0439e3ac01119f074492691f29fbdb437c1adfc44572b215c2937"
     },
+    "oct15-b2-george-13-1-man": {
+      "file": "decorators/oct15-b2-george-13-1-man.js",
+      "sha256": "3a72199c6908656c6e323e61363637e1749d3c87006b06e4dc8c718ab9a7e05a"
+    },
+    "oct15-b2-george-13-1-woman": {
+      "file": "decorators/oct15-b2-george-13-1-woman.js",
+      "sha256": "885fb64117141c7ebf1f155a8cdfb4b086f6f96279e19864463a7459ca742e0f"
+    },
+    "oct15-b2-george-15-1-dragon": {
+      "file": "decorators/oct15-b2-george-15-1-dragon.js",
+      "sha256": "de2da4dc753e46478990b32262407ed38d629fa722a764abd4cda0227e116597"
+    },
+    "oct15-b2-george-15-1-egg": {
+      "file": "decorators/oct15-b2-george-15-1-egg.js",
+      "sha256": "0973706c3f4cbda7ac9c1c20cde319f96a414d54f3037bbfc4df8f407c42ea6f"
+    },
+    "oct15-b2-george-2-1-crystal": {
+      "file": "decorators/oct15-b2-george-2-1-crystal.js",
+      "sha256": "900ad91038ffb5e6d4639695e785b94d55f280136358e4ef2923372001e0f01f"
+    },
+    "oct15-b2-george-2-2-crown": {
+      "file": "decorators/oct15-b2-george-2-2-crown.js",
+      "sha256": "643d79e11fc007187e439e1b804118923eb03b5fb76c48a974a76fab4e68b6ec"
+    },
+    "oct15-b2-george-4-1-drumstick": {
+      "file": "decorators/oct15-b2-george-4-1-drumstick.js",
+      "sha256": "0b1fc176655980d19fdf48d46a620ec19c550d5318f426ec8022651ca96b188b"
+    },
+    "oct15-b2-george-4-2-roast": {
+      "file": "decorators/oct15-b2-george-4-2-roast.js",
+      "sha256": "c71546c87c6ffcc8707f7515b47c6eae019ae1e27dae4c45ce8ce57f8d1f505c"
+    },
+    "oct15-b2-keble-1-1-scarf": {
+      "file": "decorators/oct15-b2-keble-1-1-scarf.js",
+      "sha256": "1fec0abcaa34ecc5541457c053985b942dc268ef0fb5dcf2460db4f62ee16a92"
+    },
     "oct15-keble-1-1": {
       "file": "decorators/oct15-keble-1-1.js",
       "sha256": "2facbc74fcc5f1ffcb06c37b05ad41625279d07c9e09d834708d7f27c42b8472"
@@ -929,6 +965,69 @@
       "description": "紫金背景框中的玫红丝缎礼服，强化心形领口、细吊带、珍珠腰带与连贯的放射裙褶，浅蓝底影衬托裙摆",
       "level": "oct15-liangshuo-6-5-2.json",
       "templateSha256": "ada72df5638765df5a7bb043d1b1ecbb3777bae30645e27563c7b07174490177"
+    },
+    {
+      "id": "oct15-b2-george-13-1-man",
+      "name": "10-15-george-13-1-帅哥",
+      "description": "34 × 40 格暖肤色青年半身像：斜分栗棕发束、清晰深棕眼睛、立体鼻梁与收尖下颌，双层海军蓝翻领衬衫衬托面部。",
+      "level": "oct15-b2-george-13-1-man.json",
+      "templateSha256": "665dcebc8b9b2e71e5982bc1c8596b88a5fdc3000c50840419256e29e33b5250"
+    },
+    {
+      "id": "oct15-b2-george-13-1-woman",
+      "name": "10-15-george-13-1-美女",
+      "description": "34 × 36 格棕发少女特写：弧形分缝、波浪长发、大眼与玫瑰微笑、珍珠耳饰；露肩粉裙保留浅粉缎面高光。",
+      "level": "oct15-b2-george-13-1-woman.json",
+      "templateSha256": "4b27d762cf8f0b93177b091ec849736dafe0f4186e1b9e07eb960b78915ed218"
+    },
+    {
+      "id": "oct15-b2-george-15-1-egg",
+      "name": "10-15-george-15-1-蓝色龙蛋",
+      "description": "30 × 40 格蓝宝石龙蛋：水滴状完整蛋壳、分组蓝青切面、蓝白宝石与立体侧脸龙纹，保留深蓝轮廓与明亮折射层次。",
+      "level": "oct15-b2-george-15-1-egg.json",
+      "templateSha256": "3f65a1ce836565a0efc85776b1166576f534228c55ed02c2e907a553ca50a42a"
+    },
+    {
+      "id": "oct15-b2-george-15-1-dragon",
+      "name": "10-15-george-15-1-黄色小龙",
+      "description": "36 × 40 格金色幼龙：双金角、大眼、前伸圆吻、奶油色分节肚甲、短爪与向上卷曲尾巴，朱红小背鳍和黄金明暗强化立体感。",
+      "level": "oct15-b2-george-15-1-dragon.json",
+      "templateSha256": "ff5007e364a9bc3fcfe1b5f828680904874da94ccac3d68be62a4b61196cfe46"
+    },
+    {
+      "id": "oct15-b2-george-2-1-crystal",
+      "name": "10-15-george-2-1-蓝色冰晶",
+      "description": "40 × 40 格六向蓝冰晶：修长尖晶主轴与成对钻形分枝组成对称雪花，中心六边宝石、冰蓝暗面、雪青与冰白大切面保留晶体结构，枝间自然留白。",
+      "level": "oct15-b2-george-2-1-crystal.json",
+      "templateSha256": "cddff6c9bd9e12cbb7b065e513f30e63e71cb82a166d0be62d2b2a0df2066381"
+    },
+    {
+      "id": "oct15-b2-george-2-2-crown",
+      "name": "10-15-george-2-2-宝石王冠",
+      "description": "40 × 32 格五峰黄金王冠：高低错落金珠冠尖、中央黑蓝宝石、两侧蓝宝石与中部红宝石冠带，深金内壁和双层亮金边表现厚度。",
+      "level": "oct15-b2-george-2-2-crown.json",
+      "templateSha256": "cf5ccfc8b340f12e954743ed658739b95542dc5ed7168ff7b2dfc60f0bd2d4ca"
+    },
+    {
+      "id": "oct15-b2-george-4-1-drumstick",
+      "name": "10-15-george-4-1-鸡腿",
+      "description": "32 × 38 格斜置酥烤鸡腿：饱满椭圆肉身与完整象牙色骨柄，焦糖轮廓、金黄酥皮、成片暖色烤痕与左上受光面。",
+      "level": "oct15-b2-george-4-1-drumstick.json",
+      "templateSha256": "52304f5e0261c5d5b94be556014a32e3b35fa2e8c6f244a941fd966b889ae27f"
+    },
+    {
+      "id": "oct15-b2-george-4-2-roast",
+      "name": "10-15-george-4-2-烧鸡",
+      "description": "40 × 31 格蜂蜜金烧鸡：饱满鸡胸、折叠翅膀、前后两只抬起的鸡腿，焦糖结构线和连续奶油金亮面呈现酥香体积。",
+      "level": "oct15-b2-george-4-2-roast.json",
+      "templateSha256": "76cfbc895d6093a5872b258a88d34bd9417ca215c3a6dd0c89410878cea946e2"
+    },
+    {
+      "id": "oct15-b2-keble-1-1-scarf",
+      "name": "10-15-keble-1-1-蓝色丝巾",
+      "description": "34 × 40 格海军蓝宠物三角丝巾：侧向双飘带、立体双结、挖空领口、层叠布褶、沿斜边米色绣线和完整米白爪印，主体周围自然留白。",
+      "level": "oct15-b2-keble-1-1-scarf.json",
+      "templateSha256": "0df921a80ec457d2261eb0e1e34c9656b59535ba87de0cd75a229ecd657cde12"
     }
   ]
 }
