@@ -10,10 +10,15 @@ import {taskGeneratedDir,taskResultDir,taskUploadsDir} from '../lib/paths.mjs';
 import {execFile} from '../core/lib/exec.mjs';
 import {coloreverLevel as newLevel} from '../plugins/colorever-new/lib.mjs';
 import {embeddedAudio} from '../plugins/colorever-new/music.mjs';
+import {normalizeOpening} from '../plugins/colorever-new/lib.mjs';
+import {createPuzzle,prepareLevel as prepareShippingLevel} from '../../template-core/colorever-new/src/game-level.js';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 export default async function run(assert){
   const next=getEntry('colorever-new');
+  assert.equal(normalizeOpening({mode:'scattered',seed:17,speed:3}),{mode:'medium',coverage:95,batchSize:30,seed:17},'旧零散配置转为全局，测试速度不进入正式开局配置');
+  const workbench=fs.readFileSync(path.join(next.dir,'workbench.js'),'utf8');
+  assert.check(workbench.includes('全局大块归位')&&!workbench.includes("['scattered',")&&!workbench.includes('测试搬运速度'),'正式 editor 仅展示两种模式，无测试调速控件');
   const newScript=fs.readFileSync(path.join(next.templateDir,'game/game.js'),'utf8');
   // 白名单与步骤输入沿用 colorever 家族契约(纯 store 层字符串映射,不依赖注册表)。
   assert.equal([...configWhitelistFor(next.id)],[...configWhitelistFor('colorever')],'配置保存白名单沿用家族契约');
@@ -53,10 +58,10 @@ export default async function run(assert){
     assert.check((await patch({level:{width:1}})).status>=400,'沿用原版禁止任务修改图案数据的规则');
     assert.check((await patch({patternId:'unknown'})).status>=400,'拒绝未知图案');
     assert.check((await patch({music:{source:'invalid'}})).status>=400,'拒绝未知音乐来源');
-    const config={patternId:'orange-pixel-cat',opening:{mode:'scattered',difficulty:12,seed:163},hud:{enabled:false,titleEnabled:true,titleLine1:'宝石拼图',progressFillColor:'#e76b32'},playableCta:{mode:'steps',afterSteps:8},cta:{takeoverText:'继续挑战',takeoverActionText:'立即体验'}};
+    const config={patternId:'orange-pixel-cat',opening:{mode:'medium',coverage:90,batchSize:24,seed:163},hud:{enabled:false,titleEnabled:true,titleLine1:'宝石拼图',progressFillColor:'#e76b32'},playableCta:{mode:'steps',afterSteps:8},cta:{takeoverText:'继续挑战',takeoverActionText:'立即体验'}};
     const saved=await patch(config);
     assert.equal(saved.body.config.patternId,config.patternId,'沿用原图案 ID');
-    assert.equal(saved.body.config.opening,config.opening,'保存原版开局配置');
+    assert.equal(saved.body.config.opening,config.opening,'保存全局开局配置');
     assert.check(!saved.body.steps.level&&!saved.body.steps.pack,'修改开局使关卡和打包过期');
     await patch({hud:{titleLine2:'目标颜色始终可见'}});
     const deepSaved=await(await fetch(base+url)).json();
@@ -74,6 +79,15 @@ export default async function run(assert){
     const generated=JSON.parse(fs.readFileSync(path.join(taskGeneratedDir(id),'level.json'),'utf8'));
     assert.check(Array.isArray(generated.opening)&&Array.isArray(generated.target)&&generated.target.length===generated.opening.length,'任务实际生成带开局的关卡');
     assert.equal(generated.capacity,48,'保持原图案的 48 格缓存');
+    const shipping=prepareShippingLevel({...JSON.parse(fs.readFileSync(path.join(next.templateDir,'game/patterns/orange-pixel-cat.json'),'utf8')),openingMode:'medium',...config.opening});
+    assert.equal(generated,shipping.level,'正式内置开局引擎与源码生成相同的全局关卡');
+    assert.check(shipping.proof.metrics.wrongPercent>=90,'正式全局关卡达到配置的错位比例');
+    const puzzle=createPuzzle(generated);
+    for(const hint of shipping.proof.solution)assert.check(hint.action==='pick'?puzzle.pick(hint.region,hint.index):puzzle.place(hint.region,hint.index),'正式全局关卡按实际连通规则回放');
+    assert.check(puzzle.complete,'正式全局关卡完成回放');
+    assert.check(!preview.includes('__COLOREVER_PREVIEW__'),'正式预览不注入测试调速上下文');
+    const legacy=await newLevel(next.templateDir,{...config,opening:{...config.opening,mode:'scattered',speed:3}},next.template);
+    assert.equal(legacy.level,generated,'旧零散配置兼容全局模式，测试速度不改变正式关卡');
     assert.equal(fs.readFileSync(path.join(taskResultDir(id),'game.js'),'utf8'),newScript,'交付新视觉引擎');
 
     const music=fs.readFileSync(path.join(root,'template-core/colorever-new/public/audio/pickup.mp3'));
@@ -99,12 +113,14 @@ export default async function run(assert){
       res=await fetch(base+url+'/uploads/'+slot,{method:'PUT',headers:{'Content-Type':'video/mp4'},body:videoBytes});
       assert.equal(res.status,200,`兼容视频槽位 ${slot}`);
     }
-    await patch({intro:{enabled:true},outro:{enabled:true},hud:{enabled:true,titleEnabled:true},background:{enabled:true,source:'video-first',blurSigma:2},secondPlayable:{enabled:true,patternId:'house',opening:{mode:'medium',seed:23,difficulty:21},background:{enabled:true,source:'video-last',blurSigma:2},cta:{mode:'steps',afterSteps:5}}});
+    await patch({intro:{enabled:true},outro:{enabled:true},hud:{enabled:true,titleEnabled:true},background:{enabled:true,source:'video-first',blurSigma:2},secondPlayable:{enabled:true,patternId:'house',opening:{mode:'medium',seed:23,coverage:95,batchSize:30},background:{enabled:true,source:'video-last',blurSigma:2},cta:{mode:'steps',afterSteps:5}}});
     result=await api(url+'/run',{step:'all'});
     assert.check(result.status===200&&result.body.every(x=>x.ok),'片头、HUD、双背景、片尾、第二关完整流程通过');
     const second=JSON.parse(fs.readFileSync(path.join(taskGeneratedDir(id),'level2.json'),'utf8'));
     assert.check(Array.isArray(second.opening)&&second.opening.length===second.target.length,'第二关生成带开局的数据');
+    assert.check(second.openingMode==='medium'&&second.coverage===95&&second.batchSize===30,'第二关保留自己的全局开局参数');
     const packed=fs.readFileSync(path.join(taskResultDir(id),'index.html'),'utf8');
+    assert.check(!packed.includes('__COLOREVER_PREVIEW__'),'交付 HTML 无测试速度上下文，运行使用基础速度');
     assert.check(packed.includes('data-novvy-outro')&&packed.includes('__COLOREVER_PHASE2__')&&packed.includes('background2.webp')&&packed.includes('data-novvy-cta-bridge'),'沿用视频、换关、背景和 CTA 注入');
     assert.check(packed.includes('data-colorever-decorators')&&packed.includes('["orange-pixel-cat"]=function')&&packed.includes('["house"]=function'),'双关各自的装饰片段去重注入');
     const beforeSwitch=readTask(id);

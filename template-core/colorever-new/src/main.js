@@ -1,6 +1,4 @@
 import './style.css';
-import {Puzzle} from './model.js';
-import {GlobalPuzzle} from './global-puzzle.js';
 import {moveTiming,PREVIEW_SPEEDS} from './move-timing.js';
 import {GameAudio} from './game-audio.js';
 import {GameEffects} from './game-effects.js';
@@ -14,7 +12,7 @@ import {createReferenceTray} from './reference-tray.js';
 import {actionableCell,resolveTouchTarget} from './touch-target.js';
 import * as THREE from 'three';
 import {patterns} from './patterns/index.js';
-import {validateLevel} from './level.js';
+import {validateLevel,createPuzzle} from './game-level.js';
 import {createBeadParts,BEAD_WIDTH} from './bead-reference.js';
 import {lightBeadStudio} from './studio-reference.js';
 import {createMosaicSockets} from './mosaic-sockets.js';
@@ -90,8 +88,7 @@ function buildLevel(level,pattern,patternId){
   const lettersMap=Object.fromEntries(Object.entries(codes).map(([k,v])=>[v,k]));
   const cellsMap=new Map(reference.beads.map(b=>[b.row*width+b.col,{...b,code:b.color}]));
   const tgt=level.target;
-  const SessionPuzzle=previewOptions?.globalMode?GlobalPuzzle:Puzzle;
-  puzzle=new SessionPuzzle({width,height,target:tgt,capacity:cap,trayCols:tc,openingBoard:level.opening,batchSize:previewOptions?.batchSize});
+  puzzle=createPuzzle(level);
   const gList=[];
   for(const c of Object.keys(palette)){
     const mesh=new THREE.InstancedMesh(geo,mats[c],tgt.length+cap);

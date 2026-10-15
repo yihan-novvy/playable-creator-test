@@ -44,20 +44,22 @@ window.PlayablePlugins = window.PlayablePlugins || {};
   function openingControls(getOpening, patchOpening) {
     const wrap=el('div',{class:'dragon-config-grid'});
     const mode=el('select',{'aria-label':'开局模式'});
-    for (const [value,label] of [['easy','简易模式 · 整块搬运（验证 ≤6 步完成）'],['medium','适中模式 · 小块搬运（验证 12–14 步完成）'],['scattered','零散模式 · 碎块归位']]) mode.append(el('option',{value},[label]));
-    mode.value=getOpening()?.mode??'easy';
+    for (const [value,label] of [['easy','简易模式 · 整块搬运（验证 ≤6 步完成）'],['medium','适中模式 · 全局大块归位']]) mode.append(el('option',{value},[label]));
+    mode.value=getOpening()?.mode==='scattered'?'medium':getOpening()?.mode??'easy';
     mode.onchange=async()=>{await save(patchOpening({mode:mode.value}));await refresh(true);};
     wrap.append(field('开局模式',mode));
-    if(mode.value==='scattered'){
-      const difficulty=el('input',{type:'number',min:1,max:100,step:1,value:getOpening()?.difficulty??21});
-      difficulty.onchange=async()=>{await save(patchOpening({difficulty:Number(difficulty.value)}));await refresh(true);};
-      wrap.append(field('打散对数（1–100）',difficulty));
+    if(mode.value==='medium'){
+      const coverage=el('input',{type:'number',min:80,max:100,step:1,value:getOpening()?.coverage??95});
+      coverage.onchange=async()=>{await save(patchOpening({coverage:Number(coverage.value)}));await refresh(true);};
+      const batchSize=el('input',{type:'number',min:12,max:48,step:1,value:getOpening()?.batchSize??30});
+      batchSize.onchange=async()=>{await save(patchOpening({batchSize:Number(batchSize.value)}));await refresh(true);};
+      wrap.append(field('错位目标（80–100%）',coverage),field('单批最多珠子（12–48）',batchSize));
     }
     const seed=el('input',{type:'number',min:0,max:2147483647,step:1,value:getOpening()?.seed??1});
     seed.onchange=async()=>{await save(patchOpening({seed:Number(seed.value)}));await refresh(true);};
     const shuffle=el('button',{onclick:async()=>{await save(patchOpening({seed:((Number(getOpening()?.seed??1)+1)%2147483648)}));await refresh(true);}},['换一个开局']);
     wrap.append(field('随机种子',seed),shuffle);
-    wrap.append(el('p',{class:'hint'},[mode.value==='easy'?'整块搬运开局，出题器验证 6 次搬运内可完成。':mode.value==='medium'?'每块 3–5 颗珠子，保留连续色块，增加到 12–14 次搬运；同一种子总是得到同一开局。':'随机交换珠子生成开局，打散对数越高碎块越多；同一种子总是得到同一开局。']));
+    wrap.append(el('p',{class:'hint'},[mode.value==='easy'?'整块搬运开局，出题器验证 6 次搬运内可完成。':'全局错位，只搬运与点击位置连通的同色错珠（含斜向相邻），不从远处补选。默认错位目标 95%、单批最多 30 颗；颜色数量和连通结构决定实际覆盖与搬运量。正式运行使用基础速度；同一种子与参数得到同一开局。']));
     return wrap;
   }
   let musicPlayer;

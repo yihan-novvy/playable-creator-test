@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {prepareLevel,validateLevel} from '../src/level.js';
-import {prepareGlobalLevel} from '../src/global-opening.js';
+import {validateLevel} from '../src/level.js';
+import {prepareLevel} from '../src/game-level.js';
 import {Puzzle} from '../src/model.js';
 import {validatePreviewSpeed} from '../src/move-timing.js';
 const sourceRoot=fileURLToPath(new URL('../',import.meta.url));
@@ -38,7 +38,7 @@ export function authoringPlugin({root=sourceRoot,previewRoots={original:path.res
     const speed=validatePreviewSpeed(url.searchParams.get('speed')??1);
     const prepared={...input,opening:null,openingMode:mode,seed:url.searchParams.has('seed')?Number(url.searchParams.get('seed')):input.seed};
     const options={coverage:Number(url.searchParams.get('coverage')??95),batchSize:Number(url.searchParams.get('batch')??30)};
-    const {level,proof}=mode==='medium'?prepareGlobalLevel(prepared,options):prepareLevel(prepared);
+    const {level,proof}=prepareLevel({...prepared,...options});
     let metrics=proof.metrics;
     if(!metrics){
      const puzzle=new Puzzle({width:level.width,height:level.height,target:level.target,capacity:level.capacity,trayCols:level.trayCols,openingBoard:level.opening}),amounts=[];

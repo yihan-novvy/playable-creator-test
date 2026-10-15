@@ -29,7 +29,7 @@ for(const [name,content]of [['index.html',html],['game.js',script]]){
 const hash=text=>createHash('sha256').update(text).digest('hex');
 // 开局引擎(prepareLevel/validateLevel/solveLevel 及 model 依赖)打成自包含 ESM,
 // 广告编辑器按任务配置即时生成开局;sha 经 catalog 与 manifest 双重锁定。
-const engineBuild=await build({configFile:false,root,publicDir:false,build:{write:false,minify:true,cssCodeSplit:false,lib:{entry:path.join(root,'src/level.js'),formats:['es']},rollupOptions:{output:{inlineDynamicImports:true}}}});
+const engineBuild=await build({configFile:false,root,publicDir:false,build:{write:false,minify:true,cssCodeSplit:false,lib:{entry:path.join(root,'src/game-level.js'),formats:['es']},rollupOptions:{output:{inlineDynamicImports:true}}}});
 const engine=(Array.isArray(engineBuild)?engineBuild:[engineBuild]).flatMap(r=>r.output).filter(o=>o.type==='chunk').map(o=>o.code).join('\n');
 if(/(?:^|[;\n])\s*import\s/.test(engine))throw new Error('Level engine retains external imports');
 if(!/\bprepareLevel\b/.test(engine))throw new Error('Level engine lost its entry exports');

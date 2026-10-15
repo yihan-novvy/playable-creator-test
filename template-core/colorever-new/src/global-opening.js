@@ -1,23 +1,27 @@
 import {validateLevel} from './level.js';
 import {GlobalPuzzle} from './global-puzzle.js';
 
-export function globalPreviewOptions({coverage=95,batchSize=30}={}) {
+export function globalOpeningOptions({coverage=95,batchSize=30}={}) {
   if(!Number.isInteger(coverage)||coverage<80||coverage>100)throw new Error('全局错位目标应为 80–100');
   if(!Number.isInteger(batchSize)||batchSize<12||batchSize>48)throw new Error('单批珠子应为 12–48');
   return {coverage,batchSize};
 }
+export {globalOpeningOptions as globalPreviewOptions};
 
 export function replayGlobalLevel(level,options) {
   const puzzle=new GlobalPuzzle({width:level.width,height:level.height,target:level.target,capacity:level.capacity,trayCols:level.trayCols,openingBoard:level.opening,batchSize:options.batchSize});
+  const counts=new Map();
+  level.target.forEach(c=>{if(c)counts.set(c,(counts.get(c)||0)+1);});
+  const maximumWrongPercent=Math.round(Math.min(puzzle.total,2*(puzzle.total-Math.max(...counts.values())))/puzzle.total*1000)/10;
   const solution=[],amounts=[];
   let peakCache=0;
   for(let step=0;step<level.target.length*8+100;step++) {
     if(puzzle.complete) {
       const wrongBeads=level.target.reduce((n,c,i)=>n+Number(c!==level.opening[i]),0);
       return {moves:puzzle.moves,solution,metrics:{total:puzzle.total,wrongBeads,wrongPercent:Math.round(wrongBeads/puzzle.total*1000)/10,
-        averageBatch:Math.round(amounts.reduce((sum,n)=>sum+n,0)/amounts.length*10)/10,
-        largeBatchPercent:Math.round(amounts.filter(n=>n>=12).length/amounts.length*100),
-        smallBatchPercent:Math.round(amounts.filter(n=>n<=2).length/amounts.length*100),peakCache,moves:puzzle.moves,batchSize:puzzle.batchSize}};
+        averageBatch:Math.round(amounts.reduce((sum,n)=>sum+n,0)/Math.max(1,amounts.length)*10)/10,
+        largeBatchPercent:Math.round(amounts.filter(n=>n>=12).length/Math.max(1,amounts.length)*100),
+        smallBatchPercent:Math.round(amounts.filter(n=>n<=2).length/Math.max(1,amounts.length)*100),peakCache,moves:puzzle.moves,batchSize:puzzle.batchSize,maximumWrongPercent}};
     }
     const hint=puzzle.hint();
     if(!hint)throw new Error('全局开局没有可继续的搬运');
@@ -38,7 +42,7 @@ export function replayGlobalLevel(level,options) {
 // provide large regions where the picture permits them. The replay uses actual
 // connected picks and placements, including the picture's separate details.
 export function prepareGlobalLevel(input,rawOptions={}) {
-  const options=globalPreviewOptions(rawOptions);
+  const options=globalOpeningOptions(rawOptions);
   const level=validateLevel({...input,opening:null,openingMode:'medium'});
   const {target,width,height,capacity}=level;
   const total=target.filter(Boolean).length,counts=new Map();

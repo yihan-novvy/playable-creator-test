@@ -130,7 +130,8 @@
     "patternId": "cat",
     "opening": {
       "mode": "easy",
-      "difficulty": 21,
+      "coverage": 95,
+      "batchSize": 30,
       "seed": 1
     },
     "playableCta": {
@@ -147,7 +148,8 @@
       },
       "opening": {
         "mode": "easy",
-        "difficulty": 21,
+        "coverage": 95,
+        "batchSize": 30,
         "seed": 1
       },
       "cta": {

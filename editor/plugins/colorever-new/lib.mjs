@@ -36,10 +36,11 @@ export function coloreverPatterns(root, template) {
 // 任务级开局参数：做广告时才决定开局模式与随机种子；非法值回退默认，
 // 与 normalizeCtaPolicy 同一套纪律。easy=整块搬运(验证 ≤6 步完成)。
 export function normalizeOpening(raw) {
-  const mode = ['easy', 'medium', 'scattered'].includes(raw?.mode) ? raw.mode : 'easy';
-  const difficulty = Number.isInteger(raw?.difficulty) && raw.difficulty >= 1 && raw.difficulty <= 100 ? raw.difficulty : 21;
+  const mode = raw?.mode === 'scattered' ? 'medium' : ['easy', 'medium'].includes(raw?.mode) ? raw.mode : 'easy';
+  const coverage = Number.isInteger(raw?.coverage) && raw.coverage >= 80 && raw.coverage <= 100 ? raw.coverage : 95;
+  const batchSize = Number.isInteger(raw?.batchSize) && raw.batchSize >= 12 && raw.batchSize <= 48 ? raw.batchSize : 30;
   const seed = Number.isInteger(raw?.seed) && raw.seed >= 0 && raw.seed <= 2147483647 ? raw.seed : 1;
-  return { mode, difficulty, seed };
+  return { mode, coverage, batchSize, seed };
 }
 
 // 开局引擎由 build:template 随产物导出(catalog sha 锁定)。按 mtime 缓存
@@ -69,9 +70,9 @@ export async function coloreverLevel(root, config, template) {
   if (Array.isArray(pattern.opening)) throw new Error('构建产物携带固定开局，请从源项目重新 build:template');
   const engine = await levelEngine(root, template);
   const opening = normalizeOpening(config?.opening);
-  // 开局模式+打散+种子全部来自任务配置;prepareLevel 生成开局并以真实解法
+  // 开局模式、覆盖率、搬运上限和种子来自任务配置;prepareLevel 生成开局并以真实解法
   // 回放验证,失败即拒绝(带可行动的错误信息)。
-  const { level, proof } = engine.prepareLevel({ ...pattern, openingMode: opening.mode, difficulty: opening.difficulty, seed: opening.seed });
+  const { level, proof } = engine.prepareLevel({ ...pattern, openingMode: opening.mode, coverage: opening.coverage, batchSize: opening.batchSize, seed: opening.seed });
   return { level, proof, patternId: id, opening };
 }
 

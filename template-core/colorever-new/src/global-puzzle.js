@@ -1,6 +1,7 @@
 import {Puzzle} from './model.js';
 
-// Preview-only rules: keep the original Puzzle (and easy mode) unchanged.
+// Connected global rules shared by the pattern studio and shipped playables.
+// Keep the original Puzzle (and easy mode) unchanged.
 export class GlobalPuzzle extends Puzzle {
   constructor(options={}) {
     super(options);
