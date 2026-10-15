@@ -468,6 +468,31 @@
       "id": "oct15-b2-keble-1-1-scarf",
       "name": "10-15-keble-1-1-蓝色丝巾",
       "path": "game/patterns/oct15-b2-keble-1-1-scarf.json"
+    },
+    {
+      "id": "oct15-liangshuo-1-2-2",
+      "name": "10-15-liangshuo-1-2-2-豪华床",
+      "path": "game/patterns/oct15-liangshuo-1-2-2.json"
+    },
+    {
+      "id": "oct15-b3-liangshuo-3-1-1",
+      "name": "10-15-liangshuo-3-1-1-奶油蛋糕",
+      "path": "game/patterns/oct15-b3-liangshuo-3-1-1.json"
+    },
+    {
+      "id": "oct15-b3-liangshuo-3-1-2",
+      "name": "10-15-liangshuo-3-1-2-一家三口",
+      "path": "game/patterns/oct15-b3-liangshuo-3-1-2.json"
+    },
+    {
+      "id": "oct15-b3-liangshuo-5-1-1",
+      "name": "10-15-liangshuo-5-1-1-长裙美女",
+      "path": "game/patterns/oct15-b3-liangshuo-5-1-1.json"
+    },
+    {
+      "id": "oct15-b3-liangshuo-5-1-2",
+      "name": "10-15-liangshuo-5-1-2-一封信",
+      "path": "game/patterns/oct15-b3-liangshuo-5-1-2.json"
     }
   ],
   "constants": {

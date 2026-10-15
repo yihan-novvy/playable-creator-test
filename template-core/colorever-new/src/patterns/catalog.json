@@ -552,7 +552,7 @@
   {
     "id": "oct15-keble-1-1",
     "name": "10-15-keble-1-1-蓝色丝巾",
-    "description": "32 × 38 网格、6 色丹宁蓝丝巾：双色飘带围绕立体结扣，浅蓝翻折领口、靛蓝垂坠布褶和三角前片形成完整层次；象牙白三趾刺绣爪印搭配香槟金圆角背景框。",
+    "description": "32 × 38 网格、7 色、1004 颗可玩珠子：保留宝石蓝丝巾、湖蓝结扣亮面、深蓝布褶和象牙白三趾爪印；香槟金框内及领口空隙用 456 颗暖奶油色背景珠子填满，背景同样参与拾取、暂存与归位。",
     "level": "oct15-keble-1-1.json",
     "module": "oct15-keble-1-1.js"
   },
@@ -723,5 +723,40 @@
     "description": "34 × 40 格海军蓝宠物三角丝巾：侧向双飘带、立体双结、挖空领口、层叠布褶、沿斜边米色绣线和完整米白爪印，主体周围自然留白。",
     "level": "oct15-b2-keble-1-1-scarf.json",
     "module": "oct15-b2-keble-1-1-scarf.js"
+  },
+  {
+    "id": "oct15-liangshuo-1-2-2",
+    "name": "10-15-liangshuo-1-2-2-豪华床",
+    "description": "40 × 40 格、6 色红金四柱豪华床：深桃花心木与古金卷草雕花、双色红丝绒帷幔和金色流苏，保留冠梁、拱形床头、象牙白床单、宝蓝双枕和中央花饰；金色高光与床单共用象牙白，合并相近木色和蓝色明暗，保留原轮廓与 1022 颗珠子。",
+    "level": "oct15-liangshuo-1-2-2.json",
+    "module": "oct15-liangshuo-1-2-2.js"
+  },
+  {
+    "id": "oct15-b3-liangshuo-3-1-1",
+    "name": "10-15-liangshuo-3-1-1-奶油蛋糕",
+    "description": "蓝框香草底上的草莓奶油切块蛋糕，保留奶油、金黄海绵和焦糖夹层。",
+    "level": "oct15-b3-liangshuo-3-1-1.json",
+    "module": "oct15-b3-liangshuo-3-1-1.js"
+  },
+  {
+    "id": "oct15-b3-liangshuo-3-1-2",
+    "name": "10-15-liangshuo-3-1-2-一家三口",
+    "description": "宝蓝相框中的一家三口，深蓝西装、象牙白头纱和前景棕发孩子组成温暖合影。",
+    "level": "oct15-b3-liangshuo-3-1-2.json",
+    "module": "oct15-b3-liangshuo-3-1-2.js"
+  },
+  {
+    "id": "oct15-b3-liangshuo-5-1-1",
+    "name": "10-15-liangshuo-5-1-1-长裙美女",
+    "description": "根据新的人像参考重绘头部特写，保留微侧脸、侧分深棕长发与自然五官，四周用白色珠子铺满方形背景。",
+    "level": "oct15-b3-liangshuo-5-1-1.json",
+    "module": "oct15-b3-liangshuo-5-1-1.js"
+  },
+  {
+    "id": "oct15-b3-liangshuo-5-1-2",
+    "name": "10-15-liangshuo-5-1-2-一封信",
+    "description": "象牙白金边信封，三角翻盖与折痕层次清楚，并以6 YEARS AGO呼应参考图文字。",
+    "level": "oct15-b3-liangshuo-5-1-2.json",
+    "module": "oct15-b3-liangshuo-5-1-2.js"
   }
 ]
