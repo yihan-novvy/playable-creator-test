@@ -2,6 +2,14 @@
 
 从当前 colorever 完整复制的独立模板。升级珠子、光照及珠子表面的反馈，并加强空槽内壁的阴影；底部格子容器保持原有形状、尺寸、目标色和不透明度，图案、配色、专属装饰、开局生成、求解、缓存容量、移动与归位规则保持兼容。
 
+## 图案制作入口
+
+新增和优化图案使用项目级 skill [colorever-patterns](../../.agents/skills/colorever-patterns/SKILL.md)。
+美术标准见 [图案设计规范](../../docs/colorever-pattern-design.md)，字段和注册方式见
+[图案数据契约](../../.agents/skills/colorever-patterns/references/pattern-contract.md)。
+日常只读这些资料与目标图案，沿用现有引擎、构建和预览入口。
+下文各图案条目保留历史制作记录；其中“同步原版”的描述不代表后续任务需要同步。
+
 ## 视觉
 
 - 珠子采用较浅的四切面和三段圆角倒边，沿用实例化渲染；主色与切面明暗使用保持色相的着色，避免整片亮面泛白。

@@ -36,6 +36,16 @@ npm test             # editor 测试套件 + 各 template-core 测试
 
 editor 核心零改动。详见 [docs/template-plugin-spec.md](docs/template-plugin-spec.md)。
 
+## 制作 Colorever New 图案
+
+图案制作使用项目级 skill [`colorever-patterns`](.agents/skills/colorever-patterns/SKILL.md)，
+可在任务中指定 `$colorever-patterns` 并提供参考图、名称和特殊要求。
+日常任务按 skill 中的固定路径和命令操作，仅在异常时展开相关源码。
+
+美术标准见 [图案设计规范](docs/colorever-pattern-design.md)，字段与注册方式见
+[图案数据契约](.agents/skills/colorever-patterns/references/pattern-contract.md)。
+默认仅修改 `colorever-new`，不向其他 Colorever 模板同步。
+
 ## 来源
 
 迁移自四个独立仓库（colorever / dragon-cube / water-sort-puzzle / Playable-Wholehouse，
