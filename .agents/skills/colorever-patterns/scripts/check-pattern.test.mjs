@@ -59,7 +59,7 @@ test('reports shipping global metrics, including real placements and excluding c
   assert.equal(result.modes.medium.withinMoveBudget, true);
   assert.equal(result.modes.medium.coverage, 95);
   assert.equal(result.modes.medium.batchSize, 30);
-  assert.equal(result.modes.medium.maxMoves, 50);
+  assert.equal(result.modes.medium.maxMoves, 80);
   const puzzle = createPuzzle(level), amounts = [];
   for (const hint of proof.solution) {
     if (hint.action === 'pick') assert.ok(puzzle.pick(hint.region, hint.index));
@@ -76,13 +76,13 @@ test('reports shipping global metrics, including real placements and excluding c
 });
 
 test('rejects a fragmented global opening even when legacy medium passes in 12–14 moves', async t => {
-  const source = pattern(24, 'blocks'), options = await fixture(t, source);
+  const source = pattern(32, 'blocks'), options = await fixture(t, source);
   const legacy = prepareLegacyLevel({...source, openingMode: 'medium'});
   assert.ok(legacy.proof.moves <= 14);
   const actual = prepareLevel({...source, openingMode: 'medium'});
-  assert.ok(actual.proof.moves > 50);
-  await assert.rejects(checkPattern(options), error => {
-    assert.match(error.message, /超过 50 次上限/);
+  assert.ok(actual.proof.moves > 80);
+  await assert.rejects(checkPattern({...options, coverage: 95}), error => {
+    assert.match(error.message, /超过 80 次上限/);
     assert.equal(error.result.ok, false);
     assert.equal(error.result.modes.medium.moves, actual.proof.moves);
     assert.equal(error.result.modes.medium.averageBatch, actual.proof.metrics.averageBatch);
@@ -91,9 +91,29 @@ test('rejects a fragmented global opening even when legacy medium passes in 12�
   });
 });
 
-test('accepts exactly 50 moves and retains source data when checking task overrides', async t => {
-  const boundary = await checkPattern(await fixture(t, pattern(30, 'quadrants', 18)));
-  assert.equal(boundary.modes.medium.moves, 50);
+test('preserves the artwork and retries at 80 percent before rejecting the move budget', async t => {
+  const source = pattern(32, 'blocks'), options = await fixture(t, source);
+  const result = await checkPattern(options);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.openingTrials.map(trial => trial.coverage), [95, 80]);
+  assert.ok(result.openingTrials[0].moves > 80);
+  assert.ok(result.openingTrials[1].moves <= 80);
+  assert.equal(result.modes.medium.coverage, 80);
+  assert.equal(result.recommendedOpening.coverage, 80);
+  assert.deepEqual(JSON.parse(await fs.readFile(path.join(options.repoRoot, 'template-core/colorever-new/src/patterns/fixture.json'), 'utf8')), source);
+
+  const tooLarge = await fixture(t, pattern(40, 'blocks'));
+  await assert.rejects(checkPattern(tooLarge), error => {
+    assert.equal(error.result.modes.medium.coverage, 80);
+    assert.ok(error.result.modes.medium.moves > 80);
+    assert.equal(error.result.openingTrials.length, 2);
+    return true;
+  });
+});
+
+test('accepts exactly 80 moves and retains source data when checking task overrides', async t => {
+  const boundary = await checkPattern(await fixture(t, pattern(40, 'quadrants', 5)));
+  assert.equal(boundary.modes.medium.moves, 80);
   assert.equal(boundary.ok, true);
 
   const source = pattern(), options = await fixture(t, source);

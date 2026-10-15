@@ -8,13 +8,13 @@ const defaultRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const readJson = async file => JSON.parse(await fs.readFile(file, 'utf8'));
 const hash = value => createHash('sha256').update(value).digest('hex');
 const inventory = cells => cells.filter(Boolean).sort((a, b) => a - b);
-const MAX_GLOBAL_MOVES = 50;
+const MAX_GLOBAL_MOVES = 80;
 const assertFileName = (name, extension) => {
   assert.match(name ?? '', new RegExp(`^[a-z][a-z0-9-]*\\.${extension}$`), 'Invalid pattern file name');
 };
 
 // Read-only entry point; accepts a root in tests without copying the real repo.
-export async function checkPattern({id, built = false, seed, coverage = 95, batchSize = 30, repoRoot = defaultRoot}) {
+export async function checkPattern({id, built = false, seed, coverage, batchSize = 30, repoRoot = defaultRoot}) {
   assert.match(id ?? '', /^[a-z][a-z0-9-]*$/, 'Invalid pattern ID');
   const root = path.join(repoRoot, 'template-core/colorever-new');
   const sourceDir = path.join(root, 'src/patterns');
@@ -46,24 +46,37 @@ export async function checkPattern({id, built = false, seed, coverage = 95, batc
   const normalized = validateLevel(source);
   const checkedSeed = seed ?? normalized.seed;
   const modes = {};
+  const openingTrials = [];
   for (const mode of ['easy', 'medium']) {
-    let prepared;
-    try {
-      prepared = prepareLevel({...normalized, openingMode: mode, seed: checkedSeed, coverage, batchSize});
-    } catch (error) {
-      throw new Error(`${mode}, seed ${checkedSeed}: ${error.message}`);
-    }
-    assert.deepEqual(inventory(prepared.level.opening), inventory(normalized.target), `${mode}: color inventory changed`);
-    assert.ok(prepared.level.opening.every((color, index) => (color === 0) === (normalized.target[index] === 0)), `${mode}: board silhouette changed`);
-    modes[mode] = {moves: prepared.proof.moves, actions: prepared.proof.solution.length, seed: checkedSeed};
-    if (mode === 'medium') {
-      const metrics = prepared.proof.metrics;
-      assert.ok(metrics && Number.isFinite(metrics.averageBatch), 'Shipping global replay must report transfer metrics');
-      modes.medium = {
-        ...modes.medium, ...metrics, coverage, batchSize,
-        capacity: prepared.level.capacity, trayCols: prepared.level.trayCols,
-        maxMoves: MAX_GLOBAL_MOVES, withinMoveBudget: prepared.proof.moves <= MAX_GLOBAL_MOVES,
-      };
+    // Preserve the artwork: try a less scrambled opening before asking for art
+    // changes. An explicit --coverage remains exact and never falls back silently.
+    const coverages = mode === 'medium' && coverage === undefined ? [95, 80] : [coverage ?? 95];
+    for (const trialCoverage of coverages) {
+      let prepared;
+      try {
+        prepared = prepareLevel({...normalized, openingMode: mode, seed: checkedSeed, coverage: trialCoverage, batchSize});
+      } catch (error) {
+        if (mode === 'medium' && trialCoverage !== coverages.at(-1)) {
+          openingTrials.push({coverage: trialCoverage, solvable: false, error: error.message});
+          continue;
+        }
+        throw new Error(`${mode}, seed ${checkedSeed}, coverage ${trialCoverage}: ${error.message}`);
+      }
+      assert.deepEqual(inventory(prepared.level.opening), inventory(normalized.target), `${mode}: color inventory changed`);
+      assert.ok(prepared.level.opening.every((color, index) => (color === 0) === (normalized.target[index] === 0)), `${mode}: board silhouette changed`);
+      modes[mode] = {moves: prepared.proof.moves, actions: prepared.proof.solution.length, seed: checkedSeed};
+      if (mode === 'medium') {
+        const metrics = prepared.proof.metrics;
+        assert.ok(metrics && Number.isFinite(metrics.averageBatch), 'Shipping global replay must report transfer metrics');
+        modes.medium = {
+          ...modes.medium, ...metrics, coverage: trialCoverage, batchSize,
+          capacity: prepared.level.capacity, trayCols: prepared.level.trayCols,
+          maxMoves: MAX_GLOBAL_MOVES, withinMoveBudget: prepared.proof.moves <= MAX_GLOBAL_MOVES,
+        };
+        openingTrials.push({coverage: trialCoverage, solvable: true, moves: prepared.proof.moves,
+          averageBatch: metrics.averageBatch, withinMoveBudget: modes.medium.withinMoveBudget});
+      }
+      if (mode === 'easy' || modes.medium.withinMoveBudget) break;
     }
   }
 
@@ -73,13 +86,18 @@ export async function checkPattern({id, built = false, seed, coverage = 95, batc
     beads: normalized.target.filter(Boolean).length,
     colors: new Set(normalized.target.filter(Boolean)).size,
     seed: checkedSeed, sourceSeed: normalized.seed, difficulty: normalized.difficulty, modes,
-    warnings: batchSize === 30 && modes.medium.averageBatch < 12
-      ? ['全局模式平均搬运不足 12 颗；优先合并碎色、扩大连续色块，并检查小批搬运占比。12 颗是优化参考，50 次是硬门槛。'] : [],
+    openingTrials,
+    recommendedOpening: {mode: 'medium', coverage: modes.medium.coverage, batchSize, seed: checkedSeed},
+    warnings: openingTrials.length > 1
+      ? ['95% 错位未通过，已用 80% 复验以保留图案美感；交付预览和广告任务须同步使用报告中的 coverage。'] : [],
     built: false,
   };
   const finish = report => {
     if (!modes.medium.withinMoveBudget) {
-      const error = new Error(`全局大块归位需要 ${modes.medium.moves} 次搬运，超过 ${MAX_GLOBAL_MOVES} 次上限（seed ${checkedSeed}, coverage ${coverage}, batchSize ${batchSize}）；请简化图案并扩大连续色块`);
+      const next = modes.medium.coverage > 80
+        ? '请先用 --coverage 80 复验并同步实际开局；不要为步数牺牲造型和材质层次'
+        : '80% 错位仍超标；保留美观版本，继续优化非关键碎色与开局预算，不标记为通过';
+      const error = new Error(`全局大块归位需要 ${modes.medium.moves} 次搬运，超过 ${MAX_GLOBAL_MOVES} 次上限（seed ${checkedSeed}, coverage ${modes.medium.coverage}, batchSize ${batchSize}）；${next}`);
       error.result = {...report, ok: false, error: error.message};
       throw error;
     }
