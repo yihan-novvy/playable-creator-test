@@ -548,5 +548,117 @@
     "description": "32 × 32 等间距粗网格、7 色修长冰蓝狼头：直立尖耳、内收冰青斜眼、收尖蓝额纹、细长雪白鼻梁、小鼻头与浅弧嘴线，楔形脸颊和逐层收窄的下颌及鬃毛全部由可玩珠子组成；仅用于 colorever-new。",
     "level": "ice-wolf-head.json",
     "module": "ice-wolf-head.js"
+  },
+  {
+    "id": "oct15-keble-1-1",
+    "name": "10-15-keble-1-1-蓝色丝巾",
+    "description": "重新设计为有清楚椭圆领口、右上小结和自然垂坠三角下摆的宝蓝丝巾，保留奶油爪印",
+    "level": "oct15-keble-1-1.json",
+    "module": "oct15-keble-1-1.js"
+  },
+  {
+    "id": "oct15-keble-1-2",
+    "name": "10-15-keble-1-2-蓝色袋子",
+    "description": "米白帆布托特袋、拱形藏蓝提手、连续蓝色包边与中央蓝色骨头标志",
+    "level": "oct15-keble-1-2.json",
+    "module": "oct15-keble-1-2.js"
+  },
+  {
+    "id": "oct15-liangshuo-1-4-1",
+    "name": "10-15-liangshuo-1-4-1-断腿木马",
+    "description": "改为清楚的栗色马头特写：长口鼻、直立双耳、深色长鬃、杏金面部和沿鼻梁延伸的白纹，不再堆叠小腿部细节",
+    "level": "oct15-liangshuo-1-4-1.json",
+    "module": "oct15-liangshuo-1-4-1.js"
+  },
+  {
+    "id": "oct15-liangshuo-1-4-2",
+    "name": "10-15-liangshuo-1-4-2-金属小鸟",
+    "description": "蓝色背景框中的银蓝侧身小鸟，放大圆头、亮眼和金色鸟喙，用一片完整折叠翅膀、长尾和栖枝表达鸟形",
+    "level": "oct15-liangshuo-1-4-2.json",
+    "module": "oct15-liangshuo-1-4-2.js"
+  },
+  {
+    "id": "oct15-liangshuo-4-3-1",
+    "name": "10-15-liangshuo-4-3-1-三把钥匙",
+    "description": "红、湖蓝、香槟银三把竖直钥匙；六角空心钥匙柄、直槽和分明的齿口",
+    "level": "oct15-liangshuo-4-3-1.json",
+    "module": "oct15-liangshuo-4-3-1.js"
+  },
+  {
+    "id": "oct15-liangshuo-4-3-2",
+    "name": "10-15-liangshuo-4-3-2-保险箱",
+    "description": "深灰立式保险箱、银灰门框与两段铰链、左侧钥匙锁，以及铜框白底警示牌；微小文字简化为红色叹号",
+    "level": "oct15-liangshuo-4-3-2.json",
+    "module": "oct15-liangshuo-4-3-2.js"
+  },
+  {
+    "id": "oct15-liangshuo-4-4-1",
+    "name": "10-15-liangshuo-4-4-1-金属按钮",
+    "description": "保留圆形凸起按钮和同心金属环，改用明黄金、象牙金亮边和蓝色安装侧壁",
+    "level": "oct15-liangshuo-4-4-1.json",
+    "module": "oct15-liangshuo-4-4-1.js"
+  },
+  {
+    "id": "oct15-liangshuo-4-4-2",
+    "name": "10-15-liangshuo-4-4-2-黑色盒子",
+    "description": "简洁紫金盒子，移除盒盖徽章和宝石，换成清楚的大号浅金 BOX 字母，保留完整盒沿与锁扣",
+    "level": "oct15-liangshuo-4-4-2.json",
+    "module": "oct15-liangshuo-4-4-2.js"
+  },
+  {
+    "id": "oct15-liangshuo-6-1-1",
+    "name": "10-15-liangshuo-6-1-1-黄色小鸟",
+    "description": "完全重画的正面可爱小黄鸡：圆头圆身、对称大眼、中央橙色小喙、短小双翼与橙色双脚，去掉冠羽和复杂尾巴",
+    "level": "oct15-liangshuo-6-1-1.json",
+    "module": "oct15-liangshuo-6-1-1.js"
+  },
+  {
+    "id": "oct15-liangshuo-6-1-2",
+    "name": "10-15-liangshuo-6-1-2-黄色水果",
+    "description": "圆润金黄覆盆子状果实，合并为大颗果粒，保留顶部弯曲果梗、左右绿叶和浅金受光面",
+    "level": "oct15-liangshuo-6-1-2.json",
+    "module": "oct15-liangshuo-6-1-2.js"
+  },
+  {
+    "id": "oct15-liangshuo-6-3-1",
+    "name": "10-15-liangshuo-6-3-1-白衣美女",
+    "description": "参考 liangshuo-2101239560518004737-2-1 的脸部特写比例，采用金色长发、清楚眉眼与红唇、白衣领角，以及蓝金背景框",
+    "level": "oct15-liangshuo-6-3-1.json",
+    "module": "oct15-liangshuo-6-3-1.js"
+  },
+  {
+    "id": "oct15-liangshuo-6-3-2",
+    "name": "10-15-liangshuo-6-3-2-树枝和红唇",
+    "description": "青绿金色双层背景框与奶油底色，精简为弧形绿叶枝条和柔和玫红双唇，突出完整唇形与牙齿",
+    "level": "oct15-liangshuo-6-3-2.json",
+    "module": "oct15-liangshuo-6-3-2.js"
+  },
+  {
+    "id": "oct15-liangshuo-6-4-1",
+    "name": "10-15-liangshuo-6-4-1-红发美女",
+    "description": "参考已有特写人像重新制作的铜红发女性，脸部朝向与金发版区分，采用草莓红发束和青绿金色背景框",
+    "level": "oct15-liangshuo-6-4-1.json",
+    "module": "oct15-liangshuo-6-4-1.js"
+  },
+  {
+    "id": "oct15-liangshuo-6-4-2",
+    "name": "10-15-liangshuo-6-4-2-猫耳和红唇",
+    "description": "紫杏色双层背景框与浅粉底色，重画玫瑰色圆润猫耳、蜜桃内耳和奶白耳毛，搭配玫红双唇",
+    "level": "oct15-liangshuo-6-4-2.json",
+    "module": "oct15-liangshuo-6-4-2.js"
+  },
+  {
+    "id": "oct15-liangshuo-6-5-1",
+    "name": "10-15-liangshuo-6-5-1-龙石柱",
+    "description": "简化为蓝金背景框中的典雅象牙白立柱，包含卷涡柱头、青蓝凹槽和香槟金饰带",
+    "level": "oct15-liangshuo-6-5-1.json",
+    "module": "oct15-liangshuo-6-5-1.js"
+  },
+  {
+    "id": "oct15-liangshuo-6-5-2",
+    "name": "10-15-liangshuo-6-5-2-红色裙子",
+    "description": "紫金背景框中的玫红丝缎礼服，强化心形领口、细吊带、珍珠腰带与连贯的放射裙褶，浅蓝底影衬托裙摆",
+    "level": "oct15-liangshuo-6-5-2.json",
+    "module": "oct15-liangshuo-6-5-2.js"
   }
 ]

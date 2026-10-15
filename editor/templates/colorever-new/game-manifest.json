@@ -343,6 +343,86 @@
       "id": "ice-wolf-head",
       "name": "冰晶狼头",
       "path": "game/patterns/ice-wolf-head.json"
+    },
+    {
+      "id": "oct15-keble-1-1",
+      "name": "10-15-keble-1-1-蓝色丝巾",
+      "path": "game/patterns/oct15-keble-1-1.json"
+    },
+    {
+      "id": "oct15-keble-1-2",
+      "name": "10-15-keble-1-2-蓝色袋子",
+      "path": "game/patterns/oct15-keble-1-2.json"
+    },
+    {
+      "id": "oct15-liangshuo-1-4-1",
+      "name": "10-15-liangshuo-1-4-1-断腿木马",
+      "path": "game/patterns/oct15-liangshuo-1-4-1.json"
+    },
+    {
+      "id": "oct15-liangshuo-1-4-2",
+      "name": "10-15-liangshuo-1-4-2-金属小鸟",
+      "path": "game/patterns/oct15-liangshuo-1-4-2.json"
+    },
+    {
+      "id": "oct15-liangshuo-4-3-1",
+      "name": "10-15-liangshuo-4-3-1-三把钥匙",
+      "path": "game/patterns/oct15-liangshuo-4-3-1.json"
+    },
+    {
+      "id": "oct15-liangshuo-4-3-2",
+      "name": "10-15-liangshuo-4-3-2-保险箱",
+      "path": "game/patterns/oct15-liangshuo-4-3-2.json"
+    },
+    {
+      "id": "oct15-liangshuo-4-4-1",
+      "name": "10-15-liangshuo-4-4-1-金属按钮",
+      "path": "game/patterns/oct15-liangshuo-4-4-1.json"
+    },
+    {
+      "id": "oct15-liangshuo-4-4-2",
+      "name": "10-15-liangshuo-4-4-2-黑色盒子",
+      "path": "game/patterns/oct15-liangshuo-4-4-2.json"
+    },
+    {
+      "id": "oct15-liangshuo-6-1-1",
+      "name": "10-15-liangshuo-6-1-1-黄色小鸟",
+      "path": "game/patterns/oct15-liangshuo-6-1-1.json"
+    },
+    {
+      "id": "oct15-liangshuo-6-1-2",
+      "name": "10-15-liangshuo-6-1-2-黄色水果",
+      "path": "game/patterns/oct15-liangshuo-6-1-2.json"
+    },
+    {
+      "id": "oct15-liangshuo-6-3-1",
+      "name": "10-15-liangshuo-6-3-1-白衣美女",
+      "path": "game/patterns/oct15-liangshuo-6-3-1.json"
+    },
+    {
+      "id": "oct15-liangshuo-6-3-2",
+      "name": "10-15-liangshuo-6-3-2-树枝和红唇",
+      "path": "game/patterns/oct15-liangshuo-6-3-2.json"
+    },
+    {
+      "id": "oct15-liangshuo-6-4-1",
+      "name": "10-15-liangshuo-6-4-1-红发美女",
+      "path": "game/patterns/oct15-liangshuo-6-4-1.json"
+    },
+    {
+      "id": "oct15-liangshuo-6-4-2",
+      "name": "10-15-liangshuo-6-4-2-猫耳和红唇",
+      "path": "game/patterns/oct15-liangshuo-6-4-2.json"
+    },
+    {
+      "id": "oct15-liangshuo-6-5-1",
+      "name": "10-15-liangshuo-6-5-1-龙石柱",
+      "path": "game/patterns/oct15-liangshuo-6-5-1.json"
+    },
+    {
+      "id": "oct15-liangshuo-6-5-2",
+      "name": "10-15-liangshuo-6-5-2-红色裙子",
+      "path": "game/patterns/oct15-liangshuo-6-5-2.json"
     }
   ],
   "constants": {

@@ -192,6 +192,70 @@
       "file": "decorators/medical-kit.js",
       "sha256": "00f441f549e0439e3ac01119f074492691f29fbdb437c1adfc44572b215c2937"
     },
+    "oct15-keble-1-1": {
+      "file": "decorators/oct15-keble-1-1.js",
+      "sha256": "2facbc74fcc5f1ffcb06c37b05ad41625279d07c9e09d834708d7f27c42b8472"
+    },
+    "oct15-keble-1-2": {
+      "file": "decorators/oct15-keble-1-2.js",
+      "sha256": "b874883ce453c13d70b255c53b098a5823a4461d34de9ff3fc7cae4d60fc8930"
+    },
+    "oct15-liangshuo-1-4-1": {
+      "file": "decorators/oct15-liangshuo-1-4-1.js",
+      "sha256": "be95f01740a452217fbc90d770d362eeb11df2a3da9007648fcb90e54a92b8aa"
+    },
+    "oct15-liangshuo-1-4-2": {
+      "file": "decorators/oct15-liangshuo-1-4-2.js",
+      "sha256": "fe87440a45c92fcd5202e2525e6692441026154453faaae4814a0e278af673be"
+    },
+    "oct15-liangshuo-4-3-1": {
+      "file": "decorators/oct15-liangshuo-4-3-1.js",
+      "sha256": "88af1cce2f9fc1a917f8366f27522b579797f46022cd33abf932add1b723d2a1"
+    },
+    "oct15-liangshuo-4-3-2": {
+      "file": "decorators/oct15-liangshuo-4-3-2.js",
+      "sha256": "7177a4ded26e71e309e990e942925de763ec98ee4723f75622e26afed94088ca"
+    },
+    "oct15-liangshuo-4-4-1": {
+      "file": "decorators/oct15-liangshuo-4-4-1.js",
+      "sha256": "e2f81364cda69f468f8b9971df3fda1428983e84fcde7459b381fd2c62f1d15b"
+    },
+    "oct15-liangshuo-4-4-2": {
+      "file": "decorators/oct15-liangshuo-4-4-2.js",
+      "sha256": "7fadb6700be25c7ff95429ffda795e462aa6ba00c8a1f0c3825cb57c8d112416"
+    },
+    "oct15-liangshuo-6-1-1": {
+      "file": "decorators/oct15-liangshuo-6-1-1.js",
+      "sha256": "3ba08c943f60999aea0b10a79644117b766c05e807214483f8ea2cb27a8f444e"
+    },
+    "oct15-liangshuo-6-1-2": {
+      "file": "decorators/oct15-liangshuo-6-1-2.js",
+      "sha256": "996a376a6f575d5d36b4d7a654c514b722a442611983d7785b9d33cc18f72e6a"
+    },
+    "oct15-liangshuo-6-3-1": {
+      "file": "decorators/oct15-liangshuo-6-3-1.js",
+      "sha256": "b7462f2fd66af5c3fbc8d1a65783ee8239fb8c781469f726c36c3434469669d3"
+    },
+    "oct15-liangshuo-6-3-2": {
+      "file": "decorators/oct15-liangshuo-6-3-2.js",
+      "sha256": "888763d6c71fea0683ceb6cedb5ee854a689000c6e362d5034b85777d03b0fbe"
+    },
+    "oct15-liangshuo-6-4-1": {
+      "file": "decorators/oct15-liangshuo-6-4-1.js",
+      "sha256": "2d80f779d001ec3262be5fdbd850d602b4b4437716b10c0a8bea27870e515a3a"
+    },
+    "oct15-liangshuo-6-4-2": {
+      "file": "decorators/oct15-liangshuo-6-4-2.js",
+      "sha256": "f2e3e64e1a0b397cdc83b990f00d76adf02dc15400bb3a430ba8efd374fef0bc"
+    },
+    "oct15-liangshuo-6-5-1": {
+      "file": "decorators/oct15-liangshuo-6-5-1.js",
+      "sha256": "7b8b1f4f033abb82e1adbddc90c5c89dfeb1d4569b9ebf807a6be187ecde1b67"
+    },
+    "oct15-liangshuo-6-5-2": {
+      "file": "decorators/oct15-liangshuo-6-5-2.js",
+      "sha256": "3de9da2a833e6a5f4576afeb0c6fb4fed5352659fb78465896cfdf022f48c9ed"
+    },
     "orange-pixel-cat": {
       "file": "decorators/orange-pixel-cat.js",
       "sha256": "8f28eefde1661f3b29002b6f3dd6dd7a18fce428fc1d9916d0f35e06d7278580"
@@ -753,6 +817,118 @@
       "description": "32 × 32 等间距粗网格、7 色修长冰蓝狼头：直立尖耳、内收冰青斜眼、收尖蓝额纹、细长雪白鼻梁、小鼻头与浅弧嘴线，楔形脸颊和逐层收窄的下颌及鬃毛全部由可玩珠子组成；仅用于 colorever-new。",
       "level": "ice-wolf-head.json",
       "templateSha256": "8da4aebdf144446e0b6c31c13502663b620385c1eb7e7b73364b552366a97ed0"
+    },
+    {
+      "id": "oct15-keble-1-1",
+      "name": "10-15-keble-1-1-蓝色丝巾",
+      "description": "重新设计为有清楚椭圆领口、右上小结和自然垂坠三角下摆的宝蓝丝巾，保留奶油爪印",
+      "level": "oct15-keble-1-1.json",
+      "templateSha256": "04bda725526bc1732d42135933661860067fbfa238346757b7f73358d9d184b2"
+    },
+    {
+      "id": "oct15-keble-1-2",
+      "name": "10-15-keble-1-2-蓝色袋子",
+      "description": "米白帆布托特袋、拱形藏蓝提手、连续蓝色包边与中央蓝色骨头标志",
+      "level": "oct15-keble-1-2.json",
+      "templateSha256": "5a4c96cffe38beb3ba532545b5f5d573a6f9435589ec901018f6e567888fd1d2"
+    },
+    {
+      "id": "oct15-liangshuo-1-4-1",
+      "name": "10-15-liangshuo-1-4-1-断腿木马",
+      "description": "改为清楚的栗色马头特写：长口鼻、直立双耳、深色长鬃、杏金面部和沿鼻梁延伸的白纹，不再堆叠小腿部细节",
+      "level": "oct15-liangshuo-1-4-1.json",
+      "templateSha256": "a4ff9db6c45ce5427362aac07a6ef30a51dd6434758622a5cd3b58624140758a"
+    },
+    {
+      "id": "oct15-liangshuo-1-4-2",
+      "name": "10-15-liangshuo-1-4-2-金属小鸟",
+      "description": "蓝色背景框中的银蓝侧身小鸟，放大圆头、亮眼和金色鸟喙，用一片完整折叠翅膀、长尾和栖枝表达鸟形",
+      "level": "oct15-liangshuo-1-4-2.json",
+      "templateSha256": "182b170dca68d0c9257877910a3128f276a3ff833bbd22ff58d5891375068036"
+    },
+    {
+      "id": "oct15-liangshuo-4-3-1",
+      "name": "10-15-liangshuo-4-3-1-三把钥匙",
+      "description": "红、湖蓝、香槟银三把竖直钥匙；六角空心钥匙柄、直槽和分明的齿口",
+      "level": "oct15-liangshuo-4-3-1.json",
+      "templateSha256": "0fa13c03d3abfb52c0a4375d73d41e7520b609b5a397c00b8099ba071054ace2"
+    },
+    {
+      "id": "oct15-liangshuo-4-3-2",
+      "name": "10-15-liangshuo-4-3-2-保险箱",
+      "description": "深灰立式保险箱、银灰门框与两段铰链、左侧钥匙锁，以及铜框白底警示牌；微小文字简化为红色叹号",
+      "level": "oct15-liangshuo-4-3-2.json",
+      "templateSha256": "abe5c437412345d66ceedef43a05a70f8d54065259e72bcdafe7ca7cec457272"
+    },
+    {
+      "id": "oct15-liangshuo-4-4-1",
+      "name": "10-15-liangshuo-4-4-1-金属按钮",
+      "description": "保留圆形凸起按钮和同心金属环，改用明黄金、象牙金亮边和蓝色安装侧壁",
+      "level": "oct15-liangshuo-4-4-1.json",
+      "templateSha256": "ab51f3d27c186b48074cd69da70e14695457e89c794d2469c1febdc83455aed6"
+    },
+    {
+      "id": "oct15-liangshuo-4-4-2",
+      "name": "10-15-liangshuo-4-4-2-黑色盒子",
+      "description": "简洁紫金盒子，移除盒盖徽章和宝石，换成清楚的大号浅金 BOX 字母，保留完整盒沿与锁扣",
+      "level": "oct15-liangshuo-4-4-2.json",
+      "templateSha256": "fb8b25c0214b41d53e34091afbd05c95b2f2904f8f16dba9cdf2053890e504bb"
+    },
+    {
+      "id": "oct15-liangshuo-6-1-1",
+      "name": "10-15-liangshuo-6-1-1-黄色小鸟",
+      "description": "完全重画的正面可爱小黄鸡：圆头圆身、对称大眼、中央橙色小喙、短小双翼与橙色双脚，去掉冠羽和复杂尾巴",
+      "level": "oct15-liangshuo-6-1-1.json",
+      "templateSha256": "dd82c7da908ed882ca9353f643e23c94790c33ed97f9ad4523c5f876fa7eb353"
+    },
+    {
+      "id": "oct15-liangshuo-6-1-2",
+      "name": "10-15-liangshuo-6-1-2-黄色水果",
+      "description": "圆润金黄覆盆子状果实，合并为大颗果粒，保留顶部弯曲果梗、左右绿叶和浅金受光面",
+      "level": "oct15-liangshuo-6-1-2.json",
+      "templateSha256": "5ffcc9640a52c9a43000ff004c574c19d0b7672d0280839a662df013f10e48aa"
+    },
+    {
+      "id": "oct15-liangshuo-6-3-1",
+      "name": "10-15-liangshuo-6-3-1-白衣美女",
+      "description": "参考 liangshuo-2101239560518004737-2-1 的脸部特写比例，采用金色长发、清楚眉眼与红唇、白衣领角，以及蓝金背景框",
+      "level": "oct15-liangshuo-6-3-1.json",
+      "templateSha256": "f9e1b4799797da688776e69f656855c7721627bd5f3e1ee80b36b3a8b9ce3f7f"
+    },
+    {
+      "id": "oct15-liangshuo-6-3-2",
+      "name": "10-15-liangshuo-6-3-2-树枝和红唇",
+      "description": "青绿金色双层背景框与奶油底色，精简为弧形绿叶枝条和柔和玫红双唇，突出完整唇形与牙齿",
+      "level": "oct15-liangshuo-6-3-2.json",
+      "templateSha256": "2a7f9e3e530f95a801c8a06b0ee1d6bb386eda32575fc557291c1718f08aef7b"
+    },
+    {
+      "id": "oct15-liangshuo-6-4-1",
+      "name": "10-15-liangshuo-6-4-1-红发美女",
+      "description": "参考已有特写人像重新制作的铜红发女性，脸部朝向与金发版区分，采用草莓红发束和青绿金色背景框",
+      "level": "oct15-liangshuo-6-4-1.json",
+      "templateSha256": "8411de0ccfc12d49cfaf4cafaa2e98f12c332b7fcd1e706bdbb7a09e34918956"
+    },
+    {
+      "id": "oct15-liangshuo-6-4-2",
+      "name": "10-15-liangshuo-6-4-2-猫耳和红唇",
+      "description": "紫杏色双层背景框与浅粉底色，重画玫瑰色圆润猫耳、蜜桃内耳和奶白耳毛，搭配玫红双唇",
+      "level": "oct15-liangshuo-6-4-2.json",
+      "templateSha256": "03febaf29049481d6f189c1ba2bf30cec1e8948a366edd6892cf712cc0a94a99"
+    },
+    {
+      "id": "oct15-liangshuo-6-5-1",
+      "name": "10-15-liangshuo-6-5-1-龙石柱",
+      "description": "简化为蓝金背景框中的典雅象牙白立柱，包含卷涡柱头、青蓝凹槽和香槟金饰带",
+      "level": "oct15-liangshuo-6-5-1.json",
+      "templateSha256": "87735202da75962f5bfb93c6cf7caa7c412adf374bfb3d5fff7eaf3fa9bf6f4b"
+    },
+    {
+      "id": "oct15-liangshuo-6-5-2",
+      "name": "10-15-liangshuo-6-5-2-红色裙子",
+      "description": "紫金背景框中的玫红丝缎礼服，强化心形领口、细吊带、珍珠腰带与连贯的放射裙褶，浅蓝底影衬托裙摆",
+      "level": "oct15-liangshuo-6-5-2.json",
+      "templateSha256": "ada72df5638765df5a7bb043d1b1ecbb3777bae30645e27563c7b07174490177"
     }
   ]
 }
