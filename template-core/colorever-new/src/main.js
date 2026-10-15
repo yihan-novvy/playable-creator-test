@@ -1,5 +1,7 @@
 import './style.css';
 import {Puzzle} from './model.js';
+import {GlobalPuzzle} from './global-puzzle.js';
+import {moveTiming,PREVIEW_SPEEDS} from './move-timing.js';
 import {GameAudio} from './game-audio.js';
 import {GameEffects} from './game-effects.js';
 import {AmbientSheen} from './ambient-sheen.js';
@@ -21,6 +23,8 @@ const patternId=globalThis.__COLOREVER_PATTERN_ID__??'cat';
 // 引擎包不携带图案数据与装饰代码:关卡一律来自注入(广告/预览/离线样例),
 // 装饰由 __COLOREVER_DECORATORS__ 按所选图案注册,dev 直连回退注册表模块。
 const level=validateLevel(globalThis.__COLOREVER_LEVEL__);
+const previewOptions=globalThis.__COLOREVER_PREVIEW__??null;
+const previewOrigin=new URL(document.baseURI).origin;
 if(!level.opening)throw new Error('Missing injected level (window.__COLOREVER_LEVEL__) with authored opening');
 const resolveDecorate=id=>globalThis.__COLOREVER_DECORATORS__?.[id]?.({THREE})??patterns[id]?.decorate??(()=>{});
 const pattern={decorate:resolveDecorate(patternId)};
@@ -45,6 +49,7 @@ let session=null,puzzle=null,groups=[],cells=new Map(),target=[],capacity=48,tra
 let bodyGeometry=null,bodyMaterials={},letters={};
 let busy=false,flights=[],hint=null,down=null,selectionStart=0,completion=null,completedColors=new Set(),pendingColors=[];
 let wasWon=false;
+let previewLastBatch=0;
 
 /* —— CTA 时机策略(两关同构):complete=完成后跳转;steps=第 N 步跳转(N 不是上限,完成时兜底)。
    第一关策略仅注入于无片尾场景;双 playable 时第一关不武装,进第二关后换用 PHASE2.cta。 —— */
@@ -85,7 +90,8 @@ function buildLevel(level,pattern,patternId){
   const lettersMap=Object.fromEntries(Object.entries(codes).map(([k,v])=>[v,k]));
   const cellsMap=new Map(reference.beads.map(b=>[b.row*width+b.col,{...b,code:b.color}]));
   const tgt=level.target;
-  puzzle=new Puzzle({width,height,target:tgt,capacity:cap,trayCols:tc,openingBoard:level.opening});
+  const SessionPuzzle=previewOptions?.globalMode?GlobalPuzzle:Puzzle;
+  puzzle=new SessionPuzzle({width,height,target:tgt,capacity:cap,trayCols:tc,openingBoard:level.opening,batchSize:previewOptions?.batchSize});
   const gList=[];
   for(const c of Object.keys(palette)){
     const mesh=new THREE.InstancedMesh(geo,mats[c],tgt.length+cap);
@@ -146,6 +152,7 @@ function updateUI(){
   if(tutorial.active)hint=tutorial.hint(puzzle,busy);
   showHint();
   document.dispatchEvent(new CustomEvent('novvy:hud-progress',{bubbles:true,detail:{percent:Math.round(puzzle.correct/puzzle.total*100),correct:puzzle.correct,total:puzzle.total}}));
+  if(previewOptions&&window.parent!==window)window.parent.postMessage({type:'colorever-preview-state',id:previewOptions.id,moves:puzzle.moves,correct:puzzle.correct,total:puzzle.total,selected:puzzle.selection?.indices.length??0,cache:puzzle.tray.filter(Boolean).length,lastBatch:previewLastBatch,complete:puzzle.complete,busy},previewOrigin);
   if(armedPolicy&&!ctaAnnounced&&armedPolicy.mode==='steps'&&puzzle.moves>=armedPolicy.afterSteps)announceCtaMoment();
   if(!puzzle.complete)wasWon=false;
 }
@@ -170,18 +177,32 @@ function activate(region,index){
   const selection=puzzle.selection;
   if(selection&&selection.region===region&&selection.indices.includes(index)){puzzle.selection=null;updateUI();return;}
   if(selection){const moved=puzzle.place(region,index);if(moved){tutorial.placed(region);busy=true;let order=0;const now=performance.now();
-    flights=moved.map(m=>{const mesh=new THREE.Mesh(bodyGeometry,bodyMaterials[letters[m.color]]);scene.add(mesh);const a=point(m.fromRegion,m.from).clone();if(!m.shift)a.z+=.38;return{...m,mesh,start:now+(m.shift?0:order++*(region==='tray'?55:m.fromRegion==='tray'?65:50)),duration:m.shift?210:(m.fromRegion==='tray'||m.toRegion==='tray')?360:260,a,b:point(m.toRegion,m.to),landed:false};});
+    previewLastBatch=moved.filter(m=>!m.shift).length;
+    const timing=moveTiming(selection.region,region,previewOptions);
+    flights=moved.map(m=>{const mesh=new THREE.Mesh(bodyGeometry,bodyMaterials[letters[m.color]]);scene.add(mesh);const a=point(m.fromRegion,m.from).clone();if(!m.shift)a.z+=.38;return{...m,mesh,start:now+(m.shift?0:order++*timing.stagger),duration:m.shift?timing.shiftDuration:timing.duration,a,b:point(m.toRegion,m.to),landed:false};});
     if(moved.some(m=>m.shift))play('store-move');refresh();return;}
 }
   if(puzzle.pick(region,index)){selectionStart=performance.now();play('pickup');updateUI();}else if(tutorial.active){updateUI();}else{$('instruction').textContent=region==='board'&&puzzle.board[index]===target[index]?'这颗已归位，不能移动':selection?'请选择同色空格，或盒子里的空格':'点金色边框的错珠开始';}
 }
 $('sound').onclick=()=>{audio.setEnabled(!audio.enabled);updateSound();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.bgm.pause();audio.stopEffects();}else audio.unlock();});
-function reset(){wasWon=false;for(const f of flights)scene.remove(f.mesh);flights=[];busy=false;completion=null;pendingColors=[];effects.clear();audio.stopEffects();clearHint();puzzle.reset();tutorial.reset();seedCompleteColors();$('win').hidden=true;$('celebration').hidden=true;refresh();if(puzzle.complete)afterFlights(performance.now());}
+function reset(){wasWon=false;previewLastBatch=0;for(const f of flights)scene.remove(f.mesh);flights=[];busy=false;completion=null;pendingColors=[];effects.clear();audio.stopEffects();clearHint();puzzle.reset();tutorial.reset();seedCompleteColors();$('win').hidden=true;$('celebration').hidden=true;refresh();if(puzzle.complete)afterFlights(performance.now());}
 $('reset').onclick=reset;$('again').onclick=reset;$('dismiss').onclick=()=>{$('win').hidden=true;};
 $('undo').onclick=()=>{if(!busy&&puzzle.undo()){clearHint();effects.clear();pendingColors=[];completion=null;seedCompleteColors();$('win').hidden=true;$('celebration').hidden=true;refresh();}};
 $('hint').onclick=()=>{hint=puzzle.hint();showHint();};
 $('guide').onclick=()=>{if(hint){const h=hint;activate(h.region,h.index);}};
+if(previewOptions)window.addEventListener('message',event=>{
+  if(event.source!==window.parent||event.origin!==previewOrigin||event.data?.type!=='colorever-preview-action')return;
+  if(event.data.action==='speed'){
+    if(PREVIEW_SPEEDS.includes(event.data.speed))previewOptions.speed=event.data.speed;
+    return;
+  }
+  if(event.data.action==='reset'){reset();return;}
+  if(event.data.action!=='step'||busy||puzzle.complete)return;
+  let next=puzzle.hint();
+  if(next?.action==='pick'){activate(next.region,next.index);next=puzzle.hint();}
+  if(next&&next.action!=='pick')activate(next.region,next.index);
+});
 const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,0,1),-.1);
 function preciseHitAt(e){const r=canvas.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,camera);
   const hit=raycaster.intersectObjects(groups.map(g=>g.mesh))[0];if(hit){const g=groups.find(g=>g.mesh===hit.object),entry=g.entries[hit.instanceId];if(entry)return{region:entry.region,index:entry.index};}

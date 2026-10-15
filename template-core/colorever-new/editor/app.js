@@ -1,15 +1,33 @@
 const $=id=>document.getElementById(id);
-let catalog=[],draft=null,brush=1,tool='draw',selectedPart=null,history=[],future=[],dirty=false,completed=true,timer,revision=0,loadRevision=0,pointer=null;
+let catalog=[],draft=null,brush=1,tool='draw',selectedPart=null,history=[],future=[],dirty=false,completed=false,timer,revision=0,loadRevision=0,pointer=null;
 let renderer=document.body.dataset.previewRenderer??'original';
 const rendererNames={original:'原版 Colorever',new:'新版 Colorever New'};
 const pitch=18,copy=value=>structuredClone(value);
+const previewQuery=new URLSearchParams(location.search);
+let previewMode=previewQuery.get('mode')==='easy'?'easy':'medium';
+const integerParam=(key,fallback,min,max)=>{const raw=previewQuery.get(key),value=Number(raw);return raw!==null&&Number.isInteger(value)&&value>=min&&value<=max?value:fallback;};
+let previewSeed=integerParam('seed',1,0,2147483647),previewCoverage=integerParam('coverage',95,80,100),previewBatch=integerParam('batch',30,12,48),autoTimer=null;
+const previewSpeeds=[.5,1,1.5,2,3];
+let previewSpeed=previewSpeeds.includes(Number(previewQuery.get('speed')))?Number(previewQuery.get('speed')):1;
 const currentPicture=()=>catalog.find(p=>p.id===$('pattern').value);
 const parts=()=>currentPicture()?.editableParts??[];
 async function request(url,options){const response=await fetch(url,options);const data=await response.json();if(!response.ok)throw new Error(data.error?.message??'请求失败');return data;}
 function status(text,error=false){$('status').textContent=text;$('status').className=error?'error':'';}
 function remember(){history.push(copy(draft));if(history.length>60)history.shift();future=[];}
 function changed(resetOpening=false){if(resetOpening)draft.opening=null;dirty=true;$('dirty').textContent='未保存的修改';render();clearTimeout(timer);timer=setTimeout(preview,650);}
-function syncFields(){$('opening-mode').value=draft.openingMode??'scattered';$('difficulty-field').style.display=draft.openingMode!=='scattered'?'none':'flex';$('mode-hint').textContent=(draft.openingMode==='easy'?'打乱四块连续的大区域，验证最多 6 次搬运可完成。选择“试玩开局”查看整块错位效果。':draft.openingMode==='medium'?'每块 3–5 颗珠子，保留连续小块，验证 12–14 次搬运可完成。':'随机交换分散的珠子；打散对数越高，碎块越多。')+'这些只是模板的演示默认；广告任务的开局模式与随机种子在广告编辑器中逐任务设置。';for(const id of ['name','width','height','trayCols','difficulty','seed'])$(id).value=draft[id];$('trayRows').value=Math.ceil(draft.capacity/draft.trayCols);$('json').value=JSON.stringify(draft,null,2);$('undo').disabled=!history.length;$('redo').disabled=!future.length;}
+function syncPreviewFields(){
+ $('opening-mode').value=previewMode;$('seed').value=previewSeed;
+ $('global-settings').hidden=previewMode!=='medium';
+ $('coverage').value=previewCoverage;$('coverage-value').textContent=previewCoverage+'%';
+ $('batch-size').value=previewBatch;$('batch-value').textContent=previewBatch+' 颗';
+ $('mode-hint').textContent=previewMode==='easy'?'原有简易规则，最多 6 次搬运完成。':'全图大范围错位，只搬运点击位置连通的同色珠子。';
+ if(previewMode==='medium')renderer='new';
+ $('renderer-original').disabled=previewMode==='medium';
+ $('preview-speed').value=String(renderer==='new'?previewSpeed:1);$('preview-speed').disabled=renderer!=='new';
+ for(const version of Object.keys(rendererNames)){const button=$('renderer-'+version);button.classList.toggle('active',renderer===version);button.setAttribute('aria-pressed',String(renderer===version));}
+}
+function syncFields(){syncPreviewFields();for(const id of ['name','width','height','trayCols'])$(id).value=draft[id];$('trayRows').value=Math.ceil(draft.capacity/draft.trayCols);$('json').value=JSON.stringify(draft,null,2);$('undo').disabled=!history.length;$('redo').disabled=!future.length;}
+
 function setTool(value){tool=value;document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('active',b.dataset.tool===tool));$('board').style.cursor=tool==='move'?'grab':'crosshair';}
 function renderPalette(){const root=$('palette');root.replaceChildren();for(const [id,color]of Object.entries(draft.colors)){
  const wrap=document.createElement('div');wrap.className='swatch-wrap';const button=document.createElement('button');button.className='swatch';button.style.background=color;button.title=draft.colorNames?.[id]??'颜色 '+id;button.setAttribute('aria-label','画笔颜色 '+id);button.setAttribute('aria-pressed',String(Number(id)===brush));button.onclick=()=>{brush=Number(id);setTool('draw');renderPalette();};
@@ -69,17 +87,61 @@ for(const [id,key]of [['offsetX','offsetX'],['offsetY','offsetY'],['part-scale',
  $(id).addEventListener('input',update);$(id).addEventListener('change',update);
 }
 $('reset-part').onclick=()=>{remember();if(draft.decorations)delete draft.decorations[selectedPart];changed();};
-for(const id of ['name','width','height','trayRows','trayCols','difficulty','seed'])$(id).onchange=()=>{const value=id==='name'?$(id).value:Number($(id).value);if(id!=='name'&&(!Number.isInteger(value)||value<Number($(id).min)||value>Number($(id).max))){syncFields();return;}remember();if(id==='width'||id==='height'){const ow=draft.width,oh=draft.height,old=draft.target;draft[id]=value;draft.target=Array.from({length:draft.width*draft.height},(_,i)=>{const x=i%draft.width,y=Math.floor(i/draft.width);return x<ow&&y<oh?old[y*ow+x]:0;});}else if(id==='trayRows'||id==='trayCols'){const rows=id==='trayRows'?value:Math.ceil(draft.capacity/draft.trayCols),cols=id==='trayCols'?value:draft.trayCols;draft.trayCols=cols;draft.capacity=rows*cols;}else draft[id]=value;changed(id!=='name');};
-$('opening-mode').onchange=()=>{remember();draft.openingMode=$('opening-mode').value;showOpening();changed(true);};
+for(const id of ['name','width','height','trayRows','trayCols'])$(id).onchange=()=>{const value=id==='name'?$(id).value:Number($(id).value);if(id!=='name'&&(!Number.isInteger(value)||value<Number($(id).min)||value>Number($(id).max))){syncFields();return;}remember();if(id==='width'||id==='height'){const ow=draft.width,oh=draft.height,old=draft.target;draft[id]=value;draft.target=Array.from({length:draft.width*draft.height},(_,i)=>{const x=i%draft.width,y=Math.floor(i/draft.width);return x<ow&&y<oh?old[y*ow+x]:0;});}else if(id==='trayRows'||id==='trayCols'){const rows=id==='trayRows'?value:Math.ceil(draft.capacity/draft.trayCols),cols=id==='trayCols'?value:draft.trayCols;draft.trayCols=cols;draft.capacity=rows*cols;}else draft[id]=value;changed(id!=='name');};
+function stopAuto(){clearInterval(autoTimer);autoTimer=null;$('auto-preview').textContent='自动演示';}
+function previewParams(){return new URLSearchParams({completed:completed?'1':'0',renderer,mode:previewMode,seed:String(previewSeed),coverage:String(previewCoverage),batch:String(previewBatch),speed:String(renderer==='new'?previewSpeed:1)});}
+function updatePreviewUrl(){const params=previewParams();params.delete('completed');params.delete('renderer');params.set('pattern',$('pattern').value);historyUrl(params);}
+function updatePreviewLinks(){const standalone=previewParams();standalone.set('completed','0');$('standalone').href=`/api/patterns/${$('pattern').value}/preview?${standalone}`;updatePreviewUrl();}
+function historyUrl(params){window.history.replaceState(null,'',location.pathname+'?'+params);}
 function showOpening(){completed=false;$('play').classList.add('active');$('completed').classList.remove('active');}
-$('shuffle').onclick=()=>{remember();draft.seed=(draft.seed+1)%2147483648;showOpening();changed(true);};
-async function preview(){if(!draft)return;clearTimeout(timer);const rev=++revision,version=renderer;$('preview-state').textContent=`正在更新${rendererNames[version]}预览…`;try{const response=await fetch(`/api/patterns/${$('pattern').value}/preview?completed=${completed?1:0}&renderer=${version}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(draft)});if(!response.ok){const error=await response.json();throw new Error(error.error?.message??'预览失败');}const moves=response.headers.get('X-Colorever-Solution-Moves'),html=await response.text();if(rev!==revision)return;$('preview').srcdoc=html;$('preview').title=`图案模板预览 · ${rendererNames[version]}`;$('preview-state').textContent=rendererNames[version]+' · '+(dirty?'当前显示未保存的草稿':'当前显示已保存的模板')+(draft.openingMode==='easy'&&moves?` · 开局验证 ${moves} 次搬运可完成`:'');}catch(error){if(rev===revision)$('preview-state').textContent='预览未更新：'+error.message;}}
-function selectRenderer(version){if(version===renderer)return;renderer=version;for(const key of Object.keys(rendererNames)){const button=$('renderer-'+key);button.classList.toggle('active',key===version);button.setAttribute('aria-pressed',String(key===version));}preview();}
+function changePreview(){stopAuto();showOpening();syncPreviewFields();preview();}
+$('opening-mode').onchange=()=>{previewMode=$('opening-mode').value;changePreview();};
+$('seed').onchange=()=>{const value=Number($('seed').value);if(!Number.isInteger(value)||value<0||value>2147483647){syncPreviewFields();return;}previewSeed=value;changePreview();};
+$('shuffle').onclick=()=>{previewSeed=(previewSeed+1)%2147483648;changePreview();};
+for(const [id,key]of [['coverage','coverage'],['batch-size','batch']]){
+ $(id).oninput=()=>{if(key==='coverage')$('coverage-value').textContent=$(id).value+'%';else $('batch-value').textContent=$(id).value+' 颗';};
+ $(id).onchange=()=>{if(key==='coverage')previewCoverage=Number($(id).value);else previewBatch=Number($(id).value);changePreview();};
+}
+async function preview(){
+ if(!draft)return;
+ clearTimeout(timer);stopAuto();
+ const rev=++revision,version=renderer,params=previewParams();params.set('previewId',String(rev));
+ $('preview-state').textContent='正在生成并验证开局…';$('live-state').textContent='正在准备开局…';
+ for(const id of ['step-preview','auto-preview','reset-preview'])$(id).disabled=true;
+ try{
+  const response=await fetch(`/api/patterns/${$('pattern').value}/preview?${params}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(draft)});
+  if(!response.ok){const error=await response.json();throw new Error(error.error?.message??'预览失败');}
+  const metrics=JSON.parse(response.headers.get('X-Colorever-Opening-Metrics')),html=await response.text();
+  if(rev!==revision)return;
+  $('preview').srcdoc=html;$('preview').title=`图案模板预览 · ${rendererNames[version]}`;
+  $('stat-wrong').textContent=metrics.wrongPercent+'%';$('stat-batch').textContent=metrics.averageBatch+' 颗';$('stat-moves').textContent=metrics.moves+' 次';
+  $('stat-wrong').title=`${metrics.wrongBeads} / ${metrics.total} 颗珠子错位`;
+  $('preview-state').textContent=`${dirty?'当前图案草稿':'已保存图案'} · ${metrics.wrongBeads}/${metrics.total} 颗错位 · 验证可完成`;
+  $('live-state').textContent=completed?'成品展示，点击「试玩开局」开始。':'点击珠子亲自试玩，或使用下方演示按钮。';
+  for(const id of ['step-preview','auto-preview','reset-preview'])$(id).disabled=completed||version!=='new';
+  updatePreviewLinks();
+ }catch(error){if(rev===revision){$('preview-state').textContent='预览未更新：'+error.message;$('live-state').textContent='请调整参数后重新生成。';for(const id of ['stat-wrong','stat-batch','stat-moves'])$(id).textContent='—';}}
+}
+function previewAction(action,speed){$('preview').contentWindow.postMessage({type:'colorever-preview-action',action,speed},location.origin);}
+$('preview-speed').onchange=()=>{const speed=Number($('preview-speed').value);if(!previewSpeeds.includes(speed))return;previewSpeed=speed;previewAction('speed',previewSpeed);updatePreviewLinks();};
+$('preview').addEventListener('load',()=>previewAction('speed',renderer==='new'?previewSpeed:1));
+$('step-preview').onclick=()=>{stopAuto();previewAction('step');};
+$('reset-preview').onclick=()=>{stopAuto();previewAction('reset');};
+$('auto-preview').onclick=()=>{if(autoTimer){stopAuto();return;}$('auto-preview').textContent='暂停演示';previewAction('step');autoTimer=setInterval(()=>previewAction('step'),300);};
+window.addEventListener('message',event=>{
+ if(event.origin!==location.origin||event.source!==$('preview').contentWindow||event.data?.type!=='colorever-preview-state'||event.data.id!==String(revision))return;
+ const state=event.data;
+ $('live-state').textContent=`已归位 ${state.correct}/${state.total} · ${state.moves} 次搬运`+(state.lastBatch?` · 上次 ${state.lastBatch} 颗`:'')+(state.selected?` · 已选 ${state.selected} 颗`:'');
+ if(state.complete){stopAuto();$('live-state').textContent=`完成！${state.moves} 次搬运，${state.total} 颗全部归位。`;}
+ $('step-preview').disabled=state.busy||state.complete;$('auto-preview').disabled=state.complete;
+});
+$('copy-preview-link').onclick=async()=>{try{updatePreviewUrl();await navigator.clipboard.writeText(location.href);status(dirty?'已复制测试链接；链接使用已保存的图案。':'已复制测试链接，包含图案、模式、种子和全局参数。');}catch{status('复制失败，可直接复制浏览器地址。',true);}};
+function selectRenderer(version){if(version===renderer)return;renderer=version;syncPreviewFields();preview();}
 $('renderer-original').onclick=()=>selectRenderer('original');$('renderer-new').onclick=()=>selectRenderer('new');
-async function load(){const rev=++loadRevision;++revision;clearTimeout(timer);const id=$('pattern').value,level=await request('/api/patterns/'+id);if(rev!==loadRevision)return;draft=level;brush=Number(Object.keys(draft.colors)[0]);selectedPart=null;history=[];future=[];dirty=false;$('dirty').textContent='已保存';$('description').textContent=currentPicture().description;$('module').textContent=`专属装饰代码：colorever/src/patterns/${currentPicture().module}。新增造型由作者或 AI 修改该模块后运行 npm run build:template。`;setTool('draw');status('已读取模板。修改只保存在草稿，点击保存才生效。');render();await preview();}
+async function load(){const rev=++loadRevision;++revision;clearTimeout(timer);const id=$('pattern').value,level=await request('/api/patterns/'+id);if(rev!==loadRevision)return;draft=level;brush=Number(Object.keys(draft.colors)[0]);selectedPart=null;history=[];future=[];dirty=false;$('dirty').textContent='已保存';$('description').textContent=currentPicture().description;$('module').textContent=`专属装饰代码：colorever-new/src/patterns/${currentPicture().module}。新增造型由作者或 AI 修改该模块后运行 npm run build:template。`;setTool('draw');status('已读取模板。修改只保存在草稿，点击保存才生效。');render();await preview();}
 $('pattern').onchange=()=>load().catch(e=>status(e.message,true));$('reload').onclick=()=>load().catch(e=>status(e.message,true));
-$('save').onclick=async()=>{const id=$('pattern').value,submitted=JSON.stringify(draft);$('save').disabled=true;try{const saved=await request('/api/patterns/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:submitted});if(id===$('pattern').value&&JSON.stringify(draft)===submitted){draft=saved;dirty=false;$('dirty').textContent='已保存';render();}status('已保存到 colorever。运行 npm run build:template 后广告项目才能使用新版本。');await preview();}catch(e){status(e.message,true);}finally{$('save').disabled=false;}};
-$('play').onclick=()=>{completed=false;$('play').classList.add('active');$('completed').classList.remove('active');preview();};$('completed').onclick=()=>{completed=true;$('completed').classList.add('active');$('play').classList.remove('active');preview();};
+$('save').onclick=async()=>{const id=$('pattern').value,submitted=JSON.stringify(draft);$('save').disabled=true;try{const saved=await request('/api/patterns/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:submitted});if(id===$('pattern').value&&JSON.stringify(draft)===submitted){draft=saved;dirty=false;$('dirty').textContent='已保存';render();}status('已保存到 colorever-new。运行 npm run build:template 后广告项目才能使用新版本。');await preview();}catch(e){status(e.message,true);}finally{$('save').disabled=false;}};
+$('play').onclick=()=>{stopAuto();completed=false;$('play').classList.add('active');$('completed').classList.remove('active');preview();};$('completed').onclick=()=>{stopAuto();completed=true;$('completed').classList.add('active');$('play').classList.remove('active');preview();};
 $('apply-json').onclick=async()=>{try{const {validateLevel}=await import('/src/level.js');const next=validateLevel(JSON.parse($('json').value));if(next.decoration!==draft.decoration)throw new Error('不能替换专属装饰模块');remember();draft=next;changed();}catch(e){status(e.message,true);}};
 $('export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=$('pattern').value+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-(async()=>{catalog=await request('/api/patterns');for(const p of catalog){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('pattern').append(o);}await load();})().catch(e=>status(e.message,true));
+(async()=>{catalog=await request('/api/patterns');for(const p of catalog){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('pattern').append(o);}if(catalog.some(p=>p.id===previewQuery.get('pattern')))$('pattern').value=previewQuery.get('pattern');await load();})().catch(e=>status(e.message,true));
