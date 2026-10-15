@@ -1,0 +1,4 @@
+interface:
+  display_name: "Colorever 视频任务批量初始化"
+  short_description: "从两层视频素材目录批量创建 Colorever 任务，上传视频并处理两关背景"
+  default_prompt: "使用 $colorever-video-tasks，按给定素材目录批量初始化任务，只运行视频和背景步骤。"
