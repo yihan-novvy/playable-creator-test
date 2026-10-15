@@ -8,12 +8,13 @@ const defaultRoot = fileURLToPath(new URL('../../../../', import.meta.url));
 const readJson = async file => JSON.parse(await fs.readFile(file, 'utf8'));
 const hash = value => createHash('sha256').update(value).digest('hex');
 const inventory = cells => cells.filter(Boolean).sort((a, b) => a - b);
+const MAX_GLOBAL_MOVES = 50;
 const assertFileName = (name, extension) => {
   assert.match(name ?? '', new RegExp(`^[a-z][a-z0-9-]*\\.${extension}$`), 'Invalid pattern file name');
 };
 
 // Read-only entry point; accepts a root in tests without copying the real repo.
-export async function checkPattern({id, built = false, repoRoot = defaultRoot}) {
+export async function checkPattern({id, built = false, seed, coverage = 95, batchSize = 30, repoRoot = defaultRoot}) {
   assert.match(id ?? '', /^[a-z][a-z0-9-]*$/, 'Invalid pattern ID');
   const root = path.join(repoRoot, 'template-core/colorever-new');
   const sourceDir = path.join(root, 'src/patterns');
@@ -38,19 +39,32 @@ export async function checkPattern({id, built = false, repoRoot = defaultRoot}) 
   assert.equal(source.version, 1, 'Expected pattern version 1');
   assert.ok(typeof source.name === 'string' && source.name.trim() && source.name.length <= 100, 'Expected a nonempty pattern name of at most 100 characters');
   assert.equal(source.opening, null, 'Source patterns must not contain a baked opening');
-  const {validateLevel, prepareLevel} = await import(pathToFileURL(path.join(root, 'src/level.js')).href);
+  // Keep the source schema for built-data comparison; generate openings through
+  // the shipping entry, where medium uses GlobalPuzzle rather than legacy patches.
+  const {validateLevel} = await import(pathToFileURL(path.join(root, 'src/level.js')).href);
+  const {prepareLevel} = await import(pathToFileURL(path.join(root, 'src/game-level.js')).href);
   const normalized = validateLevel(source);
+  const checkedSeed = seed ?? normalized.seed;
   const modes = {};
-  for (const mode of ['easy', 'medium', 'scattered']) {
+  for (const mode of ['easy', 'medium']) {
     let prepared;
     try {
-      prepared = prepareLevel({...normalized, openingMode: mode});
+      prepared = prepareLevel({...normalized, openingMode: mode, seed: checkedSeed, coverage, batchSize});
     } catch (error) {
-      throw new Error(`${mode}, seed ${normalized.seed}: ${error.message}`);
+      throw new Error(`${mode}, seed ${checkedSeed}: ${error.message}`);
     }
     assert.deepEqual(inventory(prepared.level.opening), inventory(normalized.target), `${mode}: color inventory changed`);
     assert.ok(prepared.level.opening.every((color, index) => (color === 0) === (normalized.target[index] === 0)), `${mode}: board silhouette changed`);
-    modes[mode] = {moves: prepared.proof.moves, actions: prepared.proof.solution.length};
+    modes[mode] = {moves: prepared.proof.moves, actions: prepared.proof.solution.length, seed: checkedSeed};
+    if (mode === 'medium') {
+      const metrics = prepared.proof.metrics;
+      assert.ok(metrics && Number.isFinite(metrics.averageBatch), 'Shipping global replay must report transfer metrics');
+      modes.medium = {
+        ...modes.medium, ...metrics, coverage, batchSize,
+        capacity: prepared.level.capacity, trayCols: prepared.level.trayCols,
+        maxMoves: MAX_GLOBAL_MOVES, withinMoveBudget: prepared.proof.moves <= MAX_GLOBAL_MOVES,
+      };
+    }
   }
 
   const result = {
@@ -58,10 +72,20 @@ export async function checkPattern({id, built = false, repoRoot = defaultRoot}) 
     width: normalized.width, height: normalized.height,
     beads: normalized.target.filter(Boolean).length,
     colors: new Set(normalized.target.filter(Boolean)).size,
-    seed: normalized.seed, difficulty: normalized.difficulty, modes,
+    seed: checkedSeed, sourceSeed: normalized.seed, difficulty: normalized.difficulty, modes,
+    warnings: batchSize === 30 && modes.medium.averageBatch < 12
+      ? ['全局模式平均搬运不足 12 颗；优先合并碎色、扩大连续色块，并检查小批搬运占比。12 颗是优化参考，50 次是硬门槛。'] : [],
     built: false,
   };
-  if (!built) return result;
+  const finish = report => {
+    if (!modes.medium.withinMoveBudget) {
+      const error = new Error(`全局大块归位需要 ${modes.medium.moves} 次搬运，超过 ${MAX_GLOBAL_MOVES} 次上限（seed ${checkedSeed}, coverage ${coverage}, batchSize ${batchSize}）；请简化图案并扩大连续色块`);
+      error.result = {...report, ok: false, error: error.message};
+      throw error;
+    }
+    return report;
+  };
+  if (!built) return finish(result);
 
   const builtRoot = path.join(repoRoot, 'editor/templates/colorever-new');
   const gameRoot = path.join(builtRoot, 'game');
@@ -93,16 +117,34 @@ export async function checkPattern({id, built = false, repoRoot = defaultRoot}) 
   assert.equal(manifest.constants.engineSha256, compiled.engineSha256, 'Manifest game engine hash mismatch');
   assert.equal(manifest.constants.levelEngine, `game/${compiled.levelEngine}`, 'Manifest level engine path mismatch');
   assert.equal(manifest.constants.levelEngineSha256, compiled.levelEngineSha256, 'Manifest level engine hash mismatch');
-  return {...result, built: true, engineSha256: compiled.engineSha256};
+  return finish({...result, built: true, engineSha256: compiled.engineSha256});
+}
+
+export function parseArgs(args) {
+  const usage = 'Usage: node check-pattern.mjs <pattern-id> [--built] [--seed N] [--coverage 80..100] [--batch-size 12..48]';
+  assert.match(args[0] ?? '', /^[a-z][a-z0-9-]*$/, usage);
+  const options = {id: args[0]}, seen = new Set();
+  const numeric = {'--seed': 'seed', '--coverage': 'coverage', '--batch-size': 'batchSize'};
+  for (let i = 1; i < args.length; i++) {
+    const flag = args[i];
+    assert.ok(!seen.has(flag), `Duplicate option ${flag}. ${usage}`);
+    seen.add(flag);
+    if (flag === '--built') options.built = true;
+    else {
+      assert.ok(Object.hasOwn(numeric, flag), `Unknown option ${flag}. ${usage}`);
+      const raw = args[++i];
+      assert.match(raw ?? '', /^\d+$/, `Expected an integer for ${flag}. ${usage}`);
+      options[numeric[flag]] = Number(raw);
+    }
+  }
+  return options;
 }
 
 if (process.argv[1] && pathToFileURL(path.resolve(process.argv[1])).href === import.meta.url) {
-  const args = process.argv.slice(2);
   try {
-    assert.ok(args.length === 1 || (args.length === 2 && args[1] === '--built'), 'Usage: node check-pattern.mjs <pattern-id> [--built]');
-    console.log(JSON.stringify(await checkPattern({id: args[0], built: args[1] === '--built'}), null, 2));
+    console.log(JSON.stringify(await checkPattern(parseArgs(process.argv.slice(2))), null, 2));
   } catch (error) {
-    console.error(JSON.stringify({ok: false, error: error.message}));
+    console.error(JSON.stringify(error.result ?? {ok: false, error: error.message}, null, 2));
     process.exitCode = 1;
   }
 }

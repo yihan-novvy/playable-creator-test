@@ -1,6 +1,6 @@
 # 图案数据契约
 
-适用于 `template-core/colorever-new`。日常制作按此契约填写，使用 `scripts/check-pattern.mjs` 调用现有引擎验证。下述技术范围来自当前 `src/level.js`；若工具报告与文档不一致，以实际错误定位并更新契约。
+适用于 `template-core/colorever-new`。日常制作按此契约填写，使用 `scripts/check-pattern.mjs` 调用现有引擎验证。基础字段由 `src/level.js` 校验；当前开局入口为 `src/game-level.js`。若工具报告与文档不一致，以实际错误定位并更新契约。
 
 ## 数据字段
 
@@ -13,8 +13,8 @@
 | `target` | 长度严格等于 `width * height` 的一维整数数组，按从上到下、从左到右排列；索引为 `y * width + x`。`0` 表示没有珠子、没有目标槽位，其余值必须存在于 `colors`。 |
 | `opening` | 源图案保持 `null`，不把打散后的棋盘烘焙进图案。 |
 | `capacity` / `trayCols` | 缓存容量 4～96，列数 4～16，容量不小于列数，行数向上取整且不超过 6。默认 48 / 12，按图案需求调整。 |
-| `openingMode` | `easy`、`medium` 或 `scattered`；新图案演示默认优先 `easy`。 |
-| `difficulty` / `seed` | 打散参数为 1～100 整数；种子为 0～2147483647 整数。作为开发预览和离线演示默认值，广告任务可另设。 |
+| `openingMode` | 源数据兼容 `easy`、`medium` 或 `scattered`；当前入口中 `medium` 为全局大块归位，旧 `scattered` 映射为 `medium`。新图案演示可用 `easy`，仍须验收全局模式。 |
+| `difficulty` / `seed` | 保留打散参数 1～100 整数；种子为 0～2147483647 整数。当前全局模式的错位比例和单批大小由下述参数控制，不能用降低 `difficulty` 代替全局验收。广告任务可另设种子。 |
 | `decoration` | 新图案默认 `"none"`；引擎也支持既有 `cat`、`chick`、`phoenix` 类型，普通图案任务不新增类型。 |
 | `decorations` | 既有专属装饰的可选微调。纯珠子新图案省略；需要维护专属装饰时才读取对应模块。 |
 
@@ -58,7 +58,11 @@ ID 使用以字母开头的小写字母、数字和连字符，先确认未被�
 
 ## 检查与构建边界
 
-`check-pattern.mjs <id>` 检查 ID 唯一性、源文件与开发注册、原始数据，以及三种模式在演示种子下的求解和颜色库存。它不运行装饰模块，也不判断轮廓和配色是否好看。
+`check-pattern.mjs <id>` 检查 ID 唯一性、源文件与开发注册、原始数据，以及当前简易、全局模式的求解、颜色库存和轮廓守恒。全局模式默认使用 `coverage=95`、`batchSize=30`、源图案 seed / capacity / trayCols；可用 `--seed N --coverage N --batch-size N` 复验任务参数。参数范围分别为 seed 0～2147483647、coverage 80～100、batchSize 12～48。这些覆盖参数用于检查，不写回源文件，也不改变构建比对。
+
+全局完整解法 **≤50 次成功搬运** 才通过；入篮和归位均计步，拾取点击不计。报告 `moves`、`averageBatch`、`largeBatchPercent`（≥12 颗）、`smallBatchPercent`（≤2 颗）、`peakCache`、实际与理论最大错位比例等实际引擎指标；超过上限以退出码 1 返回完整指标。默认单批 30 时平均不足 12 颗会警告，提示继续优化连续色块；12 颗是优化参考，不是另一条硬门槛。平均值不含缓存自动整理位移，不能直接用错位珠子数除以步数代替。
+
+它不运行装饰模块，也不判断轮廓和配色是否好看。通过仅代表报告中的参数与种子；随机种子交付需按 SKILL.md 抽查，不宣称全种子保证。维护此工具时运行 `node --test .agents/skills/colorever-patterns/scripts/check-pattern.test.mjs`。
 
 `--built` 额外检查所选构建图案、装饰片段、引擎哈希和 `game-manifest.json` 是否对应源数据。它不代替浏览器加载和广告集成检查。
 
