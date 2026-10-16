@@ -877,5 +877,12 @@
     "description": "完整横版绿色美元钞票，双侧清晰美元符号、中央侧面肖像、复古雕刻明暗和象牙白装饰边框。",
     "level": "oct16-b2-george-14-1-dollar.json",
     "module": "oct16-b2-george-14-1-dollar.js"
+  },
+  {
+    "id": "oct16-george-3-1-envelope",
+    "name": "10-16-george-3-1-信封",
+    "description": "奶油色珠宝信封，珍珠白与香槟金包边、完整三角翻盖和纸折暗面，红宝石 V 形封口与中央切面爱心。",
+    "level": "oct16-george-3-1-envelope.json",
+    "module": "oct16-george-3-1-envelope.js"
   }
 ]

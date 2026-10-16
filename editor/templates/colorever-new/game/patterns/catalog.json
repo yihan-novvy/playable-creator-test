@@ -380,6 +380,10 @@
       "file": "decorators/oct16-b2-george-9-2-butterfly.js",
       "sha256": "808252d085099e45f66c214a4dbffaa8bce959253cab91d254a620284dd2df05"
     },
+    "oct16-george-3-1-envelope": {
+      "file": "decorators/oct16-george-3-1-envelope.js",
+      "sha256": "ad3515dbf240a3cab01568b0f969fe5446189c9f4cfb027080078ece192dc624"
+    },
     "orange-pixel-cat": {
       "file": "decorators/orange-pixel-cat.js",
       "sha256": "8f28eefde1661f3b29002b6f3dd6dd7a18fce428fc1d9916d0f35e06d7278580"
@@ -1270,6 +1274,13 @@
       "description": "完整横版绿色美元钞票，双侧清晰美元符号、中央侧面肖像、复古雕刻明暗和象牙白装饰边框。",
       "level": "oct16-b2-george-14-1-dollar.json",
       "templateSha256": "c3ca6e442a96d01e484a8606abb76b44585fa738d95d4f473c2479a38c1c5b22"
+    },
+    {
+      "id": "oct16-george-3-1-envelope",
+      "name": "10-16-george-3-1-信封",
+      "description": "奶油色珠宝信封，珍珠白与香槟金包边、完整三角翻盖和纸折暗面，红宝石 V 形封口与中央切面爱心。",
+      "level": "oct16-george-3-1-envelope.json",
+      "templateSha256": "746ab036d0db1bcc4d0fd88139bcfe58eb876b5b3c4bce843260c24d5a854d94"
     }
   ]
 }

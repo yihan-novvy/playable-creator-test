@@ -1,3 +1,5 @@
+import oct16GeorgeEnvelopeLevel from './oct16-george-3-1-envelope.json';
+import {decorate as oct16GeorgeEnvelope} from './oct16-george-3-1-envelope.js';
 import oct16Batch2Art0Level from './oct16-b2-george-9-1-leaf.json';
 import {decorate as oct16Batch2Art0} from './oct16-b2-george-9-1-leaf.js';
 import oct16Batch2Art1Level from './oct16-b2-george-9-2-butterfly.json';
@@ -229,6 +231,7 @@ import {decorate as portraitFrown} from './portrait-frown.js';
 import goldenSwordLevel from './golden-sword.json';
 import {decorate as goldenSword} from './golden-sword.js';
 export const patterns={
+  'oct16-george-3-1-envelope': {level: oct16GeorgeEnvelopeLevel, decorate: oct16GeorgeEnvelope},
   'oct16-b2-george-9-1-leaf': {level: oct16Batch2Art0Level, decorate: oct16Batch2Art0},
   'oct16-b2-george-9-2-butterfly': {level: oct16Batch2Art1Level, decorate: oct16Batch2Art1},
   'oct16-b2-george-10-2-blue-diamond': {level: oct16Batch2Art2Level, decorate: oct16Batch2Art2},

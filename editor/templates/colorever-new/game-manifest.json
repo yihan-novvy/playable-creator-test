@@ -578,6 +578,11 @@
       "id": "oct16-b2-george-14-1-dollar",
       "name": "10-16-george-14-1-美元",
       "path": "game/patterns/oct16-b2-george-14-1-dollar.json"
+    },
+    {
+      "id": "oct16-george-3-1-envelope",
+      "name": "10-16-george-3-1-信封",
+      "path": "game/patterns/oct16-george-3-1-envelope.json"
     }
   ],
   "constants": {
