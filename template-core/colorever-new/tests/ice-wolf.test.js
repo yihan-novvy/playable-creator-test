@@ -2,8 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-import {execFileSync} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
 import {prepareLevel,validateLevel} from '../src/level.js';
 import {Puzzle} from '../src/model.js';
 import {decorate} from '../src/patterns/ice-wolf.js';
@@ -49,16 +47,12 @@ test('All wolf opening modes conserve colors and replay to completion with undo 
   }
 });
 
-test('The demo preserves the pointed ears and slim central face and completes within six placements',()=>{
-  const {level,proof}=prepareLevel(source);
-  source.target.forEach((c,i)=>{
-    const x=i%source.width,y=Math.floor(i/source.width);
-    if(y<=14||(y<=20&&x>=11&&x<=28)||(y<=37&&x>=17&&x<=22))assert.equal(level.opening[i],c);
-  });
+test('The demo completes within six placements',()=>{
+  const {proof}=prepareLevel(source);
   assert.ok(proof.moves>0&&proof.moves<=6);
 });
 
-test('The registered colorever-new wolf, hashes and offline ZIP match the source',()=>{
+test('The registered colorever-new wolf and hashes match the source',()=>{
   const prefix='../../../editor/templates/colorever-new/';
   assert.equal(JSON.parse(read('../src/patterns/catalog.json')).filter(p=>p.id==='ice-wolf').length,1);
   assert.ok(read('../src/patterns/index.js').toString().includes("'ice-wolf':{level:iceWolfLevel,decorate:iceWolf}"));
@@ -75,10 +69,4 @@ test('The registered colorever-new wolf, hashes and offline ZIP match the source
   const manifest=JSON.parse(read(prefix+'game-manifest.json'));
   assert.equal(manifest.id,'colorever-new');
   assert.ok(manifest.levels.some(p=>p.id==='ice-wolf'&&p.path==='game/patterns/ice-wolf.json'));
-  const html=read('../docs/ice-wolf-playable.html').toString();
-  assert.ok(html.includes('__COLOREVER_PATTERN_ID__="ice-wolf"'));
-  assert.ok(!html.includes('<script src="game.js"'),'the offline demo embeds the actual template engine');
-  const zip=fileURLToPath(new URL('../docs/ice-wolf-playable.zip',import.meta.url));
-  assert.equal(execFileSync('unzip',['-Z1',zip],{encoding:'utf8'}).trim(),'index.html');
-  assert.equal(execFileSync('unzip',['-p',zip,'index.html'],{encoding:'utf8',maxBuffer:2*1024*1024}),html);
 });

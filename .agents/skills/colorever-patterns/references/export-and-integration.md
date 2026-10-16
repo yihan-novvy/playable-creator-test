@@ -4,17 +4,7 @@
 
 ## 离线 HTML 和 ZIP
 
-目前没有适用于所有图案的统一单图导出命令。现有 `scripts/package-<id>.mjs` 多数把 ID 写在代码中，不能把其他图案的脚本当作可传入任意 ID 的接口。
-
-已有图案若存在对应脚本，只读该脚本的参数说明并复用。例如已验证的医药箱入口为：
-
-```sh
-node template-core/colorever-new/scripts/package-medical-kit.mjs --build
-```
-
-它生成 `template-core/colorever-new/docs/medical-kit-playable.html` 和同名 ZIP。其他脚本的参数不一定一致。
-
-新图案需要离线交付时，优先复用 `editor/plugins/colorever-new/lib.mjs` 导出的 `coloreverLevel` 和 `coloreverHtml` 组装能力。仅为当前导出读取这些函数及必要调用示例，不批量阅读其他图案的脚本。没有统一接口时，不将“已能预览”描述为“已完成离线打包”；按任务需要实现导出，避免逐图复制整套工具。
+目前没有适用于所有图案的统一单图导出命令，历史 `scripts/package-<id>.mjs` 及其 `docs/<id>-playable.html/.zip` 产物已于 2026-10-16 删除。需要离线交付时，复用 `editor/plugins/colorever-new/lib.mjs` 导出的 `coloreverLevel` 和 `coloreverHtml` 组装能力。仅为当前导出读取这些函数及必要调用示例，不批量阅读其他图案的脚本。没有统一接口时，不将“已能预览”描述为“已完成离线打包”；按任务需要实现导出，避免逐图复制整套工具。
 
 ## 广告编辑器
 

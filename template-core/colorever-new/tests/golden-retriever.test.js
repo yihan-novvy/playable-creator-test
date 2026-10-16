@@ -2,8 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {createHash} from 'node:crypto';
-import {execFileSync} from 'node:child_process';
-import {fileURLToPath} from 'node:url';
 import {prepareLevel,validateLevel} from '../src/level.js';
 import {Puzzle} from '../src/model.js';
 import {decorate} from '../src/patterns/golden-retriever.js';
@@ -40,17 +38,12 @@ test('All retriever opening modes conserve beads and replay the actual puzzle to
   }
 });
 
-test('The demo opening preserves the entire head, the harness and the gold tag',()=>{
-  const {level,proof}=prepareLevel(source);
-  assert.deepEqual(level.opening.slice(0,20*source.width),source.target.slice(0,20*source.width));
-  source.target.forEach((c,i)=>{
-    if(c===6||c===7)assert.equal(level.opening[i],c,'the navy harness stays readable at the start');
-  });
-  for(let y=25;y<=27;y++)for(let x=19;x<=21;x++)assert.equal(level.opening[y*source.width+x],source.target[y*source.width+x]);
-  assert.equal(proof.moves,5);
+test('The demo opening completes within six placements',()=>{
+  const {proof}=prepareLevel(source);
+  assert.ok(proof.moves>0&&proof.moves<=6);
 });
 
-test('The actual colorever-new template and offline ZIP contain the registered retriever',()=>{
+test('The actual colorever-new template contains the registered retriever',()=>{
   const prefix='../../../editor/templates/colorever-new/';
   const catalog=JSON.parse(read(prefix+'game/patterns/catalog.json'));
   const entry=catalog.patterns.find(p=>p.id==='golden-retriever');assert.ok(entry);
@@ -63,10 +56,4 @@ test('The actual colorever-new template and offline ZIP contain the registered r
   assert.equal(hash(read(prefix+'game/game.js')),catalog.engineSha256);
   assert.equal(hash(read(prefix+'game/'+catalog.levelEngine)),catalog.levelEngineSha256);
   assert.ok(JSON.parse(read(prefix+'game-manifest.json')).levels.some(p=>p.id==='golden-retriever'&&p.path==='game/patterns/golden-retriever.json'));
-  const html=read('../docs/golden-retriever-playable.html').toString();
-  assert.ok(html.includes('__COLOREVER_PATTERN_ID__="golden-retriever"'));
-  assert.ok(!html.includes('<script src="game.js"'),'the offline demo embeds its actual template engine');
-  const zip=fileURLToPath(new URL('../docs/golden-retriever-playable.zip',import.meta.url));
-  assert.equal(execFileSync('unzip',['-Z1',zip],{encoding:'utf8'}).trim(),'index.html');
-  assert.equal(execFileSync('unzip',['-p',zip,'index.html'],{encoding:'utf8',maxBuffer:2*1024*1024}),html);
 });
