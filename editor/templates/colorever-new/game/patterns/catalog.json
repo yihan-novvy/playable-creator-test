@@ -2,7 +2,7 @@
   "version": 2,
   "engineSha256": "b5f0fe26cedf4654f7b691d0435d6e9990617471b4cb2b1c57a3c536f9b204f6",
   "levelEngine": "level-engine.mjs",
-  "levelEngineSha256": "2e569cde24a52d3857121c163ee4a04a8635ef20d04fd4e01e4db63bdf32c510",
+  "levelEngineSha256": "d7f2f9885334799f8a645825e3ef8da6991d2a317b28add5ebf6bc63e2b46156",
   "decorators": {
     "axe": {
       "file": "decorators/axe.js",
@@ -311,6 +311,74 @@
     "oct15-liangshuo-6-5-2": {
       "file": "decorators/oct15-liangshuo-6-5-2.js",
       "sha256": "3de9da2a833e6a5f4576afeb0c6fb4fed5352659fb78465896cfdf022f48c9ed"
+    },
+    "oct16-b1-george-1-1-heart": {
+      "file": "decorators/oct16-b1-george-1-1-heart.js",
+      "sha256": "d2170e9603856fecbe120f4280b61b6a98e806d6aec001638b3e6a6be55974ed"
+    },
+    "oct16-b1-george-1-2-diamond-ring": {
+      "file": "decorators/oct16-b1-george-1-2-diamond-ring.js",
+      "sha256": "a9f63b4b93dc067bd1e514400293e46567979d4434c79ee25061e54467d76bad"
+    },
+    "oct16-b1-george-10-2-spider": {
+      "file": "decorators/oct16-b1-george-10-2-spider.js",
+      "sha256": "8775670d21bf75d2ae569af032d2bd9ea1d206d35e83c7907823568bedfa19cb"
+    },
+    "oct16-b1-george-12-1-lawyer": {
+      "file": "decorators/oct16-b1-george-12-1-lawyer.js",
+      "sha256": "a4dddd6374082ab88869812c8e1488a195344683dd9a4fd59c3569298d660419"
+    },
+    "oct16-b1-george-12-2-elder": {
+      "file": "decorators/oct16-b1-george-12-2-elder.js",
+      "sha256": "192d2ccd0c7b54d4f1e24f8ae86499e4a7e134d5e73bbbc559aafe6cfae480fc"
+    },
+    "oct16-b1-george-16-2-heart-shield": {
+      "file": "decorators/oct16-b1-george-16-2-heart-shield.js",
+      "sha256": "bb8befaa81dcdefbada9f375bb9c6d1257214bfdef47cd4bd11490faf9732e74"
+    },
+    "oct16-b1-george-3-2-suit": {
+      "file": "decorators/oct16-b1-george-3-2-suit.js",
+      "sha256": "369e02a5ae27196c2f9dc6a4418a984b383966d73c7f3f1b640cd79cc714d573"
+    },
+    "oct16-b1-george-6-1-goblet": {
+      "file": "decorators/oct16-b1-george-6-1-goblet.js",
+      "sha256": "2d7d4aeff8ff9aa8319333f8494a4d5fcb5a97eb7f17767f2a84d14308c45e56"
+    },
+    "oct16-b1-keble-3-1-star-heart": {
+      "file": "decorators/oct16-b1-keble-3-1-star-heart.js",
+      "sha256": "9b110e5352c0a3c35aad2d2d29641b4da201779a42141d45cb82c5cc3b8b52be"
+    },
+    "oct16-b1-keble-3-1-star-sun": {
+      "file": "decorators/oct16-b1-keble-3-1-star-sun.js",
+      "sha256": "41f09473fb42da13261f233807409adaa802df7aabf318aaf97581ee513b6941"
+    },
+    "oct16-b1-keble-4-1-words": {
+      "file": "decorators/oct16-b1-keble-4-1-words.js",
+      "sha256": "c7560c22cb81ee596f15c0abfdf50e13be97a4e30221d8caa3be1428e57fc624"
+    },
+    "oct16-b1-keble-4-2-rose": {
+      "file": "decorators/oct16-b1-keble-4-2-rose.js",
+      "sha256": "fc028bbfa6818bd7df1fe6e459aefa8225e717516d8535dcd20261b73cd654ea"
+    },
+    "oct16-b2-george-10-2-blue-diamond": {
+      "file": "decorators/oct16-b2-george-10-2-blue-diamond.js",
+      "sha256": "3ab7fe66f59401866eb8d76bd20ce13dc8941686f4d52a02b08a9913b590d4a8"
+    },
+    "oct16-b2-george-11-2-1m": {
+      "file": "decorators/oct16-b2-george-11-2-1m.js",
+      "sha256": "1c1ed05c92c73c8355daf9c8c7dd528bd202c9aa162303a91bdd3edc7f822412"
+    },
+    "oct16-b2-george-14-1-dollar": {
+      "file": "decorators/oct16-b2-george-14-1-dollar.js",
+      "sha256": "47c45eeb4862c5d245854f50c4fca5dfaea61666ccd351c8a6781bb8065f4ad4"
+    },
+    "oct16-b2-george-9-1-leaf": {
+      "file": "decorators/oct16-b2-george-9-1-leaf.js",
+      "sha256": "db6f1e54fd9da3c81fb70052a5671965a2e4c5d0d870dac99012c97ebe6d7585"
+    },
+    "oct16-b2-george-9-2-butterfly": {
+      "file": "decorators/oct16-b2-george-9-2-butterfly.js",
+      "sha256": "808252d085099e45f66c214a4dbffaa8bce959253cab91d254a620284dd2df05"
     },
     "orange-pixel-cat": {
       "file": "decorators/orange-pixel-cat.js",
@@ -1083,6 +1151,125 @@
       "description": "象牙白金边信封，三角翻盖与折痕层次清楚，并以6 YEARS AGO呼应参考图文字。",
       "level": "oct15-b3-liangshuo-5-1-2.json",
       "templateSha256": "0459ff76abef47df59a44cc1310a97f6803f10837b8afad0a9a5f84c07c96419"
+    },
+    {
+      "id": "oct16-b1-george-1-1-heart",
+      "name": "10-16-george-1-1-红粉色爱心",
+      "description": "红宝石包边的樱粉爱心，完整双瓣轮廓与连续晶体切面。",
+      "level": "oct16-b1-george-1-1-heart.json",
+      "templateSha256": "167abef686f5c99a4e6837d94f7435b59dec1c1f7edb248f6d6253827c2c3e17"
+    },
+    {
+      "id": "oct16-b1-george-1-2-diamond-ring",
+      "name": "10-16-george-1-2-钻石戒指",
+      "description": "空心银色钻戒，连贯银白戒圈、冷灰内壁、香槟金镶爪与冰白主钻切面。",
+      "level": "oct16-b1-george-1-2-diamond-ring.json",
+      "templateSha256": "28ff1c04ca7f4b242b9592a1615b501afdf5a0582155abe694abfa0cb3c1eee4"
+    },
+    {
+      "id": "oct16-b1-george-10-2-spider",
+      "name": "10-16-george-10-2-蜘蛛",
+      "description": "深紫蜘蛛，八条分开的弯折长腿、梨形腹部和小头部，紫晶结构明暗配薄荷色亮眼。",
+      "level": "oct16-b1-george-10-2-spider.json",
+      "templateSha256": "161e89aab38ff4157f8c4c0e25144498a0f499ad0f0ac4c960faea3cf10703e5"
+    },
+    {
+      "id": "oct16-b1-george-12-1-lawyer",
+      "name": "10-16-george-12-1-lawyer证件",
+      "description": "深蓝证件边框、象牙白证纸、金色正义天平、清楚可读的 LAWYER 标题与签字栏。",
+      "level": "oct16-b1-george-12-1-lawyer.json",
+      "templateSha256": "986af2aebcb43fdadf902b7e9ebd1bb912c0ed39db997e15f6dd996efe5cca5f"
+    },
+    {
+      "id": "oct16-b1-george-12-2-elder",
+      "name": "10-16-george-12-2-老人头像",
+      "description": "白发髻老人正面特写，银白发束、黑框眼镜、温和眉眼与皱纹，搭配白衬领和海军蓝西装。",
+      "level": "oct16-b1-george-12-2-elder.json",
+      "templateSha256": "9e04bbc26ddf5db3c21e250273f967ea20d26482ae77c688efe0580d1d429486"
+    },
+    {
+      "id": "oct16-b1-george-16-2-heart-shield",
+      "name": "10-16-george-16-2-爱心盾牌",
+      "description": "黄金尖底盾牌，双层香槟金镶边、左右结构明暗和中央立体红宝石爱心。",
+      "level": "oct16-b1-george-16-2-heart-shield.json",
+      "templateSha256": "0314e1724bab2270e88f1aae7c4e73c6e8801bdd52a52d8e9b25c6f314b7f252"
+    },
+    {
+      "id": "oct16-b1-george-3-2-suit",
+      "name": "10-16-george-3-2-西服",
+      "description": "完整海军蓝双袖西服，白衬衫、深蓝领带、层叠翻领、胸袋和金色双纽扣，保留布料亮暗面。",
+      "level": "oct16-b1-george-3-2-suit.json",
+      "templateSha256": "e489b99ab33070d417a21efa4cab08ae75978b20f9794710d69a97d49cab3608"
+    },
+    {
+      "id": "oct16-b1-george-6-1-goblet",
+      "name": "10-16-george-6-1-水杯",
+      "description": "盛蓝色清水的高脚玻璃杯，椭圆杯口和水面、完整杯肚、细长杯柱与宽底座，保留冰白折射。",
+      "level": "oct16-b1-george-6-1-goblet.json",
+      "templateSha256": "6cc2e0800a4006f953f7bea19ff2001245eca5b8f5edf2e25fda87b0c1fc12da"
+    },
+    {
+      "id": "oct16-b1-keble-3-1-star-heart",
+      "name": "10-16-keble-3-1-星星爱心",
+      "description": "十二道宽尖角金色星芒，层叠金色镶边和象牙白饰盘托住实心红宝石爱心。",
+      "level": "oct16-b1-keble-3-1-star-heart.json",
+      "templateSha256": "c76882afa2992a31aa1e8ea25933ca650ef14ff18104d2bb5e73555c0df958f2"
+    },
+    {
+      "id": "oct16-b1-keble-3-1-star-sun",
+      "name": "10-16-keble-3-1-星星太阳",
+      "description": "十二道宽尖角金色太阳，连续双层金色镶边、象牙白圆盘和空心红宝石爱心，保留冰蓝内壁。",
+      "level": "oct16-b1-keble-3-1-star-sun.json",
+      "templateSha256": "d44d4b30c19bbc13a113b772547afaeed840073dc47233022a3def11e7a0cd26"
+    },
+    {
+      "id": "oct16-b1-keble-4-1-words",
+      "name": "10-16-keble-4-1-文字",
+      "description": "奶油色粉红边框中，以三行大号玫粉珠字完整保留 PLEASE / MY / LOVE。",
+      "level": "oct16-b1-keble-4-1-words.json",
+      "templateSha256": "7e96e0cd18636415e8cd9113982f2eaf05c818a8c7f7cf086fe8518938177d33"
+    },
+    {
+      "id": "oct16-b1-keble-4-2-rose",
+      "name": "10-16-keble-4-2-玫瑰花",
+      "description": "完整直立红玫瑰，旋卷花心、层叠弧形花瓣、深红花影、绿色花萼、弯曲花茎和成对叶片。",
+      "level": "oct16-b1-keble-4-2-rose.json",
+      "templateSha256": "dfecc605c745c2fe4cfbc6e5a0bfdde8ef99e62b9a61f6da65bef019b90052a9"
+    },
+    {
+      "id": "oct16-b2-george-9-1-leaf",
+      "name": "10-16-george-9-1-树叶",
+      "description": "斜向舒展的象牙白树叶，暖棕金包边、清晰主脉和分枝叶脉，保留奶油色折面与细长叶柄。",
+      "level": "oct16-b2-george-9-1-leaf.json",
+      "templateSha256": "aadd09e18bf841fed0d220a358a913cedf88a8adaa521fbb2ece69752625b213"
+    },
+    {
+      "id": "oct16-b2-george-9-2-butterfly",
+      "name": "10-16-george-9-2-蝴蝶",
+      "description": "紫水晶蝴蝶，完整对称的尖上翅与圆下翅、分区晶体切面、细触角和香槟金身体。",
+      "level": "oct16-b2-george-9-2-butterfly.json",
+      "templateSha256": "5954e9ac989ed97647b66f0c01ac71935160bef695c7921711851d02f92a082f"
+    },
+    {
+      "id": "oct16-b2-george-10-2-blue-diamond",
+      "name": "10-16-george-10-2-蓝色钻石",
+      "description": "宽冠尖底的蓝色钻石，藏蓝外缘、连续三角形切面与冰白折射高光，全部结构由可玩珠子组成。",
+      "level": "oct16-b2-george-10-2-blue-diamond.json",
+      "templateSha256": "420acb13a4c80d0f2043c1d7b867fe297f026fd04b48cd50ae6610ba53c89b94"
+    },
+    {
+      "id": "oct16-b2-george-11-2-1m",
+      "name": "10-16-george-11-2-1M图案",
+      "description": "珍珠白底的金色 1M 圆章，清楚的大号立体字、双层金环、明暗侧壁与香槟金倒角。",
+      "level": "oct16-b2-george-11-2-1m.json",
+      "templateSha256": "351b0a43d52113aa6a1e573086861c36fed18f64eee86905729c8e29273c9305"
+    },
+    {
+      "id": "oct16-b2-george-14-1-dollar",
+      "name": "10-16-george-14-1-美元",
+      "description": "完整横版绿色美元钞票，双侧清晰美元符号、中央侧面肖像、复古雕刻明暗和象牙白装饰边框。",
+      "level": "oct16-b2-george-14-1-dollar.json",
+      "templateSha256": "c3ca6e442a96d01e484a8606abb76b44585fa738d95d4f473c2479a38c1c5b22"
     }
   ]
 }

@@ -493,12 +493,97 @@
       "id": "oct15-b3-liangshuo-5-1-2",
       "name": "10-15-liangshuo-5-1-2-一封信",
       "path": "game/patterns/oct15-b3-liangshuo-5-1-2.json"
+    },
+    {
+      "id": "oct16-b1-george-1-1-heart",
+      "name": "10-16-george-1-1-红粉色爱心",
+      "path": "game/patterns/oct16-b1-george-1-1-heart.json"
+    },
+    {
+      "id": "oct16-b1-george-1-2-diamond-ring",
+      "name": "10-16-george-1-2-钻石戒指",
+      "path": "game/patterns/oct16-b1-george-1-2-diamond-ring.json"
+    },
+    {
+      "id": "oct16-b1-george-10-2-spider",
+      "name": "10-16-george-10-2-蜘蛛",
+      "path": "game/patterns/oct16-b1-george-10-2-spider.json"
+    },
+    {
+      "id": "oct16-b1-george-12-1-lawyer",
+      "name": "10-16-george-12-1-lawyer证件",
+      "path": "game/patterns/oct16-b1-george-12-1-lawyer.json"
+    },
+    {
+      "id": "oct16-b1-george-12-2-elder",
+      "name": "10-16-george-12-2-老人头像",
+      "path": "game/patterns/oct16-b1-george-12-2-elder.json"
+    },
+    {
+      "id": "oct16-b1-george-16-2-heart-shield",
+      "name": "10-16-george-16-2-爱心盾牌",
+      "path": "game/patterns/oct16-b1-george-16-2-heart-shield.json"
+    },
+    {
+      "id": "oct16-b1-george-3-2-suit",
+      "name": "10-16-george-3-2-西服",
+      "path": "game/patterns/oct16-b1-george-3-2-suit.json"
+    },
+    {
+      "id": "oct16-b1-george-6-1-goblet",
+      "name": "10-16-george-6-1-水杯",
+      "path": "game/patterns/oct16-b1-george-6-1-goblet.json"
+    },
+    {
+      "id": "oct16-b1-keble-3-1-star-heart",
+      "name": "10-16-keble-3-1-星星爱心",
+      "path": "game/patterns/oct16-b1-keble-3-1-star-heart.json"
+    },
+    {
+      "id": "oct16-b1-keble-3-1-star-sun",
+      "name": "10-16-keble-3-1-星星太阳",
+      "path": "game/patterns/oct16-b1-keble-3-1-star-sun.json"
+    },
+    {
+      "id": "oct16-b1-keble-4-1-words",
+      "name": "10-16-keble-4-1-文字",
+      "path": "game/patterns/oct16-b1-keble-4-1-words.json"
+    },
+    {
+      "id": "oct16-b1-keble-4-2-rose",
+      "name": "10-16-keble-4-2-玫瑰花",
+      "path": "game/patterns/oct16-b1-keble-4-2-rose.json"
+    },
+    {
+      "id": "oct16-b2-george-9-1-leaf",
+      "name": "10-16-george-9-1-树叶",
+      "path": "game/patterns/oct16-b2-george-9-1-leaf.json"
+    },
+    {
+      "id": "oct16-b2-george-9-2-butterfly",
+      "name": "10-16-george-9-2-蝴蝶",
+      "path": "game/patterns/oct16-b2-george-9-2-butterfly.json"
+    },
+    {
+      "id": "oct16-b2-george-10-2-blue-diamond",
+      "name": "10-16-george-10-2-蓝色钻石",
+      "path": "game/patterns/oct16-b2-george-10-2-blue-diamond.json"
+    },
+    {
+      "id": "oct16-b2-george-11-2-1m",
+      "name": "10-16-george-11-2-1M图案",
+      "path": "game/patterns/oct16-b2-george-11-2-1m.json"
+    },
+    {
+      "id": "oct16-b2-george-14-1-dollar",
+      "name": "10-16-george-14-1-美元",
+      "path": "game/patterns/oct16-b2-george-14-1-dollar.json"
     }
   ],
   "constants": {
     "engineSha256": "b5f0fe26cedf4654f7b691d0435d6e9990617471b4cb2b1c57a3c536f9b204f6",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
-    "levelEngineSha256": "2e569cde24a52d3857121c163ee4a04a8635ef20d04fd4e01e4db63bdf32c510"
+    "levelEngineSha256": "d7f2f9885334799f8a645825e3ef8da6991d2a317b28add5ebf6bc63e2b46156"
   }
 }

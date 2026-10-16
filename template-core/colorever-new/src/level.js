@@ -92,11 +92,16 @@ function blockOpening(level,random){
   const {target,width,height,capacity}=level;
   const neighbors=i=>{const x=i%width,y=Math.floor(i/width),out=[];if(x)out.push(i-1);if(x+1<width)out.push(i+1);if(y)out.push(i-width);if(y+1<height)out.push(i+width);return out;};
   const nearby=i=>{const x=i%width,y=Math.floor(i/width),out=[];for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++)if(x+dx>=0&&x+dx<width&&y+dy>=0&&y+dy<height)out.push((y+dy)*width+x+dx);return out;};
-  const colors=[...new Set(target.filter(Boolean))],total=target.filter(Boolean).length;
+  const colors=[...new Set(target.filter(Boolean))];
   const medium=level.openingMode==='medium',pairs=medium?5:2;
-  const preferred=medium?Math.min(capacity,5):Math.min(capacity,18,Math.max(6,Math.round(Math.sqrt(total)/2)));
+  // One patch sits alone in the basket while its partner flies board-to-board,
+  // so easy patches may fill up to 7/8 of the basket (3.5 of 4 rows).
+  const preferred=medium?Math.min(capacity,5):Math.min(capacity,Math.floor(capacity*.875));
+  const cellsByColor=new Map();
+  for(let i=0;i<target.length;i++){const c=target[i];if(c){if(!cellsByColor.has(c))cellsByColor.set(c,[]);cellsByColor.get(c).push(i);}}
   function patch(color,size,blocked){
-    const available=new Set(target.flatMap((c,i)=>c===color&&!blocked.has(i)?[i]:[])),components=[];
+    const available=new Set();for(const i of cellsByColor.get(color)||[])if(!blocked.has(i))available.add(i);
+    const components=[];
     while(available.size){const start=available.values().next().value,group=[start];available.delete(start);for(let q=0;q<group.length;q++)for(const i of neighbors(group[q]))if(available.delete(i))group.push(i);if(group.length>=size)components.push(group);}
     if(!components.length)return null;
     const component=components[Math.floor(random()*components.length)],allowed=new Set(component),start=component[Math.floor(random()*component.length)],seen=new Set([start]),frontier=[start],result=[];
@@ -105,7 +110,14 @@ function blockOpening(level,random){
     return result.length===size?result:null;
   }
   // Prefer generous patches. Reduce only when a picture lacks enough uniform area.
-  for(let size=preferred;size>=(medium?3:Math.min(4,preferred));size--){
+  // A size needs two colors whose uniform components both reach it, so start at
+  // the second-largest component instead of burning attempts above every ceiling.
+  const componentMax=colors.map(color=>{
+    const available=new Set(target.flatMap((c,i)=>c===color?[i]:[]));let max=0;
+    while(available.size){const start=available.values().next().value,group=[start];available.delete(start);for(let q=0;q<group.length;q++)for(const i of neighbors(group[q]))if(available.delete(i))group.push(i);max=Math.max(max,group.length);}
+    return max;
+  }).sort((a,b)=>b-a);
+  for(let size=Math.min(preferred,componentMax[1]||preferred);size>=(medium?3:Math.min(4,preferred));size--){
     for(let attempt=0;attempt<60;attempt++){
       const blocked=new Set(),board=[...target];let swaps=0;
       for(let pair=0;pair<pairs;pair++){
