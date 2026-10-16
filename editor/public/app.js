@@ -79,6 +79,24 @@ const statusCache = new Map();
 const EMPTY_HINT = '还没有任务。先创建一个,然后上传素材、逐步预览、打包。';
 const FILTERED_EMPTY_HINT = '没有符合过滤条件的任务,试试调整名称或日期。';
 
+// 过滤条件持久化到 URL query(?q=...&date=...):刷新、复制链接都能还原。
+// 用 replaceState 同步,输入过程不产生历史记录,后退不会逐字符回退过滤框。
+function readFiltersFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  document.getElementById('task-filter-text').value = params.get('q') || '';
+  document.getElementById('task-filter-date').value = params.get('date') || '';
+}
+
+function writeFiltersToUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const query = document.getElementById('task-filter-text').value.trim();
+  const date = document.getElementById('task-filter-date').value;
+  if (query) params.set('q', query); else params.delete('q');
+  if (date) params.set('date', date); else params.delete('date');
+  const qs = params.toString();
+  history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+}
+
 // 按「更新时间为某一天」过滤:输入框的 value 是 YYYY-MM-DD,和本地时区日期串比较。
 function localDateKey(date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -114,6 +132,7 @@ function renderFilteredRows() {
   const textValue = document.getElementById('task-filter-text').value;
   const dateValue = document.getElementById('task-filter-date').value;
   const filtersActive = textValue.trim() !== '' || dateValue !== '';
+  writeFiltersToUrl();
 
   tbody.textContent = '';
   const filtered = tasksCache.filter(matchesFilters);
@@ -241,4 +260,5 @@ document.getElementById('task-filter-clear').addEventListener('click', () => {
 });
 
 renderEnv();
+readFiltersFromUrl();
 renderTemplates().then(renderTasks).catch((error) => console.error(error));
