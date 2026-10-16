@@ -72,17 +72,64 @@ function stepChips(steps) {
   return wrap;
 }
 
+// 任务列表与各任务状态缓存:过滤只重渲染 DOM,不重新发请求。
+let tasksCache = [];
+const statusCache = new Map();
+
+const EMPTY_HINT = '还没有任务。先创建一个,然后上传素材、逐步预览、打包。';
+const FILTERED_EMPTY_HINT = '没有符合过滤条件的任务,试试调整名称或日期。';
+
+// 按「更新时间为某一天」过滤:输入框的 value 是 YYYY-MM-DD,和本地时区日期串比较。
+function localDateKey(date) {
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+function matchesFilters(task) {
+  const query = document.getElementById('task-filter-text').value.trim().toLowerCase();
+  if (query && !`${task.name} ${task.templateId}`.toLowerCase().includes(query)) return false;
+  const day = document.getElementById('task-filter-date').value;
+  if (day && localDateKey(new Date(task.updatedAt)) !== day) return false;
+  return true;
+}
+
 async function renderTasks() {
+  tasksCache = await fetchJson('/api/tasks');
+  await Promise.all(tasksCache.map(async (task) => {
+    try {
+      statusCache.set(task.id, await fetchJson(`/api/tasks/${task.id}`));
+    } catch {
+      statusCache.set(task.id, null); // deleted mid-render
+    }
+  }));
+  renderFilteredRows();
+}
+
+function renderFilteredRows() {
   const tbody = document.getElementById('task-rows');
   const hint = document.getElementById('empty-hint');
+  const count = document.getElementById('task-filter-count');
+  const clearButton = document.getElementById('task-filter-clear');
+  const textValue = document.getElementById('task-filter-text').value;
+  const dateValue = document.getElementById('task-filter-date').value;
+  const filtersActive = textValue.trim() !== '' || dateValue !== '';
+
   tbody.textContent = '';
-  const tasks = await fetchJson('/api/tasks');
-  hint.hidden = tasks.length > 0;
-  for (const task of tasks) {
-    let status = null;
-    try {
-      status = await fetchJson(`/api/tasks/${task.id}`);
-    } catch { /* deleted mid-render */ }
+  const filtered = tasksCache.filter(matchesFilters);
+  clearButton.hidden = !filtersActive;
+  count.textContent = filtersActive ? `共 ${filtered.length} / ${tasksCache.length} 个任务` : '';
+  if (tasksCache.length === 0) {
+    hint.textContent = EMPTY_HINT;
+    hint.hidden = false;
+  } else if (filtered.length === 0) {
+    hint.textContent = FILTERED_EMPTY_HINT;
+    hint.hidden = false;
+  } else {
+    hint.hidden = true;
+  }
+  for (const task of filtered) {
+    const status = statusCache.get(task.id);
     const tr = el('tr', {});
     tr.append(el('td', {}, [el('a', { href: `/task.html?id=${encodeURIComponent(task.id)}` }, [task.name])]));
     tr.append(el('td', {}, [task.templateId]));
@@ -182,6 +229,15 @@ document.getElementById('create-form').addEventListener('submit', (event) => {
     return;
   }
   openCreateModal(name);
+});
+
+// 过滤栏:输入/选日期只走缓存重渲染;清除按钮还原两个条件。
+document.getElementById('task-filter-text').addEventListener('input', renderFilteredRows);
+document.getElementById('task-filter-date').addEventListener('change', renderFilteredRows);
+document.getElementById('task-filter-clear').addEventListener('click', () => {
+  document.getElementById('task-filter-text').value = '';
+  document.getElementById('task-filter-date').value = '';
+  renderFilteredRows();
 });
 
 renderEnv();

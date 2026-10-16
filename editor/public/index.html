@@ -23,6 +23,13 @@
 
   <section class="card">
     <h2>任务列表</h2>
+    <div class="task-filters">
+      <input id="task-filter-text" type="text" class="task-filter-text" placeholder="按任务名或模板过滤">
+      <span class="task-filter-label">更新日期</span>
+      <input id="task-filter-date" type="date" title="只看更新时间为这一天的任务">
+      <button id="task-filter-clear" type="button" hidden>清除过滤</button>
+      <span id="task-filter-count" class="hint"></span>
+    </div>
     <table class="task-table">
       <thead>
         <tr><th>名称</th><th>模板</th><th>步骤状态</th><th>成品</th><th>更新时间</th><th></th></tr>
