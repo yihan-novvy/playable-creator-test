@@ -1,3 +1,17 @@
+import oct16Batch4Art1Level from './oct16-b4-george-16-2-raised-fist.json';
+import {decorate as oct16Batch4Art1} from './oct16-b4-george-16-2-raised-fist.js';
+import oct16Batch4Art0Level from './oct16-b4-george-16-1-blue-shield.json';
+import {decorate as oct16Batch4Art0} from './oct16-b4-george-16-1-blue-shield.js';
+import oct16Batch3Art0Level from './oct16-b3-liangshuo-5-4-1-kiss.json';
+import {decorate as oct16Batch3Art0} from './oct16-b3-liangshuo-5-4-1-kiss.js';
+import oct16Batch3Art1Level from './oct16-b3-liangshuo-5-5-1-hammer.json';
+import {decorate as oct16Batch3Art1} from './oct16-b3-liangshuo-5-5-1-hammer.js';
+import oct16Batch3Art2Level from './oct16-b3-liangshuo-5-5-2-lifebuoy.json';
+import {decorate as oct16Batch3Art2} from './oct16-b3-liangshuo-5-5-2-lifebuoy.js';
+import oct16Batch3Art3Level from './oct16-b3-liangshuo-8-3-1-silver-haired-woman.json';
+import {decorate as oct16Batch3Art3} from './oct16-b3-liangshuo-8-3-1-silver-haired-woman.js';
+import oct16Batch3Art4Level from './oct16-b3-liangshuo-8-3-2-red-lips.json';
+import {decorate as oct16Batch3Art4} from './oct16-b3-liangshuo-8-3-2-red-lips.js';
 import oct16GeorgeEnvelopeLevel from './oct16-george-3-1-envelope.json';
 import {decorate as oct16GeorgeEnvelope} from './oct16-george-3-1-envelope.js';
 import oct16Batch2Art0Level from './oct16-b2-george-9-1-leaf.json';
@@ -231,6 +245,14 @@ import {decorate as portraitFrown} from './portrait-frown.js';
 import goldenSwordLevel from './golden-sword.json';
 import {decorate as goldenSword} from './golden-sword.js';
 export const patterns={
+  'oct16-b4-george-16-2-raised-fist': {level: oct16Batch4Art1Level, decorate: oct16Batch4Art1},
+  'oct16-b4-george-16-1-blue-shield': {level: oct16Batch4Art0Level, decorate: oct16Batch4Art0},
+  'oct16-b3-liangshuo-5-4-1-kiss': {level: oct16Batch3Art0Level, decorate: oct16Batch3Art0},
+  'oct16-b3-liangshuo-5-5-1-hammer': {level: oct16Batch3Art1Level, decorate: oct16Batch3Art1},
+  'oct16-b3-liangshuo-5-5-2-lifebuoy': {level: oct16Batch3Art2Level, decorate: oct16Batch3Art2},
+  'oct16-b3-liangshuo-8-3-1-silver-haired-woman': {level: oct16Batch3Art3Level, decorate: oct16Batch3Art3},
+  'oct16-b3-liangshuo-8-3-2-red-lips': {level: oct16Batch3Art4Level, decorate: oct16Batch3Art4},
+
   'oct16-george-3-1-envelope': {level: oct16GeorgeEnvelopeLevel, decorate: oct16GeorgeEnvelope},
   'oct16-b2-george-9-1-leaf': {level: oct16Batch2Art0Level, decorate: oct16Batch2Art0},
   'oct16-b2-george-9-2-butterfly': {level: oct16Batch2Art1Level, decorate: oct16Batch2Art1},

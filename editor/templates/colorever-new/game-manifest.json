@@ -583,6 +583,41 @@
       "id": "oct16-george-3-1-envelope",
       "name": "10-16-george-3-1-信封",
       "path": "game/patterns/oct16-george-3-1-envelope.json"
+    },
+    {
+      "id": "oct16-b3-liangshuo-5-4-1-kiss",
+      "name": "10-16-liangshuo-5-4-1-亲吻",
+      "path": "game/patterns/oct16-b3-liangshuo-5-4-1-kiss.json"
+    },
+    {
+      "id": "oct16-b3-liangshuo-5-5-1-hammer",
+      "name": "10-16-liangshuo-5-5-1-锤子",
+      "path": "game/patterns/oct16-b3-liangshuo-5-5-1-hammer.json"
+    },
+    {
+      "id": "oct16-b3-liangshuo-5-5-2-lifebuoy",
+      "name": "10-16-liangshuo-5-5-2-救生圈",
+      "path": "game/patterns/oct16-b3-liangshuo-5-5-2-lifebuoy.json"
+    },
+    {
+      "id": "oct16-b3-liangshuo-8-3-1-silver-haired-woman",
+      "name": "10-16-liangshuo-8-3-1-白发美女",
+      "path": "game/patterns/oct16-b3-liangshuo-8-3-1-silver-haired-woman.json"
+    },
+    {
+      "id": "oct16-b3-liangshuo-8-3-2-red-lips",
+      "name": "10-16-liangshuo-8-3-2-红唇",
+      "path": "game/patterns/oct16-b3-liangshuo-8-3-2-red-lips.json"
+    },
+    {
+      "id": "oct16-b4-george-16-1-blue-shield",
+      "name": "10-16-george-16-1-蓝色盾牌",
+      "path": "game/patterns/oct16-b4-george-16-1-blue-shield.json"
+    },
+    {
+      "id": "oct16-b4-george-16-2-raised-fist",
+      "name": "10-16-george-16-2-举起的拳头",
+      "path": "game/patterns/oct16-b4-george-16-2-raised-fist.json"
     }
   ],
   "constants": {

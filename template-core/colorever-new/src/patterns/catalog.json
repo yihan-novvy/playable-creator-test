@@ -884,5 +884,54 @@
     "description": "奶油色珠宝信封，珍珠白与香槟金包边、完整三角翻盖和纸折暗面，红宝石 V 形封口与中央切面爱心。",
     "level": "oct16-george-3-1-envelope.json",
     "module": "oct16-george-3-1-envelope.js"
+  },
+  {
+    "id": "oct16-b3-liangshuo-5-4-1-kiss",
+    "name": "10-16-liangshuo-5-4-1-亲吻",
+    "description": "深色卷发女子与金发男子的亲吻侧脸，以相接的嘴唇、闭眼、暖肤明暗和海军蓝衣领构图",
+    "level": "oct16-b3-liangshuo-5-4-1-kiss.json",
+    "module": "oct16-b3-liangshuo-5-4-1-kiss.js"
+  },
+  {
+    "id": "oct16-b3-liangshuo-5-5-1-hammer",
+    "name": "10-16-liangshuo-5-5-1-锤子",
+    "description": "尖锥与方头组成的银灰救援锤，保留金属明暗、亮边和防滑红柄",
+    "level": "oct16-b3-liangshuo-5-5-1-hammer.json",
+    "module": "oct16-b3-liangshuo-5-5-1-hammer.js"
+  },
+  {
+    "id": "oct16-b3-liangshuo-5-5-2-lifebuoy",
+    "name": "10-16-liangshuo-5-5-2-救生圈",
+    "description": "橙白四分区救生圈，带圆润外轮廓、内圈投影与海蓝色束带",
+    "level": "oct16-b3-liangshuo-5-5-2-lifebuoy.json",
+    "module": "oct16-b3-liangshuo-5-5-2-lifebuoy.js"
+  },
+  {
+    "id": "oct16-b3-liangshuo-8-3-1-silver-haired-woman",
+    "name": "10-16-liangshuo-8-3-1-白发美女",
+    "description": "银白波浪长发的蓝眸女子特写，保留蓝宝石额饰、耳坠、轻托下巴的手和冰蓝衣领",
+    "level": "oct16-b3-liangshuo-8-3-1-silver-haired-woman.json",
+    "module": "oct16-b3-liangshuo-8-3-1-silver-haired-woman.js"
+  },
+  {
+    "id": "oct16-b3-liangshuo-8-3-2-red-lips",
+    "name": "10-16-liangshuo-8-3-2-红唇",
+    "description": "奶油色蓝边画框中的饱满红唇，突出唇峰、唇线、皓齿和玫瑰色高光",
+    "level": "oct16-b3-liangshuo-8-3-2-red-lips.json",
+    "module": "oct16-b3-liangshuo-8-3-2-red-lips.js"
+  },
+  {
+    "id": "oct16-b4-george-16-1-blue-shield",
+    "name": "10-16-george-16-1-蓝色盾牌",
+    "description": "尖底盾形、冰蓝金属镶边与深蓝盾面，保留盾面斜切明暗和左上沿高光",
+    "level": "oct16-b4-george-16-1-blue-shield.json",
+    "module": "oct16-b4-george-16-1-blue-shield.js"
+  },
+  {
+    "id": "oct16-b4-george-16-2-raised-fist",
+    "name": "10-16-george-16-2-举起的拳头",
+    "description": "举起的握拳手势，四枚指节、横向拇指、掌心折线与深靛蓝腕带，暖杏肤色分层",
+    "level": "oct16-b4-george-16-2-raised-fist.json",
+    "module": "oct16-b4-george-16-2-raised-fist.js"
   }
 ]

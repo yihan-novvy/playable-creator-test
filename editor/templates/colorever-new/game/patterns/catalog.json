@@ -380,6 +380,34 @@
       "file": "decorators/oct16-b2-george-9-2-butterfly.js",
       "sha256": "808252d085099e45f66c214a4dbffaa8bce959253cab91d254a620284dd2df05"
     },
+    "oct16-b3-liangshuo-5-4-1-kiss": {
+      "file": "decorators/oct16-b3-liangshuo-5-4-1-kiss.js",
+      "sha256": "baaa1a9cb00973a508ff19e946b6719136e2718fdd6fb908664d98720c18e2be"
+    },
+    "oct16-b3-liangshuo-5-5-1-hammer": {
+      "file": "decorators/oct16-b3-liangshuo-5-5-1-hammer.js",
+      "sha256": "a3fe798ab4e0b629d278b3e9aaef8a77106dbaecdc86f7a16715e5f5023252a0"
+    },
+    "oct16-b3-liangshuo-5-5-2-lifebuoy": {
+      "file": "decorators/oct16-b3-liangshuo-5-5-2-lifebuoy.js",
+      "sha256": "d220a494357fd0c50b93184239d25ace756cef2194279ce23bab0642391075f9"
+    },
+    "oct16-b3-liangshuo-8-3-1-silver-haired-woman": {
+      "file": "decorators/oct16-b3-liangshuo-8-3-1-silver-haired-woman.js",
+      "sha256": "ea84ca1bbc419f04bdacedf5674e819275c1bb78873dc77290c650fb3a6ef993"
+    },
+    "oct16-b3-liangshuo-8-3-2-red-lips": {
+      "file": "decorators/oct16-b3-liangshuo-8-3-2-red-lips.js",
+      "sha256": "268e11e80eddba2913ec7892abf48ddd8fc65aae951525bd5486664d5f88100f"
+    },
+    "oct16-b4-george-16-1-blue-shield": {
+      "file": "decorators/oct16-b4-george-16-1-blue-shield.js",
+      "sha256": "f5bc95f6f1cd9d282841a7aa0776701a3e6d99703e9e123b9d48b74b788a7008"
+    },
+    "oct16-b4-george-16-2-raised-fist": {
+      "file": "decorators/oct16-b4-george-16-2-raised-fist.js",
+      "sha256": "783df559cf20900041ccc480c32d0384fafa8391715c07d59206b35744df31d8"
+    },
     "oct16-george-3-1-envelope": {
       "file": "decorators/oct16-george-3-1-envelope.js",
       "sha256": "ad3515dbf240a3cab01568b0f969fe5446189c9f4cfb027080078ece192dc624"
@@ -1281,6 +1309,55 @@
       "description": "奶油色珠宝信封，珍珠白与香槟金包边、完整三角翻盖和纸折暗面，红宝石 V 形封口与中央切面爱心。",
       "level": "oct16-george-3-1-envelope.json",
       "templateSha256": "746ab036d0db1bcc4d0fd88139bcfe58eb876b5b3c4bce843260c24d5a854d94"
+    },
+    {
+      "id": "oct16-b3-liangshuo-5-4-1-kiss",
+      "name": "10-16-liangshuo-5-4-1-亲吻",
+      "description": "深色卷发女子与金发男子的亲吻侧脸，以相接的嘴唇、闭眼、暖肤明暗和海军蓝衣领构图",
+      "level": "oct16-b3-liangshuo-5-4-1-kiss.json",
+      "templateSha256": "c3aa4f003a2e48e58a18b1cdc3a73c78462330352759f9791ae5ff5f8e70dd32"
+    },
+    {
+      "id": "oct16-b3-liangshuo-5-5-1-hammer",
+      "name": "10-16-liangshuo-5-5-1-锤子",
+      "description": "尖锥与方头组成的银灰救援锤，保留金属明暗、亮边和防滑红柄",
+      "level": "oct16-b3-liangshuo-5-5-1-hammer.json",
+      "templateSha256": "e810b62cd94a3fa8e13395788c95f8e46e755da1dbeba1011b60c8f420fa3f99"
+    },
+    {
+      "id": "oct16-b3-liangshuo-5-5-2-lifebuoy",
+      "name": "10-16-liangshuo-5-5-2-救生圈",
+      "description": "橙白四分区救生圈，带圆润外轮廓、内圈投影与海蓝色束带",
+      "level": "oct16-b3-liangshuo-5-5-2-lifebuoy.json",
+      "templateSha256": "8902963294df7e04363eec27075a17423f5f53ab11a3c80bf28b9896fa003655"
+    },
+    {
+      "id": "oct16-b3-liangshuo-8-3-1-silver-haired-woman",
+      "name": "10-16-liangshuo-8-3-1-白发美女",
+      "description": "银白波浪长发的蓝眸女子特写，保留蓝宝石额饰、耳坠、轻托下巴的手和冰蓝衣领",
+      "level": "oct16-b3-liangshuo-8-3-1-silver-haired-woman.json",
+      "templateSha256": "01de20ad72f796ffb5e42a8649a37eb48c9b2f5586c8b470f80e6466dda14a38"
+    },
+    {
+      "id": "oct16-b3-liangshuo-8-3-2-red-lips",
+      "name": "10-16-liangshuo-8-3-2-红唇",
+      "description": "奶油色蓝边画框中的饱满红唇，突出唇峰、唇线、皓齿和玫瑰色高光",
+      "level": "oct16-b3-liangshuo-8-3-2-red-lips.json",
+      "templateSha256": "a0bd1b79e309cd907266ec8635b4caaeb7759c6c719ed2b5d7a82ad6e7790a87"
+    },
+    {
+      "id": "oct16-b4-george-16-1-blue-shield",
+      "name": "10-16-george-16-1-蓝色盾牌",
+      "description": "尖底盾形、冰蓝金属镶边与深蓝盾面，保留盾面斜切明暗和左上沿高光",
+      "level": "oct16-b4-george-16-1-blue-shield.json",
+      "templateSha256": "67555b30bd66e6f409a1c4508337a3403a5ef357a54d57940e83c7ec10884df9"
+    },
+    {
+      "id": "oct16-b4-george-16-2-raised-fist",
+      "name": "10-16-george-16-2-举起的拳头",
+      "description": "举起的握拳手势，四枚指节、横向拇指、掌心折线与深靛蓝腕带，暖杏肤色分层",
+      "level": "oct16-b4-george-16-2-raised-fist.json",
+      "templateSha256": "c2ee82cbff05e16a777e0c464fc0fa60ae891741ad4c7bda26e03aa4a6a1f2c8"
     }
   ]
 }
