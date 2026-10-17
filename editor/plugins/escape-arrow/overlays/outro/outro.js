@@ -98,8 +98,9 @@
     if (visible()) void playVideo();
     else { attempt++; video.pause(); }
   }
-  // The engine emits victory only after all completion effects have ended.
-  window.addEventListener('novvy:victory', () => {
+  // Start after the current round's animation settles. In a two-playable ad,
+  // the first round advances through this video on either win or failure.
+  function startVideo() {
     if (active || consumed) return;
     consumed = true;
     active = true;
@@ -112,7 +113,9 @@
     window.dispatchEvent(new CustomEvent('novvy:outro-started'));
     if (video.error) { finish('video_error'); return; }
     void playVideo();
-  });
+  }
+  window.addEventListener('novvy:victory', startVideo);
+  window.addEventListener('escape-arrow:continue-video', startVideo);
   window.addEventListener('novvy:hud-progress', event => {
     /* 双 playable:片尾位于两关之间只播一次,第二关的进度回落不复位 consumed。 */
     if (window.__novvyTwoPhase) return;

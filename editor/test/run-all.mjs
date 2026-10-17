@@ -44,6 +44,7 @@ export const TESTS = [
   // 旧模板已废弃改名 colorever-abandoned,其专属套件(colorever/colorever-music/
   // colorever-outro)退出常规套件;文件保留,需要时可按名单独运行。
   { name: 'playable-bridge', file: path.join(TEST_DIR, 'playable-bridge.test.mjs') },
+  { name: 'cta-continuation', file: path.join(TEST_DIR, 'cta-continuation.test.mjs') },
   { name: 'pattern-colors', file: path.join(TEST_DIR, 'pattern-colors.test.mjs') },
   { name: 'editor-run-regressions', file: path.join(TEST_DIR, 'editor-run-regressions.test.mjs') },
   { name: 'repack-port', file: path.join(TEST_DIR, 'repack-port.test.mjs') },

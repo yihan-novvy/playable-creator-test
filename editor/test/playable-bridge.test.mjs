@@ -99,6 +99,15 @@ export default async function run(assert){
  assert.equal(retry.steps(),[[1,20],[1,10]],'失败重玩后有效步骤重新计数');
  assert.equal(retry.calls.filter(([name])=>name==='onReplay').length,1,'重玩显式调用 SDK onReplay');
  assert.equal(retry.completes().at(-1),['onComplete',{result:'win'}],'重玩成功最终结算 win');
+ const advance=bridgeRun({chain:['playable','video','playable'],replayable:true});
+ advance.emit('novvy:playable-failed',{retryable:false,continuing:true});
+ advance.emit('novvy:outro-started');
+ advance.emit('novvy:phase2-start');
+ advance.emit('novvy:hud-progress',{percent:20});
+ advance.emit('novvy:playable-complete',{replayable:true});
+ assert.equal(advance.stages(),['1:playable','2:video','3:playable'],'首关失败仍向前切入第二段视频和末关');
+ assert.equal(advance.completes(),[['onComplete',{result:'fail'}],['onComplete',{result:'win',continue_playing:true}]],'首关如实报告失败，末关仍可重玩');
+ assert.equal(advance.steps(),[[1,20]],'首关失败后的末关步骤重新计数');
  const winReplay=bridgeRun({chain:['video','playable','video','playable'],replayable:true});
  winReplay.emit('novvy:playable-complete',{replayable:false});
  winReplay.emit('novvy:phase2-start');

@@ -60,7 +60,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]);
   }
   function renderConfig() {
-    document.getElementById('config-hint').textContent = `关卡来自 Unity 的前 ${catalog.length} 关；选择两关的编号即可预览和打包。素材覆盖层可按需开启。`;
+    document.getElementById('config-hint').textContent = `关卡来自 Unity 的前 ${catalog.length} 关。双 playable 的第一段成功或失败后，均不弹结算框，直接衔接第二段视频；最后一段按设置结算或重玩。`;
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
     if (galleryPath) wrap.append(el('a', { href: '/templates/escape-arrow/' + galleryPath, target: '_blank', rel: 'noopener', class: 'primary' }, [`浏览前 ${catalog.length} 关并试玩 ↗`]));
@@ -90,7 +90,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'Escape Arrow'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2),
     ]));
-    wrap.append(el('p', { class: 'hint' }, ['片头结束后显示底部下载卡，第一个 playable 完成即跳转；存在片尾视频时可增加第二个 playable，按第二关的步数设置再次触发。']));
+    wrap.append(el('p', { class: 'hint' }, ['片头结束后显示底部下载卡，可随时手动点击。双 playable 的首段只负责衔接视频，自动跳转 CTA 由最后一段的设置触发。']));
     const gameplay = config().gameplay || {};
     const limits = el('div', { class: 'dragon-config-grid' });
     for (const [key, label, fallback] of [['lives', '生命次数', 3], ['hints', '提示次数', 'unlimited']]) {
@@ -110,7 +110,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       }
     }
     wrap.append(el('h3', {}, ['玩法限制']), limits,
-      el('p', { class: 'hint' }, ['每局分别计数。最后一颗心耗尽或使用最后一次提示时立即跳转 CTA。重玩开放给最后一段试玩的通关或失败结算，重玩会重置当前关卡的生命和提示次数。']));
+      el('p', { class: 'hint' }, ['每局分别计数。双 playable 首段生命耗尽后进入下一段视频，提示耗尽后停止提示；最后一段达到生命或提示次数限制时立即跳转 CTA。重玩仅开放给最后一段的通关或失败结算，并重置当前关卡的生命和提示。']));
     if (!(config().outro?.enabled && config().secondPlayable?.enabled)) wrap.append(finalReplayControls());
     root.append(wrap);
   }
@@ -227,7 +227,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       select2.addEventListener('change', async () => { await save({ secondPlayable: { levelId: Number(select2.value) } }); await refresh(true); });
       secondPlayable = el('section', { class: 'step-card', id: 'second-playable-settings' }, [
         el('h3', {}, ['第二个 playable']),
-        el('p', { class: 'hint' }, ['第一个 playable 完成即跳转，片尾播完后进入第二个 playable；底部下载卡继续显示，达到本关步数后自动跳转，后续每次交互再次触发。']),
+        el('p', { class: 'hint' }, ['第一个 playable 成功或失败后均不弹窗，动画结束后直接播放片尾视频，再进入本关；首段不自动跳转 CTA。最后一段按下方设置触发 CTA，并决定是否允许重玩。']),
         el('div', { class: 'dragon-config-grid' }, [checkbox('启用第二个 playable', 'secondPlayable', 'enabled')]),
         field('第二关编号', select2),
         el('div', { class: 'dragon-config-grid' }, ['titleLine1', 'titleLine2'].map((key, index) => {

@@ -192,6 +192,7 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   const sounds = new Map();
   function visible() { return !document.hidden && viewable; }
   function playable() { return visible() && !introActive && !outroActive; }
+  function hasNextPlayable() { return !!phase2 && !phase2Started; }
   function replayAllowed() { return gameplay.allowReplay && (!phase2 || phase2Started) && (!window.__novvyOutroEnabled || !!phase2); }
   function canReplay() {
     const finished = (state.won && victorySent) || (state.failed && resultSent);
@@ -343,22 +344,32 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
     if (!motions.size && state.failed && !resultSent && playable()) finish(false);
     if (playable() && (motions.size || hintId !== null)) requestFrame();
   }
-  function announceCta(reason = 'progress') { if (ctaAnnounced) return; ctaAnnounced = true; fire('novvy:cta-moment', { levelId: level.Index, steps: state.steps, reason, replayable: replayAllowed() }); }
+  function announceCta(reason = 'progress') {
+    // The first of two playables leads into the next video. Automatic CTA and
+    // takeover belong to the final playable; the download card stays usable.
+    if (hasNextPlayable() || ctaAnnounced) return;
+    ctaAnnounced = true;
+    fire('novvy:cta-moment', { levelId: level.Index, steps: state.steps, reason, replayable: replayAllowed() });
+  }
   function reportFailure() {
     if (failureReported) return;
     failureReported = true;
-    fire('novvy:playable-failed', { levelId: level.Index, retryable: replayAllowed() });
+    fire('novvy:playable-failed', { levelId: level.Index, retryable: replayAllowed(), continuing: hasNextPlayable() });
   }
   function finish(won) {
     if (won) {
       victorySent = true; sound('win');
       $('instruction').textContent = 'Every arrow is free!';
-      fire('novvy:victory', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed() });
+      fire('novvy:victory', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed(), continuing: hasNextPlayable() });
       if (policy) announceCta();
       if (window.__novvyOutroEnabled && !phase2Started) return;
     } else {
       resultSent = true; sound('fail');
       reportFailure();
+      if (hasNextPlayable()) {
+        fire('escape-arrow:continue-video', { levelId: level.Index, result: 'fail' });
+        return;
+      }
     }
     $('result-icon').textContent = won ? '✧' : '♡';
     $('result-title').textContent = won ? 'All clear!' : 'Out of lives';
@@ -386,7 +397,7 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
       progress();
       fire('escape-arrow:escape', { levelId: level.Index, arrowId: id, steps: state.steps });
       if (policy?.mode === 'steps' && state.steps >= policy.afterSteps) announceCta();
-      if (state.won) fire('novvy:playable-complete', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed() });
+      if (state.won) fire('novvy:playable-complete', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed(), continuing: hasNextPlayable() });
     } else {
       progress(false);
       if (state.failed) { reportFailure(); announceCta('lives-exhausted'); }

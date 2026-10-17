@@ -171,6 +171,7 @@ try {
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().lives), 2);
   await page.locator('#hint').click();
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 0);
+  assert.equal((await page.evaluate(() => window.qaSdk.filter(e => e[0] === 'click'))).length, 0, 'first playable defers automatic CTA until the final playable');
   await solve(1);
   await page.waitForFunction(() => window.EscapeArrow.getState().levelId === 20, null, { timeout: 10000 });
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().lives), 2);

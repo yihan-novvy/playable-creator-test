@@ -9,7 +9,8 @@
    侵入契约),桥只派发 novvy:cta-card 显示事件 —— 单 playable 在第一次
    进入试玩时亮出底部常驻条并全程常驻;双 playable(__novvyTwoPhase)第一关
    同样亮底部条。转化时机:引擎派发 novvy:playable-complete(最后一步完成,
-   不等胜利扫光/片尾音乐收尾)即主动跳转一次;双 playable 进第二关
+   不等胜利扫光/片尾音乐收尾)即主动跳转一次;显式 continuing:true 的过渡段
+   保留底卡并直接进入下一段，不触发自动跳转。双 playable 进第二关
    (novvy:phase2-start)重置闩锁,第二关的 novvy:cta-moment(第 N 步或完成
    兜底)升级全屏接管并再次转化。自动时机经分相 autoConverted 闩锁去重;
    手动点击统一复用 Download,预览兜底经 novvy:cta-interact 回到桥,
@@ -153,16 +154,20 @@
     interactArmed = false;
     lastInteractAt = -1e9;
   });
-  /* 第一个 playable 最后一步完成(playable-complete)即主动转化:不等胜利
+  /* 默认在最后一步完成(playable-complete)时主动转化:不等胜利
      扫光/片尾音乐收尾,请求与结算显露都在这一刻发生。victory 保留为兜底
      (未派发新事件的旧素材),两者经同一闩锁只转化一次。 */
-  window.addEventListener('novvy:playable-complete', function () {
+  window.addEventListener('novvy:playable-complete', function (event) {
+    // Explicit opt-in for a round that immediately continues into another
+    // video/playable. Keep manual CTA available without interrupting the flow.
+    if (event && event.detail && event.detail.continuing === true) return;
     if (!END_MASK) armInteractConvert();
     if (autoConverted) return;
     autoConverted = true;
     convert('playable-complete');
   });
-  window.addEventListener('novvy:victory', function () {
+  window.addEventListener('novvy:victory', function (event) {
+    if (event && event.detail && event.detail.continuing === true) return;
     if (!END_MASK) armInteractConvert();
     if (autoConverted) return;
     autoConverted = true;
