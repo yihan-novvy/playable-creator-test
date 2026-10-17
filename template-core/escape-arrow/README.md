@@ -13,6 +13,7 @@ node editor/test/run-all.mjs escape-arrow playable-bridge
 npm run test:browser -w template-core/escape-arrow
 npm run test:gallery -w template-core/escape-arrow
 npm run test:replay -w template-core/escape-arrow
+npm run test:confetti -w template-core/escape-arrow
 ```
 
 构建确定性输出 `editor/templates/escape-arrow/`，无需运行时模块加载、关卡 fetch 或 CDN。直接打开其中 `game/index.html` 可离线试玩第一关。浏览器验收需要本机 Playwright Chromium，逐关使用真实指针点击通关，并验证缩放、拖动、通关重玩、片头片尾、双关、SDK 结算和 editor 工作台。截图保存在命令输出的系统临时目录。
@@ -48,6 +49,8 @@ playable 内部使用英文；editor 编辑控件、配置说明及试玩总览�
 支持单指拖动、双指缩放、滚轮缩放、缩放按钮、回到中心和提示，统一使用深色主题。密集棋盘可进一步放大，提示会放大并定位可逃出箭头。点击和拖动分别判定；棋盘适配可用空间，像素比上限为 2。
 
 成功逃出按可见路径距离匀速推进，最短 380ms；较长箭头按每秒 64 个网格单位计算。尾部离开 Canvas 后即结束，不额外消耗视口外的移动距离。
+
+通关纸屑烟花参考 Unity 场景 `WinParticle`：两侧各 45 片纸屑喷射，叠加顶部彩纸雨，沿用 `NAConfettiCannonRainbow` / `NAConfettiRainRainbow` 的白、品红、绿、青、黄配色。用独立 Canvas 绘制纸片旋转、翻面和重力飘落，不增加图片或音频文件。箭头动画结束后先庆祝约 1 秒，再显示结算或衔接视频；末关纸屑继续飘落至自然结束。效果不拦截点击，CTA card 仍处于顶层；隐藏时暂停，重玩或切段时清理。系统开启减少动态效果时跳过纸屑动画。
 
 `gameplay` 配置每局的生命、提示和重玩：`lives` / `hints` 可设为 `"unlimited"` 或 1–99 的整数，`allowReplay` 为布尔值。默认三条命、无限提示、允许最后一段试玩通关或失败后重玩。最后一段的最后一条命耗尽或使用最后一次有效提示时，立即派发 CTA，不等待动画结束；提示会正常高亮目标。未找到有效提示不扣次数。生命无限时受阻仍标记箭头，但不会失败。
 

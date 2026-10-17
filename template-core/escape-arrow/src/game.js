@@ -4,6 +4,7 @@
   const DEFAULT_LEVEL = __DEFAULT_LEVEL_JSON__;
   const $ = id => document.getElementById(id);
   const canvas = $('board'), wrap = $('board-wrap'), ctx = canvas.getContext('2d');
+  const confettiCanvas = $('win-confetti'), confettiCtx = confettiCanvas.getContext('2d');
   const scriptBase = new URL('.', document.currentScript.src || document.baseURI);
   const asset = file => window.__ESCAPE_ARROW_ASSETS__?.[file] || new URL('assets/' + file, scriptBase).href;
   $('guide-hand').src = asset('guide-hand.png');
@@ -18,6 +19,7 @@
   let policy = phase2 ? null : window.__ESCAPE_ARROW_CTA_POLICY__;
   let state, paths, markers, hintsRemaining, motions = new Map(), trails = new Map(), hintId = null, hintUntil = 0;
   let width = 0, height = 0, fit = 1, zoom = 1, pan = { x: 0, y: 0 }, frame = null, lastTime = 0;
+  let celebration = null, confettiWidth = 0, confettiHeight = 0;
   let introActive = !!$('novvy-video-intro') && !window.__novvyIntroFinished, outroActive = false;
   let viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
   let ctaAnnounced = false, victorySent = false, resultSent = false, failureReported = false, phase2Started = false;
@@ -76,6 +78,7 @@
     if (emit) fire('novvy:hud-progress', { percent: state.steps / state.arrows.length * 100, correct: state.steps, total: state.arrows.length });
   }
   function loadLevel(data, replay = false) {
+    clearCelebration();
     level = M.validateLevel(data);
     state = M.createState(level, gameplay.lives);
     hintsRemaining = gameplay.hints;
@@ -109,6 +112,7 @@
     clampPan(); requestFrame();
   }
   function resize() {
+    resizeConfetti();
     const rect = wrap.getBoundingClientRect(), ratio = Math.min(window.devicePixelRatio || 1, 2);
     width = Math.max(1, rect.width); height = Math.max(1, rect.height);
     canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
@@ -119,6 +123,80 @@
     clampPan(); requestFrame();
   }
   function requestFrame() { if (frame === null) frame = requestAnimationFrame(render); }
+  function resizeConfetti() {
+    const w = window.innerWidth, h = window.innerHeight;
+    if (w === confettiWidth && h === confettiHeight) return;
+    if (celebration && confettiWidth && confettiHeight) {
+      const sx = w / confettiWidth, sy = h / confettiHeight;
+      for (const p of celebration.particles) { p.x *= sx; p.y *= sy; p.vx *= sx; p.vy *= sy; p.gravity *= sy; }
+    }
+    confettiWidth = w; confettiHeight = h;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    confettiCanvas.width = Math.round(w * ratio); confettiCanvas.height = Math.round(h * ratio);
+    confettiCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  }
+  function clearCelebration() {
+    celebration = null;
+    confettiCanvas.hidden = true;
+    confettiCtx.clearRect(0, 0, confettiWidth, confettiHeight);
+  }
+  function startCelebration() {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { finish(true); return; }
+    resizeConfetti();
+    const w = confettiWidth, h = confettiHeight;
+    const size = clamp(Math.min(w, h) / 65, 4, 8);
+    // Unity WinParticle: two 45-piece cannons at +/-35 degrees, plus rainbow
+    // rain. These are the five color keys of NAConfettiCannon/RainRainbow.
+    const palette = ['#ffffff', '#ff00ed', '#13ff00', '#00ffff', '#ffff00'];
+    const particles = [];
+    function paper(x, y, vx, vy, gravity, delay, life, drag) {
+      const width = size * (.6 + Math.random() * .65);
+      particles.push({ x, y, vx, vy, gravity, delay, life, drag, width,
+        height: width * (Math.random() < .15 ? 2.8 : 1.25),
+        color: palette[Math.floor(Math.random() * palette.length)],
+        angle: Math.random() * Math.PI, spin: (Math.random() - .5) * 12,
+        flutter: 7 + Math.random() * 7, phase: Math.random() * Math.PI * 2 });
+    }
+    for (const side of [-1, 1]) for (let i = 0; i < 45; i++) {
+      paper(side === 1 ? -8 : w + 8, h * (.68 + Math.random() * .04),
+        side * w * (.45 + Math.random() * .65), -h * (.85 + Math.random() * .35),
+        h * (.85 + Math.random() * .4), Math.random() * .08, 1.6 + Math.random() * .55, 1.8);
+    }
+    for (let i = 0; i < 64; i++) paper(Math.random() * w, -size * 5,
+      (Math.random() - .5) * 45, 35 + Math.random() * 45, h * (.3 + Math.random() * .15),
+      i / 40, 2 + Math.random() * .7, .3);
+    celebration = { elapsed: 0, particles };
+    confettiCanvas.hidden = false;
+    fire('escape-arrow:confetti', { levelId: level.Index });
+    requestFrame();
+  }
+  function drawCelebration(delta) {
+    if (!celebration) return;
+    if (playable()) celebration.elapsed += delta / 1000;
+    const elapsed = celebration.elapsed;
+    confettiCtx.clearRect(0, 0, confettiWidth, confettiHeight);
+    let pending = false;
+    for (const p of celebration.particles) {
+      const age = elapsed - p.delay;
+      if (age >= p.life) continue;
+      pending = true;
+      if (age < 0) continue;
+      const travel = (1 - Math.exp(-p.drag * age)) / p.drag;
+      const x = p.x + p.vx * travel + Math.sin(age * 5 + p.phase) * 9 * Math.min(1, age * 3);
+      const y = p.y + p.vy * age + .5 * p.gravity * age * age;
+      const flip = Math.cos(p.phase + age * p.flutter);
+      confettiCtx.save();
+      confettiCtx.translate(x, y); confettiCtx.rotate(p.angle + p.spin * age);
+      confettiCtx.scale(flip, .8 + .2 * Math.sin(age * 7 + p.phase));
+      confettiCtx.globalAlpha = Math.min(1, (p.life - age) / .45) * (.75 + .25 * Math.abs(flip));
+      confettiCtx.fillStyle = p.color;
+      confettiCtx.fillRect(-p.width / 2, -p.height / 2, p.width, p.height);
+      confettiCtx.restore();
+    }
+    // Let the opening burst read before revealing the result or next video.
+    if (!victorySent && elapsed >= 1) finish(true);
+    if (!pending && celebration) clearCelebration();
+  }
   function arrowColor(color) { return colors[color % colors.length]; }
   function drawArrow(arrow, points, highlight, dashed) {
     if (points.length < 2) return;
@@ -175,9 +253,10 @@
     $('guide-hand').hidden = guide === undefined;
     if (guide !== undefined) { const p = screen(state.arrows[guide].points[0]); $('guide-hand').style.left = p.x + 5 + 'px'; $('guide-hand').style.top = p.y - 18 + 'px'; }
     if (hintId !== null && time >= hintUntil) hintId = null;
-    if (!motions.size && state.won && !victorySent && playable()) finish(true);
+    if (!motions.size && state.won && !victorySent && !celebration && playable()) startCelebration();
     if (!motions.size && state.failed && !resultSent && playable()) finish(false);
-    if (playable() && (motions.size || hintId !== null)) requestFrame();
+    drawCelebration(delta);
+    if (playable() && (motions.size || hintId !== null || celebration)) requestFrame();
   }
   function announceCta(reason = 'progress') {
     // The first of two playables leads into the next video. Automatic CTA and
@@ -324,7 +403,7 @@
   };
   function resume() { lastTime = 0; audioSync(); requestFrame(); }
   window.addEventListener('novvy:intro-finished', () => { introActive = false; unlockAudio(); resume(); });
-  window.addEventListener('novvy:outro-started', () => { outroActive = true; pointers.clear(); gesture = null; $('guide-hand').hidden = true; audioSync(); });
+  window.addEventListener('novvy:outro-started', () => { outroActive = true; clearCelebration(); pointers.clear(); gesture = null; $('guide-hand').hidden = true; audioSync(); });
   window.addEventListener('novvy:outro-finished', event => {
     if (phase2Started || event.detail?.reason !== 'video_ended' || !phase2) return;
     phase2Started = true;

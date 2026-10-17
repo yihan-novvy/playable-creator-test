@@ -77,6 +77,7 @@ try {
       await page.waitForFunction(escaped => window.EscapeArrow.getState().escaped === escaped, step + 1);
     }
     await page.waitForFunction(() => window.EscapeArrow.getState().moving === 0);
+    await page.waitForFunction(() => !document.getElementById('result').hidden || document.getElementById('novvy-video-outro')?.hidden === false);
   };
   const fail = async (id, progressed = true, expectResult = true) => {
     const state = createState(levels[id]);

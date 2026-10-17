@@ -46,6 +46,7 @@ try {
       await page.waitForFunction(expected => window.EscapeArrow.getState().escaped === expected, step + 1, { timeout: 3000 });
     }
     await page.waitForFunction(() => window.EscapeArrow.getState().moving === 0, null, { timeout: 4000 });
+    await page.waitForFunction(() => !document.getElementById('result').hidden || document.getElementById('novvy-video-outro')?.hidden === false);
   };
   const entry = pathToFileURL(path.join(root, 'editor/templates/escape-arrow/game/index.html')).href;
   await page.goto(entry + '?qaLevel=1');
