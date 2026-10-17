@@ -412,6 +412,14 @@
       "file": "decorators/oct16-george-3-1-envelope.js",
       "sha256": "ad3515dbf240a3cab01568b0f969fe5446189c9f4cfb027080078ece192dc624"
     },
+    "oct17-b1-peiyi-1-1-penguin": {
+      "file": "decorators/oct17-b1-peiyi-1-1-penguin.js",
+      "sha256": "f856524adf624329ec9db05eec7db6ec323fe041b4438c42a8cc5d1dacfe72a8"
+    },
+    "oct17-b1-peiyi-2-1-flower": {
+      "file": "decorators/oct17-b1-peiyi-2-1-flower.js",
+      "sha256": "94da46d6c2acf2bd1ae0d0ed9836c5b9d503001042b6226718cb4d15bcefc6a5"
+    },
     "orange-pixel-cat": {
       "file": "decorators/orange-pixel-cat.js",
       "sha256": "8f28eefde1661f3b29002b6f3dd6dd7a18fce428fc1d9916d0f35e06d7278580"
@@ -1358,6 +1366,20 @@
       "description": "举起的握拳手势，四枚指节、横向拇指、掌心折线与深靛蓝腕带，暖杏肤色分层",
       "level": "oct16-b4-george-16-2-raised-fist.json",
       "templateSha256": "c2ee82cbff05e16a777e0c464fc0fa60ae891741ad4c7bda26e03aa4a6a1f2c8"
+    },
+    {
+      "id": "oct17-b1-peiyi-1-1-penguin",
+      "name": "10-17-peiyi-1-1-企鹅",
+      "description": "逐格还原参考企鹅：深灰蓝外轮廓与双翼、奶白脸颊和腹部、两列黑眼睛、四颗黄嘴和橙黄双脚",
+      "level": "oct17-b1-peiyi-1-1-penguin.json",
+      "templateSha256": "95c7060690915edbb12efb1f6d4e550d1a1615342bbfcac1da60e5ad722413ed"
+    },
+    {
+      "id": "oct17-b1-peiyi-2-1-flower",
+      "name": "10-17-peiyi-2-1-大花",
+      "description": "逐格还原五瓣粉色大花：深灰蓝像素描边、紫红花瓣镶边、粉色花瓣、金黄花心与右上及左下两片绿叶",
+      "level": "oct17-b1-peiyi-2-1-flower.json",
+      "templateSha256": "09b16a9f34d175d718301ba97edca35dbc06530d209490b7a80bf97a7a084801"
     }
   ]
 }

@@ -1,3 +1,7 @@
+import oct17Batch1Art1Level from './oct17-b1-peiyi-2-1-flower.json';
+import {decorate as oct17Batch1Art1} from './oct17-b1-peiyi-2-1-flower.js';
+import oct17Batch1Art0Level from './oct17-b1-peiyi-1-1-penguin.json';
+import {decorate as oct17Batch1Art0} from './oct17-b1-peiyi-1-1-penguin.js';
 import oct16Batch4Art1Level from './oct16-b4-george-16-2-raised-fist.json';
 import {decorate as oct16Batch4Art1} from './oct16-b4-george-16-2-raised-fist.js';
 import oct16Batch4Art0Level from './oct16-b4-george-16-1-blue-shield.json';
@@ -245,6 +249,8 @@ import {decorate as portraitFrown} from './portrait-frown.js';
 import goldenSwordLevel from './golden-sword.json';
 import {decorate as goldenSword} from './golden-sword.js';
 export const patterns={
+  'oct17-b1-peiyi-2-1-flower': {level: oct17Batch1Art1Level, decorate: oct17Batch1Art1},
+  'oct17-b1-peiyi-1-1-penguin': {level: oct17Batch1Art0Level, decorate: oct17Batch1Art0},
   'oct16-b4-george-16-2-raised-fist': {level: oct16Batch4Art1Level, decorate: oct16Batch4Art1},
   'oct16-b4-george-16-1-blue-shield': {level: oct16Batch4Art0Level, decorate: oct16Batch4Art0},
   'oct16-b3-liangshuo-5-4-1-kiss': {level: oct16Batch3Art0Level, decorate: oct16Batch3Art0},

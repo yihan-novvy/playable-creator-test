@@ -933,5 +933,19 @@
     "description": "举起的握拳手势，四枚指节、横向拇指、掌心折线与深靛蓝腕带，暖杏肤色分层",
     "level": "oct16-b4-george-16-2-raised-fist.json",
     "module": "oct16-b4-george-16-2-raised-fist.js"
+  },
+  {
+    "id": "oct17-b1-peiyi-1-1-penguin",
+    "name": "10-17-peiyi-1-1-企鹅",
+    "description": "逐格还原参考企鹅：深灰蓝外轮廓与双翼、奶白脸颊和腹部、两列黑眼睛、四颗黄嘴和橙黄双脚",
+    "level": "oct17-b1-peiyi-1-1-penguin.json",
+    "module": "oct17-b1-peiyi-1-1-penguin.js"
+  },
+  {
+    "id": "oct17-b1-peiyi-2-1-flower",
+    "name": "10-17-peiyi-2-1-大花",
+    "description": "逐格还原五瓣粉色大花：深灰蓝像素描边、紫红花瓣镶边、粉色花瓣、金黄花心与右上及左下两片绿叶",
+    "level": "oct17-b1-peiyi-2-1-flower.json",
+    "module": "oct17-b1-peiyi-2-1-flower.js"
   }
 ]

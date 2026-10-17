@@ -618,6 +618,16 @@
       "id": "oct16-b4-george-16-2-raised-fist",
       "name": "10-16-george-16-2-举起的拳头",
       "path": "game/patterns/oct16-b4-george-16-2-raised-fist.json"
+    },
+    {
+      "id": "oct17-b1-peiyi-1-1-penguin",
+      "name": "10-17-peiyi-1-1-企鹅",
+      "path": "game/patterns/oct17-b1-peiyi-1-1-penguin.json"
+    },
+    {
+      "id": "oct17-b1-peiyi-2-1-flower",
+      "name": "10-17-peiyi-2-1-大花",
+      "path": "game/patterns/oct17-b1-peiyi-2-1-flower.json"
     }
   ],
   "constants": {
