@@ -4,12 +4,12 @@
   "width": 28,
   "height": 26,
   "colors": {
-    "1": "#30404F",
-    "2": "#AD46A6",
-    "3": "#F2A4AD",
-    "4": "#F7C620",
-    "5": "#A0D11D",
-    "6": "#0D6412"
+    "1": "#7a282f",
+    "2": "#d8405b",
+    "3": "#f8b5bb",
+    "4": "#0cc6b6",
+    "5": "#c9e72b",
+    "6": "#0d6412"
   },
   "colorNames": {
     "1": "深灰蓝花瓣描边",
@@ -752,8 +752,8 @@
   "opening": null,
   "capacity": 48,
   "trayCols": 12,
-  "openingMode": "easy",
   "difficulty": 70,
   "seed": 1017021,
+  "openingMode": "easy",
   "decoration": "none"
 }
