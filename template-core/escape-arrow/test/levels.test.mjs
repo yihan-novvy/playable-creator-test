@@ -1,12 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { validateLevel, createState, escapeRoute, attemptEscape, availableArrows, solveLevel, roundedPath, pathMetrics, movingPath } from '../src/level-model.mjs';
+import { validateLevel, createState, escapeRoute, attemptEscape, availableArrows, solveLevel, roundedPath, pathMetrics, movingPath, escapeTiming } from '../src/level-model.mjs';
 
 const load = id => ({ Index: id, ...JSON.parse(fs.readFileSync(new URL(`../src/levels/${id}.json`, import.meta.url), 'utf8')) });
 
-test('all twenty original levels have valid, solvable paths without mutating source data', () => {
-  for (let id = 1; id <= 20; id++) {
+test('the library contains exactly the first 100 Unity levels, all valid and solvable without mutating source data', () => {
+  const files = fs.readdirSync(new URL('../src/levels/', import.meta.url)).filter(file => /^\d+\.json$/.test(file)).map(file => Number(file.slice(0, -5))).sort((a, b) => a - b);
+  assert.deepEqual(files, Array.from({ length: 100 }, (_, index) => index + 1));
+  for (let id = 1; id <= 100; id++) {
     const level = load(id), before = JSON.stringify(level);
     assert.equal(validateLevel(level, id), level);
     const solution = solveLevel(level), state = createState(level);
@@ -77,4 +79,15 @@ test('snake animation keeps its path length and follows bends instead of transla
     assert.ok(Math.abs(moved.at(-1).x - (2 + distance)) < 1e-8);
   }
   assert.equal(movingPath(path, { x: 1, y: 0 }, 1)[0].y > 0, true, 'tail travels around the corner');
+});
+
+test('escape stays visible for short arrows and longer paths take proportionally longer', () => {
+  const short = escapeTiming(5, 4);
+  assert.equal(short.duration, 650);
+  assert.equal(short.travel, 9.5, 'travel ends when the tail clears the canvas, without invisible padding');
+  const long = escapeTiming(50, 20), longer = escapeTiming(70, 20);
+  assert.ok(long.duration > 1500);
+  assert.ok(longer.duration > long.duration);
+  assert.equal(long.travel / long.duration, longer.travel / longer.duration, 'same grid speed for long arrows');
+  assert.equal(escapeTiming(5, -3).travel, 5.5, 'a head already outside the viewport still animates its full body');
 });

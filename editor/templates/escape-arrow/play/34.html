@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <base href="../game/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#191b2d">
+  <title>Escape Arrow · 第 34 关</title>
+  <link rel="stylesheet" href="style.css">
+  <script>window.__ESCAPE_ARROW_LEVEL__={"Index":34,"GridXSize":25,"GridYSize":25,"Arrows":[{"Indices":[197,196],"ColorIndex":0},{"Indices":[397,396],"ColorIndex":1},{"Indices":[504,479],"ColorIndex":2},{"Indices":[40,65,90,89,88,63,64],"ColorIndex":3},{"Indices":[67,92,117,116],"ColorIndex":4},{"Indices":[377,378,379,380,381,406,431,430,405],"ColorIndex":5},{"Indices":[373,372,371,346,321,296],"ColorIndex":6},{"Indices":[128,153,178,203,228],"ColorIndex":7},{"Indices":[146,171,172,147],"ColorIndex":8},{"Indices":[221,246],"ColorIndex":9},{"Indices":[303,328,329,304,279],"ColorIndex":0},{"Indices":[115,114,113,112,87,86,85,84,83],"ColorIndex":1},{"Indices":[110,109,108,107,132,131],"ColorIndex":2},{"Indices":[470,469,468,467,466,465,464,463,462,461,460,459,458,457,456,455,480,505,530],"ColorIndex":3},{"Indices":[481,482,483,484,485,486,487,488,489,490,491,492,493,494,495,520,519,518,543],"ColorIndex":4},{"Indices":[506,507,508,509,510,511,512,537,536,535],"ColorIndex":5},{"Indices":[395,370,345,320,295,270,245,220,195,170,145,144,143,142,141,166],"ColorIndex":6},{"Indices":[140,165,164,163,162,161,160,185,210,235,236,237,212,187,186,211],"ColorIndex":7},{"Indices":[138,137,136,135,134,133],"ColorIndex":8},{"Indices":[432,407,382,357,356,355,354,353,352,327,302,301,326],"ColorIndex":9},{"Indices":[177,152,127],"ColorIndex":0},{"Indices":[330,331,332,307,306,305,280,281,282],"ColorIndex":1},{"Indices":[517,516,515,514,513,538,563,562,561,586,587,588],"ColorIndex":2},{"Indices":[130,129,154,179,204,229,254,255,256,257,258,283,308,333,358,383,408,433],"ColorIndex":3},{"Indices":[309,310,311,312],"ColorIndex":4},{"Indices":[284,285,286,287,288,313,314,315,316,317,318,319,294,269,244,219,194,169,168,167,192],"ColorIndex":5},{"Indices":[218,243,268,293],"ColorIndex":6},{"Indices":[289,290,291,292,267,242,241,240,239,214,213,238,263,262,261,260,259,234,209,184,159],"ColorIndex":7},{"Indices":[264,265,266],"ColorIndex":8},{"Indices":[233,232,231,230,205,180,155,156,157,158,183,208,207,206,181,182],"ColorIndex":9},{"Indices":[369,394,419,444,443,442,441,440,439,438,437,436,435,434,409,410,411,412,413,414],"ColorIndex":0},{"Indices":[384,359,334],"ColorIndex":1},{"Indices":[418,393,392,391,390,415,416,417],"ColorIndex":2},{"Indices":[389,388,387,386,361,362,363,364,365,366,367,368,343,342,341,340],"ColorIndex":3},{"Indices":[385,360,335,336,337,338,339],"ColorIndex":4},{"Indices":[188,189,190,191,216,217],"ColorIndex":5},{"Indices":[347,348,323,322],"ColorIndex":6},{"Indices":[91,66,41],"ColorIndex":7},{"Indices":[34,33,58,59,60,61],"ColorIndex":8},{"Indices":[82,57],"ColorIndex":9}]};</script>
+  <script src="game.js" defer></script>
+</head>
+<body data-theme="night">
+  <main id="game-shell">
+    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">找到出口，让箭头自由</span></div></header>
+    <div class="game-status"><span id="lives" aria-label="剩余生命"></span><span id="progress" aria-live="polite"></span><button id="sound" class="icon-button" type="button" aria-label="关闭声音">♪</button></div>
+    <div id="board-wrap"><canvas id="board" aria-label="点击箭头，让它沿箭头方向逃出；拖动移动棋盘，双指缩放"></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="点击箭头" hidden><div id="toast" role="status" hidden></div></div>
+    <nav class="game-toolbar" aria-label="棋盘工具"><button id="hint" type="button">✧ 提示</button><button id="zoom-out" type="button" aria-label="缩小棋盘">−</button><button id="recenter" type="button" aria-label="棋盘回到中心">⌖</button><button id="zoom-in" type="button" aria-label="放大棋盘">＋</button><button id="theme" type="button" aria-label="切换明暗主题">☼</button></nav>
+    <div class="bottom-ui"><span id="instruction">点击箭头，让它逃出</span></div>
+    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" type="button">再试一次</button></div></div>
+  </main>
+</body>
+</html>

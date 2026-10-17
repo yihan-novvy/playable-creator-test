@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <base href="../game/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#191b2d">
+  <title>Escape Arrow · 第 16 关</title>
+  <link rel="stylesheet" href="style.css">
+  <script>window.__ESCAPE_ARROW_LEVEL__={"Index":16,"GridXSize":12,"GridYSize":13,"Arrows":[{"Indices":[64,52,40],"ColorIndex":0},{"Indices":[76,77,65,53,41],"ColorIndex":1},{"Indices":[88,89,90,78,66,54,42],"ColorIndex":2},{"Indices":[100,101,102,103,91,79,67,55,43],"ColorIndex":3},{"Indices":[39,51,63,75,87,99,111,112,113,114,115,116,104,92,80,68,56,44],"ColorIndex":4},{"Indices":[110,98,86,74,62,50,38,26,27],"ColorIndex":3},{"Indices":[32,31,30,29,28],"ColorIndex":1},{"Indices":[122,123,124,125,126,127,128,129,117,105,93,81,69,57,45,33],"ColorIndex":5},{"Indices":[85,97,109,121],"ColorIndex":6},{"Indices":[14,13,25,37,49,61,73],"ColorIndex":2},{"Indices":[34,22,21,20,19,18,17,16,15],"ColorIndex":3},{"Indices":[70,58,46],"ColorIndex":0},{"Indices":[106,94,82],"ColorIndex":0},{"Indices":[141,142,130,118],"ColorIndex":6},{"Indices":[138,139,140],"ColorIndex":0},{"Indices":[135,136,137],"ColorIndex":0},{"Indices":[143,131,119,107,95,83,71,59,47,35,23,11,10,9,8,7,6,5,4,3,2,1,0,12,24,36,48,60,72,84,96,108,120,132,133,134],"ColorIndex":5},{"Indices":[144,145,146,147,148,149,150,151,152,153,154,155],"ColorIndex":7}]};</script>
+  <script src="game.js" defer></script>
+</head>
+<body data-theme="night">
+  <main id="game-shell">
+    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">找到出口，让箭头自由</span></div></header>
+    <div class="game-status"><span id="lives" aria-label="剩余生命"></span><span id="progress" aria-live="polite"></span><button id="sound" class="icon-button" type="button" aria-label="关闭声音">♪</button></div>
+    <div id="board-wrap"><canvas id="board" aria-label="点击箭头，让它沿箭头方向逃出；拖动移动棋盘，双指缩放"></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="点击箭头" hidden><div id="toast" role="status" hidden></div></div>
+    <nav class="game-toolbar" aria-label="棋盘工具"><button id="hint" type="button">✧ 提示</button><button id="zoom-out" type="button" aria-label="缩小棋盘">−</button><button id="recenter" type="button" aria-label="棋盘回到中心">⌖</button><button id="zoom-in" type="button" aria-label="放大棋盘">＋</button><button id="theme" type="button" aria-label="切换明暗主题">☼</button></nav>
+    <div class="bottom-ui"><span id="instruction">点击箭头，让它逃出</span></div>
+    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" type="button">再试一次</button></div></div>
+  </main>
+</body>
+</html>

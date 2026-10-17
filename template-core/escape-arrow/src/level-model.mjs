@@ -76,10 +76,11 @@ export function availableArrows(state) {
 export function solveLevel(level) {
   const state = createState(level), solution = [];
   while (state.remaining) {
-    const next = availableArrows(state)[0];
-    if (next === undefined) return null;
-    attemptEscape(state, next);
-    solution.push(next);
+    const ready = availableArrows(state);
+    if (!ready.length) return null;
+    // Removing an arrow cannot block another. Consume each available batch
+    // before rescanning large libraries and boards with hundreds of arrows.
+    for (const next of ready) { attemptEscape(state, next); solution.push(next); }
   }
   return solution;
 }
@@ -107,6 +108,13 @@ export function pathMetrics(points) {
   const lengths = [0];
   for (let i = 1; i < points.length; i++) lengths.push(lengths[i - 1] + Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y));
   return { points, lengths, length: lengths[lengths.length - 1] };
+}
+
+export function escapeTiming(pathLength, headDistanceToEdge) {
+  // Finish just after the tail clears the visible canvas. An extra viewport of
+  // invisible travel made short animations appear to vanish almost instantly.
+  const travel = pathLength + Math.max(0, headDistanceToEdge) + .5;
+  return { travel, duration: Math.max(650, travel / 36 * 1000) };
 }
 
 export function movingPath(path, direction, distance) {

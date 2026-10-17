@@ -4,6 +4,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
 (function () {
   let saving = Promise.resolve();
   let catalog = [];
+  let galleryPath = null;
   function config() { return getConfig(); }
   function save(patch) {
     saving = saving.then(async () => {
@@ -33,7 +34,6 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     input.addEventListener('change', () => save({ [key]: { [subkey]: input.value.trim() } }));
     return field(label, input);
   }
-  function levelOptionLabel(i) { return catalog.find(level => level.id === i)?.name || `第 ${i} 关`; }
   // 转化时机控件:两关同构(complete=完成后跳转;steps=成功逃出满 N 次跳转,完成时兜底)。
   function ctaTimingControls(getCta, patchCta) {
     const wrap = el('div', { class: 'dragon-config-grid' });
@@ -50,12 +50,14 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     return wrap;
   }
   function renderConfig() {
-    document.getElementById('config-hint').textContent = '关卡来自 Unity 的 Level_1.json–Level_20.json；选择两关的编号即可预览和打包，无需制作关卡。素材覆盖层可按需开启。';
+    document.getElementById('config-hint').textContent = `关卡来自 Unity 的前 ${catalog.length} 关；选择两关的编号即可预览和打包。素材覆盖层可按需开启。`;
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
+    if (galleryPath) wrap.append(el('a', { href: '/templates/escape-arrow/' + galleryPath, target: '_blank', rel: 'noopener', class: 'primary' }, [`浏览前 ${catalog.length} 关并试玩 ↗`]));
     const select = el('select', { 'aria-label': '选择 Escape Arrow 关卡' });
-    for (let i = 1; i <= 20; i++) {
-      const option = el('option', { value: String(i) }, [levelOptionLabel(i)]);
+    for (const level of catalog) {
+      const i = level.id;
+      const option = el('option', { value: String(i) }, [level.name]);
       if (i === config().levelId) option.selected = true;
       select.append(option);
     }
@@ -189,7 +191,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     let secondPlayable = null;
     if (config().outro?.enabled) {
       const select2 = el('select', { 'aria-label': '第二关编号' });
-      for (let i = 1; i <= 20; i++) select2.append(el('option', { value: String(i) }, [levelOptionLabel(i)]));
+      for (const level of catalog) select2.append(el('option', { value: String(level.id) }, [level.name]));
       select2.value = String(config().secondPlayable?.levelId ?? 2);
       select2.addEventListener('change', async () => { await save({ secondPlayable: { levelId: Number(select2.value) } }); await refresh(true); });
       secondPlayable = el('section', { class: 'step-card', id: 'second-playable-settings' }, [
@@ -275,5 +277,5 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     let number = 0;
     for (const section of root.children) { const badge = section.querySelector('.step-num'); if (badge) badge.textContent = String(++number); }
   }
-  window.PlayablePlugins['escape-arrow'] = { render: async () => { if (!catalog.length) catalog = (await fetchJson('/templates/escape-arrow/game-manifest.json')).levels; renderConfig(); renderSteps(); }, saveAll: async () => { await saving; document.getElementById('config-save-state').textContent = '已保存'; } };
+  window.PlayablePlugins['escape-arrow'] = { render: async () => { if (!catalog.length) { const manifest = await fetchJson('/templates/escape-arrow/game-manifest.json'); catalog = manifest.levels; galleryPath = manifest.constants.gallery; } renderConfig(); renderSteps(); }, saveAll: async () => { await saving; document.getElementById('config-save-state').textContent = '已保存'; } };
 })();

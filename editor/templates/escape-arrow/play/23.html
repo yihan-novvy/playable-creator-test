@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <base href="../game/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#191b2d">
+  <title>Escape Arrow · 第 23 关</title>
+  <link rel="stylesheet" href="style.css">
+  <script>window.__ESCAPE_ARROW_LEVEL__={"Index":23,"GridXSize":13,"GridYSize":24,"Arrows":[{"Indices":[45,46,59,72,85,86,87,100,99,98,97,84],"ColorIndex":0},{"Indices":[31,30,43,44],"ColorIndex":1},{"Indices":[17,18,19,32,33],"ColorIndex":2},{"Indices":[42,29,16,3,4],"ColorIndex":2},{"Indices":[28,41,54,55,56,69,70,57,58,71],"ColorIndex":3},{"Indices":[14,1,2,15],"ColorIndex":1},{"Indices":[52,39,40,27,26,13,0],"ColorIndex":4},{"Indices":[105,104,91,78,65,66,53],"ColorIndex":4},{"Indices":[130,117,118,119,106,93,92,79,80,67,68],"ColorIndex":5},{"Indices":[121,120,107,94,81,82,83],"ColorIndex":4},{"Indices":[88,101,114,113,112,111,110,109,108,95,96],"ColorIndex":5},{"Indices":[35,34,47,60,73,74,75],"ColorIndex":4},{"Indices":[9,8,21,20,7,6,5],"ColorIndex":4},{"Indices":[25,12,11,10,23,22],"ColorIndex":6},{"Indices":[76,63,62,61,48,49,36,37,24],"ColorIndex":7},{"Indices":[102,89,90,77,64,51,38],"ColorIndex":4},{"Indices":[136,135,122,123,124,125,126,127,128,115,116,103],"ColorIndex":0},{"Indices":[149,150,137,138,139,140,141,142,129],"ColorIndex":7},{"Indices":[170,169,156,143,144,131,132,133,134],"ColorIndex":7},{"Indices":[152,151,164,163,162,161,148,147,146,145,158,157],"ColorIndex":0},{"Indices":[203,204,191,178,165,166,153,154,155],"ColorIndex":7},{"Indices":[188,189,176,177,190],"ColorIndex":2},{"Indices":[222,221,208,195,182,183,184,171,172,159,160,173,174,175],"ColorIndex":1},{"Indices":[210,209,196,197,198,185,186,187],"ColorIndex":8},{"Indices":[193,192,179,180,167,168],"ColorIndex":6},{"Indices":[218,205,206,207,194,181],"ColorIndex":6},{"Indices":[243,244,231,232,219,220],"ColorIndex":6},{"Indices":[282,283,270,257,258,245,246,233],"ColorIndex":8},{"Indices":[212,199,200,201,202,215,216,217,230],"ColorIndex":7},{"Indices":[247,234,235,236,223,224,211],"ColorIndex":4},{"Indices":[227,214,213,226,225,238,237,250,249,248,261,260],"ColorIndex":0},{"Indices":[252,239,240,241,228,229],"ColorIndex":6},{"Indices":[290,291,278,265,266,253,254,255,242],"ColorIndex":7},{"Indices":[296,295,294,281,268,269,256],"ColorIndex":4},{"Indices":[307,308,309,310,297,298,285,284,271,272,259],"ColorIndex":5},{"Indices":[275,262,263,264,277,276,289,302,303,304,305,306,293,292,279,280,267],"ColorIndex":4},{"Indices":[286,273,274,287,300,301,288],"ColorIndex":4}]};</script>
+  <script src="game.js" defer></script>
+</head>
+<body data-theme="night">
+  <main id="game-shell">
+    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">找到出口，让箭头自由</span></div></header>
+    <div class="game-status"><span id="lives" aria-label="剩余生命"></span><span id="progress" aria-live="polite"></span><button id="sound" class="icon-button" type="button" aria-label="关闭声音">♪</button></div>
+    <div id="board-wrap"><canvas id="board" aria-label="点击箭头，让它沿箭头方向逃出；拖动移动棋盘，双指缩放"></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="点击箭头" hidden><div id="toast" role="status" hidden></div></div>
+    <nav class="game-toolbar" aria-label="棋盘工具"><button id="hint" type="button">✧ 提示</button><button id="zoom-out" type="button" aria-label="缩小棋盘">−</button><button id="recenter" type="button" aria-label="棋盘回到中心">⌖</button><button id="zoom-in" type="button" aria-label="放大棋盘">＋</button><button id="theme" type="button" aria-label="切换明暗主题">☼</button></nav>
+    <div class="bottom-ui"><span id="instruction">点击箭头，让它逃出</span></div>
+    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" type="button">再试一次</button></div></div>
+  </main>
+</body>
+</html>

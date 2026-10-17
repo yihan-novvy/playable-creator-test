@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#10131e">
+  <title>Escape Arrow · 前 100 关试玩</title>
+  <link rel="stylesheet" href="gallery/style.css">
+  <script src="gallery/catalog.js" defer></script>
+  <script src="gallery/gallery.js" defer></script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="brand"><img src="app-icon.png" alt=""><div><span class="eyebrow">ESCAPE ARROW</span><h1>挑一关，开始试玩。</h1></div></div>
+    <p>从简单的三根箭头，到盘绕交错的迷宫。<br>点击关卡预览，亲手找到每一条出路。</p>
+  </header>
+  <main class="layout">
+    <section class="library" aria-label="全部关卡">
+      <div class="section-heading"><h2>前 100 关 <span id="level-count">100</span></h2><span>按原版关卡顺序排列</span></div>
+      <div id="level-grid" class="level-grid"></div>
+    </section>
+    <aside id="player-panel" class="player-panel" aria-label="关卡试玩">
+      <div class="player-heading"><div><span class="eyebrow">正在试玩</span><h2 id="player-title">第 1 关</h2></div><button id="close-player" class="close-button" type="button" aria-label="返回关卡列表">×</button></div>
+      <p id="player-meta" class="player-meta"></p>
+      <div class="phone-frame"><iframe id="game-player" name="escape-arrow-preview" title="第 1 关试玩" allow="autoplay"></iframe></div>
+      <p id="player-status" class="player-status" role="status">点击箭头让它逃出 · 拖动与双指缩放查看棋盘</p>
+      <div class="player-actions"><button id="previous-level" type="button">← 上一关</button><button id="restart-level" type="button">重新开始</button><button id="next-level" type="button">下一关 →</button></div>
+      <a id="open-level" class="standalone-link" target="_blank" rel="noopener">在独立窗口试玩 ↗</a>
+    </aside>
+  </main>
+</body>
+</html>

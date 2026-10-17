@@ -14,13 +14,19 @@ const templateRoot = path.join(root, 'editor/templates/escape-arrow');
 
 export default async function run(assert) {
   const entry = getEntry('escape-arrow');
-  for (let id = 1; id <= 20; id++) assert.equal(escapeLevel(templateRoot, id).Index, id, `原版第 ${id} 关可选`);
-  for (const id of [0, 21, '1', 1.1]) {
+  assert.equal(entry.template.gallery, 'gallery.html', '清单提供试玩总览入口');
+  assert.equal(entry.template.level.max, 100, '注册范围上限为第 100 关');
+  for (const [directory, extension] of [['levels', 'json'], ['previews', 'svg'], ['play', 'html']]) {
+    const ids = fs.readdirSync(path.join(templateRoot, directory)).map(file => Number(file.replace(`.${extension}`, ''))).sort((a, b) => a - b);
+    assert.equal(JSON.stringify(ids), JSON.stringify(Array.from({ length: 100 }, (_, index) => index + 1)), `${directory} 仅保留第 1–100 关`);
+  }
+  for (let id = 1; id <= 100; id++) assert.equal(escapeLevel(templateRoot, id).Index, id, `原版第 ${id} 关可选`);
+  for (const id of [0, 101, 634, '1', 1.1]) {
     let rejected = false; try { escapeLevel(templateRoot, id); } catch { rejected = true; }
     assert.check(rejected, `拒绝无效关卡 ${id}`);
   }
-  const built = escapeHtmlPage({ root: templateRoot, template: entry.template, level: escapeLevel(templateRoot, 20), config: entry.template.defaults, media: { ctaIcon: '/templates/escape-arrow/app-icon.png' }, preview: true }).html;
-  assert.check(built.includes('window.__ESCAPE_ARROW_LEVEL__={"Index":20'), '预览注入第 20 关');
+  const built = escapeHtmlPage({ root: templateRoot, template: entry.template, level: escapeLevel(templateRoot, 100), config: entry.template.defaults, media: { ctaIcon: '/templates/escape-arrow/app-icon.png' }, preview: true }).html;
+  assert.check(built.includes('window.__ESCAPE_ARROW_LEVEL__={"Index":100'), '预览注入第 100 关');
   assert.check(built.includes('window.__novvyReplayable=true') && built.includes('data-novvy-playable-bridge'), '失败重玩接入共享段桥');
   assert.check(built.includes('/templates/escape-arrow/game/game.js') && built.includes('/templates/escape-arrow/game/style.css'), '预览游戏路径正确');
   assert.check(built.includes('min-height:calc(148px'), '为下载卡预留棋盘外空间');
@@ -30,7 +36,7 @@ export default async function run(assert) {
   try {
     const projectRoot = path.join(tmp, 'project'), resultRoot = path.join(tmp, 'result');
     fs.mkdirSync(path.join(projectRoot, 'generated'), { recursive: true });
-    for (const levelId of [1, 20]) {
+    for (const levelId of [1, 100]) {
       const options = { taskId: 'smoke', templateId: entry.id, projectRoot, resultRoot, config: { levelId } };
       assert.check((await runStep({ ...options, stepId: 'level' })).ok, `第 ${levelId} 关导出成功`);
       const result = await runStep({ ...options, stepId: 'pack' });
@@ -39,6 +45,7 @@ export default async function run(assert) {
       assert.check(html.includes(`window.__ESCAPE_ARROW_LEVEL__={"Index":${levelId}`), '选定关卡进入广告包');
       assert.check(!html.includes('type="module"') && fs.existsSync(path.join(resultRoot, 'assets/sfx/escape.m4a')), '离线脚本及 Unity 音效进入包');
       assert.check(!fs.existsSync(path.join(resultRoot, 'levels')), '关卡库不全量带进交付包');
+      assert.check(!fs.existsSync(path.join(resultRoot, 'play')) && !fs.existsSync(path.join(resultRoot, 'gallery.html')), '关卡试玩入口与总览不进入广告交付包');
     }
     server = createServer();
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -49,14 +56,14 @@ export default async function run(assert) {
     };
     assert.check((await (await fetch(base + '/api/templates')).json()).some(item => item.id === entry.id), '模版自动注册到 editor');
     taskId = (await api('/api/tasks', { name: 'escape-arrow-test-' + Date.now(), templateId: entry.id })).body.id;
-    const patch = { levelId: 20, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 16, cta: { mode: 'steps', afterSteps: 4 }, background: { enabled: true, source: 'video-last' } } };
+    const patch = { levelId: 100, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 100, cta: { mode: 'steps', afterSteps: 4 }, background: { enabled: true, source: 'video-last' } } };
     const saved = await api(`/api/tasks/${taskId}`, { config: patch }, 'PATCH');
-    assert.equal(saved.status, 200, '保存第 20 关及双 playable 设置');
-    assert.equal(saved.body.config.secondPlayable.levelId, 16, '第二关不受旧 10 关上限影响');
-    for (const bad of [{ levelId: 21 }, { secondPlayable: { levelId: 21 } }]) {
+    assert.equal(saved.status, 200, '保存第 100 关及双 playable 设置');
+    assert.equal(saved.body.config.secondPlayable.levelId, 100, '第二关也可保存第 100 关');
+    for (const bad of [{ levelId: 101 }, { secondPlayable: { levelId: 101 } }]) {
       assert.equal((await api(`/api/tasks/${taskId}`, { config: bad }, 'PATCH')).status, 400, '两关选择都拒绝越界');
     }
-    assert.equal(readTask(taskId).config.levelId, 20, '非法保存没有覆盖原关卡');
+    assert.equal(readTask(taskId).config.levelId, 100, '非法保存没有覆盖原关卡');
     const video = path.join(tmp, 'outro.mp4');
     await execFile('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=blue:s=32x32:r=5:d=0.4', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video]);
     const upload = await fetch(`${base}/api/tasks/${taskId}/uploads/outro-video`, { method: 'PUT', headers: { 'Content-Type': 'video/mp4' }, body: fs.readFileSync(video) });
@@ -64,11 +71,12 @@ export default async function run(assert) {
     const all = await api(`/api/tasks/${taskId}/run`, { step: 'all' });
     assert.check(all.status === 200 && all.body.every(step => step.ok), `双关含独立背景全流程成功: ${JSON.stringify(all.body)}`);
     const packed = await (await fetch(`${base}/result/${taskId}/index.html`)).text();
-    assert.check(packed.includes('window.__ESCAPE_ARROW_PHASE2__={"levelId":16'), '第二关数据正确内联');
+    assert.check(packed.includes('window.__ESCAPE_ARROW_PHASE2__={"levelId":100'), '第二关数据正确内联');
     assert.check(packed.includes('window.__novvyStageChain__=["playable","video","playable"]'), '双 playable 段链正确');
     assert.equal((await fetch(`${base}/result/${taskId}/background2.webp`)).status, 200, '第二关背景进入包');
     assert.equal((await fetch(`${base}/api/tasks/${taskId}/preview`)).status, 200, '在线预览正常');
-    assert.equal((await fetch(base + '/templates/escape-arrow/previews/20.svg')).status, 200, '关卡缩略图可访问');
+    assert.equal((await fetch(base + '/templates/escape-arrow/previews/100.svg')).status, 200, '第 100 关缩略图可访问');
+    assert.equal((await fetch(base + '/templates/escape-arrow/play/101.html')).status, 404, '第 101 关试玩已移除');
     recordStepResult(taskId, { stepId: 'level', ok: true });
     recordStepResult(taskId, { stepId: 'pack', ok: true });
     recordUpload(taskId, 'outro-video', { bytes: 1 });

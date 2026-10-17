@@ -81,11 +81,6 @@
     "outro": "overlays/outro",
     "background": "overlays/background"
   },
-  "level": {
-    "directory": "levels",
-    "min": 1,
-    "max": 20
-  },
   "background": {
     "width": 1560,
     "height": 2598,

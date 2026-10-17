@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <base href="../game/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#191b2d">
+  <title>Escape Arrow · 第 24 关</title>
+  <link rel="stylesheet" href="style.css">
+  <script>window.__ESCAPE_ARROW_LEVEL__={"Index":24,"GridXSize":13,"GridYSize":13,"Arrows":[{"Indices":[12,11,10,9,8,7,6,5,4,3,2,1,0,13,26,27,28,29,30,31,32,33,34,35,36,37,50,63,62,61,60,59,58,57,56,55,54,53,66,79,80,81,82,83,84,85,86,87,88,89],"ColorIndex":0},{"Indices":[14,15],"ColorIndex":1},{"Indices":[16,17],"ColorIndex":2},{"Indices":[18,19],"ColorIndex":3},{"Indices":[21,20],"ColorIndex":4},{"Indices":[23,22],"ColorIndex":5},{"Indices":[64,51,38,25,24],"ColorIndex":6},{"Indices":[67,68],"ColorIndex":7},{"Indices":[69,70],"ColorIndex":8},{"Indices":[72,71],"ColorIndex":9},{"Indices":[74,73],"ColorIndex":0},{"Indices":[76,75],"ColorIndex":1},{"Indices":[90,77],"ColorIndex":2},{"Indices":[49,48],"ColorIndex":3},{"Indices":[47,46],"ColorIndex":4},{"Indices":[45,44],"ColorIndex":5},{"Indices":[42,43],"ColorIndex":6},{"Indices":[40,41],"ColorIndex":7},{"Indices":[78,65,52,39],"ColorIndex":8},{"Indices":[148,135,122,109,110,111,124,137],"ColorIndex":9},{"Indices":[150,149,136,123],"ColorIndex":0},{"Indices":[163,164,151,138],"ColorIndex":1},{"Indices":[146,147,160,161,162],"ColorIndex":2},{"Indices":[156,157,144,145,158,159],"ColorIndex":3},{"Indices":[143,130,131,132],"ColorIndex":4},{"Indices":[117,118,119,120,133,134],"ColorIndex":5},{"Indices":[104,91],"ColorIndex":6},{"Indices":[105,106,107,108,121],"ColorIndex":7},{"Indices":[165,152,139,126,125],"ColorIndex":8},{"Indices":[92,93],"ColorIndex":9},{"Indices":[94,95],"ColorIndex":0},{"Indices":[97,96],"ColorIndex":1},{"Indices":[112,99,98],"ColorIndex":2},{"Indices":[127,114,113],"ColorIndex":3},{"Indices":[154,153,140],"ColorIndex":4},{"Indices":[166,167,168,155,142,141],"ColorIndex":5},{"Indices":[129,128,115,102,101,100],"ColorIndex":6},{"Indices":[116,103],"ColorIndex":7}]};</script>
+  <script src="game.js" defer></script>
+</head>
+<body data-theme="night">
+  <main id="game-shell">
+    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">找到出口，让箭头自由</span></div></header>
+    <div class="game-status"><span id="lives" aria-label="剩余生命"></span><span id="progress" aria-live="polite"></span><button id="sound" class="icon-button" type="button" aria-label="关闭声音">♪</button></div>
+    <div id="board-wrap"><canvas id="board" aria-label="点击箭头，让它沿箭头方向逃出；拖动移动棋盘，双指缩放"></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="点击箭头" hidden><div id="toast" role="status" hidden></div></div>
+    <nav class="game-toolbar" aria-label="棋盘工具"><button id="hint" type="button">✧ 提示</button><button id="zoom-out" type="button" aria-label="缩小棋盘">−</button><button id="recenter" type="button" aria-label="棋盘回到中心">⌖</button><button id="zoom-in" type="button" aria-label="放大棋盘">＋</button><button id="theme" type="button" aria-label="切换明暗主题">☼</button></nav>
+    <div class="bottom-ui"><span id="instruction">点击箭头，让它逃出</span></div>
+    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" type="button">再试一次</button></div></div>
+  </main>
+</body>
+</html>

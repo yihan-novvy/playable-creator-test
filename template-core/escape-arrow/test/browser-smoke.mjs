@@ -41,6 +41,18 @@ try {
     await page.waitForFunction(() => window.EscapeArrow.getState().moving === 0, null, { timeout: 4000 });
   };
   const entry = pathToFileURL(path.join(root, 'editor/templates/escape-arrow/game/index.html')).href;
+  await page.goto(entry + '?qaLevel=1');
+  await page.waitForFunction(() => window.__ESCAPE_ARROW_READY__);
+  await clickArrow(0);
+  await page.waitForTimeout(250);
+  const visibleCyanPixels = await page.evaluate(() => {
+    const canvas = document.getElementById('board'), pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+    let count = 0;
+    for (let i = 0; i < pixels.length; i += 4) if (pixels[i] < 130 && pixels[i + 1] > 190 && pixels[i + 2] > 210 && pixels[i + 3] > 150) count++;
+    return count;
+  });
+  assert.ok(visibleCyanPixels > 100, 'the clicked arrow remains visibly moving after 250ms');
+  console.log('PASS short arrow remains visible during its escape instead of vanishing in the first frames');
   for (let id = 1; !process.argv.includes('--integration-only') && id <= 20; id++) {
     await page.goto(entry + '?qaLevel=' + id);
     await page.waitForFunction(() => window.__ESCAPE_ARROW_READY__);
@@ -102,11 +114,36 @@ try {
   assert.ok(completes.every(e => e[1].result === 'win'));
   assert.equal((await page.evaluate(() => window.qaSdk.filter(e => e[0] === 'step'))).length, 33);
   console.log('PASS packed intro → level 1 → outro → level 20, 33 progress steps, two final wins');
+  for (const id of [49, 100]) {
+    await page.goto(pathToFileURL(path.join(root, `editor/templates/escape-arrow/play/${id}.html`)).href);
+    await page.waitForFunction(() => window.__ESCAPE_ARROW_READY__);
+    await page.locator('#hint').click();
+    const state = await page.evaluate(() => window.EscapeArrow.getState());
+    assert.ok(state.zoom > 1, 'dense boards zoom in when hinting');
+    const arrowId = state.available[0];
+    const point = await page.evaluate(id => window.EscapeArrow.getArrowScreenPoint(id), arrowId);
+    const board = await page.locator('#board').boundingBox();
+    assert.ok(point.x > 0 && point.x < board.width && point.y > 0 && point.y < board.height, 'hint brings the available arrow into view');
+    await clickArrow(arrowId);
+    await page.waitForFunction(() => window.EscapeArrow.getState().escaped === 1);
+    assert.equal(await page.evaluate(() => window.EscapeArrow.getState().lives), 3);
+    await page.screenshot({ path: path.join(tmp, `phone-${id}-hint.png`) });
+  }
+  console.log('PASS dense levels 49 and 100: hint zooms, centers an available arrow, and a real click escapes it');
   await page.goto(`${base}/task.html?id=${task.id}`);
-  await page.getByRole('combobox', { name: '选择 Escape Arrow 关卡' }).selectOption('15');
-  await page.waitForFunction(() => document.querySelector('img[alt^="第 15 关"]'));
-  assert.equal((await (await fetch(`${base}/api/tasks/${task.id}`)).json()).config.levelId, 15);
-  console.log('PASS editor workbench level selection and thumbnail');
+  const select = page.getByRole('combobox', { name: '选择 Escape Arrow 关卡' });
+  assert.equal(await select.locator('option').count(), 100);
+  await select.selectOption('100');
+  await page.waitForFunction(() => document.querySelector('img[alt^="第 100 关"]'));
+  const second = page.getByRole('combobox', { name: '第二关编号' });
+  assert.equal(await second.locator('option').count(), 100);
+  await second.selectOption('100');
+  await page.waitForFunction(() => document.getElementById('config-save-state').textContent === '已保存');
+  const saved = await (await fetch(`${base}/api/tasks/${task.id}`)).json();
+  assert.equal(saved.config.levelId, 100);
+  assert.equal(saved.config.secondPlayable.levelId, 100);
+  assert.equal(await page.getByRole('link', { name: '浏览前 100 关并试玩 ↗' }).getAttribute('href'), '/templates/escape-arrow/gallery.html');
+  console.log('PASS editor offers 100 options for both playables, saves level 100, and links to the gallery');
   assert.deepEqual(errors, []);
   console.log('Screenshots: ' + tmp);
 } finally {

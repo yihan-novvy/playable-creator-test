@@ -9,7 +9,6 @@
   const colors = ['#5ee6ff', '#6cffb5', '#6fa8ff', '#b48cff', '#ff9e7a', '#ffd966', '#ff7fa8', '#4dffd2', '#c9b6ff', '#b6ff6a'];
   const fire = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
-  const ease = t => 1 - Math.pow(1 - t, 3);
   const phase2 = window.__ESCAPE_ARROW_PHASE2__ || null;
   let level = window.__ESCAPE_ARROW_LEVEL__ || DEFAULT_LEVEL;
   let policy = phase2 ? null : window.__ESCAPE_ARROW_CTA_POLICY__;
@@ -80,7 +79,7 @@
   }
   function zoomAt(value, anchor = { x: width / 2, y: height / 2 }) {
     const before = world(anchor);
-    zoom = clamp(value, 1, 4);
+    zoom = clamp(value, 1, Math.max(4, Math.min(16, 32 / fit)));
     const after = screen(before);
     pan.x += anchor.x - after.x; pan.y += anchor.y - after.y;
     clampPan(); requestFrame();
@@ -92,6 +91,7 @@
     canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     fit = Math.min(width / (state.width + 1.5), height / (state.height + 1.5));
+    if (tutorial && state.steps === 0) $('instruction').textContent = fit < 12 ? '双指放大棋盘，再点击箭头' : '点击箭头，让它逃出';
     clampPan(); requestFrame();
   }
   function requestFrame() { if (frame === null) frame = requestAnimationFrame(render); }
@@ -129,7 +129,7 @@
       if (arrow.escaped && !motion) continue;
       if (motion && playable()) motion.elapsed += delta;
       const t = motion ? clamp(motion.elapsed / motion.duration, 0, 1) : 0;
-      const distance = !motion ? 0 : motion.kind === 'escape' ? ease(t) * motion.travel : Math.sin(Math.PI * t) * motion.travel;
+      const distance = !motion ? 0 : motion.kind === 'escape' ? t * motion.travel : Math.sin(Math.PI * t) * motion.travel;
       const points = motion ? M.movingPath(paths[arrow.id], arrow.direction, distance) : paths[arrow.id].points;
       drawArrow(arrow, points, arrow.id === hintId && time < hintUntil && Math.sin(time / 130) > -.3, !!motion);
       if (motion && t >= 1) {
@@ -172,8 +172,12 @@
     if (!result) return false;
     tutorial = false; hintId = null; $('guide-hand').hidden = true;
     const path = paths[id];
-    const travel = result.clear ? path.length + result.distance + Math.max(width, height) / (fit * zoom) : Math.max(.15, result.distance - .55);
-    motions.set(id, { kind: result.kind, travel, elapsed: 0, duration: result.clear ? clamp(300 + path.length * 7, 420, 850) : 440 });
+    const arrow = state.arrows[id], head = screen(arrow.points[0]), direction = arrow.direction;
+    const pixelsToEdge = direction.x > 0 ? width - head.x : direction.x < 0 ? head.x : direction.y > 0 ? head.y : height - head.y;
+    const timing = result.clear
+      ? M.escapeTiming(path.length, pixelsToEdge / (fit * zoom))
+      : { travel: Math.max(.15, result.distance - .55), duration: 440 };
+    motions.set(id, { kind: result.kind, ...timing, elapsed: 0 });
     sound(result.clear ? 'escape' : 'blocked'); haptic(result.clear ? 'light' : 'heavy');
     if (result.clear) {
       progress();
@@ -250,6 +254,7 @@
     hintId = M.availableArrows(state).find(id => !motions.has(id)) ?? null;
     if (hintId === null) { toast('等箭头回到原位，再试一次'); return; }
     tutorial = false; hintUntil = performance.now() + 2400;
+    if (fit * zoom < 18) zoomAt(18 / fit);
     const p = screen(state.arrows[hintId].points[0]);
     if (p.x < 20 || p.x > width - 20 || p.y < 20 || p.y > height - 20) {
       const head = state.arrows[hintId].points[0];

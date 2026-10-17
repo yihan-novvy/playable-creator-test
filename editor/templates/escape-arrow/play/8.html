@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <base href="../game/">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <meta name="theme-color" content="#191b2d">
+  <title>Escape Arrow · 第 8 关</title>
+  <link rel="stylesheet" href="style.css">
+  <script>window.__ESCAPE_ARROW_LEVEL__={"Index":8,"GridXSize":6,"GridYSize":6,"Arrows":[{"Indices":[22,21,20,14],"ColorIndex":0},{"Indices":[28,27,26,25,19,13,7],"ColorIndex":1},{"Indices":[34,33,32,31,30,24,18,12,6,0,1,2,3,4],"ColorIndex":0},{"Indices":[8,9,15],"ColorIndex":2},{"Indices":[5,11,10,16,17,23,29,35],"ColorIndex":3}]};</script>
+  <script src="game.js" defer></script>
+</head>
+<body data-theme="night">
+  <main id="game-shell">
+    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">找到出口，让箭头自由</span></div></header>
+    <div class="game-status"><span id="lives" aria-label="剩余生命"></span><span id="progress" aria-live="polite"></span><button id="sound" class="icon-button" type="button" aria-label="关闭声音">♪</button></div>
+    <div id="board-wrap"><canvas id="board" aria-label="点击箭头，让它沿箭头方向逃出；拖动移动棋盘，双指缩放"></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="点击箭头" hidden><div id="toast" role="status" hidden></div></div>
+    <nav class="game-toolbar" aria-label="棋盘工具"><button id="hint" type="button">✧ 提示</button><button id="zoom-out" type="button" aria-label="缩小棋盘">−</button><button id="recenter" type="button" aria-label="棋盘回到中心">⌖</button><button id="zoom-in" type="button" aria-label="放大棋盘">＋</button><button id="theme" type="button" aria-label="切换明暗主题">☼</button></nav>
+    <div class="bottom-ui"><span id="instruction">点击箭头，让它逃出</span></div>
+    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" type="button">再试一次</button></div></div>
+  </main>
+</body>
+</html>

@@ -1,0 +1,92 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import assert from 'node:assert/strict';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { chromium } from '@playwright/test';
+import { createServer } from '../../../editor/server.mjs';
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+const screenshots = fs.mkdtempSync(path.join(os.tmpdir(), 'escape-arrow-gallery-'));
+const server = createServer();
+let browser;
+try {
+  await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+  const url = `http://127.0.0.1:${server.address().port}/templates/escape-arrow/gallery.html`;
+  browser = await chromium.launch({ headless: true });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 1 });
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await page.goto(url);
+  assert.equal(await page.locator('.level-card').count(), 100);
+  let game = page.frame('escape-arrow-preview');
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__);
+  const historyStart = await page.evaluate(() => history.length);
+  for (let id = 1; id <= 100; id++) {
+    await page.getByRole('button', { name: `试玩第 ${id} 关`, exact: true }).click();
+    await game.waitForFunction(id => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === id, id);
+    assert.equal(new URL(page.url()).searchParams.get('level'), String(id));
+    if (id === 20) assert.equal(await page.evaluate(() => history.length), historyStart + 20, 'iframe changes do not add duplicate navigation entries');
+    if (id % 10 === 0) console.log(`PASS gallery cards ${id - 9}–${id} load the matching playables`);
+  }
+  assert.equal(await page.locator('#next-level').isDisabled(), true);
+  assert.ok(await page.locator('.level-card img').evaluateAll(images => images.every(image => image.naturalWidth > 0)), 'all 100 thumbnails load');
+  await page.locator('#previous-level').click();
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === 99);
+  await page.locator('#next-level').click();
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === 100);
+  assert.equal(await page.locator('#open-level').getAttribute('href'), 'play/100.html');
+  await page.getByRole('button', { name: '试玩第 20 关', exact: true }).click();
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === 20);
+  const id = await game.evaluate(() => window.EscapeArrow.getState().available[0]);
+  const point = await game.evaluate(id => window.EscapeArrow.getArrowScreenPoint(id), id);
+  const board = await game.locator('#board').boundingBox();
+  await page.mouse.click(board.x + point.x, board.y + point.y);
+  await game.waitForFunction(() => window.EscapeArrow.getState().escaped === 1);
+  await page.locator('#restart-level').click();
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().escaped === 0);
+  assert.equal(await page.locator('#open-level').getAttribute('href'), 'play/20.html');
+  await page.screenshot({ path: path.join(screenshots, 'desktop.png'), fullPage: true });
+  await page.goto(url + '?level=9');
+  game = page.frame('escape-arrow-preview');
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === 9);
+  assert.equal(await page.locator('.level-card[aria-pressed=true]').getAttribute('data-level'), '9');
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+  console.log('PASS previous/next, restarting a played level, deep links and desktop layout');
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto(url);
+  game = page.frame('escape-arrow-preview');
+  assert.equal(await page.locator('#player-panel').isVisible(), false);
+  assert.equal(await page.locator('.level-card').count(), 100);
+  await page.screenshot({ path: path.join(screenshots, 'mobile-library.png'), fullPage: true });
+  await page.getByRole('button', { name: '试玩第 20 关', exact: true }).click();
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === 20);
+  assert.equal(await page.locator('#player-panel').getAttribute('aria-modal'), 'true');
+  const box = await page.locator('#game-player').boundingBox();
+  assert.ok(box.height > 400 && box.y >= 0 && box.y + box.height < 844);
+  await page.screenshot({ path: path.join(screenshots, 'mobile-player.png') });
+  await page.locator('#close-player').click();
+  assert.equal(await page.locator('#player-panel').isVisible(), false);
+  await game.waitForURL('about:blank');
+  await page.getByRole('button', { name: '试玩第 1 关', exact: true }).click();
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === 1);
+  assert.equal(await page.locator('#previous-level').isDisabled(), true);
+  await page.goBack();
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === 20);
+  await page.goBack();
+  assert.equal(await page.locator('#player-panel').isVisible(), false);
+  console.log('PASS mobile full-screen player, closing unloads the game, and browser back navigation');
+
+  await page.setViewportSize({ width: 1200, height: 900 });
+  await page.goto(pathToFileURL(path.join(root, 'editor/templates/escape-arrow/gallery.html')).href + '?level=100');
+  game = page.frame('escape-arrow-preview');
+  await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__ && window.EscapeArrow.getState().levelId === 100);
+  assert.equal(await page.locator('.level-card').count(), 100);
+  assert.deepEqual(errors, []);
+  console.log('PASS file:// offline gallery and individual level loading');
+  console.log('Screenshots: ' + screenshots);
+} finally {
+  if (browser) await browser.close();
+  await new Promise(resolve => server.close(resolve));
+}

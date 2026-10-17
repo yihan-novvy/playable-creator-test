@@ -11,7 +11,7 @@ const SCRIPT = '<script src="game.js" defer></script>';
 export function escapeLevel(root, id) {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'game-manifest.json'), 'utf8'));
   const entry = manifest.levels.find(level => level.id === id);
-  if (!Number.isInteger(id) || !entry) throw new Error('Escape Arrow 只能选择第 1–20 关');
+  if (!Number.isInteger(id) || !entry) throw new Error(`Escape Arrow 只能选择第 ${manifest.levels[0].id}–${manifest.levels.at(-1).id} 关`);
   const level = JSON.parse(fs.readFileSync(path.join(root, entry.path), 'utf8'));
   if (level.Index !== id || createHash('sha256').update(JSON.stringify(level)).digest('hex') !== entry.sha256) throw new Error('关卡数据已损坏，请重新构建模版');
   return level;
