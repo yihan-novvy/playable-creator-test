@@ -169,10 +169,11 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   const DEFAULT_LEVEL = {"Index":1,"GridXSize":7,"GridYSize":6,"Arrows":[{"Indices":[38,31,24,17,10,3],"ColorIndex":0},{"Indices":[35,36,29,22,15,8,1],"ColorIndex":1},{"Indices":[6,5,12,19,26,33,40],"ColorIndex":2}]};
   const $ = id => document.getElementById(id);
   const canvas = $('board'), wrap = $('board-wrap'), ctx = canvas.getContext('2d');
-  const scriptBase = new URL('.', document.currentScript.src);
-  const asset = file => new URL('assets/' + file, scriptBase).href;
+  const scriptBase = new URL('.', document.currentScript.src || document.baseURI);
+  const asset = file => window.__ESCAPE_ARROW_ASSETS__?.[file] || new URL('assets/' + file, scriptBase).href;
   $('guide-hand').src = asset('guide-hand.png');
   $('hint-icon').src = asset('hint.png');
+  for (const image of document.querySelectorAll('img[data-escape-asset]')) image.src = asset(image.dataset.escapeAsset);
   const colors = ['#5ee6ff', '#6cffb5', '#6fa8ff', '#b48cff', '#ff9e7a', '#ffd966', '#ff7fa8', '#4dffd2', '#c9b6ff', '#b6ff6a'];
   const fire = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
@@ -192,7 +193,10 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   function visible() { return !document.hidden && viewable; }
   function playable() { return visible() && !introActive && !outroActive; }
   function replayAllowed() { return gameplay.allowReplay && (!phase2 || phase2Started) && (!window.__novvyOutroEnabled || !!phase2); }
-  function canReplay() { return replayAllowed() && state.won && victorySent && !motions.size && !$('result').hidden; }
+  function canReplay() {
+    const finished = (state.won && victorySent) || (state.failed && resultSent);
+    return replayAllowed() && finished && !motions.size && !$('result').hidden;
+  }
   function audioSync() {
     if (unlocked && !muted && playable()) music.play().catch(() => {});
     else { music.pause(); for (const sound of sounds.values()) sound.pause(); }
@@ -218,11 +222,21 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
     $('hud-title-line2').hidden = !spec?.titleLine2;
   }
   function progress(emit = true) {
-    $('lives').textContent = state.maxLives === null ? '♥ ∞' : state.maxLives <= 5 ? '♥'.repeat(state.lives) + '♡'.repeat(state.maxLives - state.lives) : '♥ ' + state.lives;
+    const showLifeSlots = state.maxLives !== null && state.maxLives <= 5;
+    $('lives').innerHTML = Array.from({ length: showLifeSlots ? state.maxLives : 1 }, (_, i) => {
+      const empty = state.lives !== null && i >= state.lives;
+      return '<svg class="life-heart' + (empty ? ' is-empty' : '') + '" viewBox="0 0 28 28" aria-hidden="true" focusable="false">' +
+        '<defs><linearGradient id="life-fill-' + i + '" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ff91b0"/><stop offset="1" stop-color="#f44f82"/></linearGradient></defs>' +
+        '<path class="life-heart-shape" fill="url(#life-fill-' + i + ')" d="M14 24 4.8 15.3C1.6 12.3 1.3 7.5 4.3 4.7c2.7-2.5 7-2.2 9.7 1.1 2.7-3.3 7-3.6 9.7-1.1 3 2.8 2.7 7.6-.5 10.6Z"/>' +
+        '<path class="life-heart-shine" d="M6 8.2c.6-1.6 2.5-2.2 4.1-1.4"/></svg>';
+    }).join('') + (showLifeSlots ? '' : '<span class="life-count" aria-hidden="true">' + (state.lives === null ? '∞' : state.lives) + '</span>');
     $('lives').setAttribute('aria-label', state.lives === null ? 'Unlimited lives' : state.lives + ' lives remaining');
     $('hint-count').textContent = hintsRemaining === null ? '∞' : String(hintsRemaining);
     $('hint').setAttribute('aria-label', hintsRemaining === null ? 'Hint: unlimited' : 'Hint: ' + hintsRemaining + ' remaining');
-    $('progress').textContent = state.steps + ' / ' + state.arrows.length;
+    $('progress-escaped').textContent = state.steps;
+    $('progress-total').textContent = state.arrows.length;
+    $('progress').style.setProperty('--progress-digits', String(state.arrows.length).length + 'ch');
+    $('progress').setAttribute('aria-label', state.steps + ' of ' + state.arrows.length + ' arrows escaped');
     if (emit) fire('novvy:hud-progress', { percent: state.steps / state.arrows.length * 100, correct: state.steps, total: state.arrows.length });
   }
   function loadLevel(data, replay = false) {
@@ -270,18 +284,20 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   }
   function requestFrame() { if (frame === null) frame = requestAnimationFrame(render); }
   function arrowColor(color) { return colors[color % colors.length]; }
-  function drawArrow(arrow, points, highlight, moving) {
+  function drawArrow(arrow, points, highlight, dashed) {
     if (points.length < 2) return;
     const color = arrowColor(arrow.color);
     ctx.beginPath();
-    points.forEach((point, i) => { const p = screen(point); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); });
+    // Unity tiles its dash texture from head to tail, with transparent gaps.
+    const body = dashed ? [...points].reverse() : points;
+    body.forEach((point, i) => { const p = screen(point); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); });
     const scale = fit * zoom;
     ctx.strokeStyle = highlight ? '#ffffff' : color;
-    ctx.lineWidth = Math.max(2.1, scale * .19); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    ctx.globalAlpha = arrow.marked && !moving ? .77 : 1;
-    ctx.setLineDash(arrow.marked && !moving ? [scale * .19, scale * .18] : []);
+    ctx.lineWidth = Math.max(2.1, scale * .19); ctx.lineCap = dashed ? 'butt' : 'round'; ctx.lineJoin = 'round';
+    ctx.globalAlpha = 1;
+    ctx.setLineDash(dashed ? [Math.max(3, scale * .28), Math.max(2, scale * .20)] : []);
     ctx.shadowColor = color; ctx.shadowBlur = highlight ? 10 : 0;
-    ctx.stroke(); ctx.setLineDash([]);
+    ctx.stroke(); ctx.setLineDash([]); ctx.lineCap = 'round';
     const head = points[points.length - 1], d = arrow.direction;
     const tip = screen({ x: head.x + d.x * .16, y: head.y + d.y * .16 });
     const back = { x: head.x - d.x * .15, y: head.y - d.y * .15 };
@@ -313,7 +329,8 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
       const t = motion ? clamp(motion.elapsed / motion.duration, 0, 1) : 0;
       const distance = !motion ? 0 : motion.kind === 'escape' ? t * motion.travel : Math.sin(Math.PI * t) * motion.travel;
       const points = motion ? M.movingPath(paths[arrow.id], arrow.direction, distance) : paths[arrow.id].points;
-      drawArrow(arrow, points, arrow.id === hintId && time < hintUntil && Math.sin(time / 130) > -.3, !!motion);
+      const dashed = arrow.marked && (!motion || motion.markedAtStart || t >= 1);
+      drawArrow(arrow, points, arrow.id === hintId && time < hintUntil && Math.sin(time / 130) > -.3, dashed);
       if (motion && t >= 1) {
         motions.delete(arrow.id);
       }
@@ -330,7 +347,7 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   function reportFailure() {
     if (failureReported) return;
     failureReported = true;
-    fire('novvy:playable-failed', { levelId: level.Index, retryable: false });
+    fire('novvy:playable-failed', { levelId: level.Index, retryable: replayAllowed() });
   }
   function finish(won) {
     if (won) {
@@ -347,12 +364,13 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
     $('result-title').textContent = won ? 'All clear!' : 'Out of lives';
     $('result-copy').textContent = won ? 'You found a way out for every arrow.' : 'Look for arrows with a clear path ahead.';
     $('result-reset').textContent = won ? 'Play again' : 'Try again';
-    // Only the last playable's All clear result offers a same-stage replay.
-    $('result-reset').hidden = !won || !replayAllowed();
+    // Only the last playable's finished round offers a same-stage replay.
+    $('result-reset').hidden = !replayAllowed();
     $('result').hidden = false;
   }
   function tryArrow(id) {
     if (!playable() || motions.has(id)) return false;
+    const markedAtStart = state.arrows[id]?.marked === true;
     const result = M.attemptEscape(state, id);
     if (!result) return false;
     tutorial = false; hintId = null; $('guide-hand').hidden = true;
@@ -362,7 +380,7 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
     const timing = result.clear
       ? M.escapeTiming(path.length, pixelsToEdge / (fit * zoom))
       : { travel: Math.max(.15, result.distance - .55), duration: 440 };
-    motions.set(id, { kind: result.kind, ...timing, elapsed: 0, trailStep: 0 });
+    motions.set(id, { kind: result.kind, ...timing, elapsed: 0, trailStep: 0, markedAtStart });
     sound(result.clear ? 'escape' : 'blocked'); haptic(result.clear ? 'light' : 'heavy');
     if (result.clear) {
       progress();
@@ -371,7 +389,6 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
       if (state.won) fire('novvy:playable-complete', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed() });
     } else {
       progress(false);
-      toast(result.lifeLost ? 'Path blocked. Try another arrow.' : 'This arrow cannot escape yet.');
       if (state.failed) { reportFailure(); announceCta('lives-exhausted'); }
     }
     requestFrame(); return true;
@@ -479,7 +496,7 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
       const img = new Image(); const timeout = setTimeout(resolve, 5000);
       const done = () => { clearTimeout(timeout); resolve(); };
       img.onload = () => { if (img.decode) img.decode().catch(() => {}).then(done); else done(); };
-      img.onerror = done; img.src = url;
+      img.onerror = done; img.src = window.__ESCAPE_ARROW_ASSETS__?.[url] || url;
     })));
   }
   const extraImages = window.__ESCAPE_ARROW_IMAGES__ || {};

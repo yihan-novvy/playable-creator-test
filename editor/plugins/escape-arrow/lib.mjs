@@ -8,6 +8,31 @@ import { effectiveConfig } from '../../core/runner.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
 
 const SCRIPT = '<script src="game.js" defer></script>';
+export function escapeAssetUrl(file) {
+  const mime = { '.png': 'image/png', '.webp': 'image/webp', '.m4a': 'audio/mp4' }[path.extname(file).toLowerCase()];
+  if (!mime) throw new Error(`Escape Arrow 不支持内嵌资源 ${file}`);
+  return `data:${mime};base64,${fs.readFileSync(file).toString('base64')}`;
+}
+
+function gameAssets(root) {
+  const assets = {};
+  const visit = (directory, prefix = '') => {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const file = path.join(directory, entry.name), key = prefix + entry.name;
+      if (entry.isDirectory()) visit(file, key + '/');
+      else assets[key] = escapeAssetUrl(file);
+    }
+  };
+  visit(path.join(root, 'game/assets'));
+  return assets;
+}
+
+export function escapeGameScript(root, ctaIcon = null) {
+  const assets = gameAssets(root);
+  if (ctaIcon) assets['app-icon.png'] = escapeAssetUrl(ctaIcon);
+  return `window.__ESCAPE_ARROW_ASSETS__=${inline(assets)};\n${fs.readFileSync(path.join(root, 'game/game.js'), 'utf8')}`;
+}
+
 export function escapeLevel(root, id) {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, 'game-manifest.json'), 'utf8'));
   const entry = manifest.levels.find(level => level.id === id);
@@ -32,7 +57,9 @@ function ctaCardAssets(config, icon) {
     __CTA_TAKEOVER_ACTION_TEXT__: escapeHtml(config?.cta?.takeoverActionText ?? 'Tap to keep playing'),
   };
   return {
-    style: `<style data-novvy-cta-card>${readCard('cta-card.css')}</style>`,
+    // Escape Arrow keeps its CTA above game/video overlays and the service's
+    // result dialog (999999), in both bar and takeover modes.
+    style: `<style data-novvy-cta-card>${readCard('cta-card.css')}\n#novvy-cta,#novvy-cta.novvy-cta-takeover{z-index:1000000}</style>`,
     dom: readCard('cta-card.html').replace(/__CTA_(?:ICON|NAME|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]).replace('aria-label="体验引导"', 'aria-label="Keep playing"'),
     script: `<script data-novvy-cta-card>${readCard('cta-card.js')}</script>`,
   };
@@ -77,6 +104,7 @@ export function escapeHtmlPage({ root, overlaysRoot, template, level, config, me
   injection.ctaCardEnabled = config?.cta?.enabled !== false && !!media.ctaIcon;
   if (injection.ctaCardEnabled) {
     const card = ctaCardAssets(config, media.ctaIcon);
+    if (!preview && media.ctaIcon === 'app-icon.png') card.dom = card.dom.replace('src="app-icon.png"', 'data-escape-asset="app-icon.png"');
     injection.headStyles.push(card.style);
     injection.bodyDom.push(card.dom);
     injection.bodyScripts.push(card.script);

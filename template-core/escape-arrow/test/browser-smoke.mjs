@@ -24,6 +24,9 @@ try {
     const id = new URL(location.href).searchParams.get('qaLevel');
     if (id) window.__ESCAPE_ARROW_LEVEL__ = library[id];
     window.qaEvents = []; window.qaSdk = [];
+    window.qaAudio = [];
+    const NativeAudio = window.Audio;
+    window.Audio = function (src) { const audio = new NativeAudio(src); window.qaAudio.push(audio); return audio; };
     for (const name of ['novvy:playable-complete', 'novvy:victory', 'novvy:phase2-start', 'novvy:playable-failed', 'novvy:playable-replay', 'novvy:cta-moment']) window.addEventListener(name, e => window.qaEvents.push({ name, detail: e.detail }));
     window.qaDots = [];
     const clear = CanvasRenderingContext2D.prototype.clearRect, arc = CanvasRenderingContext2D.prototype.arc;
@@ -87,9 +90,9 @@ try {
   await page.waitForFunction(() => window.__ESCAPE_ARROW_READY__);
   const blocked = createState(levels[16]).arrows.filter(a => !escapeRoute(createState(levels[16]), a.id).clear).slice(0, 3).map(a => a.id);
   for (const id of blocked) { await clickArrow(id); await page.waitForFunction(() => window.EscapeArrow.getState().moving === 0); }
-  assert.equal(await page.locator('#result-reset').isVisible(), false, 'failure does not offer the All clear replay action');
+  assert.equal(await page.locator('#result-reset').isVisible(), true, 'a replay-enabled final playable offers retry after failure');
   const sdk = await page.evaluate(() => window.qaSdk);
-  assert.deepEqual(sdk.filter(e => e[0] === 'complete'), [['complete', { result: 'fail' }]]);
+  assert.deepEqual(sdk.filter(e => e[0] === 'complete'), [['complete', { result: 'fail', continue_playing: true }]]);
   assert.equal(sdk.filter(e => e[0] === 'replay').length, 0);
   await page.goto(`${base}/api/tasks/${task.id}/preview`);
   await page.waitForFunction(() => window.__ESCAPE_ARROW_READY__);
@@ -110,7 +113,7 @@ try {
   await page.screenshot({ path: path.join(tmp, 'small-phone-packed.png') });
   const layout = await page.evaluate(() => ({ board: document.getElementById('board').getBoundingClientRect().bottom, tools: document.querySelector('.game-toolbar').getBoundingClientRect().bottom, cta: document.getElementById('novvy-cta').getBoundingClientRect().top }));
   assert.ok(layout.board <= layout.tools && layout.tools <= layout.cta, 'board controls do not overlap the download card');
-  console.log('PASS failure SDK without replay, zoom, drag, pinch and 320px layout');
+  console.log('PASS retryable failure SDK, zoom, drag, pinch and 320px layout');
   await page.setViewportSize({ width: 390, height: 844 });
   updateTaskConfig(task.id, { gameplay: { lives: 1, hints: 2, allowReplay: false } });
   await page.goto(`${base}/api/tasks/${task.id}/preview`);
@@ -132,20 +135,31 @@ try {
   updateTaskConfig(task.id, { gameplay: { lives: 'unlimited', hints: 1, allowReplay: true } });
   const limitOptions = { taskId: task.id, templateId: 'escape-arrow', projectRoot: path.join(root, 'project', task.id), resultRoot: path.join(root, 'result', task.id), config: { levelId: 16, gameplay: { lives: 'unlimited', hints: 1, allowReplay: true } } };
   for (const stepId of ['level', 'pack']) assert.equal((await runStep({ ...limitOptions, stepId })).ok, true);
-  await page.goto(`${base}/result/${task.id}/index.html`);
+  await context.setOffline(true);
+  const offlineRequests = [];
+  const recordRequest = request => { if (!/^(?:file|data|blob):/.test(request.url())) offlineRequests.push(request.url()); };
+  page.on('request', recordRequest);
+  await page.goto(pathToFileURL(path.join(root, `result/${task.id}/index.html`)).href);
   await page.waitForFunction(() => window.__ESCAPE_ARROW_READY__);
   for (const id of blocked) { await clickArrow(id); await page.waitForFunction(() => window.EscapeArrow.getState().moving === 0); }
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().lives), null);
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().failed), false);
   assert.equal((await page.evaluate(() => window.qaSdk.filter(e => e[0] === 'click'))).length, 0);
   await page.locator('#hint').click();
+  await page.waitForFunction(() => window.qaAudio.some(audio => audio.loop && !audio.paused && audio.readyState >= 2));
+  assert.equal(await page.evaluate(() => window.qaAudio.every(audio => audio.src.startsWith('data:audio/mp4;base64,') && !audio.error)), true, 'embedded AAC audio decodes and background music plays offline');
+  assert.equal(await page.locator('#hint-icon').evaluate(image => image.src.startsWith('data:image/png;base64,') && image.naturalWidth > 0), true, 'embedded bulb image loads offline');
+  assert.equal(await page.locator('#novvy-cta img').first().evaluate(image => image.src.startsWith('data:image/png;base64,') && image.naturalWidth > 0), true, 'CTA icon loads from game.js without a separate file');
+  assert.deepEqual(offlineRequests, [], 'bundled playable makes no network requests');
+  page.off('request', recordRequest);
+  await context.setOffline(false);
   assert.equal(await page.locator('#hint-count').textContent(), '0');
   assert.equal((await page.evaluate(() => window.qaEvents)).filter(e => e.name === 'novvy:cta-moment' && e.detail.reason === 'hints-exhausted').length, 1);
   assert.equal((await page.evaluate(() => window.qaSdk.filter(e => e[0] === 'click'))).length, 1, 'last hint triggers CTA on that click');
   await page.screenshot({ path: path.join(tmp, 'bulb-hint-limited.png') });
   await page.evaluate(() => window.EscapeArrow.reset());
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 0, 'an unfinished round cannot bypass limits via reset');
-  console.log('PASS packed unlimited lives, limited hints, last-hint CTA, and reset restricted to All clear');
+  console.log('PASS packed unlimited lives, limited hints, last-hint CTA, and reset restricted to finished rounds');
 
   updateTaskConfig(task.id, { gameplay: { lives: 3, hints: 'unlimited', allowReplay: true } });
   updateTaskConfig(task.id, { levelId: 1, intro: { enabled: true }, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 20, cta: { mode: 'steps', afterSteps: 4 }, background: { enabled: false } } });

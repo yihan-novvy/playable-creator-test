@@ -56,7 +56,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     return el('div', { id: 'final-playable-replay' }, [toggle,
       el('p', { class: 'hint' }, [trailingVideo
         ? '当前试玩后还接片尾视频，不能在片尾后返回前面的试玩重玩。关闭片尾或启用第二个 playable 后，可为最后一段开启重玩。'
-        : '仅最后一个 playable 通关后，在“All clear!”结算中显示重玩按钮。点击先跳转 CTA，再重置当前关卡；返回后直接开始新一局，前面的试玩和视频不重复播放。']),
+        : '仅最后一个 playable 在“All clear!”或“Out of lives”结算中显示重玩按钮。点击先跳转 CTA，再重置当前关卡；返回后直接开始新一局，前面的试玩和视频不重复播放。']),
     ]);
   }
   function renderConfig() {
@@ -110,7 +110,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       }
     }
     wrap.append(el('h3', {}, ['玩法限制']), limits,
-      el('p', { class: 'hint' }, ['每局分别计数。最后一颗心耗尽或使用最后一次提示时立即跳转 CTA。重玩仅开放给最后一段试玩的通关结算，重玩会重置当前关卡的生命和提示次数。']));
+      el('p', { class: 'hint' }, ['每局分别计数。最后一颗心耗尽或使用最后一次提示时立即跳转 CTA。重玩开放给最后一段试玩的通关或失败结算，重玩会重置当前关卡的生命和提示次数。']));
     if (!(config().outro?.enabled && config().secondPlayable?.enabled)) wrap.append(finalReplayControls());
     root.append(wrap);
   }

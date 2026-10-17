@@ -32,6 +32,7 @@ export default async function run(assert) {
   assert.check(built.includes('/templates/escape-arrow/game/game.js') && built.includes('/templates/escape-arrow/game/style.css'), '预览游戏路径正确');
   assert.check(built.includes('min-height:calc(148px'), '为下载卡预留棋盘外空间');
   assert.check(built.includes('<body data-theme="night">') && built.includes('id="novvy-cta"') && built.includes('id="novvy-training-hud"'), '带主题属性的 body 正确注入 HUD 和下载卡 DOM');
+  assert.check(built.includes('#novvy-cta,#novvy-cta.novvy-cta-takeover{z-index:1000000}'), '普通底卡与全屏 CTA 在预览中统一高于模板及服务结算弹窗');
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'escape-arrow-editor-'));
   let server, taskId;
   try {
@@ -44,10 +45,23 @@ export default async function run(assert) {
       assert.check(result.ok, `第 ${levelId} 关打包成功: ${result.error || ''}`);
       const html = fs.readFileSync(path.join(resultRoot, 'index.html'), 'utf8');
       assert.check(html.includes(`window.__ESCAPE_ARROW_LEVEL__={"Index":${levelId}`), '选定关卡进入广告包');
-      assert.check(!html.includes('type="module"') && fs.existsSync(path.join(resultRoot, 'assets/sfx/escape.m4a')), '离线脚本及 Unity 音效进入包');
+      assert.equal(fs.readdirSync(resultRoot).sort(), ['game.js', 'index.html', 'style.css'], '无视频广告保留 HTML、游戏脚本和样式三文件');
+      assert.check(html.includes('<script src="game.js" defer></script>') && html.includes('href="style.css"') && !html.includes('base64,'), 'HTML 保持轻量，仅引用脚本和样式，不内嵌图片音频');
+      const script = fs.readFileSync(path.join(resultRoot, 'game.js'), 'utf8');
+      const assets = JSON.parse(script.match(/window\.__ESCAPE_ARROW_ASSETS__=(\{[^\n]*\});/)[1]);
+      assert.equal(Object.keys(assets).length, 9, '两张游戏图片、下载卡图标及六段原版音频内嵌到 game.js');
+      for (const [file, url] of Object.entries(assets)) {
+        const source = file === 'app-icon.png' ? path.join(templateRoot, entry.template.appIcon) : path.join(templateRoot, 'game/assets', file);
+        assert.check(Buffer.from(url.split(',')[1], 'base64').equals(fs.readFileSync(source)), `内嵌 ${file} 与原文件字节一致`);
+      }
+      assert.check(assets['sfx/bgm.m4a'].startsWith('data:audio/mp4;base64,') && assets['hint.png'].startsWith('data:image/png;base64,'), '音频和图片使用正确的 MIME');
+      assert.check(!/src="(?:assets\/|app-icon\.png)/.test(html) && html.includes('data-escape-asset="app-icon.png"'), '图片通过资源表赋值，不再发起独立文件请求');
       assert.check(!fs.existsSync(path.join(resultRoot, 'levels')), '关卡库不全量带进交付包');
       assert.check(!fs.existsSync(path.join(resultRoot, 'play')) && !fs.existsSync(path.join(resultRoot, 'gallery.html')), '关卡试玩入口与总览不进入广告交付包');
     }
+    const noCard = await runStep({ taskId: 'smoke', templateId: entry.id, projectRoot, resultRoot, config: { levelId: 100, cta: { enabled: false } }, stepId: 'pack' });
+    assert.check(noCard.ok, '关闭下载卡可正常打包');
+    assert.check(!fs.readFileSync(path.join(resultRoot, 'game.js'), 'utf8').includes('"app-icon.png":'), '关闭下载卡时不内嵌图标');
     server = createServer();
     await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
     const base = `http://127.0.0.1:${server.address().port}`;
@@ -87,7 +101,8 @@ export default async function run(assert) {
     const packed = await (await fetch(`${base}/result/${taskId}/index.html`)).text();
     assert.check(packed.includes('window.__ESCAPE_ARROW_PHASE2__={"levelId":100'), '第二关数据正确内联');
     assert.check(packed.includes('window.__novvyStageChain__=["playable","video","playable"]'), '双 playable 段链正确');
-    assert.equal((await fetch(`${base}/result/${taskId}/background2.webp`)).status, 200, '第二关背景进入包');
+    assert.equal((await fetch(`${base}/result/${taskId}/background2.webp`)).status, 200, '任务生成的第二关背景仍单独交付');
+    assert.equal(fs.readdirSync(path.join(root, 'result', taskId)).sort(), ['background2.webp', 'game.js', 'index.html', 'outro-video.mp4', 'style.css'], '双关包只额外携带启用的视频和任务生成的背景');
     assert.equal((await fetch(`${base}/api/tasks/${taskId}/preview`)).status, 200, '在线预览正常');
     assert.equal((await fetch(base + '/templates/escape-arrow/previews/100.svg')).status, 200, '第 100 关缩略图可访问');
     assert.equal((await fetch(base + '/templates/escape-arrow/play/101.html')).status, 404, '第 101 关试玩已移除');

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { requireFiles } from '../../../core/lib/helpers.mjs';
-import { escapeLevel, escapeHtmlPage } from '../lib.mjs';
+import { escapeLevel, escapeHtmlPage, escapeGameScript } from '../lib.mjs';
 
 export function prerequisites(config) {
   const generated = ['level.json'];
@@ -58,14 +58,12 @@ export async function run(ctx) {
   if (enabled.background2) needed.push(path.join(ctx.generatedDir, 'background2.webp'));
   requireFiles(needed);
   const built = escapeHtmlPage({ root: ctx.templateRoot, overlaysRoot: ctx.pluginDir, template: ctx.template, level, config: ctx.config, media });
+  const gameScript = escapeGameScript(ctx.templateRoot, enabled.cta ? ctaIconSource : null);
   fs.rmSync(ctx.resultDir, { recursive: true, force: true });
-  fs.cpSync(path.join(ctx.templateRoot, 'game'), ctx.resultDir, { recursive: true });
-  // levelN.html 是基础包的无埋点/无 CTA 独立入口,配置的关卡只经 index.html
-  // 注入;混进广告包会绕过任务配置,这里兜底删除(模板侧 build 已不同步它们)。
-  for (const file of fs.readdirSync(ctx.resultDir)) {
-    if (/^level\d+\.html$/.test(file)) fs.rmSync(path.join(ctx.resultDir, file));
-  }
+  fs.mkdirSync(ctx.resultDir, { recursive: true });
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
+  fs.writeFileSync(path.join(ctx.resultDir, 'game.js'), gameScript);
+  fs.copyFileSync(path.join(ctx.templateRoot, 'game/style.css'), path.join(ctx.resultDir, 'style.css'));
   // 视频 pack 只发 intro/outro 步骤转码出的 720p 产物(上传原片不进包)。
   if (enabled.intro) {
     fs.copyFileSync(path.join(ctx.generatedDir, 'intro-video.mp4'), path.join(ctx.resultDir, 'tail-ad-video.mp4'));
@@ -77,11 +75,6 @@ export async function run(ctx) {
   }
   if (enabled.background) fs.copyFileSync(path.join(ctx.generatedDir, 'background.webp'), path.join(ctx.resultDir, 'background.webp'));
   if (enabled.background2) fs.copyFileSync(path.join(ctx.generatedDir, 'background2.webp'), path.join(ctx.resultDir, 'background2.webp'));
-  if (enabled.cta) fs.copyFileSync(ctaIconSource, path.join(ctx.resultDir, 'app-icon.png'));
   const packageFiles = fs.readdirSync(ctx.resultDir).sort();
-  for (const file of ['index.html', 'game.js', 'style.css']) if (!packageFiles.includes(file)) throw new Error(`Escape Arrow 打包缺少 ${file}`);
-  const sizeOf = (entry) => fs.statSync(entry).isDirectory()
-    ? fs.readdirSync(entry).reduce((sum, name) => sum + sizeOf(path.join(entry, name)), 0)
-    : fs.statSync(entry).size;
-  return { metrics: { levelId: level.Index, packageFiles, outputBytes: packageFiles.reduce((n, name) => n + sizeOf(path.join(ctx.resultDir, name)), 0), overlays: enabled, phase2: phase2Level ? phase2Level.Index : null }, warnings: [] };
+  return { metrics: { levelId: level.Index, packageFiles, outputBytes: packageFiles.reduce((n, name) => n + fs.statSync(path.join(ctx.resultDir, name)).size, 0), overlays: enabled, phase2: phase2Level ? phase2Level.Index : null }, warnings: [] };
 }

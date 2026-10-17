@@ -11,9 +11,9 @@
 <body data-theme="night">
   <main id="game-shell">
     <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">Find a way. Set them free.</span></div></header>
-    <div class="game-status"><span id="lives" aria-label="Lives remaining"></span><span id="progress" aria-live="polite"></span></div>
-    <div id="board-wrap"><canvas id="board" aria-label="Tap an arrow to let it escape. Drag to pan and pinch to zoom."></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="Tap an arrow" hidden><div id="toast" role="status" hidden></div></div>
-    <nav class="game-toolbar" aria-label="Board tools"><button id="hint" type="button" aria-label="Hint: unlimited"><img id="hint-icon" src="assets/hint.png" alt=""><span id="hint-count" class="hint-count">∞</span></button><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="recenter" type="button" aria-label="Center board">⌖</button><button id="zoom-in" type="button" aria-label="Zoom in">＋</button></nav>
+    <div class="game-status"><span id="lives" aria-label="Lives remaining"></span><span id="progress" role="status" aria-live="polite"><svg class="progress-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 19v-7a4 4 0 0 1 4-4h12m-5-5 5 5-5 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="progress-values" aria-hidden="true"><strong id="progress-escaped"></strong><span class="progress-divider">/</span><span id="progress-total"></span></span></span></div>
+    <div id="board-wrap"><canvas id="board" aria-label="Tap an arrow to let it escape. Drag to pan and pinch to zoom."></canvas><img id="guide-hand" alt="Tap an arrow" hidden><div id="toast" role="status" hidden></div></div>
+    <nav class="game-toolbar" aria-label="Board tools"><button id="hint" type="button" aria-label="Hint: unlimited"><img id="hint-icon" alt=""><span id="hint-count" class="hint-count">∞</span></button><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="recenter" type="button" aria-label="Center board">⌖</button><button id="zoom-in" type="button" aria-label="Zoom in">＋</button></nav>
     <div class="bottom-ui"><span id="instruction">Tap an arrow to set it free</span></div>
     <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" data-novvy-replay type="button">Play again</button></div></div>
   </main>
