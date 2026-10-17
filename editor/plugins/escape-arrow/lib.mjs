@@ -125,7 +125,7 @@ export function escapeHtmlPage({ root, overlaysRoot, template, level, config, me
     injection.bodyScripts.push(`<script data-novvy-outro>${read('outro.js')}</script>`);
   }
   // 双 playable:第二关数据与两关各自的 CTA 时机策略。第一关策略仅武装于
-  // 无片尾场景(有片尾时第一关只负责引出片尾,转化由片尾链/第二关负责)。
+  // 无片尾场景；双关首段成功在庆祝后转化，失败在点击 Try again 时转化。
   // 第二关背景未启用时沿用游戏的主题背景。
   const background2Enabled = phase2 !== null && config?.secondPlayable?.background?.enabled === true && !!media.background2;
   if (phase2) {

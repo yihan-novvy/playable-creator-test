@@ -56,11 +56,11 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     return el('div', { id: 'final-playable-replay' }, [toggle,
       el('p', { class: 'hint' }, [trailingVideo
         ? '当前试玩后还接片尾视频，不能在片尾后返回前面的试玩重玩。关闭片尾或启用第二个 playable 后，可为最后一段开启重玩。'
-        : '仅最后一个 playable 在“All clear!”或“Out of lives”结算中显示重玩按钮。点击先跳转 CTA，再重置当前关卡；返回后直接开始新一局，前面的试玩和视频不重复播放。']),
+        : '此设置控制最后一个 playable 在“All clear!”或“Out of lives”结算中是否显示重玩按钮。双 playable 的首段失败时始终可重试。点击先跳转 CTA，再重置当前关卡；返回后开始新一局，前面的试玩和视频不重复播放。']),
     ]);
   }
   function renderConfig() {
-    document.getElementById('config-hint').textContent = `关卡来自 Unity 的前 ${catalog.length} 关。双 playable 的第一段成功或失败后，均不弹结算框，直接衔接第二段视频；最后一段按设置结算或重玩。`;
+    document.getElementById('config-hint').textContent = `关卡来自 Unity 的前 ${catalog.length} 关。双 playable 首段失败可重试；成功后播完庆祝动画并跳转 CTA，返回后播放中间视频，再进入第二段。最后一段按设置结算或重玩。`;
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
     if (galleryPath) wrap.append(el('a', { href: '/templates/escape-arrow/' + galleryPath, target: '_blank', rel: 'noopener', class: 'primary' }, [`浏览前 ${catalog.length} 关并试玩 ↗`]));
@@ -90,7 +90,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'Escape Arrow'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2),
     ]));
-    wrap.append(el('p', { class: 'hint' }, ['片头结束后显示底部下载卡，可随时手动点击。双 playable 的首段只负责衔接视频，自动跳转 CTA 由最后一段的设置触发。']));
+    wrap.append(el('p', { class: 'hint' }, ['片头结束后显示底部下载卡，可随时手动点击。双 playable 首段成功庆祝后跳转 CTA，返回后衔接视频；失败点击 Try again 时先跳转 CTA 再重试。']));
     const gameplay = config().gameplay || {};
     const limits = el('div', { class: 'dragon-config-grid' });
     for (const [key, label, fallback] of [['lives', '生命次数', 3], ['hints', '提示次数', 'unlimited']]) {
@@ -110,7 +110,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       }
     }
     wrap.append(el('h3', {}, ['玩法限制']), limits,
-      el('p', { class: 'hint' }, ['每局分别计数。双 playable 首段生命耗尽后进入下一段视频，提示耗尽后停止提示；最后一段达到生命或提示次数限制时立即跳转 CTA。重玩仅开放给最后一段的通关或失败结算，并重置当前关卡的生命和提示。']));
+      el('p', { class: 'hint' }, ['每局分别计数。双 playable 首段生命耗尽后显示 Try again，点击先跳转 CTA 再重试当前关；首段提示耗尽后停止提示。最后一段达到生命或提示次数限制时立即跳转 CTA。重试会重置当前关卡的生命和提示。']));
     if (!(config().outro?.enabled && config().secondPlayable?.enabled)) wrap.append(finalReplayControls());
     root.append(wrap);
   }
@@ -227,7 +227,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       select2.addEventListener('change', async () => { await save({ secondPlayable: { levelId: Number(select2.value) } }); await refresh(true); });
       secondPlayable = el('section', { class: 'step-card', id: 'second-playable-settings' }, [
         el('h3', {}, ['第二个 playable']),
-        el('p', { class: 'hint' }, ['第一个 playable 成功或失败后均不弹窗，动画结束后直接播放片尾视频，再进入本关；首段不自动跳转 CTA。最后一段按下方设置触发 CTA，并决定是否允许重玩。']),
+        el('p', { class: 'hint' }, ['第一个 playable 失败后显示 Try again，点击先跳转 CTA，再重试首段。成功后不弹结算框，播完庆祝动画后跳转 CTA，返回后播放片尾视频，再进入本关。最后一段按下方设置触发 CTA，并决定是否允许重玩。']),
         el('div', { class: 'dragon-config-grid' }, [checkbox('启用第二个 playable', 'secondPlayable', 'enabled')]),
         field('第二关编号', select2),
         el('div', { class: 'dragon-config-grid' }, ['titleLine1', 'titleLine2'].map((key, index) => {

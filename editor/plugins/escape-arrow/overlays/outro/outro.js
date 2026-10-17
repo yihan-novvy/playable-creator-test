@@ -6,6 +6,7 @@
   const countdown = document.getElementById('novvy-outro-countdown');
   if (!root || !video || !sound || !play) return;
   let active = false, consumed = false;
+  let pending = false, pendingTimer = null, awaitingReturn = false;
   let ctaReady = false;
   function revealCta() {
     if (ctaReady) return;
@@ -94,14 +95,23 @@
     }
   }
   function syncVisibility() {
+    if (pending) {
+      if (!visible()) {
+        awaitingReturn = true;
+        clearTimeout(pendingTimer); pendingTimer = null;
+      } else if (awaitingReturn) startVideo();
+      return;
+    }
     if (!active) return;
     if (visible()) void playVideo();
     else { attempt++; video.pause(); }
   }
-  // Start after the current round's animation settles. In a two-playable ad,
-  // the first round advances through this video on either win or failure.
+  // Only a successful round advances. When CTA leaves the ad, defer both the
+  // video and SDK stage change until the ad becomes visible again.
   function startVideo() {
     if (active || consumed) return;
+    pending = false; awaitingReturn = false;
+    clearTimeout(pendingTimer); pendingTimer = null;
     consumed = true;
     active = true;
     ctaReady = false;
@@ -114,8 +124,19 @@
     if (video.error) { finish('video_error'); return; }
     void playVideo();
   }
-  window.addEventListener('novvy:victory', startVideo);
-  window.addEventListener('escape-arrow:continue-video', startVideo);
+  window.addEventListener('novvy:victory', event => {
+    if (!event.detail?.ctaBeforeContinue) { startVideo(); return; }
+    if (active || consumed || pending) return;
+    pending = true;
+    awaitingReturn = !visible();
+    // Give an asynchronous store launch time to deliver visibility callbacks.
+    // Editor previews and hosts that stay visible can continue without a return.
+    if (!awaitingReturn) pendingTimer = setTimeout(() => {
+      pendingTimer = null;
+      if (visible()) startVideo();
+      else awaitingReturn = true;
+    }, 400);
+  });
   window.addEventListener('novvy:hud-progress', event => {
     /* 双 playable:片尾位于两关之间只播一次,第二关的进度回落不复位 consumed。 */
     if (window.__novvyTwoPhase) return;

@@ -25,6 +25,7 @@ try {
   page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => {
     window.qaSdk = []; window.qaEvents = []; window.qaResults = []; window.qaHideOnReplay = false;
+    window.qaHideOnVictory = false; window.qaDocumentLifecycle = false; window.qaStoreHidden = false;
     window.addEventListener('DOMContentLoaded', () => {
       const result = document.getElementById('result');
       if (result) new MutationObserver(() => {
@@ -32,10 +33,10 @@ try {
       }).observe(result, { attributes: true, attributeFilter: ['hidden'] });
     });
     const snapshot = () => window.EscapeArrow?.getState() || null;
-    for (const name of ['novvy:intro-finished', 'novvy:outro-started', 'novvy:outro-finished', 'novvy:phase2-start', 'novvy:playable-complete', 'novvy:playable-failed', 'escape-arrow:continue-video', 'novvy:playable-replay']) {
+    for (const name of ['novvy:intro-finished', 'novvy:outro-started', 'novvy:outro-finished', 'novvy:phase2-start', 'novvy:playable-complete', 'novvy:playable-failed', 'novvy:playable-replay', 'escape-arrow:confetti']) {
       window.addEventListener(name, event => {
-        window.qaEvents.push({ name, detail: event.detail, state: snapshot() });
-        if (['novvy:playable-complete', 'novvy:playable-failed'].includes(name) && event.detail?.continuing) {
+        window.qaEvents.push({ name, detail: event.detail, state: snapshot(), clicks: window.qaSdk.filter(call => call[0] === 'click').length });
+        if (name === 'novvy:playable-complete' && event.detail?.continuing) {
           window.EscapeArrow.reset();
           window.qaEvents.push({ name: 'first-reset-denied', state: snapshot() });
         }
@@ -50,6 +51,17 @@ try {
       click: detail => {
         window.qaSdk.push(['click', detail, snapshot()]);
         if (detail.scene === 'playable-replay' && window.qaHideOnReplay) window.dispatchEvent(new CustomEvent('novvy:viewablechange', { detail: { viewable: false } }));
+        if (detail.scene === 'victory' && window.qaHideOnVictory) {
+          const hide = () => {
+            window.qaStoreHidden = true;
+            if (window.qaDocumentLifecycle) {
+              Object.defineProperty(document, 'hidden', { configurable: true, value: true });
+              document.dispatchEvent(new Event('visibilitychange'));
+            } else window.dispatchEvent(new CustomEvent('novvy:viewablechange', { detail: { viewable: false } }));
+          };
+          if (window.qaDocumentLifecycle) setTimeout(hide, 60);
+          else hide();
+        }
       },
     };
   });
@@ -71,15 +83,15 @@ try {
     }, id);
     await page.mouse.click(point.x, point.y);
   };
-  const solve = async id => {
+  const solve = async (id, waitForResult = true) => {
     for (const [step, arrowId] of solveLevel(levels[id]).entries()) {
       await clickArrow(arrowId);
       await page.waitForFunction(escaped => window.EscapeArrow.getState().escaped === escaped, step + 1);
     }
     await page.waitForFunction(() => window.EscapeArrow.getState().moving === 0);
-    await page.waitForFunction(() => !document.getElementById('result').hidden || document.getElementById('novvy-video-outro')?.hidden === false);
+    if (waitForResult) await page.waitForFunction(() => !document.getElementById('result').hidden || document.getElementById('novvy-video-outro')?.hidden === false);
   };
-  const fail = async (id, progressed = true, expectResult = true) => {
+  const fail = async (id, progressed = true) => {
     const state = createState(levels[id]);
     if (progressed) {
       await page.locator('#hint').click();
@@ -94,12 +106,8 @@ try {
       await clickArrow(arrow.id);
       await page.waitForFunction(() => window.EscapeArrow.getState().moving === 0);
     }
-    if (expectResult) {
-      await page.locator('#result').waitFor({ state: 'visible' });
-      assert.equal(await page.evaluate(() => window.EscapeArrow.getState().failed), true);
-    } else {
-      await page.waitForFunction(id => window.qaEvents.some(event => event.name === 'escape-arrow:continue-video' && event.detail.levelId === id), id);
-    }
+    await page.locator('#result').waitFor({ state: 'visible' });
+    assert.equal(await page.evaluate(() => window.EscapeArrow.getState().failed), true);
   };
   const assertCtaOnTop = async () => {
     const hit = await page.evaluate(() => {
@@ -168,6 +176,31 @@ try {
     assert.deepEqual(await page.evaluate(() => window.qaEvents.filter(event => ['novvy:intro-finished', 'novvy:outro-started', 'novvy:phase2-start'].includes(event.name))), beforeEvents);
     assert.deepEqual((await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'complete'))).at(-1), ['complete', { result: 'win', continue_playing: true }]);
   };
+  const winFirstAndReturn = async (id, nextId, documentLifecycle = false) => {
+    await page.evaluate(documentLifecycle => { window.qaHideOnVictory = true; window.qaDocumentLifecycle = documentLifecycle; }, documentLifecycle);
+    const before = await page.evaluate(() => ({ stages: window.qaSdk.filter(call => call[0] === 'stage'), clicks: window.qaSdk.filter(call => call[0] === 'click').length }));
+    await solve(id, false);
+    await page.waitForFunction(() => window.qaStoreHidden);
+    const milestones = await page.evaluate(() => window.qaEvents.filter(event => ['novvy:playable-complete', 'escape-arrow:confetti'].includes(event.name)));
+    assert.ok(milestones.length >= 2);
+    assert.ok(milestones.every(event => event.clicks === before.clicks), 'last arrow and celebration begin before the automatic CTA');
+    await page.waitForTimeout(550);
+    assert.equal(await page.locator('#novvy-video-outro').isVisible(), false, 'video remains hidden while the store is open');
+    assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'stage')), before.stages, 'SDK stays in the first playable until store return');
+    assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), before.clicks + 1, 'first win converts exactly once after celebration');
+    assert.equal(await page.locator('#result').isVisible(), false, 'first win never opens All clear');
+    assert.equal(await page.locator('#novvy-cta').evaluate(node => node.classList.contains('novvy-cta-takeover')), false);
+    await page.evaluate(() => {
+      window.qaHideOnVictory = false;
+      if (window.qaDocumentLifecycle) {
+        Object.defineProperty(document, 'hidden', { configurable: true, value: false });
+        document.dispatchEvent(new Event('visibilitychange'));
+      } else window.dispatchEvent(new CustomEvent('novvy:viewablechange', { detail: { viewable: true } }));
+    });
+    await page.waitForFunction(id => window.EscapeArrow.getState().levelId === id, nextId);
+    assert.equal(await page.evaluate(() => window.qaEvents.filter(event => event.name === 'novvy:outro-started').length), 1, 'video starts once, on return');
+    assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), before.clicks + 1, 'returning and video completion do not repeat CTA');
+  };
   for (const name of ['intro', 'outro']) await execFile('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i', 'color=c=black:s=64x64:r=10:d=0.5', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', path.join(root, `project/${task.id}/uploads/${name}-video.mp4`)]);
 
   await pack({ intro: { enabled: true } });
@@ -182,10 +215,9 @@ try {
   await pack({ intro: { enabled: true }, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2, cta: { mode: 'steps', afterSteps: 1 } }, cta: { endMask: true } });
   await page.waitForFunction(() => window.__novvyIntroFinished);
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().allowReplay), false);
-  await solve(1);
-  await page.waitForFunction(() => window.EscapeArrow.getState().levelId === 2);
+  await winFirstAndReturn(1, 2);
   assert.deepEqual(await page.evaluate(() => window.qaResults), [], 'first win never flashes a result dialog');
-  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'first win advances through the video without automatic CTA');
+  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 1, 'first win converts before the video');
   const firstAttempt = await page.evaluate(() => window.qaEvents.find(event => event.name === 'first-reset-denied'));
   assert.equal(firstAttempt.state.levelId, 1);
   assert.equal(firstAttempt.state.won, true, 'the first playable cannot be replayed through the API');
@@ -196,7 +228,7 @@ try {
   assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'complete')), [['complete', { result: 'win' }], ['complete', { result: 'win', continue_playing: true }]]);
   await replayAndReturn(2);
   await page.screenshot({ path: path.join(screenshots, 'second-all-clear.png') });
-  console.log('PASS two playables: only the last offers replay, only that level restarts, and previous gameplay/videos never repeat');
+  console.log('PASS first win: celebration → CTA → viewable return → video → second playable; only final win offers replay');
 
   await pack({ levelId: 16, intro: { enabled: true } });
   await fail(16);
@@ -207,24 +239,42 @@ try {
   console.log('PASS single playable: failure offers Try again; CTA precedes reset, lives/hints/progress reset, and intro never repeats');
 
   for (const allowReplay of [true, false]) {
-    await pack({ levelId: 16, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2 }, gameplay: { lives: 2, hints: 1, allowReplay }, cta: { endMask: !allowReplay } });
+    await pack({ levelId: 16, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2 }, gameplay: { lives: 2, hints: 2, allowReplay }, cta: { endMask: !allowReplay } });
+    await page.locator('#hint').click();
     await page.locator('#hint').click();
     assert.equal(await page.locator('#hint-count').textContent(), '0');
     assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'first-playable hint limit does not interrupt the video flow');
-    await fail(16, false, false);
-    await page.waitForFunction(() => window.EscapeArrow.getState().levelId === 2);
-    assert.deepEqual(await page.evaluate(() => window.qaResults), [], 'first failure never flashes a result dialog');
-    assert.equal(await page.locator('#result').isVisible(), false);
-    assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'first failure advances without automatic CTA');
+    await fail(16, false);
+    assert.equal(await page.locator('#result-reset').isVisible(), true, 'first failure always offers retry, independent of the final-playable setting');
+    assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'first failure waits for the retry button to request CTA');
     assert.equal(await page.locator('#novvy-cta').evaluate(node => node.classList.contains('novvy-cta-takeover')), false);
-    assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'complete')), [['complete', { result: 'fail' }]], 'first failure stays a real failure in SDK reporting');
-    assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'stage')), [['stage', 1, 'playable'], ['stage', 2, 'video'], ['stage', 3, 'playable']]);
-    const firstFailure = await page.evaluate(() => window.qaEvents.find(event => event.name === 'first-reset-denied'));
-    assert.equal(firstFailure.state.failed, true, 'first failure rejects replay even when the last playable permits it');
+    assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'complete')), [['complete', { result: 'fail', continue_playing: true }]], 'first failure reports fail with same-stage retry');
+    assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'stage')), [['stage', 1, 'playable']]);
+    const beforeClicks = await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length);
+    await page.evaluate(() => { window.qaHideOnReplay = true; });
+    await page.locator('#result-reset').click();
+    const replayLog = await page.evaluate(() => window.qaSdk);
+    const clickAt = replayLog.findLastIndex(call => call[0] === 'click');
+    assert.equal(replayLog.filter(call => call[0] === 'click').length, beforeClicks + 1);
+    assert.ok(clickAt < replayLog.findLastIndex(call => call[0] === 'replay'), 'first retry converts before resetting');
+    assert.equal(replayLog[clickAt][2].failed, true);
+    assert.equal(await page.evaluate(() => window.EscapeArrow.getState().levelId), 16);
+    assert.equal(await page.evaluate(() => window.EscapeArrow.getState().lives), 2);
+    assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 2);
+    assert.equal(await page.evaluate(() => window.EscapeArrow.getState().failed), false);
+    assert.equal(await page.evaluate(() => window.qaEvents.filter(event => event.name === 'novvy:outro-started').length), 0, 'retry never starts the next video');
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('novvy:viewablechange', { detail: { viewable: true } })));
+    // The retry can fail repeatedly without consuming the video transition.
+    await fail(16, false);
+    await page.locator('#result-reset').click();
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('novvy:viewablechange', { detail: { viewable: true } })));
+    await winFirstAndReturn(16, 2, true);
     assert.equal(await page.evaluate(() => window.EscapeArrow.getState().allowReplay), allowReplay);
-    assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 1);
+    assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 2);
+    assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'complete')), [['complete', { result: 'fail', continue_playing: true }], ['complete', { result: 'fail', continue_playing: true }], ['complete', { result: 'win' }]]);
+    assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'stage')), [['stage', 1, 'playable'], ['stage', 2, 'video'], ['stage', 3, 'playable']]);
   }
-  console.log('PASS first-playable failure: no result popup or automatic CTA; video then second playable, with either replay setting');
+  console.log('PASS first failure: Try again always available, CTA then same-stage retry; repeated retries then win → asynchronous document return → video');
 
   await pack({ intro: { enabled: true }, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 16, cta: { mode: 'complete' } }, cta: { endMask: true } });
   await solve(1);

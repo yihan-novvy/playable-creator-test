@@ -10,7 +10,8 @@
    进入试玩时亮出底部常驻条并全程常驻;双 playable(__novvyTwoPhase)第一关
    同样亮底部条。转化时机:引擎派发 novvy:playable-complete(最后一步完成,
    不等胜利扫光/片尾音乐收尾)即主动跳转一次;显式 continuing:true 的过渡段
-   保留底卡并直接进入下一段，不触发自动跳转。双 playable 进第二关
+   保留底卡，延后自动跳转；victory 带 ctaBeforeContinue:true 时，在庆祝
+   动画结束后请求一次 CTA，再由素材衔接后续视频，不武装回访每击。双 playable 进第二关
    (novvy:phase2-start)重置闩锁,第二关的 novvy:cta-moment(第 N 步或完成
    兜底)升级全屏接管并再次转化。自动时机经分相 autoConverted 闩锁去重;
    手动点击统一复用 Download,预览兜底经 novvy:cta-interact 回到桥,
@@ -167,7 +168,15 @@
     convert('playable-complete');
   });
   window.addEventListener('novvy:victory', function (event) {
-    if (event && event.detail && event.detail.continuing === true) return;
+    if (event && event.detail && event.detail.continuing === true) {
+      // A transitional win can request CTA after its animation. Keep the bar
+      // and leave the following video interactive when the user returns.
+      if (event.detail.ctaBeforeContinue === true && !autoConverted) {
+        autoConverted = true;
+        convert('victory');
+      }
+      return;
+    }
     if (!END_MASK) armInteractConvert();
     if (autoConverted) return;
     autoConverted = true;

@@ -195,7 +195,12 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   function visible() { return !document.hidden && viewable; }
   function playable() { return visible() && !introActive && !outroActive; }
   function hasNextPlayable() { return !!phase2 && !phase2Started; }
-  function replayAllowed() { return gameplay.allowReplay && (!phase2 || phase2Started) && (!window.__novvyOutroEnabled || !!phase2); }
+  function replayAllowed() {
+    // The first playable must be cleared before its video can start. A failed
+    // attempt can always retry; the editor toggle governs the final playable.
+    if (hasNextPlayable()) return !!state?.failed;
+    return gameplay.allowReplay && (!window.__novvyOutroEnabled || !!phase2);
+  }
   function canReplay() {
     const finished = (state.won && victorySent) || (state.failed && resultSent);
     return replayAllowed() && finished && !motions.size && !$('result').hidden;
@@ -424,8 +429,8 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
     if (playable() && (motions.size || hintId !== null || celebration)) requestFrame();
   }
   function announceCta(reason = 'progress') {
-    // The first of two playables leads into the next video. Automatic CTA and
-    // takeover belong to the final playable; the download card stays usable.
+    // First-playable failure converts on Try again, success after celebration.
+    // Its hint/life limits never replace the round with a final CTA takeover.
     if (hasNextPlayable() || ctaAnnounced) return;
     ctaAnnounced = true;
     fire('novvy:cta-moment', { levelId: level.Index, steps: state.steps, reason, replayable: replayAllowed() });
@@ -439,22 +444,18 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
     if (won) {
       victorySent = true; sound('win');
       $('instruction').textContent = 'Every arrow is free!';
-      fire('novvy:victory', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed(), continuing: hasNextPlayable() });
+      fire('novvy:victory', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed(), continuing: hasNextPlayable(), ctaBeforeContinue: hasNextPlayable() });
       if (policy) announceCta();
       if (window.__novvyOutroEnabled && !phase2Started) return;
     } else {
       resultSent = true; sound('fail');
       reportFailure();
-      if (hasNextPlayable()) {
-        fire('escape-arrow:continue-video', { levelId: level.Index, result: 'fail' });
-        return;
-      }
     }
     $('result-icon').textContent = won ? '✧' : '♡';
     $('result-title').textContent = won ? 'All clear!' : 'Out of lives';
     $('result-copy').textContent = won ? 'You found a way out for every arrow.' : 'Look for arrows with a clear path ahead.';
     $('result-reset').textContent = won ? 'Play again' : 'Try again';
-    // Only the last playable's finished round offers a same-stage replay.
+    // First-playable failure retries here; final results follow editor settings.
     $('result-reset').hidden = !replayAllowed();
     $('result').hidden = false;
   }

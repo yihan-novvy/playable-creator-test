@@ -54,9 +54,9 @@ playable 内部使用英文；editor 编辑控件、配置说明及试玩总览�
 
 `gameplay` 配置每局的生命、提示和重玩：`lives` / `hints` 可设为 `"unlimited"` 或 1–99 的整数，`allowReplay` 为布尔值。默认三条命、无限提示、允许最后一段试玩通关或失败后重玩。最后一段的最后一条命耗尽或使用最后一次有效提示时，立即派发 CTA，不等待动画结束；提示会正常高亮目标。未找到有效提示不扣次数。生命无限时受阻仍标记箭头，但不会失败。
 
-双 playable 的第一段在成功或失败后均不弹结算框；当前动画结束后自动播放中间视频，再进入第二段。第一段的自动 CTA 延后到最后一段，手动下载仍可用；首段提示耗尽只停止提示，生命耗尽则进入视频。`novvy:playable-complete` / `novvy:victory` 携带 `continuing:true` 时，共享转化桥不自动跳转；失败如实报告后以 `escape-arrow:continue-video` 启动视频，不伪造胜利事件。最后一段才显示 All clear/Out of lives，并按设置允许重玩。
+双 playable 的第一段失败后显示 Out of lives / Try again，始终允许重试，不受末关重玩开关影响；点击先跳 CTA，再重置首段，后续视频尚未启动。成功后不显示 All clear，先播放纸屑庆祝，再跳 CTA；离开广告期间不启动视频或切换 SDK 段，返回后播放中间视频，再进入第二段。`novvy:playable-complete` 携带 `continuing:true`，将自动转化延后至庆祝结束的 `novvy:victory`（额外携带 `ctaBeforeContinue:true`）；此时只保留底部卡，不弹结束遮罩，也不武装回访每击转化。兼容同步 viewable 与异步文档可见性回调；未离开的编辑器预览或宿主在 400ms 后自动继续。首段提示耗尽只停止提示。最后一段按设置结算和重玩。
 
-生命和提示在两段 playable 中分别重新计数。重玩仅开放给最后一个 playable 的“All clear!”或“Out of lives”结算，进行中的游戏不能重玩，第一段有后续 playable 时也不能重玩。点击 Play again/Try again 先通过 CTA 桥请求跳转，再同步重置当前关卡的箭头、生命、提示、圆点和进度；切回来即处于新一局。已播视频、前面关卡、当前 HUD/背景及 SDK 段号均保留。仅单 playable 且尾部仍有片尾视频时禁用重玩，避免返回已结束的旧段；可关闭片尾或启用第二个 playable。
+生命和提示在两段 playable 中分别重新计数。双 playable 首段失败固定提供 Try again，首段成功不能重玩；最后一个 playable 的“All clear!”或“Out of lives”按 `allowReplay` 决定是否显示重玩按钮。进行中的游戏不能重玩。点击 Play again/Try again 先通过 CTA 桥请求跳转，再同步重置当前关卡的箭头、生命、提示、圆点和进度；切回来即处于新一局。已播视频、前面关卡、当前 HUD/背景及 SDK 段号均保留。仅单 playable 且尾部仍有片尾视频时禁用重玩，避免返回已结束的旧段；可关闭片尾或启用第二个 playable。
 
 ## 游戏契约
 
@@ -65,7 +65,7 @@ playable 内部使用英文；editor 编辑控件、配置说明及试玩总览�
 - `window.EscapeArrow.getState()`：关卡、进度、生命（无限时为 null）、剩余提示、重玩开关、圆点数量、可操作箭头、缩放和动画状态。
 - `window.EscapeArrow.getArrowScreenPoint(id)`：箭头头部在 Canvas 内的坐标，便于自动验收。
 - `window.EscapeArrow.setMuted(true)`：供宿主控制静音，游戏界面不提供音乐开关。
-- `window.EscapeArrow.reset()`：与 Play again/Try again 相同，仅最后一个可重玩 playable 的通关或失败结算可调用；先 CTA 再重置当前关卡。
+- `window.EscapeArrow.reset()`：与 Play again/Try again 相同，双 playable 首段失败或允许重玩的末关结算可调用；先 CTA 再重置当前关卡。
 
 成功逃出一根箭头产生一次真实进度；最后一根逃出时发 `novvy:playable-complete`，动画结束发 `novvy:victory`。只有最后一个可重玩的 playable 携带 `replayable:true`，段桥按 `onComplete({result:'win',continue_playing:true})` 保留当前段；其余正常最终结算。生命耗尽时先发 `novvy:playable-failed`（retryable 为当前段是否允许重玩），最后一段另发 `novvy:cta-moment`；允许重玩时失败报告为 `onComplete({result:'fail',continue_playing:true})`，保留当前段等待重玩。次数限制触发的 CTA 带 `reason: "lives-exhausted"` 或 `"hints-exhausted"`。重玩依次派发 `novvy:replay-cta` 和 `novvy:playable-replay`，前者独立触发一次 CTA，后者调用 SDK onReplay 并重置本轮 CTA 状态。不将提示、缩放、拖动或空白点击记为玩法进度。
 
