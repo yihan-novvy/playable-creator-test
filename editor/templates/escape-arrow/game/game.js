@@ -1,0 +1,435 @@
+(() => {
+const EscapeArrowModel = (() => {
+// Grid coordinates follow Unity: index = y * width + x, with y increasing up.
+function validateLevel(level, expectedId) {
+  const { GridXSize: width, GridYSize: height, Arrows: arrows } = level || {};
+  if (![width, height].every(n => Number.isInteger(n) && n > 0 && n <= 256)) throw new Error('无效的棋盘尺寸');
+  if (expectedId !== undefined && level.Index !== expectedId) throw new Error('关卡编号不匹配');
+  if (!Array.isArray(arrows) || !arrows.length) throw new Error('关卡缺少箭头');
+  const occupied = new Set();
+  for (const arrow of arrows) {
+    if (!Array.isArray(arrow?.Indices) || arrow.Indices.length < 2) throw new Error('箭头至少需要两个格子');
+    if (!Number.isInteger(arrow.ColorIndex) || arrow.ColorIndex < 0) throw new Error('箭头颜色无效');
+    let previous;
+    for (const index of arrow.Indices) {
+      if (!Number.isInteger(index) || index < 0 || index >= width * height) throw new Error('箭头越界');
+      if (occupied.has(index)) throw new Error('箭头格子重复占用');
+      occupied.add(index);
+      if (previous !== undefined) {
+        const dx = Math.abs(index % width - previous % width);
+        const dy = Math.abs(Math.floor(index / width) - Math.floor(previous / width));
+        if (dx + dy !== 1) throw new Error('箭头路径不连续');
+      }
+      previous = index;
+    }
+  }
+  return level;
+}
+
+function createState(level, maxLives = 3) {
+  validateLevel(level);
+  const width = level.GridXSize, height = level.GridYSize;
+  const occupancy = new Map();
+  const arrows = level.Arrows.map((data, id) => {
+    const points = data.Indices.map(index => ({ x: index % width, y: Math.floor(index / width) }));
+    for (const index of data.Indices) occupancy.set(index, id);
+    return { id, indices: [...data.Indices], points, color: data.ColorIndex, direction: { x: points[0].x - points[1].x, y: points[0].y - points[1].y }, escaped: false, marked: false };
+  });
+  return { width, height, arrows, occupancy, remaining: arrows.length, steps: 0, lives: maxLives, maxLives, won: false, failed: false };
+}
+
+function escapeRoute(state, id) {
+  const arrow = state.arrows[id];
+  if (!arrow || arrow.escaped) return null;
+  let { x, y } = arrow.points[0];
+  for (let distance = 1; distance <= Math.max(state.width, state.height) + 1; distance++) {
+    x += arrow.direction.x; y += arrow.direction.y;
+    if (x < 0 || y < 0 || x >= state.width || y >= state.height) return { clear: true, distance, blocker: null };
+    const blocker = state.occupancy.get(y * state.width + x);
+    // Self-intersecting escape rays are blocked too, as in Unity CanEscape().
+    if (blocker !== undefined) return { clear: false, distance, blocker };
+  }
+  throw new Error('箭头方向无效');
+}
+
+function attemptEscape(state, id) {
+  if (state.won || state.failed) return null;
+  const arrow = state.arrows[id], route = escapeRoute(state, id);
+  if (!route) return null;
+  if (route.clear) {
+    // Unity releases logical occupancy immediately, before the visual finishes.
+    for (const index of arrow.indices) state.occupancy.delete(index);
+    arrow.escaped = true;
+    state.remaining--; state.steps++;
+    state.won = state.remaining === 0;
+    return { ...route, kind: 'escape', lifeLost: false };
+  }
+  const lifeLost = !arrow.marked;
+  arrow.marked = true;
+  if (lifeLost) state.lives--;
+  state.failed = state.lives <= 0;
+  return { ...route, kind: 'blocked', lifeLost };
+}
+
+function availableArrows(state) {
+  return state.arrows.filter(arrow => !arrow.escaped && escapeRoute(state, arrow.id).clear).map(arrow => arrow.id);
+}
+
+function solveLevel(level) {
+  const state = createState(level), solution = [];
+  while (state.remaining) {
+    const next = availableArrows(state)[0];
+    if (next === undefined) return null;
+    attemptEscape(state, next);
+    solution.push(next);
+  }
+  return solution;
+}
+
+// The visible snake is a constant-length window along tail -> head -> escape ray.
+// Render and hit testing use the same rounded path; rule checks stay on the grid.
+function roundedPath(points, radius = .23) {
+  const result = [{ ...points[points.length - 1] }], reversed = [...points].reverse();
+  for (let i = 1; i < reversed.length - 1; i++) {
+    const a = reversed[i - 1], b = reversed[i], c = reversed[i + 1];
+    const ux = b.x - a.x, uy = b.y - a.y, vx = c.x - b.x, vy = c.y - b.y;
+    if (ux === vx && uy === vy) { result.push({ ...b }); continue; }
+    const p = { x: b.x - ux * radius, y: b.y - uy * radius }, q = { x: b.x + vx * radius, y: b.y + vy * radius };
+    result.push(p);
+    for (let j = 1; j <= 6; j++) {
+      const t = j / 6, s = 1 - t;
+      result.push({ x: s * s * p.x + 2 * s * t * b.x + t * t * q.x, y: s * s * p.y + 2 * s * t * b.y + t * t * q.y });
+    }
+  }
+  result.push({ ...points[0] });
+  return result;
+}
+
+function pathMetrics(points) {
+  const lengths = [0];
+  for (let i = 1; i < points.length; i++) lengths.push(lengths[i - 1] + Math.hypot(points[i].x - points[i - 1].x, points[i].y - points[i - 1].y));
+  return { points, lengths, length: lengths[lengths.length - 1] };
+}
+
+function movingPath(path, direction, distance) {
+  function sample(d) {
+    if (d >= path.length) { const head = path.points[path.points.length - 1]; return { x: head.x + direction.x * (d - path.length), y: head.y + direction.y * (d - path.length) }; }
+    let i = 1;
+    while (path.lengths[i] < d) i++;
+    const span = path.lengths[i] - path.lengths[i - 1], t = span ? (d - path.lengths[i - 1]) / span : 0;
+    const a = path.points[i - 1], b = path.points[i];
+    return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t };
+  }
+  const result = [sample(distance)];
+  for (let i = 1; i < path.points.length; i++) if (path.lengths[i] > distance) result.push(path.points[i]);
+  result.push(sample(path.length + distance));
+  return result;
+}
+
+return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solveLevel,roundedPath,pathMetrics,movingPath};
+})();
+(function () {
+  'use strict';
+  const M = EscapeArrowModel;
+  const DEFAULT_LEVEL = {"Index":1,"GridXSize":7,"GridYSize":6,"Arrows":[{"Indices":[38,31,24,17,10,3],"ColorIndex":0},{"Indices":[35,36,29,22,15,8,1],"ColorIndex":1},{"Indices":[6,5,12,19,26,33,40],"ColorIndex":2}]};
+  const $ = id => document.getElementById(id);
+  const canvas = $('board'), wrap = $('board-wrap'), ctx = canvas.getContext('2d');
+  const scriptBase = new URL('.', document.currentScript.src);
+  const asset = file => new URL('assets/' + file, scriptBase).href;
+  const colors = ['#5ee6ff', '#6cffb5', '#6fa8ff', '#b48cff', '#ff9e7a', '#ffd966', '#ff7fa8', '#4dffd2', '#c9b6ff', '#b6ff6a'];
+  const fire = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
+  const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
+  const ease = t => 1 - Math.pow(1 - t, 3);
+  const phase2 = window.__ESCAPE_ARROW_PHASE2__ || null;
+  let level = window.__ESCAPE_ARROW_LEVEL__ || DEFAULT_LEVEL;
+  let policy = phase2 ? null : window.__ESCAPE_ARROW_CTA_POLICY__;
+  let state, paths, motions = new Map(), trails = new Set(), hintId = null, hintUntil = 0;
+  let width = 0, height = 0, fit = 1, zoom = 1, pan = { x: 0, y: 0 }, frame = null, lastTime = 0;
+  let introActive = !!$('novvy-video-intro') && !window.__novvyIntroFinished, outroActive = false;
+  let viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
+  let ctaAnnounced = false, victorySent = false, resultSent = false, phase2Started = false;
+  let tutorial = true, toastTimer = null, muted = false, unlocked = false;
+  const music = new Audio(asset('sfx/bgm.m4a'));
+  music.loop = true; music.volume = .17; music.preload = 'none';
+  const sounds = new Map();
+  function visible() { return !document.hidden && viewable; }
+  function playable() { return visible() && !introActive && !outroActive; }
+  function audioSync() {
+    if (unlocked && !muted && playable() && !state?.won && !state?.failed) music.play().catch(() => {});
+    else { music.pause(); for (const sound of sounds.values()) sound.pause(); }
+  }
+  function unlockAudio() { unlocked = true; audioSync(); }
+  function sound(name) {
+    if (!unlocked || muted || !playable()) return;
+    let audio = sounds.get(name);
+    if (!audio) { audio = new Audio(asset('sfx/' + name + '.m4a')); audio.volume = .55; sounds.set(name, audio); }
+    audio.currentTime = 0; audio.play().catch(() => {});
+  }
+  function haptic(kind) {
+    try { if (typeof window.novvy?.haptic === 'function') window.novvy.haptic(kind); else navigator.vibrate?.(kind === 'heavy' ? 45 : 12); } catch (_) {}
+  }
+  function setMuted(value) { muted = !!value; $('sound').textContent = muted ? '♩' : '♪'; $('sound').setAttribute('aria-label', muted ? '开启声音' : '关闭声音'); audioSync(); }
+  function toast(text) {
+    $('toast').textContent = text; $('toast').hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 1800);
+  }
+  function title(spec) {
+    $('hud-title-line1').textContent = spec?.titleLine1 || 'Escape Arrow';
+    $('hud-title-line2').textContent = spec?.titleLine2 || '';
+    $('hud-title-line2').hidden = !spec?.titleLine2;
+  }
+  function progress(emit = true) {
+    $('lives').textContent = '♥'.repeat(state.lives) + '♡'.repeat(state.maxLives - state.lives);
+    $('lives').setAttribute('aria-label', '剩余 ' + state.lives + ' 条生命');
+    $('progress').textContent = state.steps + ' / ' + state.arrows.length;
+    if (emit) fire('novvy:hud-progress', { percent: state.steps / state.arrows.length * 100, correct: state.steps, total: state.arrows.length });
+  }
+  function loadLevel(data, replay = false) {
+    level = M.validateLevel(data);
+    state = M.createState(level);
+    paths = state.arrows.map(arrow => M.pathMetrics(M.roundedPath(arrow.points)));
+    motions.clear(); trails.clear(); pointers.clear();
+    hintId = null; ctaAnnounced = false; victorySent = false; resultSent = false;
+    tutorial = true; $('result').hidden = true; $('toast').hidden = true;
+    $('instruction').textContent = '点击箭头，让它逃出';
+    zoom = 1; pan = { x: 0, y: 0 };
+    if (replay) fire('novvy:playable-replay', { levelId: level.Index });
+    progress(); resize(); audioSync();
+    fire('escape-arrow:start', { levelId: level.Index });
+  }
+  function screen(point) {
+    return { x: width / 2 + pan.x + (point.x - (state.width - 1) / 2) * fit * zoom, y: height / 2 + pan.y - (point.y - (state.height - 1) / 2) * fit * zoom };
+  }
+  function world(point) {
+    return { x: (point.x - width / 2 - pan.x) / (fit * zoom) + (state.width - 1) / 2, y: -(point.y - height / 2 - pan.y) / (fit * zoom) + (state.height - 1) / 2 };
+  }
+  function clampPan() {
+    const x = Math.max(0, (state.width * fit * zoom - width) / 2 + width * .18);
+    const y = Math.max(0, (state.height * fit * zoom - height) / 2 + height * .18);
+    pan.x = clamp(pan.x, -x, x); pan.y = clamp(pan.y, -y, y);
+  }
+  function zoomAt(value, anchor = { x: width / 2, y: height / 2 }) {
+    const before = world(anchor);
+    zoom = clamp(value, 1, 4);
+    const after = screen(before);
+    pan.x += anchor.x - after.x; pan.y += anchor.y - after.y;
+    clampPan(); requestFrame();
+  }
+  function resize() {
+    const rect = wrap.getBoundingClientRect(), ratio = Math.min(window.devicePixelRatio || 1, 2);
+    width = Math.max(1, rect.width); height = Math.max(1, rect.height);
+    canvas.width = Math.round(width * ratio); canvas.height = Math.round(height * ratio);
+    canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    fit = Math.min(width / (state.width + 1.5), height / (state.height + 1.5));
+    clampPan(); requestFrame();
+  }
+  function requestFrame() { if (frame === null) frame = requestAnimationFrame(render); }
+  function drawArrow(arrow, points, highlight, moving) {
+    if (points.length < 2) return;
+    const day = document.body.dataset.theme === 'day';
+    const color = day ? '#242a43' : colors[arrow.color % colors.length];
+    ctx.beginPath();
+    points.forEach((point, i) => { const p = screen(point); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); });
+    const scale = fit * zoom;
+    ctx.strokeStyle = highlight ? '#ffffff' : color;
+    ctx.lineWidth = Math.max(2.1, scale * .19); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.globalAlpha = arrow.marked && !moving ? .77 : 1;
+    ctx.setLineDash(arrow.marked && !moving ? [scale * .19, scale * .18] : []);
+    ctx.shadowColor = color; ctx.shadowBlur = highlight ? 10 : 0;
+    ctx.stroke(); ctx.setLineDash([]);
+    const head = points[points.length - 1], d = arrow.direction;
+    const tip = screen({ x: head.x + d.x * .16, y: head.y + d.y * .16 });
+    const back = { x: head.x - d.x * .15, y: head.y - d.y * .15 };
+    const a = screen({ x: back.x - d.y * .19, y: back.y + d.x * .19 });
+    const b = screen({ x: back.x + d.y * .19, y: back.y - d.x * .19 });
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(tip.x, tip.y); ctx.lineTo(b.x, b.y);
+    ctx.stroke(); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+  }
+  function render(time) {
+    frame = null;
+    const delta = lastTime ? Math.min(time - lastTime, 48) : 0; lastTime = time;
+    ctx.clearRect(0, 0, width, height);
+    if (trails.size) {
+      ctx.fillStyle = document.body.dataset.theme === 'day' ? '#bcc3d0' : '#606785';
+      for (const index of trails) { const p = screen({ x: index % state.width, y: Math.floor(index / state.width) }); ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(1, fit * zoom * .055), 0, Math.PI * 2); ctx.fill(); }
+    }
+    for (const arrow of state.arrows) {
+      const motion = motions.get(arrow.id);
+      if (arrow.escaped && !motion) continue;
+      if (motion && playable()) motion.elapsed += delta;
+      const t = motion ? clamp(motion.elapsed / motion.duration, 0, 1) : 0;
+      const distance = !motion ? 0 : motion.kind === 'escape' ? ease(t) * motion.travel : Math.sin(Math.PI * t) * motion.travel;
+      const points = motion ? M.movingPath(paths[arrow.id], arrow.direction, distance) : paths[arrow.id].points;
+      drawArrow(arrow, points, arrow.id === hintId && time < hintUntil && Math.sin(time / 130) > -.3, !!motion);
+      if (motion && t >= 1) {
+        motions.delete(arrow.id);
+        if (motion.kind === 'escape') for (const index of arrow.indices) trails.add(index);
+      }
+    }
+    const guide = tutorial && playable() && !state.won && !state.failed ? M.availableArrows(state)[0] : undefined;
+    $('guide-hand').hidden = guide === undefined;
+    if (guide !== undefined) { const p = screen(state.arrows[guide].points[0]); $('guide-hand').style.left = p.x + 5 + 'px'; $('guide-hand').style.top = p.y - 18 + 'px'; }
+    if (hintId !== null && time >= hintUntil) hintId = null;
+    if (!motions.size && state.won && !victorySent && playable()) finish(true);
+    if (!motions.size && state.failed && !resultSent && playable()) finish(false);
+    if (playable() && (motions.size || hintId !== null)) requestFrame();
+  }
+  function announceCta() { if (ctaAnnounced) return; ctaAnnounced = true; fire('novvy:cta-moment', { levelId: level.Index, steps: state.steps }); }
+  function finish(won) {
+    music.pause();
+    if (won) {
+      victorySent = true; sound('win');
+      $('instruction').textContent = '所有箭头都自由了！';
+      fire('novvy:victory', { levelId: level.Index, escaped: state.steps });
+      if (policy) announceCta();
+      if (window.__novvyOutroEnabled && !phase2Started) return;
+    } else {
+      resultSent = true; sound('fail');
+      fire('novvy:playable-failed', { levelId: level.Index, retryable: true });
+    }
+    $('result-icon').textContent = won ? '✧' : '♡';
+    $('result-title').textContent = won ? '全部逃出！' : '再观察一下';
+    $('result-copy').textContent = won ? '你找到了所有箭头的出口' : '先找到前方没有阻挡的箭头，再依次解开';
+    $('result-reset').textContent = won ? '再玩一次' : '再试一次';
+    // A packed win finalizes the SDK stage; failure explicitly permits a replay.
+    $('result-reset').hidden = won && window.__ESCAPE_ARROW_AD__ === true;
+    $('result').hidden = false;
+  }
+  function tryArrow(id) {
+    if (!playable() || motions.has(id)) return false;
+    const result = M.attemptEscape(state, id);
+    if (!result) return false;
+    tutorial = false; hintId = null; $('guide-hand').hidden = true;
+    const path = paths[id];
+    const travel = result.clear ? path.length + result.distance + Math.max(width, height) / (fit * zoom) : Math.max(.15, result.distance - .55);
+    motions.set(id, { kind: result.kind, travel, elapsed: 0, duration: result.clear ? clamp(300 + path.length * 7, 420, 850) : 440 });
+    sound(result.clear ? 'escape' : 'blocked'); haptic(result.clear ? 'light' : 'heavy');
+    if (result.clear) {
+      progress();
+      fire('escape-arrow:escape', { levelId: level.Index, arrowId: id, steps: state.steps });
+      if (policy?.mode === 'steps' && state.steps >= policy.afterSteps) announceCta();
+      if (state.won) { music.pause(); fire('novvy:playable-complete', { levelId: level.Index, escaped: state.steps }); }
+    } else {
+      progress(false);
+      toast(result.lifeLost ? '前方有阻挡，先试试其他箭头' : '这根箭头暂时还出不去');
+    }
+    requestFrame(); return true;
+  }
+  function pick(point) {
+    const p = world(point), x = Math.round(p.x), y = Math.round(p.y);
+    // The cell map preserves Unity's body-wide touch targets without selecting a
+    // neighboring arrow through an oversized pixel tolerance on dense levels.
+    if (x < 0 || y < 0 || x >= state.width || y >= state.height) return;
+    const id = state.occupancy.get(y * state.width + x);
+    if (id !== undefined) tryArrow(id);
+  }
+  const pointers = new Map();
+  let gesture = null;
+  function local(event) { const rect = canvas.getBoundingClientRect(); return { x: event.clientX - rect.left, y: event.clientY - rect.top }; }
+  function pair() { const [a, b] = [...pointers.values()]; return { distance: Math.hypot(a.x - b.x, a.y - b.y), mid: { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 } }; }
+  canvas.addEventListener('pointerdown', event => {
+    if (!playable() || state.won || state.failed) return;
+    unlockAudio();
+    const p = local(event); pointers.set(event.pointerId, p);
+    canvas.setPointerCapture(event.pointerId);
+    if (pointers.size === 1) gesture = { start: p, last: p, moved: false };
+    else { const pinch = pair(); gesture = { moved: true, pinch, zoom }; }
+  });
+  canvas.addEventListener('pointermove', event => {
+    if (!pointers.has(event.pointerId) || !gesture) return;
+    const p = local(event); pointers.set(event.pointerId, p);
+    if (pointers.size >= 2) {
+      const current = pair(), previous = gesture.pinch;
+      if (previous) {
+        zoomAt(zoom * current.distance / Math.max(1, previous.distance), previous.mid);
+        pan.x += current.mid.x - previous.mid.x; pan.y += current.mid.y - previous.mid.y; clampPan();
+      }
+      gesture.pinch = current; gesture.moved = true;
+    } else {
+      if (!gesture.last) gesture.last = p;
+      if (gesture.moved || Math.hypot(p.x - gesture.start.x, p.y - gesture.start.y) >= 8) {
+        pan.x += p.x - gesture.last.x; pan.y += p.y - gesture.last.y;
+        gesture.moved = true; tutorial = false; clampPan();
+      }
+      gesture.last = p;
+    }
+    requestFrame();
+  });
+  function endPointer(event, cancelled) {
+    if (!pointers.has(event.pointerId)) return;
+    const tap = !cancelled && pointers.size === 1 && gesture && !gesture.moved;
+    pointers.delete(event.pointerId);
+    if (tap) pick(local(event));
+    if (pointers.size) { const p = [...pointers.values()][0]; gesture = { start: p, last: p, moved: true }; }
+    else gesture = null;
+  }
+  canvas.addEventListener('pointerup', event => endPointer(event, false));
+  canvas.addEventListener('pointercancel', event => endPointer(event, true));
+  canvas.addEventListener('lostpointercapture', event => endPointer(event, true));
+  canvas.addEventListener('wheel', event => { event.preventDefault(); if (playable()) zoomAt(zoom * Math.exp(-event.deltaY * .0015), local(event)); }, { passive: false });
+  $('zoom-in').onclick = () => zoomAt(zoom * 1.3);
+  $('zoom-out').onclick = () => zoomAt(zoom / 1.3);
+  $('recenter').onclick = () => { zoom = 1; pan = { x: 0, y: 0 }; requestFrame(); };
+  $('theme').onclick = () => { document.body.dataset.theme = document.body.dataset.theme === 'day' ? 'night' : 'day'; requestFrame(); };
+  $('sound').onclick = () => { unlockAudio(); setMuted(!muted); };
+  $('result-reset').onclick = () => { unlockAudio(); loadLevel(level, true); };
+  $('hint').onclick = () => {
+    if (!playable() || state.won || state.failed) return;
+    unlockAudio(); sound('click');
+    hintId = M.availableArrows(state).find(id => !motions.has(id)) ?? null;
+    if (hintId === null) { toast('等箭头回到原位，再试一次'); return; }
+    tutorial = false; hintUntil = performance.now() + 2400;
+    const p = screen(state.arrows[hintId].points[0]);
+    if (p.x < 20 || p.x > width - 20 || p.y < 20 || p.y > height - 20) {
+      const head = state.arrows[hintId].points[0];
+      pan.x = -(head.x - (state.width - 1) / 2) * fit * zoom;
+      pan.y = (head.y - (state.height - 1) / 2) * fit * zoom; clampPan();
+    }
+    requestFrame();
+  };
+  function resume() { lastTime = 0; audioSync(); requestFrame(); }
+  window.addEventListener('novvy:intro-finished', () => { introActive = false; unlockAudio(); resume(); });
+  window.addEventListener('novvy:outro-started', () => { outroActive = true; pointers.clear(); gesture = null; $('guide-hand').hidden = true; audioSync(); });
+  window.addEventListener('novvy:outro-finished', event => {
+    if (phase2Started || event.detail?.reason !== 'video_ended' || !phase2) return;
+    phase2Started = true;
+    secondAssetsReady.then(() => {
+      policy = phase2.cta; title(phase2.hud); loadLevel(phase2.level);
+      // Reset the SDK/overlay stage before this level's first progress event.
+      fire('novvy:phase2-start', { hud: phase2.hud });
+      outroActive = false; progress(); resume();
+    });
+  });
+  window.addEventListener('novvy:viewablechange', event => { viewable = !!event.detail?.viewable; pointers.clear(); gesture = null; resume(); });
+  document.addEventListener('visibilitychange', () => { pointers.clear(); gesture = null; resume(); });
+  function prepareImages(urls) {
+    return Promise.all((urls || []).map(url => new Promise(resolve => {
+      const img = new Image(); const timeout = setTimeout(resolve, 5000);
+      const done = () => { clearTimeout(timeout); resolve(); };
+      img.onload = () => { if (img.decode) img.decode().catch(() => {}).then(done); else done(); };
+      img.onerror = done; img.src = url;
+    })));
+  }
+  const extraImages = window.__ESCAPE_ARROW_IMAGES__ || {};
+  const secondAssetsReady = prepareImages(extraImages.second);
+  title(window.__ESCAPE_ARROW_HUD_TITLE__ || { titleLine1: 'Escape Arrow', titleLine2: '找到出口，让箭头自由' });
+  loadLevel(level);
+  if (window.ResizeObserver) new ResizeObserver(resize).observe(wrap);
+  window.addEventListener('resize', resize);
+  // Public inspection API supports editor QA without coupling the engine to it.
+  window.EscapeArrow = {
+    setMuted,
+    reset: () => { if (!state.won || !window.__ESCAPE_ARROW_AD__) loadLevel(level, true); },
+    getState: () => ({ levelId: level.Index, escaped: state.steps, total: state.arrows.length, remaining: state.remaining, lives: state.lives, won: state.won, failed: state.failed, zoom, pan: { ...pan }, moving: motions.size, available: M.availableArrows(state) }),
+    getArrowScreenPoint: id => state.arrows[id] ? screen(state.arrows[id].points[0]) : null,
+  };
+  canvas.style.visibility = 'hidden';
+  prepareImages([...extraImages.first || [], asset('guide-hand.png')]).then(() => {
+    if (frame !== null) cancelAnimationFrame(frame);
+    render(performance.now()); canvas.style.visibility = '';
+    window.__ESCAPE_ARROW_READY__ = true; fire('escape-arrow:ready', { levelId: level.Index });
+  });
+})();
+
+})();

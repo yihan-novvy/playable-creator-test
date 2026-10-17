@@ -1,0 +1,14 @@
+{
+  "name": "escape-arrow-playable",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build-template.mjs",
+    "build:template": "node scripts/build-template.mjs",
+    "sync:unity": "node scripts/sync-unity.mjs",
+    "test": "node --test test/*.test.mjs",
+    "test:browser": "node test/browser-smoke.mjs"
+  },
+  "devDependencies": { "@playwright/test": "^1.55.0" }
+}

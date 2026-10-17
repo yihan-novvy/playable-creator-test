@@ -25,9 +25,11 @@
     try { NovvyPlayable.setStage(index, type); } catch (e) {}
   }
 
-  function settle() {
+  function settle(result, retryable) {
     if (!NovvyPlayable || typeof NovvyPlayable.onComplete !== 'function') return;
-    try { NovvyPlayable.onComplete({ result: 'win' }); } catch (e) {}
+    var detail = { result: result || 'win' };
+    if (retryable) detail.continue_playing = true;
+    try { NovvyPlayable.onComplete(detail); } catch (e) {}
   }
 
   /* 既有结构:chain = [intro?] playable [outro?] [phase2?]。阶段号 1 起:
@@ -79,6 +81,23 @@
   }
   window.addEventListener('novvy:playable-complete', onWin);
   window.addEventListener('novvy:victory', onWin);
+
+  // Explicit opt-in: existing templates keep their final-win-only semantics.
+  // A failed round that offers retry is not the end of its playable stage.
+  window.addEventListener('novvy:playable-failed', function (event) {
+    if (!window.__novvyReplayable || settled) return;
+    settled = true;
+    settle('fail', !!(event.detail && event.detail.retryable));
+  });
+  window.addEventListener('novvy:playable-replay', function () {
+    if (!window.__novvyReplayable || !settled) return;
+    if (NovvyPlayable && typeof NovvyPlayable.onReplay === 'function') {
+      try { NovvyPlayable.onReplay(); } catch (e) {}
+    }
+    settled = false;
+    step = 0;
+    seenPercent = 0;
+  });
 
   /* —— 切段监听 —— */
   if (introIndex) {

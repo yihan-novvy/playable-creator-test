@@ -1,6 +1,7 @@
 import {fileURLToPath} from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
+import { getEntry } from '../core/registry.mjs';
 import {
   PROJECTS_ROOT,
   RESULT_ROOT,
@@ -121,6 +122,26 @@ export function isColoreverTemplate(templateId) {
   return templateId === 'colorever' || templateId === 'colorever-new';
 }
 
+// Fixed level libraries declare their range and defaults in the plugin/manifest.
+// Adding another such template must not inherit DragonCube's ten-level limit.
+function fixedLevelTemplate(templateId) {
+  try {
+    const entry = getEntry(templateId);
+    return entry.template.level && Number.isInteger(entry.template.defaults?.levelId) ? entry : null;
+  } catch { return null; }
+}
+
+function validateFixedLevel(templateId, id) {
+  const entry = fixedLevelTemplate(templateId);
+  if (!entry) return;
+  const { min, max } = entry.template.level;
+  if (!Number.isInteger(id) || id < min || id > max || !entry.manifest.levels.some(level => level.id === id)) {
+    const error = new Error(`${entry.name} 只能选择第 ${min}–${max} 关`);
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
 export function updateColoreverTemplate(id, templateId) {
   const doc = readTask(id);
   if (!doc) return null;
@@ -136,6 +157,8 @@ export function updateColoreverTemplate(id, templateId) {
 }
 
 export function configWhitelistFor(templateId) {
+  const entry = fixedLevelTemplate(templateId);
+  if (entry) return new Set([...CONFIG_PATCH_WHITELIST, ...Object.keys(entry.plugin.defaults || {})]);
   return CONFIG_WHITELISTS.get(isColoreverTemplate(templateId) ? 'colorever' : templateId) || CONFIG_PATCH_WHITELIST;
 }
 
@@ -152,6 +175,9 @@ function mergeConfigValue(base, patch) {
 export function updateTaskConfig(id, patch) {
   const doc = readTask(id);
   if (!doc) return null;
+  // Validate both selections before mutating or writing a task.
+  if ('levelId' in (patch || {})) validateFixedLevel(doc.templateId, patch.levelId);
+  if ('levelId' in (patch?.secondPlayable || {})) validateFixedLevel(doc.templateId, patch.secondPlayable.levelId);
   doc.config = doc.config || {};
   const whitelist = configWhitelistFor(doc.templateId);
   if(isColoreverTemplate(doc.templateId)){
@@ -187,13 +213,12 @@ export function updateTaskConfig(id, patch) {
     delete doc.steps.pack;
   }
   if ('levelId' in (patch || {})) {
-    if (!Number.isInteger(patch.levelId) || patch.levelId < 1 || patch.levelId > 10) throw new Error('DragonCube 只能选择第 1–10 关');
     delete doc.steps.level;
     delete doc.steps.pack;
   }
-  if (doc.templateId === 'dragon-cube' || isColoreverTemplate(doc.templateId)) {
+  if (fixedLevelTemplate(doc.templateId) || isColoreverTemplate(doc.templateId)) {
     if ('intro' in (patch || {})) { delete doc.steps.intro; delete doc.steps.hud; delete doc.steps.background; delete doc.steps.pack; }
-    if ('outro' in (patch || {})) { delete doc.steps.outro; delete doc.steps.pack; delete doc.steps.background2; }
+    if ('outro' in (patch || {})) { delete doc.steps.outro; delete doc.steps.pack; delete doc.steps.background2; if (fixedLevelTemplate(doc.templateId)) delete doc.steps.level; }
     if ('hud' in (patch || {}) || 'hudImageSource' in (patch || {}) || 'hudCrop' in (patch || {})) { delete doc.steps.hud; delete doc.steps.pack; }
     if ('background' in (patch || {})) { delete doc.steps.background; delete doc.steps.pack; }
     if ('cta' in (patch || {})) delete doc.steps.pack;
@@ -209,8 +234,8 @@ export function recordUpload(id, slot, meta) {
   if (slot === 'background-music') delete doc.steps.pack;
   // 片尾视频/第二关背景的上传与清除,会让依赖它们的步骤过期(colorever 与
   // dragon-cube 的双 playable 管线同构)。
-  if ((isColoreverTemplate(doc.templateId) || doc.templateId === 'dragon-cube') && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
-  if ((isColoreverTemplate(doc.templateId) || doc.templateId === 'dragon-cube') && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
+  if ((isColoreverTemplate(doc.templateId) || fixedLevelTemplate(doc.templateId)) && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.level; delete doc.steps.background2; delete doc.steps.pack; }
+  if ((isColoreverTemplate(doc.templateId) || fixedLevelTemplate(doc.templateId)) && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -222,8 +247,8 @@ export function clearUpload(id, slot) {
     delete doc.steps.pack;
     if (isColoreverTemplate(doc.templateId)) { doc.config ||= {}; doc.config.music = { source: 'original' }; }
   }
-  if ((isColoreverTemplate(doc.templateId) || doc.templateId === 'dragon-cube') && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.background2; delete doc.steps.pack; }
-  if ((isColoreverTemplate(doc.templateId) || doc.templateId === 'dragon-cube') && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
+  if ((isColoreverTemplate(doc.templateId) || fixedLevelTemplate(doc.templateId)) && slot === 'outro-video') { delete doc.steps.outro; delete doc.steps.level; delete doc.steps.background2; delete doc.steps.pack; }
+  if ((isColoreverTemplate(doc.templateId) || fixedLevelTemplate(doc.templateId)) && slot === 'background2') { delete doc.steps.background2; delete doc.steps.pack; }
   return writeTask(doc);
 }
 
@@ -381,7 +406,7 @@ export function stepInputFilesFor(templateId) {
   if (isColoreverTemplate(templateId)) return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background: [...WATER_SORT_STEP_INPUT_FILES.background, 'uploads/intro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'uploads/background-music.mp3', 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp'] };
   // dragon-cube 与 colorever 共用双 playable 管线(outro/background2/第二关);
   // 第一关背景维持现状(上传图或海报回退),不加片头视频帧来源。
-  if (templateId === 'dragon-cube') return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp', 'generated/level2.json'] };
+  if (fixedLevelTemplate(templateId)) return { ...WATER_SORT_STEP_INPUT_FILES, outro: ['uploads/outro-video.mp4'], background2: ['uploads/outro-video.mp4', 'uploads/background2.png'], pack: [...WATER_SORT_STEP_INPUT_FILES.pack, 'generated/outro-video.mp4', 'uploads/background2.png', 'generated/background2.webp', 'generated/level2.json'] };
   return ['water-sort','dragon-cube','colorever'].includes(templateId) ? WATER_SORT_STEP_INPUT_FILES : STEP_INPUT_FILES;
 }
 

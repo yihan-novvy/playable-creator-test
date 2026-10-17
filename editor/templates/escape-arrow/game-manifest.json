@@ -1,0 +1,232 @@
+{
+  "id": "escape-arrow",
+  "name": "Escape Arrow（箭头逃脱）",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": 1,
+      "name": "第 1 关 · 7×6 · 3 根箭头",
+      "path": "levels/1.json",
+      "preview": "previews/1.svg",
+      "width": 7,
+      "height": 6,
+      "arrows": 3,
+      "initiallyFree": 3,
+      "sha256": "1a6cadbc13eac50f8129146d610189173955e1ebe0272ebef56777cfd78a438d"
+    },
+    {
+      "id": 2,
+      "name": "第 2 关 · 5×5 · 3 根箭头",
+      "path": "levels/2.json",
+      "preview": "previews/2.svg",
+      "width": 5,
+      "height": 5,
+      "arrows": 3,
+      "initiallyFree": 1,
+      "sha256": "e185c559c8b1fafa6aab78a12dc853790953042e93b96f60e246120850717892"
+    },
+    {
+      "id": 3,
+      "name": "第 3 关 · 5×7 · 3 根箭头",
+      "path": "levels/3.json",
+      "preview": "previews/3.svg",
+      "width": 5,
+      "height": 7,
+      "arrows": 3,
+      "initiallyFree": 2,
+      "sha256": "fd92838a8221ffdb8c899f9259f48972a106b4732bae02e59c5290ae4a76290b"
+    },
+    {
+      "id": 4,
+      "name": "第 4 关 · 10×10 · 4 根箭头",
+      "path": "levels/4.json",
+      "preview": "previews/4.svg",
+      "width": 10,
+      "height": 10,
+      "arrows": 4,
+      "initiallyFree": 1,
+      "sha256": "0b71ca6c8b4ae752540785dc55b76c3d6526fb822b39de0e82066e6d80468a3e"
+    },
+    {
+      "id": 5,
+      "name": "第 5 关 · 8×10 · 5 根箭头",
+      "path": "levels/5.json",
+      "preview": "previews/5.svg",
+      "width": 8,
+      "height": 10,
+      "arrows": 5,
+      "initiallyFree": 1,
+      "sha256": "a4a08ff4e0334db3c22e0f3ed04e07937a1319a74783ac3fdea5f974cce6db0c"
+    },
+    {
+      "id": 6,
+      "name": "第 6 关 · 4×5 · 4 根箭头",
+      "path": "levels/6.json",
+      "preview": "previews/6.svg",
+      "width": 4,
+      "height": 5,
+      "arrows": 4,
+      "initiallyFree": 2,
+      "sha256": "3d2697e4f0e9877ca4d9254c65b90d6312ca7e6954d3407a8bc6f73e9b44208a"
+    },
+    {
+      "id": 7,
+      "name": "第 7 关 · 6×4 · 5 根箭头",
+      "path": "levels/7.json",
+      "preview": "previews/7.svg",
+      "width": 6,
+      "height": 4,
+      "arrows": 5,
+      "initiallyFree": 1,
+      "sha256": "41b3fe5076b4a2cb42ee434b08fb32d9109214237a780626ca0f517d826df256"
+    },
+    {
+      "id": 8,
+      "name": "第 8 关 · 6×6 · 5 根箭头",
+      "path": "levels/8.json",
+      "preview": "previews/8.svg",
+      "width": 6,
+      "height": 6,
+      "arrows": 5,
+      "initiallyFree": 1,
+      "sha256": "c0f90f51a6a7fccd6e12b687c91fe375f5e45be127e1f0e736cea7eb42e296fd"
+    },
+    {
+      "id": 9,
+      "name": "第 9 关 · 6×6 · 6 根箭头",
+      "path": "levels/9.json",
+      "preview": "previews/9.svg",
+      "width": 6,
+      "height": 6,
+      "arrows": 6,
+      "initiallyFree": 1,
+      "sha256": "fffa7017fdc42fd9d12a36a570be7b183fbab6de2f059f488df9ff12446146db"
+    },
+    {
+      "id": 10,
+      "name": "第 10 关 · 7×7 · 7 根箭头",
+      "path": "levels/10.json",
+      "preview": "previews/10.svg",
+      "width": 7,
+      "height": 7,
+      "arrows": 7,
+      "initiallyFree": 2,
+      "sha256": "9f3840c65736f7c276db8e2866cfafc520cd263804a57a69234d1b5a0bbfef99"
+    },
+    {
+      "id": 11,
+      "name": "第 11 关 · 6×8 · 6 根箭头",
+      "path": "levels/11.json",
+      "preview": "previews/11.svg",
+      "width": 6,
+      "height": 8,
+      "arrows": 6,
+      "initiallyFree": 1,
+      "sha256": "2d53ca95c6e48ba4ed0e73bd3de02f824a2a480c1950e39bce6cceeabbd42347"
+    },
+    {
+      "id": 12,
+      "name": "第 12 关 · 5×6 · 8 根箭头",
+      "path": "levels/12.json",
+      "preview": "previews/12.svg",
+      "width": 5,
+      "height": 6,
+      "arrows": 8,
+      "initiallyFree": 3,
+      "sha256": "2cc9e70b0ba2db19566f8124ab9a8f972beff8d77f4ee3856a873b0dd5f89f1f"
+    },
+    {
+      "id": 13,
+      "name": "第 13 关 · 8×8 · 8 根箭头",
+      "path": "levels/13.json",
+      "preview": "previews/13.svg",
+      "width": 8,
+      "height": 8,
+      "arrows": 8,
+      "initiallyFree": 1,
+      "sha256": "64c3e176ec3b9a8db1470ee18a8baca209c05b81e42bc2a9ca3b8f23a02405f0"
+    },
+    {
+      "id": 14,
+      "name": "第 14 关 · 12×12 · 13 根箭头",
+      "path": "levels/14.json",
+      "preview": "previews/14.svg",
+      "width": 12,
+      "height": 12,
+      "arrows": 13,
+      "initiallyFree": 4,
+      "sha256": "11f8fc25eb6bcb9f426b286b791214908a7b8dffacef440770a6c82436d76273"
+    },
+    {
+      "id": 15,
+      "name": "第 15 关 · 24×30 · 27 根箭头",
+      "path": "levels/15.json",
+      "preview": "previews/15.svg",
+      "width": 24,
+      "height": 30,
+      "arrows": 27,
+      "initiallyFree": 15,
+      "sha256": "a16502911e46ae0184b74e6156aa605b5563c55b8f29d7844e860292688b6d00"
+    },
+    {
+      "id": 16,
+      "name": "第 16 关 · 12×13 · 18 根箭头",
+      "path": "levels/16.json",
+      "preview": "previews/16.svg",
+      "width": 12,
+      "height": 13,
+      "arrows": 18,
+      "initiallyFree": 1,
+      "sha256": "529a5ec894b1645131293d055f53e277a42326d235365a723ef05ab0717b44a0"
+    },
+    {
+      "id": 17,
+      "name": "第 17 关 · 12×12 · 20 根箭头",
+      "path": "levels/17.json",
+      "preview": "previews/17.svg",
+      "width": 12,
+      "height": 12,
+      "arrows": 20,
+      "initiallyFree": 6,
+      "sha256": "68ce2633c1ad4af5d07c5ab658a96cfcd78e1f06f3a26a1d5845877017abc9f7"
+    },
+    {
+      "id": 18,
+      "name": "第 18 关 · 20×25 · 20 根箭头",
+      "path": "levels/18.json",
+      "preview": "previews/18.svg",
+      "width": 20,
+      "height": 25,
+      "arrows": 20,
+      "initiallyFree": 2,
+      "sha256": "2813747a8d35d9a2f23b263f9bc9a9c82fe852c8cfff2edd414364e54e35fe78"
+    },
+    {
+      "id": 19,
+      "name": "第 19 关 · 12×18 · 21 根箭头",
+      "path": "levels/19.json",
+      "preview": "previews/19.svg",
+      "width": 12,
+      "height": 18,
+      "arrows": 21,
+      "initiallyFree": 2,
+      "sha256": "8a250aa4d53731f4420f29e1b87c0ac7a7c4ffd89d82b62d642927b49b2931f9"
+    },
+    {
+      "id": 20,
+      "name": "第 20 关 · 24×32 · 30 根箭头",
+      "path": "levels/20.json",
+      "preview": "previews/20.svg",
+      "width": 24,
+      "height": 32,
+      "arrows": 30,
+      "initiallyFree": 10,
+      "sha256": "f112e5957b424a4e5110c05f66324ab90a1ccf7c871cdf1c1685b4fb1edb8d56"
+    }
+  ],
+  "constants": {
+    "levelModel": "level-model.mjs",
+    "appIcon": "app-icon.png"
+  }
+}

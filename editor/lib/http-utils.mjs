@@ -16,6 +16,7 @@ const MIME = {
   '.svg': 'image/svg+xml',
   '.mp4': 'video/mp4',
   '.mp3': 'audio/mpeg',
+  '.m4a': 'audio/mp4',
   '.wasm': 'application/wasm',
   '.bin': 'application/octet-stream',
 };

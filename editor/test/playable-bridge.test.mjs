@@ -9,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const source=fs.readFileSync(path.join(root,'editor/core/overlays/playable-bridge/playable-bridge.js'),'utf8');
 
-function bridgeRun({chain,introVideo=false,outroVideo=false,sdk=true,media=true}={}){
+function bridgeRun({chain,introVideo=false,outroVideo=false,sdk=true,media=true,replayable=false}={}){
  const listeners=new Map();
  const calls=[];
  const NovvyPlayable=sdk?{
@@ -17,6 +17,7 @@ function bridgeRun({chain,introVideo=false,outroVideo=false,sdk=true,media=true}
   setStage:(index,type)=>{calls.push(['setStage',index,type]);return true;},
   onStep:(step,detail)=>{calls.push(['onStep',step,detail]);},
   onComplete:detail=>{calls.push(['onComplete',detail]);},
+  onReplay:()=>{calls.push(['onReplay']);},
  }:undefined;
  const NovvyAnalytics=media?{registerMedia:(element,name)=>{calls.push(['registerMedia',name.name]);}}:undefined;
  const document={getElementById:id=>{
@@ -24,7 +25,7 @@ function bridgeRun({chain,introVideo=false,outroVideo=false,sdk=true,media=true}
   if(id==='novvy-outro-video')return outroVideo?{}:null;
   return null;
  }};
- const sandbox={window:{__novvyStageChain__:chain,NovvyPlayable,NovvyAnalytics,addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}},document,CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
+ const sandbox={window:{__novvyStageChain__:chain,__novvyReplayable:replayable,NovvyPlayable,NovvyAnalytics,addEventListener:(event,fn)=>listeners.set(event,[...(listeners.get(event)||[]),fn]),dispatchEvent:event=>{for(const fn of listeners.get(event.type)||[])fn(event);}},document,CustomEvent:class{constructor(type,options={}){this.type=type;this.detail=options.detail;}}};
  vm.runInNewContext(source,sandbox);
  return {calls,emit:(name,detail)=>sandbox.window.dispatchEvent({type:name,detail}),
   stages:()=>calls.filter(([name])=>name==='setStage').map(([_,index,type])=>index+':'+type),
@@ -87,6 +88,20 @@ export default async function run(assert){
  assert.equal(steps.steps().length,2,'进度回落(undo/reset)不记步骤');
  steps.emit('novvy:hud-progress',{percent:101});
  assert.equal(steps.steps().length,2,'越界进度不记步骤');
+ const retry=bridgeRun({chain:['playable'],replayable:true});
+ retry.emit('novvy:hud-progress',{percent:20});
+ retry.emit('novvy:playable-failed',{retryable:true});
+ retry.emit('novvy:playable-failed',{retryable:true});
+ assert.equal(retry.completes(),[['onComplete',{result:'fail',continue_playing:true}]],'失败只结算一次并明确允许继续重玩');
+ retry.emit('novvy:playable-replay');
+ retry.emit('novvy:hud-progress',{percent:10});
+ retry.emit('novvy:playable-complete');
+ assert.equal(retry.steps(),[[1,20],[1,10]],'失败重玩后有效步骤重新计数');
+ assert.equal(retry.calls.filter(([name])=>name==='onReplay').length,1,'重玩显式调用 SDK onReplay');
+ assert.equal(retry.completes().at(-1),['onComplete',{result:'win'}],'重玩成功最终结算 win');
+ const legacy=bridgeRun({chain:['playable']});
+ legacy.emit('novvy:playable-failed',{retryable:true});legacy.emit('novvy:playable-replay');
+ assert.equal(legacy.completes(),[],'未声明重玩能力的旧模版维持既有行为');
  // 链型守卫:intro-only 不把片头段误认片尾;单关链不响应第二关切段。
  const introOnly=bridgeRun({chain:['video','playable']});
  introOnly.emit('novvy:outro-started');
@@ -112,7 +127,7 @@ export default async function run(assert){
  }
  // 三个插件 lib.mjs 的接线:段桥 unshift 到 bodyScripts 首位、段链字面量注入
  // data 脚本(静态预检可见的调用线索)。
- for(const plugin of ['colorever-new','colorever-abandoned','dragon-cube']){
+ for(const plugin of ['colorever-new','colorever-abandoned','dragon-cube','escape-arrow']){
   const lib=fs.readFileSync(path.join(root,`editor/plugins/${plugin}/lib.mjs`),'utf8');
   assert.check(lib.includes('data-novvy-playable-bridge')&&lib.indexOf('bodyScripts.unshift')<lib.indexOf('data-novvy-cta-bridge'),`${plugin}: 段桥先于转化桥注入 bodyScripts 首位`);
   assert.check(lib.includes('window.__novvyStageChain__='),`${plugin}: 段链字面量进打包/预览文档`);
