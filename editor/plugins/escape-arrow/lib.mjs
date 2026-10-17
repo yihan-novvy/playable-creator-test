@@ -28,12 +28,12 @@ function ctaCardAssets(config, icon) {
   const values = {
     __CTA_ICON__: escapeHtml(icon),
     __CTA_NAME__: 'Escape Arrow',
-    __CTA_TAKEOVER_TEXT__: escapeHtml(config?.cta?.takeoverText ?? '还想继续挑战？\n更多精彩等你体验'),
-    __CTA_TAKEOVER_ACTION_TEXT__: escapeHtml(config?.cta?.takeoverActionText ?? '点击屏幕，继续体验'),
+    __CTA_TAKEOVER_TEXT__: escapeHtml(config?.cta?.takeoverText ?? 'Ready for another challenge?\nDiscover more levels!'),
+    __CTA_TAKEOVER_ACTION_TEXT__: escapeHtml(config?.cta?.takeoverActionText ?? 'Tap to keep playing'),
   };
   return {
     style: `<style data-novvy-cta-card>${readCard('cta-card.css')}</style>`,
-    dom: readCard('cta-card.html').replace(/__CTA_(?:ICON|NAME|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]),
+    dom: readCard('cta-card.html').replace(/__CTA_(?:ICON|NAME|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]).replace('aria-label="体验引导"', 'aria-label="Keep playing"'),
     script: `<script data-novvy-cta-card>${readCard('cta-card.js')}</script>`,
   };
 }
@@ -123,9 +123,10 @@ export function escapeHtmlPage({ root, overlaysRoot, template, level, config, me
   };
   const configScript = `<script>window.__ESCAPE_ARROW_AD__=true;window.__novvyReplayable=true;window.__ESCAPE_ARROW_LEVEL__=${inline(level)};window.__ESCAPE_ARROW_CTA_URL__='';window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__ESCAPE_ARROW_HUD_TITLE__=${inline({ titleLine1: String(config?.hud?.titleLine1 ?? ''), titleLine2: String(config?.hud?.titleLine2 ?? '') })};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__novvyStageChain__=${inline(stageChain)};window.__ESCAPE_ARROW_CTA_POLICY__=${inline(ctaPolicy)};window.__ESCAPE_ARROW_PHASE2__=${inline(phase2)};window.__ESCAPE_ARROW_IMAGES__=${inline(images)};</script>`;
   const gameScript = preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT;
+  const gameplayScript = `<script>window.__ESCAPE_ARROW_GAMEPLAY__=${inline(config?.gameplay || {})};</script>`;
   if (preview) html = html.replace('href="style.css"', `href="/templates/${template.id}/game/style.css"`);
   html = html.replace('</head>', () => `${[...injection.headStyles, extra, ...injection.headScripts].join('\n')}\n</head>`)
-    .replace(SCRIPT, () => `${injection.uiScript}${configScript}${gameScript}`)
+    .replace(SCRIPT, () => `${injection.uiScript}${configScript}${gameplayScript}${gameScript}`)
     .replace(/<body\b[^>]*>/i, tag => `${tag}\n${injection.bodyDom.join('\n')}`)
     .replace('</body>', () => `${injection.bodyScripts.join('\n')}</body>`);
   return { html, injection };

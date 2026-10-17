@@ -1,23 +1,23 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <base href="../game/">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="theme-color" content="#191b2d">
-  <title>Escape Arrow · 第 37 关</title>
+  <title>Escape Arrow · Level 37</title>
   <link rel="stylesheet" href="style.css">
   <script>window.__ESCAPE_ARROW_LEVEL__={"Index":37,"GridXSize":26,"GridYSize":26,"Arrows":[{"Indices":[433,432,431,430,404,405],"ColorIndex":0},{"Indices":[40,66],"ColorIndex":1},{"Indices":[512,511,537],"ColorIndex":2},{"Indices":[526,527,553],"ColorIndex":3},{"Indices":[46,72,73,99],"ColorIndex":4},{"Indices":[61,87,113,112,86],"ColorIndex":5},{"Indices":[501,475,476,502,503,477,478,479],"ColorIndex":6},{"Indices":[98,124,125,151,150,176,175,149],"ColorIndex":7},{"Indices":[15,41,67,68,42,16,17,43,44,45,71,70,96,97,123,122,148,147,173,199,200,226,225],"ColorIndex":8},{"Indices":[111,137,163,162,136],"ColorIndex":9},{"Indices":[188,214,213,187,161],"ColorIndex":0},{"Indices":[635,636,610,584,558,557,556,555,529],"ColorIndex":1},{"Indices":[609,583],"ColorIndex":2},{"Indices":[510,509,483,484,458,459,485,486],"ColorIndex":3},{"Indices":[507,506,480],"ColorIndex":4},{"Indices":[505,504,530,531,532,533,534,560,559,585,586,587],"ColorIndex":5},{"Indices":[538,564,563,562,561,535,536],"ColorIndex":6},{"Indices":[265,291,290,264,238,212],"ColorIndex":7},{"Indices":[267,268,294,293],"ColorIndex":8},{"Indices":[240,241,242,243,217,216,215,189,190,164,138,139,165,191],"ColorIndex":9},{"Indices":[292,318,319,345,344],"ColorIndex":0},{"Indices":[370,396,395,369,368,342,343,317,316],"ColorIndex":1},{"Indices":[320,346,372,371,397,398,424,423,422],"ColorIndex":2},{"Indices":[322,323,349,375,401,400,426,425,399],"ColorIndex":3},{"Indices":[295,296,297,298,272,273,299,300,326,325,351,350,376,402,428,427],"ColorIndex":4},{"Indices":[421,420,446,447,473,474,500,499],"ColorIndex":5},{"Indices":[481,482,456,455,454,453,452,451,450,449,448],"ColorIndex":6},{"Indices":[528,554,580],"ColorIndex":7},{"Indices":[581,582,608,607],"ColorIndex":8},{"Indices":[588,589,590,616,617,591,565,566,592,618,644,643,642,641,667,666,640,639,613,614,615],"ColorIndex":9},{"Indices":[373,347,348,374],"ColorIndex":0},{"Indices":[611,612,638,637],"ColorIndex":1},{"Indices":[403,377,378,352,353,354,328,327,301,302,276,277,251,250,224,223,249],"ColorIndex":2},{"Indices":[406,407],"ColorIndex":3},{"Indices":[275,274,248,247,246,245,244,218,219,193,192,166],"ColorIndex":4},{"Indices":[167,168,194,220],"ColorIndex":5},{"Indices":[141,115,114,88,89,63,64,90],"ColorIndex":6},{"Indices":[169,170,171,145,119,93,94,95,69],"ColorIndex":7},{"Indices":[120,146],"ColorIndex":8},{"Indices":[270,269],"ColorIndex":9},{"Indices":[143,142,116,117,118,92,91,65,39,38,37],"ColorIndex":0},{"Indices":[195,221,222,196,197,198,172],"ColorIndex":1},{"Indices":[379,380],"ColorIndex":2}]};</script>
   <script src="game.js" defer></script>
 </head>
 <body data-theme="night">
   <main id="game-shell">
-    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">找到出口，让箭头自由</span></div></header>
-    <div class="game-status"><span id="lives" aria-label="剩余生命"></span><span id="progress" aria-live="polite"></span><button id="sound" class="icon-button" type="button" aria-label="关闭声音">♪</button></div>
-    <div id="board-wrap"><canvas id="board" aria-label="点击箭头，让它沿箭头方向逃出；拖动移动棋盘，双指缩放"></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="点击箭头" hidden><div id="toast" role="status" hidden></div></div>
-    <nav class="game-toolbar" aria-label="棋盘工具"><button id="hint" type="button">✧ 提示</button><button id="zoom-out" type="button" aria-label="缩小棋盘">−</button><button id="recenter" type="button" aria-label="棋盘回到中心">⌖</button><button id="zoom-in" type="button" aria-label="放大棋盘">＋</button><button id="theme" type="button" aria-label="切换明暗主题">☼</button></nav>
-    <div class="bottom-ui"><span id="instruction">点击箭头，让它逃出</span></div>
-    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" type="button">再试一次</button></div></div>
+    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">Find a way. Set them free.</span></div></header>
+    <div class="game-status"><span id="lives" aria-label="Lives remaining"></span><span id="progress" aria-live="polite"></span></div>
+    <div id="board-wrap"><canvas id="board" aria-label="Tap an arrow to let it escape. Drag to pan and pinch to zoom."></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="Tap an arrow" hidden><div id="toast" role="status" hidden></div></div>
+    <nav class="game-toolbar" aria-label="Board tools"><button id="hint" type="button" aria-label="Hint: unlimited"><img id="hint-icon" src="assets/hint.png" alt=""><span id="hint-count" class="hint-count">∞</span></button><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="recenter" type="button" aria-label="Center board">⌖</button><button id="zoom-in" type="button" aria-label="Zoom in">＋</button></nav>
+    <div class="bottom-ui"><span id="instruction">Tap an arrow to set it free</span></div>
+    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" data-novvy-replay type="button">Play again</button></div></div>
   </main>
 </body>
 </html>

@@ -27,7 +27,8 @@ export default async function run(assert) {
   }
   const built = escapeHtmlPage({ root: templateRoot, template: entry.template, level: escapeLevel(templateRoot, 100), config: entry.template.defaults, media: { ctaIcon: '/templates/escape-arrow/app-icon.png' }, preview: true }).html;
   assert.check(built.includes('window.__ESCAPE_ARROW_LEVEL__={"Index":100'), '预览注入第 100 关');
-  assert.check(built.includes('window.__novvyReplayable=true') && built.includes('data-novvy-playable-bridge'), '失败重玩接入共享段桥');
+  assert.check(built.includes('window.__novvyReplayable=true') && built.includes('data-novvy-playable-bridge'), '结果结算与同段重玩接入共享段桥');
+  assert.check(built.includes('window.__ESCAPE_ARROW_GAMEPLAY__={"lives":3,"hints":"unlimited","allowReplay":true}'), '预览注入默认生命、提示和重玩配置');
   assert.check(built.includes('/templates/escape-arrow/game/game.js') && built.includes('/templates/escape-arrow/game/style.css'), '预览游戏路径正确');
   assert.check(built.includes('min-height:calc(148px'), '为下载卡预留棋盘外空间');
   assert.check(built.includes('<body data-theme="night">') && built.includes('id="novvy-cta"') && built.includes('id="novvy-training-hud"'), '带主题属性的 body 正确注入 HUD 和下载卡 DOM');
@@ -56,6 +57,19 @@ export default async function run(assert) {
     };
     assert.check((await (await fetch(base + '/api/templates')).json()).some(item => item.id === entry.id), '模版自动注册到 editor');
     taskId = (await api('/api/tasks', { name: 'escape-arrow-test-' + Date.now(), templateId: entry.id })).body.id;
+    recordStepResult(taskId, { stepId: 'level', ok: true });
+    recordStepResult(taskId, { stepId: 'pack', ok: true });
+    const gameplay = await api(`/api/tasks/${taskId}`, { config: { gameplay: { lives: 'unlimited', hints: 2, allowReplay: false } } }, 'PATCH');
+    assert.equal(gameplay.status, 200, '保存无限生命、有限提示和禁用重玩');
+    assert.equal(gameplay.body.config.gameplay, { lives: 'unlimited', hints: 2, allowReplay: false }, '玩法配置完整保存');
+    assert.check(readTask(taskId).steps.level?.ok && !readTask(taskId).steps.pack, '玩法设置仅使打包过期，保留关卡校验');
+    const unlimitedPreview = await (await fetch(`${base}/api/tasks/${taskId}/preview`)).text();
+    assert.check(unlimitedPreview.includes('window.__ESCAPE_ARROW_GAMEPLAY__={"lives":"unlimited","hints":2,"allowReplay":false}'), '无限生命在默认配置合并后仍保留');
+    for (const settings of [null, [], { lives: 0 }, { lives: 100 }, { lives: null }, { hints: -1 }, { hints: '2' }, { allowReplay: 'false' }, { unknown: 2 }]) {
+      assert.equal((await api(`/api/tasks/${taskId}`, { config: { gameplay: settings } }, 'PATCH')).status, 400, '拒绝非法玩法设置');
+    }
+    assert.equal(readTask(taskId).config.gameplay, { lives: 'unlimited', hints: 2, allowReplay: false }, '非法玩法设置不覆盖已有配置');
+    await api(`/api/tasks/${taskId}`, { config: { gameplay: { lives: 3, hints: 'unlimited', allowReplay: true } } }, 'PATCH');
     const patch = { levelId: 100, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 100, cta: { mode: 'steps', afterSteps: 4 }, background: { enabled: true, source: 'video-last' } } };
     const saved = await api(`/api/tasks/${taskId}`, { config: patch }, 'PATCH');
     assert.equal(saved.status, 200, '保存第 100 关及双 playable 设置');

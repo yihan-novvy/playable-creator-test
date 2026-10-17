@@ -26,6 +26,7 @@ export function validateLevel(level, expectedId) {
 
 export function createState(level, maxLives = 3) {
   validateLevel(level);
+  if (maxLives !== null && (!Number.isInteger(maxLives) || maxLives < 1 || maxLives > 99)) throw new Error('Lives must be unlimited or an integer from 1 to 99');
   const width = level.GridXSize, height = level.GridYSize;
   const occupancy = new Map();
   const arrows = level.Arrows.map((data, id) => {
@@ -62,10 +63,10 @@ export function attemptEscape(state, id) {
     state.won = state.remaining === 0;
     return { ...route, kind: 'escape', lifeLost: false };
   }
-  const lifeLost = !arrow.marked;
+  const lifeLost = !arrow.marked && state.maxLives !== null;
   arrow.marked = true;
   if (lifeLost) state.lives--;
-  state.failed = state.lives <= 0;
+  state.failed = state.lives !== null && state.lives <= 0;
   return { ...route, kind: 'blocked', lifeLost };
 }
 
@@ -114,7 +115,33 @@ export function escapeTiming(pathLength, headDistanceToEdge) {
   // Finish just after the tail clears the visible canvas. An extra viewport of
   // invisible travel made short animations appear to vanish almost instantly.
   const travel = pathLength + Math.max(0, headDistanceToEdge) + .5;
-  return { travel, duration: Math.max(650, travel / 36 * 1000) };
+  return { travel, duration: Math.max(380, travel / 64 * 1000) };
+}
+
+// Project original grid cells onto the rounded tail-to-head path. This lets
+// each colored dot appear as the moving tail clears its cell, including bends.
+export function trailMarkers(points, path) {
+  return [...points].reverse().map((point, index) => {
+    let nearest = Infinity, distance = 0;
+    for (let i = 1; i < path.points.length; i++) {
+      const a = path.points[i - 1], b = path.points[i];
+      const dx = b.x - a.x, dy = b.y - a.y, length2 = dx * dx + dy * dy;
+      const t = length2 ? Math.max(0, Math.min(1, ((point.x - a.x) * dx + (point.y - a.y) * dy) / length2)) : 0;
+      const error = (point.x - a.x - t * dx) ** 2 + (point.y - a.y - t * dy) ** 2;
+      if (error < nearest) { nearest = error; distance = path.lengths[i - 1] + t * Math.sqrt(length2); }
+    }
+    return { point, index: points.length - index - 1, distance: distance + .12 };
+  });
+}
+
+export function normalizeGameplay(settings = {}) {
+  const result = { lives: 3, hints: null, allowReplay: true, ...settings };
+  for (const key of ['lives', 'hints']) {
+    if (result[key] === 'unlimited') result[key] = null;
+    if (result[key] !== null && (!Number.isInteger(result[key]) || result[key] < 1 || result[key] > 99)) throw new Error(`${key} must be unlimited or an integer from 1 to 99`);
+  }
+  if (typeof result.allowReplay !== 'boolean') throw new Error('allowReplay must be a boolean');
+  return result;
 }
 
 export function movingPath(path, direction, distance) {

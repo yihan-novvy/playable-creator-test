@@ -178,6 +178,19 @@ export function updateTaskConfig(id, patch) {
   // Validate both selections before mutating or writing a task.
   if ('levelId' in (patch || {})) validateFixedLevel(doc.templateId, patch.levelId);
   if ('levelId' in (patch?.secondPlayable || {})) validateFixedLevel(doc.templateId, patch.secondPlayable.levelId);
+  if (doc.templateId === 'escape-arrow' && 'gameplay' in (patch || {})) {
+    const settings = patch.gameplay;
+    const invalid = !settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => {
+      if (key === 'allowReplay') return typeof value !== 'boolean';
+      if (key === 'lives' || key === 'hints') return value !== 'unlimited' && (!Number.isInteger(value) || value < 1 || value > 99);
+      return true;
+    });
+    if (invalid) {
+      const error = new Error('生命和提示次数须为无限（"unlimited"）或 1–99 的整数，重玩开关须为布尔值。');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
   doc.config = doc.config || {};
   const whitelist = configWhitelistFor(doc.templateId);
   if(isColoreverTemplate(doc.templateId)){
@@ -203,6 +216,7 @@ export function updateTaskConfig(id, patch) {
   if ('music' in (patch || {})) delete doc.steps.pack;
   // 转化时机只影响 pack 内联数据;第二关还影响 level 步骤写出的 level2.json。
   if ('playableCta' in (patch || {})) delete doc.steps.pack;
+  if (doc.templateId === 'escape-arrow' && 'gameplay' in (patch || {})) delete doc.steps.pack;
   // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
   if ('opening' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
   if ('secondPlayable' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; if ('background' in (patch.secondPlayable || {}) || 'enabled' in (patch.secondPlayable || {})) delete doc.steps.background2; }

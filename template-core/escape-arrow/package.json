@@ -9,7 +9,8 @@
     "sync:unity": "node scripts/sync-unity.mjs",
     "test": "node --test test/*.test.mjs",
     "test:browser": "node test/browser-smoke.mjs",
-    "test:gallery": "node test/gallery-browser.mjs"
+    "test:gallery": "node test/gallery-browser.mjs",
+    "test:replay": "node test/replay-browser.mjs"
   },
   "devDependencies": { "@playwright/test": "^1.55.0" }
 }

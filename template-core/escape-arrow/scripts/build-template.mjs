@@ -35,7 +35,7 @@ const catalog = levels.map(level => {
   fs.writeFileSync(path.join(out, `levels/${id}.json`), data + '\n');
   const standalone = fs.readFileSync(path.join(root, 'src/index.html'), 'utf8')
     .replace('<head>', '<head>\n  <base href="../game/">')
-    .replace('<title>Escape Arrow Playable</title>', `<title>Escape Arrow · 第 ${id} 关</title>`)
+    .replace('<title>Escape Arrow Playable</title>', `<title>Escape Arrow · Level ${id}</title>`)
     .replace('<script src="game.js" defer></script>', `<script>window.__ESCAPE_ARROW_LEVEL__=${inline(level)};</script>\n  <script src="game.js" defer></script>`);
   fs.writeFileSync(path.join(out, `play/${id}.html`), standalone);
   const width = level.GridXSize, height = level.GridYSize;

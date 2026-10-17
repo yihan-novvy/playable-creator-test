@@ -74,10 +74,10 @@
   /* —— 结果与最终结束(doc §5):playable-complete 先于 victory,双触发按
      每关闩锁只结算一次;双关的 phase2-start 复位闩锁,第二关重新可结算 —— */
   var settled = false;
-  function onWin() {
+  function onWin(event) {
     if (settled) return;
     settled = true;
-    settle();
+    settle('win', !!(window.__novvyReplayable && event && event.detail && event.detail.replayable));
   }
   window.addEventListener('novvy:playable-complete', onWin);
   window.addEventListener('novvy:victory', onWin);

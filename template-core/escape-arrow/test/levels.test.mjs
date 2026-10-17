@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { validateLevel, createState, escapeRoute, attemptEscape, availableArrows, solveLevel, roundedPath, pathMetrics, movingPath, escapeTiming } from '../src/level-model.mjs';
+import { validateLevel, createState, escapeRoute, attemptEscape, availableArrows, solveLevel, roundedPath, pathMetrics, movingPath, escapeTiming, trailMarkers, normalizeGameplay } from '../src/level-model.mjs';
 
 const load = id => ({ Index: id, ...JSON.parse(fs.readFileSync(new URL(`../src/levels/${id}.json`, import.meta.url), 'utf8')) });
 
@@ -83,11 +83,39 @@ test('snake animation keeps its path length and follows bends instead of transla
 
 test('escape stays visible for short arrows and longer paths take proportionally longer', () => {
   const short = escapeTiming(5, 4);
-  assert.equal(short.duration, 650);
+  assert.equal(short.duration, 380);
   assert.equal(short.travel, 9.5, 'travel ends when the tail clears the canvas, without invisible padding');
   const long = escapeTiming(50, 20), longer = escapeTiming(70, 20);
-  assert.ok(long.duration > 1500);
+  assert.ok(long.duration > 1000 && long.duration < 1200, 'long arrows use the faster 64 cells per second pace');
   assert.ok(longer.duration > long.duration);
   assert.equal(long.travel / long.duration, longer.travel / longer.duration, 'same grid speed for long arrows');
   assert.equal(escapeTiming(5, -3).travel, 5.5, 'a head already outside the viewport still animates its full body');
+});
+
+test('unlimited lives never run out, while a single-life game fails on its first new blocked arrow', () => {
+  const unlimited = createState(load(16), null);
+  const blocked = unlimited.arrows.filter(arrow => !escapeRoute(unlimited, arrow.id).clear);
+  for (const arrow of blocked) assert.equal(attemptEscape(unlimited, arrow.id).lifeLost, false);
+  assert.equal(unlimited.lives, null);
+  assert.equal(unlimited.failed, false);
+  const single = createState(load(16), 1);
+  assert.equal(attemptEscape(single, blocked[0].id).lifeLost, true);
+  assert.equal(single.lives, 0);
+  assert.equal(single.failed, true);
+});
+
+test('gameplay settings preserve finite counts, unlimited values and replay choice', () => {
+  assert.deepEqual(normalizeGameplay(), { lives: 3, hints: null, allowReplay: true });
+  assert.deepEqual(normalizeGameplay({ lives: 'unlimited', hints: 2, allowReplay: false }), { lives: null, hints: 2, allowReplay: false });
+  for (const settings of [{ lives: 0 }, { lives: 100 }, { lives: 1.5 }, { hints: -1 }, { hints: '2' }, { allowReplay: 'false' }]) assert.throws(() => normalizeGameplay(settings));
+});
+
+test('dot markers follow the tail through rounded bends instead of waiting for the whole escape', () => {
+  const points = [{ x: 2, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 0 }, { x: 0, y: 0 }];
+  const path = pathMetrics(roundedPath(points)), markers = trailMarkers(points, path);
+  assert.deepEqual(markers.map(marker => marker.index), [3, 2, 1, 0]);
+  assert.equal(markers[0].distance, .12);
+  for (let i = 1; i < markers.length; i++) assert.ok(markers[i].distance > markers[i - 1].distance);
+  assert.equal(markers.filter(marker => marker.distance <= .5).length, 1, 'the first dot appears while the rest of the arrow is still on the board');
+  assert.ok(Math.abs(markers.at(-1).distance - path.length - .12) < 1e-8);
 });

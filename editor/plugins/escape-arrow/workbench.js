@@ -49,6 +49,16 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     }
     return wrap;
   }
+  function finalReplayControls() {
+    const trailingVideo = config().outro?.enabled && !config().secondPlayable?.enabled;
+    const toggle = checkbox('允许重玩', 'gameplay', 'allowReplay', !trailingVideo && config().gameplay?.allowReplay !== false);
+    toggle.querySelector('input').disabled = !!trailingVideo;
+    return el('div', { id: 'final-playable-replay' }, [toggle,
+      el('p', { class: 'hint' }, [trailingVideo
+        ? '当前试玩后还接片尾视频，不能在片尾后返回前面的试玩重玩。关闭片尾或启用第二个 playable 后，可为最后一段开启重玩。'
+        : '仅最后一个 playable 通关后，在“All clear!”结算中显示重玩按钮。点击先跳转 CTA，再重置当前关卡；返回后直接开始新一局，前面的试玩和视频不重复播放。']),
+    ]);
+  }
   function renderConfig() {
     document.getElementById('config-hint').textContent = `关卡来自 Unity 的前 ${catalog.length} 关；选择两关的编号即可预览和打包。素材覆盖层可按需开启。`;
     const root = document.getElementById('config-grid'); root.textContent = '';
@@ -81,6 +91,27 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2),
     ]));
     wrap.append(el('p', { class: 'hint' }, ['片头结束后显示底部下载卡，第一个 playable 完成即跳转；存在片尾视频时可增加第二个 playable，按第二关的步数设置再次触发。']));
+    const gameplay = config().gameplay || {};
+    const limits = el('div', { class: 'dragon-config-grid' });
+    for (const [key, label, fallback] of [['lives', '生命次数', 3], ['hints', '提示次数', 'unlimited']]) {
+      const value = gameplay[key] ?? fallback;
+      const mode = el('select', { 'aria-label': `${label}限制` });
+      for (const [value, text] of [['unlimited', '无限'], ['limited', '有限']]) mode.append(el('option', { value }, [text]));
+      mode.value = value === 'unlimited' ? 'unlimited' : 'limited';
+      mode.addEventListener('change', async () => { await save({ gameplay: { [key]: mode.value === 'unlimited' ? 'unlimited' : 3 } }); await refresh(true); });
+      limits.append(field(label, mode));
+      if (value !== 'unlimited') {
+        const count = el('input', { type: 'number', min: 1, max: 99, step: 1, value, 'aria-label': `${label}数量` });
+        count.addEventListener('change', async () => {
+          if (!count.checkValidity()) { count.reportValidity(); return; }
+          await save({ gameplay: { [key]: Number(count.value) } }); await refresh(true);
+        });
+        limits.append(field(`每局${label}（1–99）`, count));
+      }
+    }
+    wrap.append(el('h3', {}, ['玩法限制']), limits,
+      el('p', { class: 'hint' }, ['每局分别计数。最后一颗心耗尽或使用最后一次提示时立即跳转 CTA。重玩仅开放给最后一段试玩的通关结算，重玩会重置当前关卡的生命和提示次数。']));
+    if (!(config().outro?.enabled && config().secondPlayable?.enabled)) wrap.append(finalReplayControls());
     root.append(wrap);
   }
   function stateChip(id) {
@@ -206,6 +237,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
           return field(`第二关 HUD 标题 第${index + 1}行`, input);
         })),
         ctaTimingControls(() => config().secondPlayable?.cta, patch => ({ secondPlayable: { cta: patch } })),
+        ...(config().secondPlayable?.enabled ? [finalReplayControls()] : []),
       ]);
     }
     let secondBackground = null;
@@ -244,8 +276,8 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]);
     if (endMaskOn) {
       for (const [key, label, fallback] of [
-        ['takeoverText', '中间主文案', '还想继续挑战？\n更多精彩等你体验'],
-        ['takeoverActionText', '底部强调文案', '点击屏幕，继续体验'],
+        ['takeoverText', '中间主文案', 'Ready for another challenge?\nDiscover more levels!'],
+        ['takeoverActionText', '底部强调文案', 'Tap to keep playing'],
       ]) {
         const input = el('textarea', { rows: 3, 'aria-label': label, style: 'width:100%;box-sizing:border-box;resize:vertical' });
         input.value = config().cta?.[key] ?? fallback;

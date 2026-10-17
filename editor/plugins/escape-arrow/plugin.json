@@ -88,6 +88,11 @@
   },
   "defaults": {
     "levelId": 1,
+    "gameplay": {
+      "lives": 3,
+      "hints": "unlimited",
+      "allowReplay": true
+    },
     "intro": {
       "enabled": false,
       "ariaLabel": ""
@@ -109,8 +114,8 @@
     "cta": {
       "enabled": true,
       "endMask": false,
-      "takeoverText": "还想继续挑战？\n更多精彩等你体验",
-      "takeoverActionText": "点击屏幕，继续体验"
+      "takeoverText": "Ready for another challenge?\nDiscover more levels!",
+      "takeoverActionText": "Tap to keep playing"
     },
     "playableCta": {
       "mode": "complete",

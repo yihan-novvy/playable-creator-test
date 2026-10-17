@@ -1,23 +1,23 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
   <base href="../game/">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
   <meta name="theme-color" content="#191b2d">
-  <title>Escape Arrow · 第 17 关</title>
+  <title>Escape Arrow · Level 17</title>
   <link rel="stylesheet" href="style.css">
   <script>window.__ESCAPE_ARROW_LEVEL__={"Index":17,"GridXSize":12,"GridYSize":12,"Arrows":[{"Indices":[76,77,89,101,102,103,104,92,80,68,67,55,54],"ColorIndex":0},{"Indices":[41,53,65,66,78,90,91,79],"ColorIndex":1},{"Indices":[29,30,42,43,44,32,20],"ColorIndex":2},{"Indices":[16,17,18,19,31],"ColorIndex":3},{"Indices":[21,9,8,7,6,5,4,3,15],"ColorIndex":4},{"Indices":[24,12,0,1,2,14,26,27,28],"ColorIndex":5},{"Indices":[58,57,56],"ColorIndex":6},{"Indices":[36,37,25,13],"ColorIndex":7},{"Indices":[108,109,97,85,84,72,60,48],"ColorIndex":8},{"Indices":[121,122,110,98,86,74],"ColorIndex":9},{"Indices":[40,52,64,63,51,39,38,50,49,61,73],"ColorIndex":0},{"Indices":[114,113,112,100,88,87,75],"ColorIndex":1},{"Indices":[134,135,123,111,99],"ColorIndex":2},{"Indices":[132,120],"ColorIndex":3},{"Indices":[83,82,81,69,70,71,59,47,46,45,33],"ColorIndex":4},{"Indices":[10,22,34,35,23,11],"ColorIndex":5},{"Indices":[136,124,125,137,138,126,127,115,116,117,105,106],"ColorIndex":6},{"Indices":[130,118,119,107,95,94,93],"ColorIndex":7},{"Indices":[131,143],"ColorIndex":8},{"Indices":[139,140,128,129,141,142],"ColorIndex":9}]};</script>
   <script src="game.js" defer></script>
 </head>
 <body data-theme="night">
   <main id="game-shell">
-    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">找到出口，让箭头自由</span></div></header>
-    <div class="game-status"><span id="lives" aria-label="剩余生命"></span><span id="progress" aria-live="polite"></span><button id="sound" class="icon-button" type="button" aria-label="关闭声音">♪</button></div>
-    <div id="board-wrap"><canvas id="board" aria-label="点击箭头，让它沿箭头方向逃出；拖动移动棋盘，双指缩放"></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="点击箭头" hidden><div id="toast" role="status" hidden></div></div>
-    <nav class="game-toolbar" aria-label="棋盘工具"><button id="hint" type="button">✧ 提示</button><button id="zoom-out" type="button" aria-label="缩小棋盘">−</button><button id="recenter" type="button" aria-label="棋盘回到中心">⌖</button><button id="zoom-in" type="button" aria-label="放大棋盘">＋</button><button id="theme" type="button" aria-label="切换明暗主题">☼</button></nav>
-    <div class="bottom-ui"><span id="instruction">点击箭头，让它逃出</span></div>
-    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" type="button">再试一次</button></div></div>
+    <header class="top-ui"><div class="hud-title"><strong id="hud-title-line1">Escape Arrow</strong><span id="hud-title-line2">Find a way. Set them free.</span></div></header>
+    <div class="game-status"><span id="lives" aria-label="Lives remaining"></span><span id="progress" aria-live="polite"></span></div>
+    <div id="board-wrap"><canvas id="board" aria-label="Tap an arrow to let it escape. Drag to pan and pinch to zoom."></canvas><img id="guide-hand" src="assets/guide-hand.png" alt="Tap an arrow" hidden><div id="toast" role="status" hidden></div></div>
+    <nav class="game-toolbar" aria-label="Board tools"><button id="hint" type="button" aria-label="Hint: unlimited"><img id="hint-icon" src="assets/hint.png" alt=""><span id="hint-count" class="hint-count">∞</span></button><button id="zoom-out" type="button" aria-label="Zoom out">−</button><button id="recenter" type="button" aria-label="Center board">⌖</button><button id="zoom-in" type="button" aria-label="Zoom in">＋</button></nav>
+    <div class="bottom-ui"><span id="instruction">Tap an arrow to set it free</span></div>
+    <div id="result" class="result" hidden><div class="result-card"><div id="result-icon">✧</div><h1 id="result-title"></h1><p id="result-copy"></p><button id="result-reset" data-novvy-replay type="button">Play again</button></div></div>
   </main>
 </body>
 </html>

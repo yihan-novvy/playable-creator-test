@@ -5,7 +5,7 @@
      落地页服务注入的结算卡片(novvyEndCard=999999)。不与 SDK 注入 UI 抢高层,
      关闭按钮保持可点。 */
   z-index: 10;
-  top: calc(env(safe-area-inset-top) + max(12px, 2.4dvh));
+  top: calc(env(safe-area-inset-top) + max(12px, 2.4dvh) + var(--escape-top-offset, 12px));
   left: 50%;
   width: min(88dvw, 720px);
   aspect-ratio: 804 / 304;

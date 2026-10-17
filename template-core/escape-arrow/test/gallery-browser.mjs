@@ -21,6 +21,9 @@ try {
   assert.equal(await page.locator('.level-card').count(), 100);
   let game = page.frame('escape-arrow-preview');
   await game.waitForFunction(() => window.__ESCAPE_ARROW_READY__);
+  assert.equal(await page.locator('html').getAttribute('lang'), 'zh-CN', 'preview navigation uses Chinese');
+  assert.equal(await game.locator('html').getAttribute('lang'), 'en', 'the playable inside the preview uses English');
+  assert.equal(await game.locator('body').evaluate(body => /\p{Script=Han}/u.test(body.innerText)), false, 'player copy stays English');
   const historyStart = await page.evaluate(() => history.length);
   for (let id = 1; id <= 100; id++) {
     await page.getByRole('button', { name: `试玩第 ${id} 关`, exact: true }).click();

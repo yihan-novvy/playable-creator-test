@@ -31,6 +31,7 @@ for (const { id, data } of validated) fs.writeFileSync(path.join(levels, `${id}.
 if (!levelsOnly) {
   fs.mkdirSync(path.join(assets, 'sfx'), { recursive: true });
   fs.copyFileSync(path.join(source, 'GUI/HandIcon.png'), path.join(assets, 'guide-hand.png'));
+  fs.copyFileSync(path.join(source, 'GUI/HintIcon.png'), path.join(assets, 'hint.png'));
   fs.copyFileSync(path.join(unity, 'StoreAssets/google-play/app-icon-512.png'), path.join(assets, 'app-icon.png'));
   for (const [name, file] of Object.entries({ bgm: 'BGM', click: 'Click', escape: 'EscapeArrow', blocked: 'FailedArrow', win: 'LevelCompetled', fail: 'LevelFailed' })) {
     const result = spawnSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', path.join(source, `Sound/${file}.wav`), '-ac', '1', '-ar', '44100', '-c:a', 'aac', '-b:a', name === 'bgm' ? '64k' : '80k', path.join(assets, `sfx/${name}.m4a`)], { stdio: 'inherit' });

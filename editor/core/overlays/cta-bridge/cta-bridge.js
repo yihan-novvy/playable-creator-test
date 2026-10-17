@@ -71,6 +71,11 @@
   window.addEventListener('novvy:cta-interact', function () {
     convert('cta-card');
   });
+  // A replay is an explicit CTA request, independent of the completed round's
+  // automatic-conversion latch. The game resets its current round afterwards.
+  window.addEventListener('novvy:replay-cta', function () {
+    if (window.__novvyReplayable) convert('playable-replay');
+  });
 
   /* 遮罩关闭形态的"回访每击转化":转化时刻(主动跳转)过后,用户从商店切
      回来,每一次触压既继续操作 playable、也再触发一次跳转。捕获段监听且不
@@ -87,7 +92,7 @@
     document.addEventListener('pointerdown', function (event) {
       if (!interactArmed) return;
       var target = event && event.target;
-      if (target && target.closest && target.closest('#novvy-cta')) return;
+      if (target && target.closest && target.closest('#novvy-cta,[data-novvy-replay]')) return;
       var now = Date.now();
       if (now - lastInteractAt < 300) return;
       lastInteractAt = now;
@@ -141,6 +146,13 @@
     interactArmed = false;
     lastInteractAt = -1e9;
   });
+  // Replay-capable games start a fresh conversion window with a new round.
+  window.addEventListener('novvy:playable-replay', function () {
+    if (!window.__novvyReplayable) return;
+    autoConverted = false;
+    interactArmed = false;
+    lastInteractAt = -1e9;
+  });
   /* 第一个 playable 最后一步完成(playable-complete)即主动转化:不等胜利
      扫光/片尾音乐收尾,请求与结算显露都在这一刻发生。victory 保留为兜底
      (未派发新事件的旧素材),两者经同一闩锁只转化一次。 */
@@ -173,11 +185,12 @@
      遮罩开启时双 playable 升级为全屏接管;关闭时不弹遮罩,只主动转化一次,
      并交由回访每击转化接管后续。autoConverted 闩锁只对自动时机去重。
      单 playable 不接管 —— 底部卡自试玩起常驻,这里只补主动转化。 */
-  window.addEventListener('novvy:cta-moment', function () {
+  window.addEventListener('novvy:cta-moment', function (event) {
     if (!END_MASK) armInteractConvert();
     if (autoConverted) return;
     autoConverted = true;
-    if (window.__novvyTwoPhase === true && END_MASK) showCard('takeover');
+    var replayable = window.__novvyReplayable && event && event.detail && event.detail.replayable;
+    if (window.__novvyTwoPhase === true && END_MASK && !replayable) showCard('takeover');
     convert('cta-moment');
   });
 

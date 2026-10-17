@@ -6,25 +6,30 @@
   const canvas = $('board'), wrap = $('board-wrap'), ctx = canvas.getContext('2d');
   const scriptBase = new URL('.', document.currentScript.src);
   const asset = file => new URL('assets/' + file, scriptBase).href;
+  $('guide-hand').src = asset('guide-hand.png');
+  $('hint-icon').src = asset('hint.png');
   const colors = ['#5ee6ff', '#6cffb5', '#6fa8ff', '#b48cff', '#ff9e7a', '#ffd966', '#ff7fa8', '#4dffd2', '#c9b6ff', '#b6ff6a'];
   const fire = (name, detail) => window.dispatchEvent(new CustomEvent(name, { detail }));
   const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
   const phase2 = window.__ESCAPE_ARROW_PHASE2__ || null;
+  const gameplay = M.normalizeGameplay(window.__ESCAPE_ARROW_GAMEPLAY__);
   let level = window.__ESCAPE_ARROW_LEVEL__ || DEFAULT_LEVEL;
   let policy = phase2 ? null : window.__ESCAPE_ARROW_CTA_POLICY__;
-  let state, paths, motions = new Map(), trails = new Set(), hintId = null, hintUntil = 0;
+  let state, paths, markers, hintsRemaining, motions = new Map(), trails = new Map(), hintId = null, hintUntil = 0;
   let width = 0, height = 0, fit = 1, zoom = 1, pan = { x: 0, y: 0 }, frame = null, lastTime = 0;
   let introActive = !!$('novvy-video-intro') && !window.__novvyIntroFinished, outroActive = false;
   let viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
-  let ctaAnnounced = false, victorySent = false, resultSent = false, phase2Started = false;
+  let ctaAnnounced = false, victorySent = false, resultSent = false, failureReported = false, phase2Started = false;
   let tutorial = true, toastTimer = null, muted = false, unlocked = false;
   const music = new Audio(asset('sfx/bgm.m4a'));
   music.loop = true; music.volume = .17; music.preload = 'none';
   const sounds = new Map();
   function visible() { return !document.hidden && viewable; }
   function playable() { return visible() && !introActive && !outroActive; }
+  function replayAllowed() { return gameplay.allowReplay && (!phase2 || phase2Started) && (!window.__novvyOutroEnabled || !!phase2); }
+  function canReplay() { return replayAllowed() && state.won && victorySent && !motions.size && !$('result').hidden; }
   function audioSync() {
-    if (unlocked && !muted && playable() && !state?.won && !state?.failed) music.play().catch(() => {});
+    if (unlocked && !muted && playable()) music.play().catch(() => {});
     else { music.pause(); for (const sound of sounds.values()) sound.pause(); }
   }
   function unlockAudio() { unlocked = true; audioSync(); }
@@ -37,7 +42,7 @@
   function haptic(kind) {
     try { if (typeof window.novvy?.haptic === 'function') window.novvy.haptic(kind); else navigator.vibrate?.(kind === 'heavy' ? 45 : 12); } catch (_) {}
   }
-  function setMuted(value) { muted = !!value; $('sound').textContent = muted ? '♩' : '♪'; $('sound').setAttribute('aria-label', muted ? '开启声音' : '关闭声音'); audioSync(); }
+  function setMuted(value) { muted = !!value; audioSync(); }
   function toast(text) {
     $('toast').textContent = text; $('toast').hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(() => { $('toast').hidden = true; }, 1800);
@@ -48,19 +53,23 @@
     $('hud-title-line2').hidden = !spec?.titleLine2;
   }
   function progress(emit = true) {
-    $('lives').textContent = '♥'.repeat(state.lives) + '♡'.repeat(state.maxLives - state.lives);
-    $('lives').setAttribute('aria-label', '剩余 ' + state.lives + ' 条生命');
+    $('lives').textContent = state.maxLives === null ? '♥ ∞' : state.maxLives <= 5 ? '♥'.repeat(state.lives) + '♡'.repeat(state.maxLives - state.lives) : '♥ ' + state.lives;
+    $('lives').setAttribute('aria-label', state.lives === null ? 'Unlimited lives' : state.lives + ' lives remaining');
+    $('hint-count').textContent = hintsRemaining === null ? '∞' : String(hintsRemaining);
+    $('hint').setAttribute('aria-label', hintsRemaining === null ? 'Hint: unlimited' : 'Hint: ' + hintsRemaining + ' remaining');
     $('progress').textContent = state.steps + ' / ' + state.arrows.length;
     if (emit) fire('novvy:hud-progress', { percent: state.steps / state.arrows.length * 100, correct: state.steps, total: state.arrows.length });
   }
   function loadLevel(data, replay = false) {
     level = M.validateLevel(data);
-    state = M.createState(level);
+    state = M.createState(level, gameplay.lives);
+    hintsRemaining = gameplay.hints;
     paths = state.arrows.map(arrow => M.pathMetrics(M.roundedPath(arrow.points)));
+    markers = state.arrows.map(arrow => M.trailMarkers(arrow.points, paths[arrow.id]));
     motions.clear(); trails.clear(); pointers.clear();
-    hintId = null; ctaAnnounced = false; victorySent = false; resultSent = false;
+    hintId = null; ctaAnnounced = false; victorySent = false; resultSent = false; failureReported = false;
     tutorial = true; $('result').hidden = true; $('toast').hidden = true;
-    $('instruction').textContent = '点击箭头，让它逃出';
+    $('instruction').textContent = 'Tap an arrow to set it free';
     zoom = 1; pan = { x: 0, y: 0 };
     if (replay) fire('novvy:playable-replay', { levelId: level.Index });
     progress(); resize(); audioSync();
@@ -91,14 +100,14 @@
     canvas.style.width = width + 'px'; canvas.style.height = height + 'px';
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     fit = Math.min(width / (state.width + 1.5), height / (state.height + 1.5));
-    if (tutorial && state.steps === 0) $('instruction').textContent = fit < 12 ? '双指放大棋盘，再点击箭头' : '点击箭头，让它逃出';
+    if (tutorial && state.steps === 0) $('instruction').textContent = fit < 12 ? 'Pinch to zoom, then tap an arrow' : 'Tap an arrow to set it free';
     clampPan(); requestFrame();
   }
   function requestFrame() { if (frame === null) frame = requestAnimationFrame(render); }
+  function arrowColor(color) { return colors[color % colors.length]; }
   function drawArrow(arrow, points, highlight, moving) {
     if (points.length < 2) return;
-    const day = document.body.dataset.theme === 'day';
-    const color = day ? '#242a43' : colors[arrow.color % colors.length];
+    const color = arrowColor(arrow.color);
     ctx.beginPath();
     points.forEach((point, i) => { const p = screen(point); if (i) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); });
     const scale = fit * zoom;
@@ -120,21 +129,28 @@
     frame = null;
     const delta = lastTime ? Math.min(time - lastTime, 48) : 0; lastTime = time;
     ctx.clearRect(0, 0, width, height);
+    for (const [id, motion] of motions) {
+      if (playable()) motion.elapsed += delta;
+      if (motion.kind !== 'escape') continue;
+      const distance = Math.min(1, motion.elapsed / motion.duration) * motion.travel;
+      const cells = markers[id], arrow = state.arrows[id];
+      while (motion.trailStep < cells.length && cells[motion.trailStep].distance <= distance) {
+        trails.set(arrow.indices[cells[motion.trailStep].index], arrow.color);
+        motion.trailStep++;
+      }
+    }
     if (trails.size) {
-      ctx.fillStyle = document.body.dataset.theme === 'day' ? '#bcc3d0' : '#606785';
-      for (const index of trails) { const p = screen({ x: index % state.width, y: Math.floor(index / state.width) }); ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(1, fit * zoom * .055), 0, Math.PI * 2); ctx.fill(); }
+      for (const [index, color] of trails) { const p = screen({ x: index % state.width, y: Math.floor(index / state.width) }); ctx.fillStyle = arrowColor(color); ctx.beginPath(); ctx.arc(p.x, p.y, Math.max(1, fit * zoom * .055), 0, Math.PI * 2); ctx.fill(); }
     }
     for (const arrow of state.arrows) {
       const motion = motions.get(arrow.id);
       if (arrow.escaped && !motion) continue;
-      if (motion && playable()) motion.elapsed += delta;
       const t = motion ? clamp(motion.elapsed / motion.duration, 0, 1) : 0;
       const distance = !motion ? 0 : motion.kind === 'escape' ? t * motion.travel : Math.sin(Math.PI * t) * motion.travel;
       const points = motion ? M.movingPath(paths[arrow.id], arrow.direction, distance) : paths[arrow.id].points;
       drawArrow(arrow, points, arrow.id === hintId && time < hintUntil && Math.sin(time / 130) > -.3, !!motion);
       if (motion && t >= 1) {
         motions.delete(arrow.id);
-        if (motion.kind === 'escape') for (const index of arrow.indices) trails.add(index);
       }
     }
     const guide = tutorial && playable() && !state.won && !state.failed ? M.availableArrows(state)[0] : undefined;
@@ -145,25 +161,29 @@
     if (!motions.size && state.failed && !resultSent && playable()) finish(false);
     if (playable() && (motions.size || hintId !== null)) requestFrame();
   }
-  function announceCta() { if (ctaAnnounced) return; ctaAnnounced = true; fire('novvy:cta-moment', { levelId: level.Index, steps: state.steps }); }
+  function announceCta(reason = 'progress') { if (ctaAnnounced) return; ctaAnnounced = true; fire('novvy:cta-moment', { levelId: level.Index, steps: state.steps, reason, replayable: replayAllowed() }); }
+  function reportFailure() {
+    if (failureReported) return;
+    failureReported = true;
+    fire('novvy:playable-failed', { levelId: level.Index, retryable: false });
+  }
   function finish(won) {
-    music.pause();
     if (won) {
       victorySent = true; sound('win');
-      $('instruction').textContent = '所有箭头都自由了！';
-      fire('novvy:victory', { levelId: level.Index, escaped: state.steps });
+      $('instruction').textContent = 'Every arrow is free!';
+      fire('novvy:victory', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed() });
       if (policy) announceCta();
       if (window.__novvyOutroEnabled && !phase2Started) return;
     } else {
       resultSent = true; sound('fail');
-      fire('novvy:playable-failed', { levelId: level.Index, retryable: true });
+      reportFailure();
     }
     $('result-icon').textContent = won ? '✧' : '♡';
-    $('result-title').textContent = won ? '全部逃出！' : '再观察一下';
-    $('result-copy').textContent = won ? '你找到了所有箭头的出口' : '先找到前方没有阻挡的箭头，再依次解开';
-    $('result-reset').textContent = won ? '再玩一次' : '再试一次';
-    // A packed win finalizes the SDK stage; failure explicitly permits a replay.
-    $('result-reset').hidden = won && window.__ESCAPE_ARROW_AD__ === true;
+    $('result-title').textContent = won ? 'All clear!' : 'Out of lives';
+    $('result-copy').textContent = won ? 'You found a way out for every arrow.' : 'Look for arrows with a clear path ahead.';
+    $('result-reset').textContent = won ? 'Play again' : 'Try again';
+    // Only the last playable's All clear result offers a same-stage replay.
+    $('result-reset').hidden = !won || !replayAllowed();
     $('result').hidden = false;
   }
   function tryArrow(id) {
@@ -177,16 +197,17 @@
     const timing = result.clear
       ? M.escapeTiming(path.length, pixelsToEdge / (fit * zoom))
       : { travel: Math.max(.15, result.distance - .55), duration: 440 };
-    motions.set(id, { kind: result.kind, ...timing, elapsed: 0 });
+    motions.set(id, { kind: result.kind, ...timing, elapsed: 0, trailStep: 0 });
     sound(result.clear ? 'escape' : 'blocked'); haptic(result.clear ? 'light' : 'heavy');
     if (result.clear) {
       progress();
       fire('escape-arrow:escape', { levelId: level.Index, arrowId: id, steps: state.steps });
       if (policy?.mode === 'steps' && state.steps >= policy.afterSteps) announceCta();
-      if (state.won) { music.pause(); fire('novvy:playable-complete', { levelId: level.Index, escaped: state.steps }); }
+      if (state.won) fire('novvy:playable-complete', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed() });
     } else {
       progress(false);
-      toast(result.lifeLost ? '前方有阻挡，先试试其他箭头' : '这根箭头暂时还出不去');
+      toast(result.lifeLost ? 'Path blocked. Try another arrow.' : 'This arrow cannot escape yet.');
+      if (state.failed) { reportFailure(); announceCta('lives-exhausted'); }
     }
     requestFrame(); return true;
   }
@@ -245,14 +266,21 @@
   $('zoom-in').onclick = () => zoomAt(zoom * 1.3);
   $('zoom-out').onclick = () => zoomAt(zoom / 1.3);
   $('recenter').onclick = () => { zoom = 1; pan = { x: 0, y: 0 }; requestFrame(); };
-  $('theme').onclick = () => { document.body.dataset.theme = document.body.dataset.theme === 'day' ? 'night' : 'day'; requestFrame(); };
-  $('sound').onclick = () => { unlockAudio(); setMuted(!muted); };
-  $('result-reset').onclick = () => { unlockAudio(); loadLevel(level, true); };
+  function replay() {
+    if (!playable() || !canReplay()) return;
+    unlockAudio();
+    // Convert while the completed round is still visible to the SDK. Reset the
+    // current level synchronously afterwards, even if opening CTA hides the ad.
+    fire('novvy:replay-cta', { levelId: level.Index });
+    loadLevel(level, true);
+  }
+  $('result-reset').onclick = replay;
   $('hint').onclick = () => {
     if (!playable() || state.won || state.failed) return;
+    if (hintsRemaining === 0) { toast('No hints remaining.'); announceCta('hints-exhausted'); return; }
     unlockAudio(); sound('click');
     hintId = M.availableArrows(state).find(id => !motions.has(id)) ?? null;
-    if (hintId === null) { toast('等箭头回到原位，再试一次'); return; }
+    if (hintId === null) { toast('Wait for the arrows to settle, then try again.'); return; }
     tutorial = false; hintUntil = performance.now() + 2400;
     if (fit * zoom < 18) zoomAt(18 / fit);
     const p = screen(state.arrows[hintId].points[0]);
@@ -261,6 +289,9 @@
       pan.x = -(head.x - (state.width - 1) / 2) * fit * zoom;
       pan.y = (head.y - (state.height - 1) / 2) * fit * zoom; clampPan();
     }
+    if (hintsRemaining !== null) hintsRemaining--;
+    progress(false);
+    if (hintsRemaining === 0) announceCta('hints-exhausted');
     requestFrame();
   };
   function resume() { lastTime = 0; audioSync(); requestFrame(); }
@@ -288,19 +319,19 @@
   }
   const extraImages = window.__ESCAPE_ARROW_IMAGES__ || {};
   const secondAssetsReady = prepareImages(extraImages.second);
-  title(window.__ESCAPE_ARROW_HUD_TITLE__ || { titleLine1: 'Escape Arrow', titleLine2: '找到出口，让箭头自由' });
+  title(window.__ESCAPE_ARROW_HUD_TITLE__ || { titleLine1: 'Escape Arrow', titleLine2: 'Find a way. Set them free.' });
   loadLevel(level);
   if (window.ResizeObserver) new ResizeObserver(resize).observe(wrap);
   window.addEventListener('resize', resize);
   // Public inspection API supports editor QA without coupling the engine to it.
   window.EscapeArrow = {
     setMuted,
-    reset: () => { if (!state.won || !window.__ESCAPE_ARROW_AD__) loadLevel(level, true); },
-    getState: () => ({ levelId: level.Index, escaped: state.steps, total: state.arrows.length, remaining: state.remaining, lives: state.lives, won: state.won, failed: state.failed, zoom, pan: { ...pan }, moving: motions.size, available: M.availableArrows(state) }),
+    reset: replay,
+    getState: () => ({ levelId: level.Index, escaped: state.steps, total: state.arrows.length, remaining: state.remaining, lives: state.lives, maxLives: state.maxLives, hintsRemaining, allowReplay: replayAllowed(), canReplay: canReplay(), won: state.won, failed: state.failed, zoom, pan: { ...pan }, moving: motions.size, trails: trails.size, available: M.availableArrows(state) }),
     getArrowScreenPoint: id => state.arrows[id] ? screen(state.arrows[id].points[0]) : null,
   };
   canvas.style.visibility = 'hidden';
-  prepareImages([...extraImages.first || [], asset('guide-hand.png')]).then(() => {
+  prepareImages([...extraImages.first || [], asset('guide-hand.png'), asset('hint.png')]).then(() => {
     if (frame !== null) cancelAnimationFrame(frame);
     render(performance.now()); canvas.style.visibility = '';
     window.__ESCAPE_ARROW_READY__ = true; fire('escape-arrow:ready', { levelId: level.Index });
