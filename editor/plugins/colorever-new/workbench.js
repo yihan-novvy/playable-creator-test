@@ -300,13 +300,13 @@ window.PlayablePlugins = window.PlayablePlugins || {};
         textField('按钮文字','replay','button',config().replay?.button,'Replay'),
       ]));
     }
-    // 片头倒计时标题与 GO 按钮:仅在启用片头时出现。
+    // 倒计时标题与 GO 按钮:片头与片尾(双 playable 时通往第二段)共用同一开关。
     let introGate=null;
-    if(config().intro?.enabled){
+    if(config().intro?.enabled || config().outro?.enabled){
       const goEnabled=config().intro?.goEnabled===true;
       introGate=el('section',{class:'step-card',id:'intro-gate-settings'},[
         el('h3',{},['倒计时标题与 GO 按钮']),
-        el('p',{class:'hint'},['真实的 HUD 标题直接参演：片头最后 3 秒先移到倒计时数字下方吸引等待中的用户；倒计时结束后升到画面中央、底部亮出 GO 按钮，点击 GO 标题回到顶部原位后再进入 playable。无需额外配置文案。']),
+        el('p',{class:'hint'},['真实的 HUD 标题直接参演：片头与片尾(双 playable 时通往第二段)最后 3 秒先移到倒计时数字下方吸引等待中的用户；倒计时结束升到中线上方、中线下方亮出 GO 按钮，点击 GO 标题回到顶部原位后再进入 playable。无需额外配置文案。']),
         checkbox('倒计时结束后显示 GO 按钮','intro','goEnabled',goEnabled),
         el('div',{class:'dragon-config-grid'},[
           textField('GO 按钮文字','intro','goText',config().intro?.goText,'GO'),

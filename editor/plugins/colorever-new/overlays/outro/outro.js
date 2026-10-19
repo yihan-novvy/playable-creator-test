@@ -54,7 +54,91 @@
     buzz(n);
     countdown.hidden = false;
     countdown.innerHTML = '<span>' + n + '</span>';
+    if (canStageTitle()) stageTitle('below'); // 真实 HUD 标题降到数字下方
   }
+
+  /* —— GO 闸门(勾选 intro.goEnabled 后,通往第二段的片尾与片头同款等点击):
+     片尾 ended 不再直接派发 outro-finished,先冻结末帧到 canvas,把第二关的
+     HUD 标题(引擎在 phase2-start 会再写一次,文本一致无闪变)升到中线上方、
+     中线下方亮出 GO 按钮;点击(heavy 震动一拍)后标题归位、撤场,才放行
+     outro-finished 进入第二段。闸门期间不自动放行。 —— */
+  const gateSpec = window.__COLOREVER_PHASE2__?.go ?? null;
+  const goGate = !!(gateSpec?.enabled && window.__novvyTwoPhase);
+  const goButton = document.getElementById('novvy-outro-go');
+  const hud = document.getElementById('novvy-training-hud');
+  const title = hud ? hud.querySelector('.novvy-hud-title') : null;
+  const TITLE_MOVE_MS = 520;
+  let goWaiting = false, goConfirmed = false, titleStaged = false, titleHome = null, titleStyleBefore = '';
+  const canStageTitle = () => !!(goGate && hud && title);
+  if (goButton && gateSpec?.text) goButton.textContent = gateSpec.text;
+  function stageTitle(phase) {
+    if (!canStageTitle()) return;
+    if (!titleStaged) {
+      const rect = title.getBoundingClientRect();
+      titleHome = { left: rect.left, top: rect.top, width: rect.width };
+      titleStyleBefore = title.getAttribute('style') || '';
+      title.style.cssText = `${titleStyleBefore};position:fixed;left:0;top:0;margin:0;width:${rect.width}px;transform:translate(${rect.left}px, ${rect.top}px);transition:none;`;
+      hud.classList.add('novvy-intro-title-live');
+      void title.offsetWidth;
+      title.style.transition = `transform ${TITLE_MOVE_MS}ms cubic-bezier(0.3, 0.7, 0.3, 1)`;
+      titleStaged = true;
+    }
+    const y = phase === 'below' ? window.innerHeight / 2 + Math.min(window.innerHeight * 0.13, 104) - title.offsetHeight / 2
+      : phase === 'center' ? window.innerHeight / 2 - 24 - title.offsetHeight / 2
+        : titleHome.top;
+    title.style.transform = `translate(${titleHome.left}px, ${y}px)`;
+  }
+  function unstageTitle() {
+    if (!titleStaged) return;
+    titleStaged = false;
+    titleHome = null;
+    hud.classList.remove('novvy-intro-title-live');
+    if (titleStyleBefore) title.setAttribute('style', titleStyleBefore);
+    else title.removeAttribute('style');
+    titleStyleBefore = '';
+  }
+  function freezeLastFrame() {
+    if (!video.videoWidth || !video.videoHeight) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    try { ctx.drawImage(video, 0, 0); } catch (_) { return; }
+    canvas.className = 'novvy-intro-frame';
+    root.insertBefore(canvas, video.nextSibling);
+  }
+  function buzzGo() {
+    try {
+      if (typeof window.novvy?.haptic === 'function') { window.novvy.haptic('heavy'); return; }
+    } catch (_) {}
+    try { navigator.vibrate?.(65); } catch (_) {}
+  }
+  function showGoGate() {
+    if (!goGate || goWaiting) return;
+    goWaiting = true;
+    hideCountdown();
+    freezeLastFrame();
+    const spec = window.__COLOREVER_PHASE2__ || {};
+    const lines = [document.getElementById('novvy-hud-title-line1'), document.getElementById('novvy-hud-title-line2')];
+    if (spec.hud) {
+      if (lines[0]) lines[0].textContent = spec.hud.titleLine1 || '';
+      if (lines[1]) lines[1].textContent = spec.hud.titleLine2 || '';
+    }
+    stageTitle('center');
+    if (goButton) goButton.hidden = false;
+  }
+  goButton?.addEventListener('click', event => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (!goWaiting || goConfirmed) return;
+    goConfirmed = true;
+    buzzGo();
+    if (titleStaged) {
+      stageTitle('home');
+      window.setTimeout(() => { unstageTitle(); finish('video_ended'); }, TITLE_MOVE_MS + 80);
+    } else finish('video_ended');
+  });
   video.addEventListener('timeupdate', syncCountdown);
   video.addEventListener('ended', hideCountdown);
   let viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
@@ -81,7 +165,8 @@
     window.dispatchEvent(new CustomEvent('novvy:outro-finished', { detail: { reason } }));
   }
   async function playVideo() {
-    if (!active || !visible()) return;
+    // 闸门等待期视频已 ended:play() 可能把片尾从头重播,盖掉定帧画面。
+    if (!active || goWaiting || !visible()) return;
     const token = ++attempt;
     play.hidden = true;
     try { await video.play(); }
@@ -94,7 +179,7 @@
     }
   }
   function syncVisibility() {
-    if (!active) return;
+    if (!active || goWaiting) return;
     if (visible()) void playVideo();
     else { attempt++; video.pause(); }
   }
@@ -120,7 +205,7 @@
     if (!active && Number(detail.percent) < 100) consumed = false;
   });
   /* 第二关就绪:收起最后一帧,把画面交还游戏。 */
-  window.addEventListener('novvy:phase2-start', () => { root.hidden = true; });
+  window.addEventListener('novvy:phase2-start', () => { unstageTitle(); root.hidden = true; });
   window.addEventListener('novvy:viewablechange', event => {
     viewable = !!event.detail?.viewable;
     syncVisibility();
@@ -132,10 +217,11 @@
     updateSound();
     if (active && video.paused) void playVideo();
   });
-  root.addEventListener('click', () => { if (active && video.paused) void playVideo(); });
+  root.addEventListener('click', () => { if (active && !goWaiting && video.paused) void playVideo(); });
   updateSound();
   video.addEventListener('volumechange', updateSound);
-  video.addEventListener('ended', () => finish('video_ended'));
+  // 视频自然结束进 GO 闸门等点击(勾选时);解码出错照旧直接收尾。
+  video.addEventListener('ended', () => { if (goGate) showGoGate(); else finish('video_ended'); });
   video.addEventListener('timeupdate', () => {
     if (active && visible() && video.currentTime >= 5) revealCta();
   });

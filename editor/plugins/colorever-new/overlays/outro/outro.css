@@ -30,3 +30,14 @@
 .novvy-countdown span{color:#fff;font-size:clamp(72px,20vw,140px);font-weight:700;line-height:1;text-shadow:0 2px 18px rgba(0,0,0,.45),0 0 2px rgba(0,0,0,.35);animation:novvy-countdown-pop .42s cubic-bezier(.2,.8,.3,1.08)}
 @keyframes novvy-countdown-pop{0%{transform:scale(1.55);opacity:0}55%{transform:scale(.96);opacity:1}100%{transform:scale(1);opacity:1}}
 @media(prefers-reduced-motion:reduce){.novvy-countdown span{animation:none}}
+/* GO 闸门(与 core intro 同款类名与动线,片头同样开启时这里的规则与其重复,无副作用):
+   真机 WebView 会丢弃 ended 视频的末帧,进闸门先冻结到 canvas 垫底;真实 HUD 标题
+   参演需解除容器的 transform/filter/container-type(否则 fixed 退化)并抬层到片尾之上。 */
+.novvy-intro-frame{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:1;pointer-events:none}
+.novvy-intro-go{position:absolute;left:50%;top:calc(50% + clamp(36px,8vh,56px));transform:translateX(-50%);z-index:2;min-width:42%;padding:14px 44px;border:0;border-radius:999px;background:linear-gradient(180deg,#ffd94e,#ffb724);color:#4a2c00;font-size:clamp(20px,6vw,30px);font-weight:800;letter-spacing:.08em;cursor:pointer;box-shadow:0 10px 28px rgba(0,0,0,.35),inset 0 -3px 0 rgba(0,0,0,.12);animation:novvy-go-pulse 1.1s ease-in-out infinite}
+.novvy-intro-go[hidden]{display:none}
+.novvy-intro-go:active{transform:translateX(-50%) scale(.95)}
+@keyframes novvy-go-pulse{0%,100%{transform:translateX(-50%) scale(1)}50%{transform:translateX(-50%) scale(1.05)}}
+#novvy-training-hud.novvy-intro-title-live{transform:none!important;filter:none!important;container-type:normal!important;z-index:2147483647!important}
+#novvy-training-hud.novvy-intro-title-live>:not(.novvy-hud-title){visibility:hidden}
+@media(prefers-reduced-motion:reduce){.novvy-intro-go{animation:none}#novvy-training-hud.novvy-intro-title-live .novvy-hud-title{transition:none!important}}

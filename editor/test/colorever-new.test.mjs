@@ -131,6 +131,7 @@ export default async function run(assert){
     assert.check(!packed.includes('__COLOREVER_PREVIEW__'),'交付 HTML 无测试速度上下文，运行使用基础速度');
     assert.check(packed.includes('data-novvy-outro')&&packed.includes('__COLOREVER_PHASE2__')&&packed.includes('background2.webp')&&packed.includes('data-novvy-cta-bridge'),'沿用视频、换关、背景和 CTA 注入');
     assert.check(packed.includes('"cta":{"mode":"steps","afterSteps":5,"everySteps":7}')&&packed.includes('novvy-intro-go')&&packed.includes('"intro":{"ariaLabel":"","goEnabled":true,"goText":"开始"}'),'第二关循环策略与倒计时 GO 配置随包注入');
+    assert.check(packed.includes('"go":{"enabled":true,"text":"开始"}')&&packed.includes('novvy-outro-go'),'片尾 GO 闸门随双 playable 进包');
     assert.check(!packed.includes('window.__novvyReplayable=true')&&packed.includes('__COLOREVER_REPLAY__=null'),'未开重玩弹窗的包不携带可重玩标记');
     assert.check(packed.includes('data-colorever-decorators')&&packed.includes('["orange-pixel-cat"]=function')&&packed.includes('["house"]=function'),'双关各自的装饰片段去重注入');
     const beforeSwitch=readTask(id);
