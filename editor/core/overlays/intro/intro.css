@@ -95,11 +95,12 @@
   visibility: hidden;
 }
 
-/* GO 按钮:倒计时结束后压在片尾帧底部的进入按钮,点击才切入 playable。 */
+/* GO 按钮:倒计时结束后悬在中线下方一点,与中线上方的标题紧凑成组,
+   点击才切入 playable。 */
 .novvy-intro-go {
   position: absolute;
   left: 50%;
-  bottom: max(9%, env(safe-area-inset-bottom));
+  top: calc(50% + clamp(36px, 8vh, 56px));
   transform: translateX(-50%);
   z-index: 2;
   min-width: 42%;
@@ -118,6 +119,18 @@
 
 .novvy-intro-go[hidden] {
   display: none;
+}
+
+/* GO 态的定帧画布:真机 WebView 会丢弃 ended 视频的末帧(元素变黑/透明),
+   进 GO 态时把末帧冻结到 canvas 垫在按钮之下,停留画面不再依赖视频保留。 */
+.novvy-intro-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: 1;
+  pointer-events: none;
 }
 
 .novvy-intro-go:active {

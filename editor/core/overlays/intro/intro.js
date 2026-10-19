@@ -29,7 +29,6 @@
      容器的 transform/filter/container-type 会让 fixed 定位退化,由
      .novvy-intro-title-live(core intro.css)解除;立绘/进度暂隐,撤场恢复。 —— */
   const goGate = !!(introUi && introUi.goEnabled === true);
-  const GO_GRACE_MS = 12000;
   const TITLE_MOVE_MS = 520;
   const hud = document.getElementById('novvy-training-hud');
   const title = hud ? hud.querySelector('.novvy-hud-title') : null;
@@ -55,8 +54,9 @@
       titleStaged = true;
       track('intro_title_staged');
     }
+    // 中线上方一点是标题,下方一点是 GO 按钮,两组内容紧凑成组。
     const y = phase === 'below' ? window.innerHeight / 2 + Math.min(window.innerHeight * 0.13, 104) - title.offsetHeight / 2
-      : phase === 'center' ? window.innerHeight / 2 - title.offsetHeight / 2
+      : phase === 'center' ? window.innerHeight / 2 - 24 - title.offsetHeight / 2
         : titleHome.top;
     // 水平保持原位(标题本来就居中),只做纵向动线。
     title.style.transform = `translate(${titleHome.left}px, ${y}px)`;
@@ -70,11 +70,20 @@
     else title.removeAttribute('style');
     titleStyleBefore = '';
   }
+  // GO 点击的确认震动:与倒计时同一套桥接(SDK haptic 桥,预览退回 vibrate),
+  // 用 heavy 一拍,和数字 3 的强度对齐。
+  function buzzGo() {
+    try {
+      if (typeof window.novvy?.haptic === 'function') { window.novvy.haptic('heavy'); return; }
+    } catch (_error) {}
+    try { navigator.vibrate?.(65); } catch (_error) {}
+  }
   goButton?.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopPropagation();
     if (!goWaiting || goConfirmed) return;
     goConfirmed = true;
+    buzzGo();
     if (titleStaged) {
       stageTitle('home');
       track('go_title_restored');
@@ -165,7 +174,11 @@
   // 点击,不立即收尾;GO 点击与 failsafe 走非门控路径真正收尾。
   const finish = (reason, gated = false) => {
     if (finished) return;
-    if (gated && goGate && !goWaiting) { showGoGate(); return; }
+    if (gated && goGate) {
+      // 闸门开启时,视频结束/出错都只落入 GO 态等点击,不自动进试玩。
+      if (!goWaiting) showGoGate();
+      return;
+    }
     finished = true;
     let switchSeconds = 0;
     try { switchSeconds = Math.round(video.currentTime || 0); } catch (_error) {}
@@ -185,18 +198,33 @@
     window.setTimeout(() => root.remove(), 220);
   };
 
-  // GO 停留帧也是素材可见时间:给足最短停留窗(不缩水 30s failsafe 的剩余量),
-  // 超时仍未点击则按 timer_reached 自动进试玩,不把用户困在片尾帧上。
-  // 真实 HUD 标题在此刻从数字下方升到画面中央,GO 按钮垫在下方。
+  // GO 态等点击,不自动放行:清掉 failsafe(armFailsafe 在 GO 态是空操作),
+  // SDK 的 custom close 仍在,不存在困死路径。真实 HUD 标题升到中线上方,
+  // GO 按钮垫在中线下方;末帧冻结到 canvas,停留画面不依赖视频末帧保留。
   function showGoGate() {
     if (finished || goWaiting) return;
     goWaiting = true;
     hideCountdown();
+    freezeLastFrame();
     stageTitle('center');
     if (goButton) goButton.hidden = false;
-    failsafeRemaining = Math.max(failsafeRemaining, GO_GRACE_MS);
-    armFailsafe();
+    clearFailsafe();
     track('go_gate_shown');
+  }
+
+  // 真机 WebView 会丢弃 ended 视频的末帧(元素转黑/透明),把当前帧画进
+  // canvas 垫在标题/GO 之下,冻结停留画面。绘制失败就保留视频原样。
+  function freezeLastFrame() {
+    if (!video.videoWidth || !video.videoHeight) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    try { ctx.drawImage(video, 0, 0); } catch (_error) { return; }
+    canvas.className = 'novvy-intro-frame';
+    root.insertBefore(canvas, video.nextSibling);
+    track('go_frame_frozen');
   }
 
   function releaseCustomClose(reason) {
@@ -322,6 +350,7 @@
   let failsafeRemaining = FAILSAFE_MS;
   let failsafeArmedAt = 0;
   function armFailsafe() {
+    if (goWaiting) return; // GO 态等点击,任何路径都不自动放行
     if (failsafeTimer) window.clearTimeout(failsafeTimer);
     failsafeArmedAt = Date.now();
     failsafeTimer = window.setTimeout(() => finish('timer_reached'), failsafeRemaining);
@@ -442,8 +471,8 @@
     else playVideo();
   });
 
-  // 视频自然结束/解码出错都先过 GO 闸门(开启时亮按钮等待);failsafe 的
-  // timer_reached 直接收尾,防止无人点击时永远停在片尾帧。
+  // 视频自然结束/解码出错都进 GO 闸门等点击;闸门开启后 failsafe 不再自动
+  // 放行(存在定帧画面 + SDK custom close,不会困死),唯一出口是点 GO。
   video.addEventListener('ended', () => finish('video_ended', true), { once: true });
   video.addEventListener('error', () => finish('video_ended', true), { once: true });
 
