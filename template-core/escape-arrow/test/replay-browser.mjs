@@ -233,10 +233,25 @@ try {
   await pack({ levelId: 16, intro: { enabled: true } });
   await fail(16);
   assert.deepEqual(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'complete')), [['complete', { result: 'fail', continue_playing: true }]]);
-  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 1, 'last life still triggers its immediate CTA');
+  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'failure shows Try again first instead of converting on the spot');
   await page.screenshot({ path: path.join(screenshots, 'single-out-of-lives.png') });
   await replayAndReturn(16, false);
   console.log('PASS single playable: failure offers Try again; CTA precedes reset, lives/hints/progress reset, and intro never repeats');
+
+  // Hints: every configured hint takes effect and taps past the limit stay
+  // gameplay-only — conversion timing belongs to the CTA policy (complete),
+  // so nothing jumps from a hint and no per-click conversion gets armed.
+  await pack({ levelId: 1, intro: { enabled: false }, gameplay: { lives: 2, hints: 2, allowReplay: true } });
+  await page.locator('#hint').click();
+  await page.locator('#hint').click();
+  assert.equal(await page.locator('#hint-count').textContent(), '0');
+  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'the last configured hint runs without converting');
+  await page.locator('#hint').click();
+  assert.equal(await page.locator('#toast').textContent(), 'No hints remaining.');
+  await page.locator('#recenter').click();
+  await page.locator('#recenter').click();
+  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'taps past the hint limit never convert under the complete policy');
+  console.log('PASS single playable: all configured hints run; taps past the limit never convert');
 
   for (const allowReplay of [true, false]) {
     await pack({ levelId: 16, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2 }, gameplay: { lives: 2, hints: 2, allowReplay }, cta: { endMask: !allowReplay } });

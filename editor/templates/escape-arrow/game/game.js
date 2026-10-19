@@ -430,7 +430,9 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   }
   function announceCta(reason = 'progress') {
     // First-playable failure converts on Try again, success after celebration.
-    // Its hint/life limits never replace the round with a final CTA takeover.
+    // Hint limits never announce at all; life exhaustion announces only when
+    // the round has no retry button — a retryable failure hands conversion to
+    // the Try-again replay request.
     if (hasNextPlayable() || ctaAnnounced) return;
     ctaAnnounced = true;
     fire('novvy:cta-moment', { levelId: level.Index, steps: state.steps, reason, replayable: replayAllowed() });
@@ -480,7 +482,9 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
       if (state.won) fire('novvy:playable-complete', { levelId: level.Index, escaped: state.steps, replayable: replayAllowed(), continuing: hasNextPlayable() });
     } else {
       progress(false);
-      if (state.failed) { reportFailure(); announceCta('lives-exhausted'); }
+      // A retryable failure converts on Try again (novvy:replay-cta) with the
+      // round reset underneath; only a round without a retry button converts here.
+      if (state.failed) { reportFailure(); if (!replayAllowed()) announceCta('lives-exhausted'); }
     }
     requestFrame(); return true;
   }
@@ -550,7 +554,9 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   $('result-reset').onclick = replay;
   $('hint').onclick = () => {
     if (!playable() || state.won || state.failed) return;
-    if (hintsRemaining === 0) { toast('No hints remaining.'); announceCta('hints-exhausted'); return; }
+    // Hint limits stay gameplay-only: the CTA timing belongs to the playable
+    // policy (completion or step N), so an exhausted hint tap just toasts.
+    if (hintsRemaining === 0) { toast('No hints remaining.'); return; }
     unlockAudio(); sound('click');
     hintId = M.availableArrows(state).find(id => !motions.has(id)) ?? null;
     if (hintId === null) { toast('Wait for the arrows to settle, then try again.'); return; }
@@ -562,9 +568,10 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
       pan.x = -(head.x - (state.width - 1) / 2) * fit * zoom;
       pan.y = (head.y - (state.height - 1) / 2) * fit * zoom; clampPan();
     }
+    // Every configured hint takes effect, including the last one; the CTA
+    // moment waits until a tap asks past the limit (branch above).
     if (hintsRemaining !== null) hintsRemaining--;
     progress(false);
-    if (hintsRemaining === 0) announceCta('hints-exhausted');
     requestFrame();
   };
   function resume() { lastTime = 0; audioSync(); requestFrame(); }
