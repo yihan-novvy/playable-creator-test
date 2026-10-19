@@ -19,8 +19,8 @@
 
 .controls,.hud strong,.hud small,.hud p,#instruction,#celebration{display:none!important}
 .hud{left:19%;right:19%;width:62%;gap:8px}
-.hud span{font-size:14px;font-weight:600}
-.hud progress{height:14px;border-radius:999px}
+.hud span{font-size:14px;font-weight:600;line-height:16px}
+.hud progress{height:14px;border-radius:999px;margin-top:24px}
 .hud progress::-webkit-progress-value{border-radius:999px}
 
 #replay-prompt{position:absolute;inset:0;display:grid;place-items:center;z-index:6;background:#1b496a40}

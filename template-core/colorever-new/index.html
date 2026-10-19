@@ -5,7 +5,7 @@
 <main class="app">
   <canvas id="game" aria-label="猫咪珠子拼画游戏"></canvas>
   <div class="controls"><button id="reset" aria-label="重新开始" title="重新开始">↺</button><button id="undo" aria-label="撤销一步" title="撤销一步">↶</button><button id="hint" aria-label="提示" title="提示">?</button><button id="sheen" aria-label="关闭常驻反光" title="常驻反光预览" aria-pressed="true">✦</button><button id="sound" aria-label="打开音乐" aria-pressed="false">♫<i></i></button></div>
-  <section class="hud"><strong>猫咪拼画</strong><span id="progress"></span><progress id="progress-bar" aria-label="拼图进度"></progress><small id="moves"></small><p>金色边框是待归位珠子<br>同色相邻珠子会一起移动</p></section>
+  <section class="hud"><strong>猫咪拼画</strong><progress id="progress-bar" aria-label="拼图进度"></progress><span id="progress"></span><small id="moves"></small><p>金色边框是待归位珠子<br>同色相邻珠子会一起移动</p></section>
   <p id="instruction" role="status"></p><div id="celebration" role="status" hidden></div><button id="guide" aria-label="执行提示" hidden><img id="guide-hand" alt="" aria-hidden="true" draggable="false"></button>
   <section id="win" hidden><div class="win-card"><span>✦</span><h1>拼画完成！</h1><p id="win-detail"></p><button id="again">再玩一次</button><button id="dismiss">欣赏成品</button></div></section>
   <div id="replay-prompt" hidden><div class="replay-card"><p id="replay-text" role="status"></p><button id="replay-btn" data-novvy-replay type="button">Replay</button></div></div>
