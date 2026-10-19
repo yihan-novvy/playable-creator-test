@@ -45,21 +45,31 @@ $('guide-hand').src=guideHand;
 /* —— 每关会话:buildLevel 重赋值;渲染器/相机/音频/引导等单例不重建 —— */
 let session=null,puzzle=null,groups=[],cells=new Map(),target=[],capacity=48,trayCols=12,pitch=1,rowPitch=1,trayPoint=()=>new THREE.Vector3(),point=()=>new THREE.Vector3(),boardScale=1,trayScale=1,colorNames={},effects={clear(){}},ambientSheen={update(){},enabled:false};
 let bodyGeometry=null,bodyMaterials={},letters={};
+/* 当前关的会话数据(buildLevel 记账):结算重玩弹窗据此重建本关开局。 */
+let activeLevel=null,activePattern=null,activePatternId=null;
 let busy=false,flights=[],hint=null,down=null,selectionStart=0,completion=null,completedColors=new Set(),pendingColors=[];
 let wasWon=false;
 let previewLastBatch=0;
 
 /* —— CTA 时机策略(两关同构):complete=完成后跳转;steps=第 N 步跳转(N 不是上限,完成时兜底)。
-   第一关策略仅注入于无片尾场景;双 playable 时第一关不武装,进第二关后换用 PHASE2.cta。 —— */
+   everySteps>0 时进入"步数循环":首次第 afterSteps 步跳转后,每再走 everySteps 步再跳一次
+   (repeat 事件由转化桥绕过自动闩锁);0=仅首跳。第一关策略仅注入于无片尾场景;双 playable
+   时第一关不武装,进第二关后换用 PHASE2.cta。 —— */
 const phase2Spec=globalThis.__COLOREVER_PHASE2__??null;
 let armedPolicy=phase2Spec?null:(globalThis.__COLOREVER_CTA_POLICY__??null);
-let ctaAnnounced=false;
+let ctaAnnounced=false,nextCtaStep=Infinity,phase2Active=false;
+/* 结算重玩弹窗(最后一个 playable 的拼图完成动画结束后亮出):点击先请求一次 CTA,
+   再页内重建本关开局重玩。仅注入 enabled 时生效;双 playable 只在第二关武装。 —— */
+const replaySpec=globalThis.__COLOREVER_REPLAY__??null;
+const replayRoundActive=()=>!!(replaySpec&&replaySpec.enabled&&(!phase2Spec||phase2Active));
 /* 双 playable:第一关手势提示全程常驻(首次归位不关闭),页内换关进第二关时恢复常规引导。 */
 tutorial.persistent=!!phase2Spec;
+function armCtaSteps(){nextCtaStep=armedPolicy&&armedPolicy.mode==='steps'?armedPolicy.afterSteps:Infinity;}
 function announceCtaMoment(){
-  if(ctaAnnounced)return;
+  const repeat=ctaAnnounced,every=armedPolicy&&armedPolicy.mode==='steps'&&Number.isInteger(armedPolicy.everySteps)&&armedPolicy.everySteps>=1?armedPolicy.everySteps:0;
   ctaAnnounced=true;
-  document.dispatchEvent(new CustomEvent('novvy:cta-moment',{bubbles:true}));
+  nextCtaStep=every>0?puzzle.moves+every:Infinity;
+  document.dispatchEvent(new CustomEvent('novvy:cta-moment',{bubbles:true,detail:{repeat,everySteps:every,replayable:replayRoundActive()}}));
 }
 
 function disposeTree(root){
@@ -71,11 +81,12 @@ function disposeTree(root){
 }
 
 function buildLevel(level,pattern,patternId){
+  activeLevel=level;activePattern=pattern;activePatternId=patternId;
   clearHint();
   audio.stopEffects();
   if(session){scene.remove(session.group);disposeTree(session.group);}
   for(const f of flights)scene.remove(f.mesh);
-  busy=false;flights=[];hint=null;down=null;selectionStart=0;completion=null;pendingColors=[];completedColors=new Set();wasWon=false;ctaAnnounced=false;
+  busy=false;flights=[];hint=null;down=null;selectionStart=0;completion=null;pendingColors=[];completedColors=new Set();wasWon=false;ctaAnnounced=false;armCtaSteps();
   const sessionGroup=new THREE.Group();scene.add(sessionGroup);
   const {width,height,capacity:cap,trayCols:tc}=level;
   const bs=Math.min(3,33/Math.max(width,height)),tray=trayLayout(cap,tc),trayRows=tray.rows;
@@ -150,7 +161,7 @@ function updateUI(){
   showHint();
   document.dispatchEvent(new CustomEvent('novvy:hud-progress',{bubbles:true,detail:{percent:Math.round(puzzle.correct/puzzle.total*100),correct:puzzle.correct,total:puzzle.total}}));
   if(previewOptions&&window.parent!==window)window.parent.postMessage({type:'colorever-preview-state',id:previewOptions.id,moves:puzzle.moves,correct:puzzle.correct,total:puzzle.total,selected:puzzle.selection?.indices.length??0,cache:puzzle.tray.filter(Boolean).length,lastBatch:previewLastBatch,complete:puzzle.complete,busy},previewOrigin);
-  if(armedPolicy&&!ctaAnnounced&&armedPolicy.mode==='steps'&&puzzle.moves>=armedPolicy.afterSteps)announceCtaMoment();
+  if(armedPolicy&&puzzle.moves>=nextCtaStep)announceCtaMoment();
   if(!puzzle.complete)wasWon=false;
 }
 function projectHint(){
@@ -184,6 +195,24 @@ function activate(region,index){
 $('sound').onclick=()=>{audio.setEnabled(!audio.enabled);updateSound();};
 document.addEventListener('visibilitychange',()=>{if(document.hidden){audio.bgm.pause();audio.stopEffects();}else audio.unlock();});
 function reset(){wasWon=false;previewLastBatch=0;for(const f of flights)scene.remove(f.mesh);flights=[];busy=false;completion=null;pendingColors=[];effects.clear();audio.stopEffects();clearHint();puzzle.reset();tutorial.reset();seedCompleteColors();$('win').hidden=true;$('celebration').hidden=true;refresh();if(puzzle.complete)afterFlights(performance.now());}
+/* —— 结算重玩弹窗:拼图完成动画结束亮出;点击 Replay 先派发独立 CTA 请求
+   (转化桥手动转化,不读自动闩锁),再页内重建本关开局重玩,并派发
+   playable-replay 让段桥调 SDK onReplay、重置本轮转化窗口与步数。 —— */
+function showReplayPrompt(){
+  $('replay-text').textContent=replaySpec.text||'拼画完成！再玩一次？';
+  $('replay-btn').textContent=replaySpec.button||'Replay';
+  $('replay-prompt').hidden=false;
+}
+$('replay-btn').onclick=()=>{
+  if(!replayRoundActive()||busy||!puzzle.complete)return;
+  $('replay-prompt').hidden=true;$('win').hidden=true;$('celebration').hidden=true;
+  document.dispatchEvent(new CustomEvent('novvy:replay-cta',{bubbles:true}));
+  buildLevel(activeLevel,activePattern,activePatternId);
+  tutorial.reset();
+  refresh();
+  if(puzzle.complete)afterFlights(performance.now());
+  document.dispatchEvent(new CustomEvent('novvy:playable-replay',{bubbles:true}));
+};
 $('reset').onclick=reset;$('again').onclick=reset;$('dismiss').onclick=()=>{$('win').hidden=true;};
 $('undo').onclick=()=>{if(!busy&&puzzle.undo()){clearHint();effects.clear();pendingColors=[];completion=null;seedCompleteColors();$('win').hidden=true;$('celebration').hidden=true;refresh();}};
 $('hint').onclick=()=>{hint=puzzle.hint();showHint();};
@@ -227,7 +256,7 @@ function afterFlights(now){
   const colors=[...new Set(target.filter(Boolean))].filter(c=>!completedColors.has(c)&&puzzle.isColorComplete(c));
   let end=now;
   for(const c of colors){completedColors.add(c);const start=end+400;effects.color(c,start);const indices=[...cells].filter(([i])=>target[i]===c).map(([i])=>i);for(let k=0;k<indices.length;k+=Math.max(1,Math.floor(indices.length/12)))effects.spark(indices[k],start+80);pendingColors.push({color:c,start,announced:false});end=start+900;}
-  if(puzzle.complete){const start=end+250;completion={start,end:effects.full(start),announced:false};busy=true;document.dispatchEvent(new CustomEvent('novvy:playable-complete',{bubbles:true}));}
+  if(puzzle.complete){const start=end+250;completion={start,end:effects.full(start),announced:false};busy=true;document.dispatchEvent(new CustomEvent('novvy:playable-complete',{bubbles:true,detail:{replayable:replayRoundActive()}}));}
   else busy=colors.length>0;
   updateUI();
 }
@@ -240,7 +269,7 @@ function render(now){
   for(const event of pendingColors)if(now>=event.start&&!event.announced){event.announced=true;play('success');$('celebration').textContent=`${colorNames[event.color]}全部归位！`;$('celebration').hidden=false;}
   pendingColors=pendingColors.filter(event=>now<event.start+900);
   if(!pendingColors.length){$('celebration').hidden=true;if(busy&&!flights.length&&!completion){busy=false;updateUI();}}
-  if(completion){if(now>=completion.start&&!completion.announced){completion.announced=true;play('success');$('instruction').textContent='拼画完成 · 全图扫光中…';}if(now>=completion.end){completion=null;busy=false;updateUI();if(armedPolicy&&!ctaAnnounced)announceCtaMoment();$('win-detail').textContent=`${puzzle.total} 颗珠子全部归位 · ${puzzle.moves} 步完成`;$('win').hidden=false;if(!wasWon){wasWon=true;document.dispatchEvent(new CustomEvent('novvy:victory',{bubbles:true}));}}}
+  if(completion){if(now>=completion.start&&!completion.announced){completion.announced=true;play('success');$('instruction').textContent='拼画完成 · 全图扫光中…';}if(now>=completion.end){completion=null;busy=false;updateUI();if(armedPolicy&&!ctaAnnounced)announceCtaMoment();$('win-detail').textContent=`${puzzle.total} 颗珠子全部归位 · ${puzzle.moves} 步完成`;if(replayRoundActive())showReplayPrompt();else $('win').hidden=false;if(!wasWon){wasWon=true;document.dispatchEvent(new CustomEvent('novvy:victory',{bubbles:true,detail:{replayable:replayRoundActive()}}));}}}
   for(const {mesh,entries}of groups){for(let i=0;i<entries.length;i++){const e=entries[i],selected=puzzle.selection?.region===e.region&&puzzle.selection.indices.includes(e.index);const t=THREE.MathUtils.clamp((now-selectionStart)/150,0,1);e.lift=selected?.38*(1-Math.pow(1-t,3)):THREE.MathUtils.lerp(e.lift,0,.25);const flying=flights.some(f=>!f.landed&&f.toRegion===e.region&&f.to===e.index);dummy.position.copy(e.point);dummy.position.z+=e.lift;dummy.scale.setScalar(flying?0:(e.region==='tray'?trayScale:boardScale)*(selected?1+.07*Math.sin(Math.PI*t):1));dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);}mesh.instanceMatrix.needsUpdate=true;}
   ambientSheen.update(groups,flights,now);effects.update(now);renderer.render(scene,camera);
 }
@@ -258,6 +287,8 @@ if(phase2Spec){
     switched=true;
     buildLevel(level2,pattern2,phase2Spec.patternId);
     armedPolicy=phase2Spec.cta??null;
+    phase2Active=true;
+    armCtaSteps();
     tutorial.persistent=false;
     tutorial.reset();
     refresh();

@@ -20,7 +20,10 @@
     },
     "intro": {
       "enabled": false,
-      "ariaLabel": ""
+      "ariaLabel": "",
+      "hookText": "",
+      "goEnabled": false,
+      "goText": "GO"
     },
     "hud": {
       "enabled": false,
@@ -47,7 +50,8 @@
     },
     "playableCta": {
       "mode": "complete",
-      "afterSteps": 8
+      "afterSteps": 8,
+      "everySteps": 0
     },
     "secondPlayable": {
       "enabled": false,
@@ -65,8 +69,14 @@
       },
       "cta": {
         "mode": "steps",
-        "afterSteps": 8
+        "afterSteps": 8,
+        "everySteps": 0
       }
+    },
+    "replay": {
+      "enabled": false,
+      "text": "拼画完成！再玩一次？",
+      "button": "Replay"
     }
   },
   "overlays": {

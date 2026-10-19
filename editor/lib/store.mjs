@@ -113,7 +113,7 @@ const CONFIG_PATCH_WHITELIST = new Set(['hud', 'intro', 'cta', 'recolorPortraits
 // Water Sort 保存关卡数据；Colorever New 选择图案 ID 与任务级开局参数；
 // DragonCube 选择两关的关卡编号与转化时机（第二关共用 secondPlayable）。
 const CONFIG_WHITELISTS = new Map([
-  ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','opening','playableCta','secondPlayable','music'])],
+  ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','opening','playableCta','replay','secondPlayable','music'])],
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable'])],
 ]);

@@ -41,6 +41,21 @@ export default async function run(assert) {
     assert.equal(first.clicks.map(click => click.scene), ['cta-card', 'victory', 'cta-moment'], '末关有自己的转化窗口且不重复');
     assert.equal(first.phases, endMask ? ['bar', 'takeover'] : ['bar'], '末关仍遵守结束遮罩配置');
   }
+  // 步数循环素材(detail.everySteps>0):首跳建立转化窗口,循环间隔逐次转化;
+  // 回访触压不再武装(节奏由步数驱动);完成兜底不重复跳转,但回访触压照旧。
+  const loop = bridge({ endMask: false });
+  loop.emit('novvy:cta-moment', { everySteps: 5 });
+  loop.emit('novvy:cta-moment', { everySteps: 5, repeat: true });
+  loop.emit('novvy:cta-moment', { everySteps: 5, repeat: true });
+  loop.tap();
+  assert.equal(loop.clicks.map(click => click.scene), ['cta-moment', 'cta-moment', 'cta-moment'], '步数循环素材按间隔逐次转化，触压不抢跑');
+  assert.equal(loop.phases, ['bar'], '循环转化不重复亮卡');
+  const loopFallback = bridge({ endMask: false });
+  loopFallback.emit('novvy:cta-moment', { everySteps: 5 });
+  loopFallback.emit('novvy:playable-complete');
+  loopFallback.emit('novvy:victory');
+  loopFallback.tap();
+  assert.equal(loopFallback.clicks.map(click => click.scene), ['cta-moment', 'post-complete-interact'], '循环素材完成兜底不重复跳转，完成后的回访触压照旧武装');
   for (const continuing of [undefined, false]) {
     const legacy = bridge({ twoPhase: false });
     legacy.emit('novvy:playable-complete', { continuing });

@@ -12,6 +12,8 @@
   const video = document.getElementById('novvy-intro-video');
   const soundButton = document.getElementById('novvy-intro-sound');
   const countdown = document.getElementById('novvy-intro-countdown');
+  const hook = document.getElementById('novvy-intro-hook');
+  const goButton = document.getElementById('novvy-intro-go');
   if (!root || !video || !soundButton) return;
 
   // Package mode carries the aria text in materials.js; see hud.js note.
@@ -19,6 +21,24 @@
   if (introUi && typeof introUi.ariaLabel === 'string') {
     root.setAttribute('aria-label', introUi.ariaLabel);
   }
+
+  /* —— 倒计时钩子文案 + GO 闸门:goEnabled 开启后,倒计时下方亮一行钩子文案
+     (注入时已解析,空串=未配置),倒计时结束后不直接进试玩,底部亮 GO 按钮
+     等待点击;点击(或 failsafe 到点)才派发 novvy:intro-finished。 —— */
+  const goGate = !!(introUi && introUi.goEnabled === true);
+  const GO_GRACE_MS = 12000;
+  let goWaiting = false;
+  if (hook && introUi && typeof introUi.hookText === 'string' && introUi.hookText) {
+    hook.textContent = introUi.hookText;
+  }
+  if (goButton && introUi && typeof introUi.goText === 'string' && introUi.goText) {
+    goButton.textContent = introUi.goText;
+  }
+  goButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (goWaiting) finish('video_ended'); // 用户确认进入试玩
+  });
 
   const track = (name, params) => {
     if (window.NovvyAnalytics) window.NovvyAnalytics.track(name, params);
@@ -55,6 +75,7 @@
     if (!countdownShown) return;
     countdownShown = 0;
     if (countdown) { countdown.hidden = true; countdown.innerHTML = ''; }
+    if (hook) hook.hidden = true; // 钩子文案与倒计时同亮同收
   }
   function syncCountdown() {
     if (!countdown) return;
@@ -67,6 +88,7 @@
     buzz(n);
     countdown.hidden = false;
     countdown.innerHTML = '<span>' + n + '</span>';
+    if (hook && hook.textContent) hook.hidden = false;
   }
   video.addEventListener('timeupdate', syncCountdown);
   video.addEventListener('ended', hideCountdown);
@@ -96,14 +118,19 @@
   // user_skip stays in the contract but is no longer fired — tapping the
   // video focuses it (unlock sound) instead of skipping. The DOM event
   // decouples this overlay from analytics.
-  const finish = (reason) => {
+  // gated=true(视频自然结束/解码出错)且 GO 闸门开启时,先亮 GO 按钮等待
+  // 点击,不立即收尾;GO 点击与 failsafe 走非门控路径真正收尾。
+  const finish = (reason, gated = false) => {
     if (finished) return;
+    if (gated && goGate && !goWaiting) { showGoGate(); return; }
     finished = true;
     let switchSeconds = 0;
     try { switchSeconds = Math.round(video.currentTime || 0); } catch (_error) {}
     ownerPaused = true;
     try { video.pause(); } catch (_error) {}
     hideCountdown();
+    if (goButton) goButton.hidden = true;
+    if (hook) hook.hidden = true;
     teardown(reason || 'video_ended'); // release close BEFORE playable_entry lands
     window.__novvyIntroFinished = true;
     try {
@@ -114,6 +141,18 @@
     root.classList.add('is-finished');
     window.setTimeout(() => root.remove(), 220);
   };
+
+  // GO 停留帧也是素材可见时间:给足最短停留窗(不缩水 30s failsafe 的剩余量),
+  // 超时仍未点击则按 timer_reached 自动进试玩,不把用户困在片尾帧上。
+  function showGoGate() {
+    if (finished || goWaiting) return;
+    goWaiting = true;
+    hideCountdown();
+    if (goButton) goButton.hidden = false;
+    failsafeRemaining = Math.max(failsafeRemaining, GO_GRACE_MS);
+    armFailsafe();
+    track('go_gate_shown');
+  }
 
   function releaseCustomClose(reason) {
     if (!customCloseRequested) return;
@@ -358,8 +397,10 @@
     else playVideo();
   });
 
-  video.addEventListener('ended', () => finish('video_ended'), { once: true });
-  video.addEventListener('error', () => finish('video_ended'), { once: true });
+  // 视频自然结束/解码出错都先过 GO 闸门(开启时亮按钮等待);failsafe 的
+  // timer_reached 直接收尾,防止无人点击时永远停在片尾帧。
+  video.addEventListener('ended', () => finish('video_ended', true), { once: true });
+  video.addEventListener('error', () => finish('video_ended', true), { once: true });
 
   // Playback starts through the lifecycle above (startCreative → playVideo);
   // with no bridge, run(true) already fired synchronously there.

@@ -22,3 +22,12 @@
 .hud span{font-size:14px;font-weight:600}
 .hud progress{height:14px;border-radius:999px}
 .hud progress::-webkit-progress-value{border-radius:999px}
+
+#replay-prompt{position:absolute;inset:0;display:grid;place-items:center;z-index:6;background:#1b496a40}
+#replay-prompt[hidden]{display:none}
+.replay-card{background:#fffffff7;border-radius:22px;padding:22px 24px;width:72%;text-align:center;box-shadow:0 12px 45px #23496940;animation:replay-pop .32s cubic-bezier(.2,.8,.3,1.08)}
+.replay-card p{margin:0 0 14px;color:#326b83;font-size:16px;font-weight:600;line-height:1.5}
+.replay-card button{border:0;border-radius:14px;background:#249fc7;color:#fff;padding:12px 0;width:100%;font-size:16px;font-weight:700;cursor:pointer}
+.replay-card button:active{transform:scale(.97)}
+@media(prefers-reduced-motion:reduce){.replay-card{animation:none}}
+@keyframes replay-pop{0%{transform:scale(.72);opacity:0}100%{transform:scale(1);opacity:1}}

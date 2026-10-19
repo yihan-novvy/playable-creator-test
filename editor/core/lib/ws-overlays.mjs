@@ -88,7 +88,18 @@ export function buildWsOverlayInjection({ overlaysRoot, template, config, media,
       .replaceAll('__NOVVY_INTRO_POSTER__', media.introPoster);
     headStyles.push(`<style data-novvy-intro>${readOverlay('intro', 'intro.css')}</style>`);
     bodyScripts.push(`<script data-novvy-intro>${readOverlay('intro', 'intro.js')}</script>`);
-    uiConfig.intro = { ariaLabel: String(config?.intro?.ariaLabel ?? '') };
+    // 倒计时钩子与 GO 按钮(素材自可选实现):goEnabled 开启后,片尾 3-2-1
+    // 倒计时下方亮一行钩子文案(未显式配置时取 HUD 标题),倒计时结束后不再
+    // 直接进试玩,底部先亮 GO 按钮等点击。未开启时两者不注入,行为与旧版一致。
+    const goEnabled = config?.intro?.goEnabled === true;
+    const hookText = String(config?.intro?.hookText ?? '').trim()
+      || (goEnabled ? [config?.hud?.titleLine1, config?.hud?.titleLine2].map(value => String(value ?? '').trim()).filter(Boolean).join(' ') : '');
+    uiConfig.intro = {
+      ariaLabel: String(config?.intro?.ariaLabel ?? ''),
+      hookText,
+      goEnabled,
+      goText: String(config?.intro?.goText ?? '').trim() || 'GO',
+    };
   }
   if (backgroundEnabled) {
     bgDom = readOverlay('background', 'background.html').replaceAll('__NOVVY_BG_FILE__', media.background);

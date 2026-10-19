@@ -198,9 +198,18 @@
   /* CTA 时刻(引擎在武装策略命中时派发:第 N 步,或完成兜底):
      遮罩开启时双 playable 升级为全屏接管;关闭时不弹遮罩,只主动转化一次,
      并交由回访每击转化接管后续。autoConverted 闩锁只对自动时机去重。
-     单 playable 不接管 —— 底部卡自试玩起常驻,这里只补主动转化。 */
+     单 playable 不接管 —— 底部卡自试玩起常驻,这里只补主动转化。
+     步数循环素材(detail.everySteps>0):游玩期由"每 M 步"节奏驱动转化,
+     不再武装回访每击(否则每次触压抢跑循环节奏);repeat=引擎在循环间隔
+     的再次派发,绕过自动闩锁请求转化(连点交给 SDK 冷却护栏),亮卡状态
+     保持不变。未携带 everySteps 的既有素材行为逐字节不变。 */
   window.addEventListener('novvy:cta-moment', function (event) {
-    if (!END_MASK) armInteractConvert();
+    var everySteps = !!(event && event.detail && event.detail.everySteps > 0);
+    if (!everySteps && !END_MASK) armInteractConvert();
+    if (everySteps && event.detail.repeat) {
+      convert('cta-moment');
+      return;
+    }
     if (autoConverted) return;
     autoConverted = true;
     var replayable = window.__novvyReplayable && event && event.detail && event.detail.replayable;

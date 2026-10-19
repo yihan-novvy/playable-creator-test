@@ -19,7 +19,9 @@ export default async function run(assert){
   assert.equal(normalizeOpening({mode:'scattered',seed:17,speed:3}),{mode:'medium',coverage:95,batchSize:30,seed:17},'旧零散配置转为全局，测试速度不进入正式开局配置');
   const workbench=fs.readFileSync(path.join(next.dir,'workbench.js'),'utf8');
   assert.check(workbench.includes('全局大块归位')&&!workbench.includes("['scattered',")&&!workbench.includes('测试搬运速度'),'正式 editor 仅展示两种模式，无测试调速控件');
+  assert.check(workbench.includes('此后每 M 步再跳一次')&&workbench.includes('结算重玩弹窗')&&workbench.includes('倒计时钩子与 GO 按钮'),'工作台提供循环跳转、重玩弹窗与倒计时 GO 配置');
   const newScript=fs.readFileSync(path.join(next.templateDir,'game/game.js'),'utf8');
+  assert.check(newScript.includes('__COLOREVER_REPLAY__')&&newScript.includes('novvy:replay-cta')&&newScript.includes('novvy:playable-replay')&&newScript.includes('replay-prompt'),'重玩弹窗契约进入引擎');
   // 白名单与步骤输入沿用 colorever 家族契约(纯 store 层字符串映射,不依赖注册表)。
   assert.equal([...configWhitelistFor(next.id)],[...configWhitelistFor('colorever')],'配置保存白名单沿用家族契约');
   assert.equal(stepInputFilesFor(next.id),stepInputFilesFor('colorever'),'步骤输入与过期依赖沿用家族契约');
@@ -74,6 +76,12 @@ export default async function run(assert){
     assert.check(phoenixPreview.includes('["phoenix"]=function')&&!phoenixPreview.includes('["orange-pixel-cat"]=function'),'真装饰图案只注入自身的装饰代码');
     await patch({patternId:'orange-pixel-cat'});
     assert.check(preview.includes('宝石拼图')&&preview.includes('--colorever-progress-fill:#e76b32'),'HUD 文案和配色兼容');
+    assert.check(preview.includes('__COLOREVER_CTA_POLICY__={"mode":"steps","afterSteps":8}')&&!preview.includes('"everySteps":')&&preview.includes('__COLOREVER_REPLAY__=null'),'未配置循环间隔与重玩弹窗时保持旧注入');
+    await patch({playableCta:{mode:'steps',afterSteps:3,everySteps:5},replay:{enabled:true,text:'再来一局！',button:'重玩'}});
+    const gated=await(await fetch(base+url+'/preview')).text();
+    assert.check(gated.includes('__COLOREVER_CTA_POLICY__={"mode":"steps","afterSteps":3,"everySteps":5}')&&gated.includes('window.__novvyReplayable=true;')&&gated.includes('__COLOREVER_REPLAY__={"enabled":true,"text":"再来一局！","button":"重玩"}'),'循环跳转与重玩弹窗按配置注入');
+    assert.equal((await patch({replay:{text:''}})).body.config.replay.text,'','重玩文案允许清空(打包回退默认)');
+    await patch({playableCta:{mode:'steps',afterSteps:8,everySteps:0},replay:{enabled:false}});
     result=await api(url+'/run',{step:'all'});
     assert.check(result.body.every(x=>x.ok),'原版配置在新版本七步通过');
     const generated=JSON.parse(fs.readFileSync(path.join(taskGeneratedDir(id),'level.json'),'utf8'));
@@ -113,7 +121,7 @@ export default async function run(assert){
       res=await fetch(base+url+'/uploads/'+slot,{method:'PUT',headers:{'Content-Type':'video/mp4'},body:videoBytes});
       assert.equal(res.status,200,`兼容视频槽位 ${slot}`);
     }
-    await patch({intro:{enabled:true},outro:{enabled:true},hud:{enabled:true,titleEnabled:true},background:{enabled:true,source:'video-first',blurSigma:2},secondPlayable:{enabled:true,patternId:'house',opening:{mode:'medium',seed:23,coverage:95,batchSize:30},background:{enabled:true,source:'video-last',blurSigma:2},cta:{mode:'steps',afterSteps:5}}});
+    await patch({intro:{enabled:true,goEnabled:true,goText:'开始'},outro:{enabled:true},hud:{enabled:true,titleEnabled:true},background:{enabled:true,source:'video-first',blurSigma:2},secondPlayable:{enabled:true,patternId:'house',opening:{mode:'medium',seed:23,coverage:95,batchSize:30},background:{enabled:true,source:'video-last',blurSigma:2},cta:{mode:'steps',afterSteps:5,everySteps:7}}});
     result=await api(url+'/run',{step:'all'});
     assert.check(result.status===200&&result.body.every(x=>x.ok),'片头、HUD、双背景、片尾、第二关完整流程通过');
     const second=JSON.parse(fs.readFileSync(path.join(taskGeneratedDir(id),'level2.json'),'utf8'));
@@ -122,6 +130,8 @@ export default async function run(assert){
     const packed=fs.readFileSync(path.join(taskResultDir(id),'index.html'),'utf8');
     assert.check(!packed.includes('__COLOREVER_PREVIEW__'),'交付 HTML 无测试速度上下文，运行使用基础速度');
     assert.check(packed.includes('data-novvy-outro')&&packed.includes('__COLOREVER_PHASE2__')&&packed.includes('background2.webp')&&packed.includes('data-novvy-cta-bridge'),'沿用视频、换关、背景和 CTA 注入');
+    assert.check(packed.includes('"cta":{"mode":"steps","afterSteps":5,"everySteps":7}')&&packed.includes('novvy-intro-go')&&packed.includes('"intro":{"ariaLabel":"","hookText":"宝石拼图 目标颜色始终可见","goEnabled":true,"goText":"开始"}'),'第二关循环策略与倒计时钩子/GO 随包注入');
+    assert.check(!packed.includes('window.__novvyReplayable=true')&&packed.includes('__COLOREVER_REPLAY__=null'),'未开重玩弹窗的包不携带可重玩标记');
     assert.check(packed.includes('data-colorever-decorators')&&packed.includes('["orange-pixel-cat"]=function')&&packed.includes('["house"]=function'),'双关各自的装饰片段去重注入');
     const beforeSwitch=readTask(id);
     const filesBeforeSwitch=[taskUploadsDir(id),taskGeneratedDir(id)].flatMap(dir=>fs.readdirSync(dir).map(name=>({file:path.join(dir,name),bytes:fs.readFileSync(path.join(dir,name))})));

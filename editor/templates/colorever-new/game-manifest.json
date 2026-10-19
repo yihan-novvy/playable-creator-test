@@ -631,7 +631,7 @@
     }
   ],
   "constants": {
-    "engineSha256": "b5f0fe26cedf4654f7b691d0435d6e9990617471b4cb2b1c57a3c536f9b204f6",
+    "engineSha256": "22de3269307bd296e25e3992e77595e49c3c5a141c418e787f10a352e6a2a1f7",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "d7f2f9885334799f8a645825e3ef8da6991d2a317b28add5ebf6bc63e2b46156"

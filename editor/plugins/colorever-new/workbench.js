@@ -219,7 +219,8 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       if (statusInfo?.uploads?.['outro-video']?.present) right.append(el('video', { controls:'',src:versioned(`/project/${taskId}/uploads/outro-video.mp4`,uploadVersion('outro-video')),style:'max-height:300px' }));
       else right.append(el('span',{class:'hint'},['未设置片尾视频，可直接跳过。']));
     });
-    // 转化时机控件:两关同构(complete=完成后跳转;steps=第 N 步跳转,完成时兜底)。
+    // 转化时机控件:两关同构(complete=完成后跳转;steps=第 N 步跳转,完成时兜底;
+    // everySteps=首跳后每 M 步再跳一次,0=只跳一次)。
     function ctaTimingControls(getCta, patchCta) {
       const wrap=el('div',{class:'dragon-config-grid'});
       const select=el('select',{'aria-label':'转化时机'});
@@ -231,6 +232,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
         const steps=el('input',{type:'number',min:1,max:99,step:1,value:getCta()?.afterSteps??8});
         steps.onchange=async()=>{await save(patchCta({afterSteps:Number(steps.value)}));await refresh(true);};
         wrap.append(field('触发步数 N（完成时也会兜底跳转）',steps));
+        const every=el('input',{type:'number',min:0,max:99,step:1,value:getCta()?.everySteps??0});
+        every.onchange=async()=>{await save(patchCta({everySteps:Number(every.value)}));await refresh(true);};
+        wrap.append(field('此后每 M 步再跳一次（0=只跳一次）',every));
       }
       return wrap;
     }
@@ -280,9 +284,36 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     // 第一关转化时机:仅无片尾时可配(有片尾时第一关只负责引出片尾)。
     const ctaTiming=el('section',{class:'step-card',id:'cta-timing-settings'},[
       el('h3',{},['转化时机']),
-      el('p',{class:'hint'},['仅在未使用片尾视频时生效：完成后自动跳转，或玩到第 N 步时亮出下载卡并自动跳转一次。']),
+      el('p',{class:'hint'},['仅在未使用片尾视频时生效：完成后自动跳转，或玩到第 N 步时亮出下载卡并自动跳转；填写循环间隔 M 后，首次跳转每再玩 M 步会再跳转一次（0=只跳一次）。']),
       ctaTimingControls(()=>config().playableCta,patch=>({playableCta:patch})),
     ]);
+    // 结算重玩弹窗:作用于最后一个 playable(无片尾=唯一 playable;双关=第二关)。
+    const replayOn=config().replay?.enabled===true;
+    const replayCard=el('section',{class:'step-card',id:'replay-settings'},[
+      el('h3',{},['结算重玩弹窗']),
+      el('p',{class:'hint'},['最后一个 playable（未开片尾时即唯一的 playable）拼图完成动画结束后，亮出小弹窗引导点击 Replay；点击后先请求一次跳转，再页内重开本关开局重玩。建议保持「结束后全屏遮罩」关闭。']),
+      checkbox('启用结算重玩弹窗','replay','enabled',replayOn),
+    ]);
+    if(replayOn){
+      replayCard.append(el('div',{class:'dragon-config-grid'},[
+        textField('弹窗文案','replay','text',config().replay?.text,'拼画完成！再玩一次？'),
+        textField('按钮文字','replay','button',config().replay?.button,'Replay'),
+      ]));
+    }
+    // 片头倒计时钩子与 GO 按钮:仅在启用片头时出现。
+    let introGate=null;
+    if(config().intro?.enabled){
+      const goEnabled=config().intro?.goEnabled===true;
+      introGate=el('section',{class:'step-card',id:'intro-gate-settings'},[
+        el('h3',{},['倒计时钩子与 GO 按钮']),
+        el('p',{class:'hint'},['片头最后 3 秒倒计时数字下方显示一行钩子文案，吸引等待中的用户；倒计时结束后不再直接进入试玩，底部先亮出 GO 按钮，点击后才进入 playable。']),
+        checkbox('倒计时结束后显示 GO 按钮','intro','goEnabled',goEnabled),
+        el('div',{class:'dragon-config-grid'},[
+          textField('钩子文案（留空=取 HUD 标题）','intro','hookText',config().intro?.hookText,'默认取 HUD 主标题'),
+          textField('GO 按钮文字','intro','goText',config().intro?.goText,'GO'),
+        ]),
+      ]);
+    }
     const endMaskOn = config().cta?.endMask === true;
     const ctaCopy = el('section', { class: 'step-card', id: 'cta-copy-settings' }, [
       el('h3', {}, ['CTA 遮罩文案']),
@@ -351,12 +382,14 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       }
     });
     if(config().intro?.enabled)root.append(intro);
+    if(introGate)root.append(introGate);
     if(config().hud?.enabled)root.append(hud);
     if(titleEnabled())root.append(title);
     if(config().background?.enabled)root.append(background);
     if(config().outro?.enabled){root.append(outro);if(secondPlayable)root.append(secondPlayable);if(secondBackground)root.append(secondBackground);}
     root.append(progressStyle);
     if(!config().outro?.enabled)root.append(ctaTiming);
+    root.append(replayCard);
     root.append(ctaCopy);
     root.append(level,pack);
     let number=0;

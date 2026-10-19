@@ -76,9 +76,27 @@ export async function coloreverLevel(root, config, template) {
   return { level, proof, patternId: id, opening };
 }
 
+// CTA 时机策略(两关同构):在共享 normalizeCtaPolicy 之上叠加本模板的"步数
+// 循环"扩展——steps 模式下首次第 afterSteps 步跳转后,每再玩 everySteps 步再
+// 跳一次(引擎以 repeat 事件派发,转化桥绕过自动闩锁逐次转化)。未配置合法
+// everySteps 时不追加字段,注入 JSON 与既有产物逐字节一致。
+export function coloreverCtaPolicy(raw, fallbackMode) {
+  const policy = normalizeCtaPolicy(raw, fallbackMode);
+  const everySteps = policy.mode === 'steps' && Number.isInteger(raw?.everySteps) && raw.everySteps >= 1 && raw.everySteps <= 99 ? raw.everySteps : 0;
+  return everySteps > 0 ? { ...policy, everySteps } : policy;
+}
+
 // CTA 时机策略(两关同构):实现上收到 core/lib/helpers.mjs 供各模板共享,
 // 这里保留 re-export 兼容既有引用。
 export { normalizeCtaPolicy };
+
+// 结算重玩弹窗(最后一个 playable 的拼图完成动画结束后亮出):点击先请求
+// 一次 CTA,再页内重建本关开局重玩。enabled 未开时注入 null,包行为与旧版
+// 完全一致;文案/按钮留空回退默认。
+export function normalizeReplay(raw) {
+  if (raw?.enabled !== true) return null;
+  return { enabled: true, text: String(raw?.text ?? '').trim() || '拼画完成！再玩一次？', button: String(raw?.button ?? '').trim() || 'Replay' };
+}
 
 // 双 playable 数据:仅在片尾已启用(存在片尾视频才算)时允许,否则视为未配置。
 // 第二关数据全量内联进 index.html,打包文件列表不变。第二关开局同样由任务配置。
@@ -87,7 +105,7 @@ export async function coloreverPhase2(root, config, template, outroActive) {
   const { level, patternId } = await coloreverLevel(root, { ...config, patternId: config.secondPlayable.patternId ?? 'house', opening: config.secondPlayable?.opening }, template);
   const title = config.secondPlayable?.hud;
   const hud = { titleLine1: title?.titleEnabled === false ? '' : String(title?.titleLine1 ?? level.name), titleLine2: title?.titleEnabled === false ? '' : String(title?.titleLine2 ?? '') };
-  return { patternId, level, hud, cta: normalizeCtaPolicy(config.secondPlayable?.cta, 'steps') };
+  return { patternId, level, hud, cta: coloreverCtaPolicy(config.secondPlayable?.cta, 'steps') };
 }
 
 const inline = (value) => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
@@ -183,7 +201,10 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
     }
   }
   injection.background2Enabled = background2Enabled;
-  const ctaPolicy = injection.outroEnabled ? null : normalizeCtaPolicy(config?.playableCta, 'complete');
+  const ctaPolicy = injection.outroEnabled ? null : coloreverCtaPolicy(config?.playableCta, 'complete');
+  // 结算重玩弹窗:开启时共享段桥/转化桥按 __novvyReplayable 保留当前段等待
+  // 重玩(通关结算 continue_playing),重玩按钮的 CTA 请求不读自动闩锁。
+  const replaySpec = normalizeReplay(config?.replay);
   const portraitHudEnabled = injection.hudEnabled && config?.hud?.enabled === true;
   // 底部卡在画布上方叠放,开启时画布上移留出卡位,托盘不被卡片盖住。
   const top = portraitHudEnabled ? '.18' : '0', bottom = injection.ctaCardEnabled ? '.16' : '0';
@@ -193,7 +214,7 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const overlayColors = `--colorever-progress-text:${color('progressTextColor','#ffffff')};--colorever-progress-fill:${color('progressFillColor','#ffd91e')};--colorever-progress-track:${color('progressTrackColor','#b7834a')}`;
   injection.headStyles.push(`<style data-colorever-progress>.app{${nativeColors}}.app>.hud{top:15%;color:var(--colorever-progress-text)}.app progress{accent-color:var(--colorever-progress-fill);background:var(--colorever-progress-track)}.app progress::-webkit-progress-bar{background:var(--colorever-progress-track)}.app progress::-webkit-progress-value{background:var(--colorever-progress-fill)}.app progress::-moz-progress-bar{background:var(--colorever-progress-fill)}#novvy-training-hud{${overlayColors}}</style>`);
   const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root:not(.novvy-phase2),:root:not(.novvy-phase2) body,:root:not(.novvy-phase2) .app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
-  const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__novvyStageChain__=${inline(stageChain)};window.__COLOREVER_CTA_POLICY__=${inline(ctaPolicy)};window.__COLOREVER_PHASE2__=${inline(phase2)};</script>`;
+  const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__novvyStageChain__=${inline(stageChain)};window.__COLOREVER_CTA_POLICY__=${inline(ctaPolicy)};window.__COLOREVER_PHASE2__=${inline(phase2)};window.__COLOREVER_REPLAY__=${inline(replaySpec)};${replaySpec ? 'window.__novvyReplayable=true;' : ''}</script>`;
   html = html.replace('</head>', () => `${[...injection.headStyles, styles, ...injection.headScripts].join('\n')}</head>`)
     .replace(SCRIPT, () => `${injection.uiScript}${data}${preview ? `<script src="${gameScriptUrl || `/templates/${template.id}/game/game.js`}" defer></script>` : SCRIPT}`)
     .replace('<body>', () => `<body>${injection.bodyDom.join('\n')}`)
