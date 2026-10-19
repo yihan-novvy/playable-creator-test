@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "22de3269307bd296e25e3992e77595e49c3c5a141c418e787f10a352e6a2a1f7",
+  "engineSha256": "21981f76bc4be82dfbecb19be7a92f8f1e3c2dc030b147ac1a5d9f39082c8cc6",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "d7f2f9885334799f8a645825e3ef8da6991d2a317b28add5ebf6bc63e2b46156",
   "decorators": {
@@ -420,6 +420,46 @@
       "file": "decorators/oct17-b1-peiyi-2-1-flower.js",
       "sha256": "94da46d6c2acf2bd1ae0d0ed9836c5b9d503001042b6226718cb4d15bcefc6a5"
     },
+    "oct19-b1-george-10-1-racing-medal": {
+      "file": "decorators/oct19-b1-george-10-1-racing-medal.js",
+      "sha256": "868d77f4712b02e7dc4b81c572c6906aa758f5202b7232143a907c34a1484a56"
+    },
+    "oct19-b1-george-10-2-red-megaphone": {
+      "file": "decorators/oct19-b1-george-10-2-red-megaphone.js",
+      "sha256": "10c18eeff4ff5079a17f5ae754df14a30c341cdda7cdca8fe8de3beacbe621a0"
+    },
+    "oct19-b1-george-11-1-heart-birthmark": {
+      "file": "decorators/oct19-b1-george-11-1-heart-birthmark.js",
+      "sha256": "94bb8bff767d3d3ebac4671707c0b0b3996c10699e40424ac9b13ac8184fca93"
+    },
+    "oct19-b1-george-11-2-dna-helix": {
+      "file": "decorators/oct19-b1-george-11-2-dna-helix.js",
+      "sha256": "24439eba0720fa0cb81cfbb050c6cb2c426929116932b989794fe00849c0bcdd"
+    },
+    "oct19-b1-george-13-5-1-silver-crescent": {
+      "file": "decorators/oct19-b1-george-13-5-1-silver-crescent.js",
+      "sha256": "199608b270e5fa3b42053729d465609987bdd3243e72543811d87ab91c404c11"
+    },
+    "oct19-b1-george-13-5-2-silver-wolf": {
+      "file": "decorators/oct19-b1-george-13-5-2-silver-wolf.js",
+      "sha256": "ab149db47fe1d60e7805d747a849b8054e7e940a02f1239b99e88fe3d33c9a34"
+    },
+    "oct19-b1-george-15-2-ice-bridge": {
+      "file": "decorators/oct19-b1-george-15-2-ice-bridge.js",
+      "sha256": "9020739525e07dca5a2e9224b7a0b218d4b091f0d36313f4f202de43b681a16f"
+    },
+    "oct19-b1-george-16-1-phone": {
+      "file": "decorators/oct19-b1-george-16-1-phone.js",
+      "sha256": "4066f8b4c4f8472737ce781820c6b2432fb8affe903a5025a6ae1160d7eca942"
+    },
+    "oct19-b1-george-16-2-signal": {
+      "file": "decorators/oct19-b1-george-16-2-signal.js",
+      "sha256": "06985350caec9fb2868a50328f33c81f61dfe05f82d1f8a6d1605fb11255ede9"
+    },
+    "oct19-b1-george-4-3-2-flame-dragon": {
+      "file": "decorators/oct19-b1-george-4-3-2-flame-dragon.js",
+      "sha256": "560330c89339cf6c4fe7b0707156a935eb8502cc95b7249b682435132ab88143"
+    },
     "orange-pixel-cat": {
       "file": "decorators/orange-pixel-cat.js",
       "sha256": "8f28eefde1661f3b29002b6f3dd6dd7a18fce428fc1d9916d0f35e06d7278580"
@@ -506,6 +546,76 @@
     }
   },
   "patterns": [
+    {
+      "id": "oct19-b1-george-10-1-racing-medal",
+      "name": "10-19-george-10-1-赛车奖章",
+      "description": "金色浮雕赛车奖章，G5 红字、黑白赛旗和红蓝绶带，保留金属明暗",
+      "level": "oct19-b1-george-10-1-racing-medal.json",
+      "templateSha256": "d019102ee8cf15aa2432940b91399a14e6e7c07a0037e58ffc0e1cd032f37a43"
+    },
+    {
+      "id": "oct19-b1-george-10-2-red-megaphone",
+      "name": "10-19-george-10-2-红色喇叭",
+      "description": "珊瑚红扩音喇叭、酒红内壁、香槟金口沿及声波，握柄保留明暗",
+      "level": "oct19-b1-george-10-2-red-megaphone.json",
+      "templateSha256": "e7c7dbb6016304a584cb7ce4572decbddb75813ddb5f344056b4d97354a38cdd"
+    },
+    {
+      "id": "oct19-b1-george-11-1-heart-birthmark",
+      "name": "10-19-george-11-1-爱心胎记",
+      "description": "保留镂空爱心轮廓，以莓紫、玫瑰红、珊瑚粉表现柔和立体转折，搭配少量金光",
+      "level": "oct19-b1-george-11-1-heart-birthmark.json",
+      "templateSha256": "0ef1b42240340af2c889de9c9c14ccebc8f2c7fbcb89395889478e3b70934d32"
+    },
+    {
+      "id": "oct19-b1-george-11-2-dna-helix",
+      "name": "10-19-george-11-2-DNA双螺旋",
+      "description": "蓝青与珊瑚双色 DNA 双螺旋，香槟金横向碱基和清楚的交错关系",
+      "level": "oct19-b1-george-11-2-dna-helix.json",
+      "templateSha256": "05956ab53c77a11719800a9963a08e6f2db9f4485c66857d1395476a8529375b"
+    },
+    {
+      "id": "oct19-b1-george-13-5-1-silver-crescent",
+      "name": "10-19-george-13-5-1-银色月牙",
+      "description": "深黑夜空珠子方框衬托珍珠银月牙，保留冰蓝和淡紫弧面、暖金星星",
+      "level": "oct19-b1-george-13-5-1-silver-crescent.json",
+      "templateSha256": "30b209dc958c11835150a1ad8e38c82a37b6cefd11eef7a5e07bc1c8ef024aac"
+    },
+    {
+      "id": "oct19-b1-george-13-5-2-silver-wolf",
+      "name": "10-19-george-13-5-2-银色狼头",
+      "description": "正面尖耳银狼，冰蓝银白毛色、灰紫颊影及珊瑚红瞳，保留额头和口鼻的几何层次",
+      "level": "oct19-b1-george-13-5-2-silver-wolf.json",
+      "templateSha256": "0a90c652ecde9c8508926bc9dcf21d0ee722072df34b1470739e1a899fe2a1c2"
+    },
+    {
+      "id": "oct19-b1-george-15-2-ice-bridge",
+      "name": "10-19-george-15-2-冰桥",
+      "description": "冰蓝拱桥正面，平直雪面桥板、冰晶栏杆、双桥台和清楚的中央拱洞，移除下方斜桥板与冰锥",
+      "level": "oct19-b1-george-15-2-ice-bridge.json",
+      "templateSha256": "90680c5c39582dc18eb19ae015831876fae114dbb6497671f97b64a72000b922"
+    },
+    {
+      "id": "oct19-b1-george-16-1-phone",
+      "name": "10-19-george-16-1-手机",
+      "description": "冷蓝金属手机，薰衣草屏幕搭配珊瑚爱心通知、青绿信息卡和香槟金主页键",
+      "level": "oct19-b1-george-16-1-phone.json",
+      "templateSha256": "02562559c4785a2d750452ff6d2b67974b0acb5d486820dde87244147b9ff122"
+    },
+    {
+      "id": "oct19-b1-george-16-2-signal",
+      "name": "10-19-george-16-2-信号",
+      "description": "三段上升信号柱，以薄荷绿、青蓝、湖蓝递进，搭配少量暖金无线波纹",
+      "level": "oct19-b1-george-16-2-signal.json",
+      "templateSha256": "1006b3333e6466d3e2843eccf6cda11bf247649ff9b8280910cb8500b584e7ff"
+    },
+    {
+      "id": "oct19-b1-george-4-3-2-flame-dragon",
+      "name": "10-19-george-4-3-2-火焰巨龙",
+      "description": "单片展开的火焰龙翼，鲜朱红与明橙透光翼膜、亮金翼骨和象牙腕爪，四根长翼指勾出深凹翼缘",
+      "level": "oct19-b1-george-4-3-2-flame-dragon.json",
+      "templateSha256": "a1f0e539462576d968d3612da7dbb2d4f95bf84690326b9f3ccdd14759c9f254"
+    },
     {
       "id": "cat",
       "name": "蝴蝶结猫咪",

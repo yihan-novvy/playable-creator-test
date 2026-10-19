@@ -5,6 +5,56 @@
   "entry": "game/index.html",
   "levels": [
     {
+      "id": "oct19-b1-george-10-1-racing-medal",
+      "name": "10-19-george-10-1-赛车奖章",
+      "path": "game/patterns/oct19-b1-george-10-1-racing-medal.json"
+    },
+    {
+      "id": "oct19-b1-george-10-2-red-megaphone",
+      "name": "10-19-george-10-2-红色喇叭",
+      "path": "game/patterns/oct19-b1-george-10-2-red-megaphone.json"
+    },
+    {
+      "id": "oct19-b1-george-11-1-heart-birthmark",
+      "name": "10-19-george-11-1-爱心胎记",
+      "path": "game/patterns/oct19-b1-george-11-1-heart-birthmark.json"
+    },
+    {
+      "id": "oct19-b1-george-11-2-dna-helix",
+      "name": "10-19-george-11-2-DNA双螺旋",
+      "path": "game/patterns/oct19-b1-george-11-2-dna-helix.json"
+    },
+    {
+      "id": "oct19-b1-george-13-5-1-silver-crescent",
+      "name": "10-19-george-13-5-1-银色月牙",
+      "path": "game/patterns/oct19-b1-george-13-5-1-silver-crescent.json"
+    },
+    {
+      "id": "oct19-b1-george-13-5-2-silver-wolf",
+      "name": "10-19-george-13-5-2-银色狼头",
+      "path": "game/patterns/oct19-b1-george-13-5-2-silver-wolf.json"
+    },
+    {
+      "id": "oct19-b1-george-15-2-ice-bridge",
+      "name": "10-19-george-15-2-冰桥",
+      "path": "game/patterns/oct19-b1-george-15-2-ice-bridge.json"
+    },
+    {
+      "id": "oct19-b1-george-16-1-phone",
+      "name": "10-19-george-16-1-手机",
+      "path": "game/patterns/oct19-b1-george-16-1-phone.json"
+    },
+    {
+      "id": "oct19-b1-george-16-2-signal",
+      "name": "10-19-george-16-2-信号",
+      "path": "game/patterns/oct19-b1-george-16-2-signal.json"
+    },
+    {
+      "id": "oct19-b1-george-4-3-2-flame-dragon",
+      "name": "10-19-george-4-3-2-火焰巨龙",
+      "path": "game/patterns/oct19-b1-george-4-3-2-flame-dragon.json"
+    },
+    {
       "id": "cat",
       "name": "蝴蝶结猫咪",
       "path": "game/patterns/cat.json"
@@ -631,7 +681,7 @@
     }
   ],
   "constants": {
-    "engineSha256": "22de3269307bd296e25e3992e77595e49c3c5a141c418e787f10a352e6a2a1f7",
+    "engineSha256": "21981f76bc4be82dfbecb19be7a92f8f1e3c2dc030b147ac1a5d9f39082c8cc6",
     "patternsCatalog": "game/patterns/catalog.json",
     "levelEngine": "game/level-engine.mjs",
     "levelEngineSha256": "d7f2f9885334799f8a645825e3ef8da6991d2a317b28add5ebf6bc63e2b46156"

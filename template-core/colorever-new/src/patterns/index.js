@@ -1,3 +1,23 @@
+import oct19Batch1Art0Level from './oct19-b1-george-10-1-racing-medal.json';
+import {decorate as oct19Batch1Art0} from './oct19-b1-george-10-1-racing-medal.js';
+import oct19Batch1Art1Level from './oct19-b1-george-10-2-red-megaphone.json';
+import {decorate as oct19Batch1Art1} from './oct19-b1-george-10-2-red-megaphone.js';
+import oct19Batch1Art2Level from './oct19-b1-george-11-1-heart-birthmark.json';
+import {decorate as oct19Batch1Art2} from './oct19-b1-george-11-1-heart-birthmark.js';
+import oct19Batch1Art3Level from './oct19-b1-george-11-2-dna-helix.json';
+import {decorate as oct19Batch1Art3} from './oct19-b1-george-11-2-dna-helix.js';
+import oct19Batch1Art4Level from './oct19-b1-george-13-5-1-silver-crescent.json';
+import {decorate as oct19Batch1Art4} from './oct19-b1-george-13-5-1-silver-crescent.js';
+import oct19Batch1Art5Level from './oct19-b1-george-13-5-2-silver-wolf.json';
+import {decorate as oct19Batch1Art5} from './oct19-b1-george-13-5-2-silver-wolf.js';
+import oct19Batch1Art6Level from './oct19-b1-george-15-2-ice-bridge.json';
+import {decorate as oct19Batch1Art6} from './oct19-b1-george-15-2-ice-bridge.js';
+import oct19Batch1Art7Level from './oct19-b1-george-16-1-phone.json';
+import {decorate as oct19Batch1Art7} from './oct19-b1-george-16-1-phone.js';
+import oct19Batch1Art8Level from './oct19-b1-george-16-2-signal.json';
+import {decorate as oct19Batch1Art8} from './oct19-b1-george-16-2-signal.js';
+import oct19Batch1Art9Level from './oct19-b1-george-4-3-2-flame-dragon.json';
+import {decorate as oct19Batch1Art9} from './oct19-b1-george-4-3-2-flame-dragon.js';
 import oct17Batch1Art1Level from './oct17-b1-peiyi-2-1-flower.json';
 import {decorate as oct17Batch1Art1} from './oct17-b1-peiyi-2-1-flower.js';
 import oct17Batch1Art0Level from './oct17-b1-peiyi-1-1-penguin.json';
@@ -249,6 +269,17 @@ import {decorate as portraitFrown} from './portrait-frown.js';
 import goldenSwordLevel from './golden-sword.json';
 import {decorate as goldenSword} from './golden-sword.js';
 export const patterns={
+  'oct19-b1-george-10-1-racing-medal': {level: oct19Batch1Art0Level, decorate: oct19Batch1Art0},
+  'oct19-b1-george-10-2-red-megaphone': {level: oct19Batch1Art1Level, decorate: oct19Batch1Art1},
+  'oct19-b1-george-11-1-heart-birthmark': {level: oct19Batch1Art2Level, decorate: oct19Batch1Art2},
+  'oct19-b1-george-11-2-dna-helix': {level: oct19Batch1Art3Level, decorate: oct19Batch1Art3},
+  'oct19-b1-george-13-5-1-silver-crescent': {level: oct19Batch1Art4Level, decorate: oct19Batch1Art4},
+  'oct19-b1-george-13-5-2-silver-wolf': {level: oct19Batch1Art5Level, decorate: oct19Batch1Art5},
+  'oct19-b1-george-15-2-ice-bridge': {level: oct19Batch1Art6Level, decorate: oct19Batch1Art6},
+  'oct19-b1-george-16-1-phone': {level: oct19Batch1Art7Level, decorate: oct19Batch1Art7},
+  'oct19-b1-george-16-2-signal': {level: oct19Batch1Art8Level, decorate: oct19Batch1Art8},
+  'oct19-b1-george-4-3-2-flame-dragon': {level: oct19Batch1Art9Level, decorate: oct19Batch1Art9},
+
   'oct17-b1-peiyi-2-1-flower': {level: oct17Batch1Art1Level, decorate: oct17Batch1Art1},
   'oct17-b1-peiyi-1-1-penguin': {level: oct17Batch1Art0Level, decorate: oct17Batch1Art0},
   'oct16-b4-george-16-2-raised-fist': {level: oct16Batch4Art1Level, decorate: oct16Batch4Art1},
