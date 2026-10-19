@@ -4,7 +4,7 @@
 
 - `levelId`：第一段原版关卡编号，1–100。
 - `secondPlayable.levelId`：第二段原版关卡编号，1–100；与现有流程一致，必须启用并提供片尾视频。
-- `gameplay.lives` / `gameplay.hints`：每局生命、提示次数，`"unlimited"` 或 1–99 的整数。提示完全按配置生效，不触发自动 CTA；最后一段中提示用尽后再点提示按钮 = 用户主动换条：跳转一次 CTA（场景 `hint-refill`）并同步补 1 条提示，回店即见可用；首段与禁用重玩的回合仅提示 "No hints remaining."。生命耗尽在可重玩回合弹 Try again，点击先跳 CTA 再重置当前关卡；仅无重试按钮的回合才当场转化。双关分别重新计数。
+- `gameplay.lives` / `gameplay.hints`：每局生命、提示次数，`"unlimited"` 或 1–99 的整数。提示完全按配置生效，不触发自动 CTA；最后一段中提示用尽后再点提示按钮 = 用户主动换条：跳转一次 CTA（场景 `hint-refill`）并同步补 1 条提示，回店即见可用；首段与禁用重玩的回合不跳转，仅提示 "No hints remaining."。生命耗尽在可重玩回合弹 Try again，点击先跳 CTA 再重置当前关卡；仅无重试按钮的回合才当场转化。双关分别重新计数。
 - `gameplay.allowReplay`：控制最后一个 playable 是否在“All clear!”或“Out of lives”结算中重玩当前关卡，默认 true。点击先跳转 CTA 再重置当前关卡；切回来已是新一局，前面关卡与视频不重播。单 playable 末尾仍有片尾视频时禁用，避免倒退到已结束的旧段。允许重玩时失败也提供 Try again，先跳转 CTA 再重置当前关卡。双 playable 首段失败始终可重试，不受此开关影响。设置只使 pack 过期。
 - `playableCta` / `secondPlayable.cta`：完成后转化或成功逃出 N 根箭头时转化，通关时兜底。失败点击、移动棋盘和缩放不计入步骤。
 - `secondPlayable.background.source`：`video-first`、`video-last`、`upload` 或 `auto`。

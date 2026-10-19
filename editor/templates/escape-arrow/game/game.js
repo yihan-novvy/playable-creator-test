@@ -556,15 +556,17 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
     if (!playable() || state.won || state.failed) return;
     // Asking past the limit is an explicit user request, not an automatic CTA
     // moment: one jump buys one more hint, granted synchronously so the store
-    // return shows it ready. First playables and no-replay rounds just toast —
-    // conversion there belongs to the policy (completion or step N).
+    // return shows it ready — no toast, the fresh counter speaks for itself.
+    // First playables and no-replay rounds don't jump; the toast is their only
+    // feedback (conversion there belongs to the policy: completion or step N).
     if (hintsRemaining === 0) {
-      toast('No hints remaining.');
       if (replayAllowed() && !hasNextPlayable()) {
         fire('novvy:hint-refill', { levelId: level.Index });
         hintsRemaining++;
         progress(false);
+        return;
       }
+      toast('No hints remaining.');
       return;
     }
     unlockAudio(); sound('click');

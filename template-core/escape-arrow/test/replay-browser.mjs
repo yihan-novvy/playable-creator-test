@@ -247,7 +247,7 @@ try {
   assert.equal(await page.locator('#hint-count').textContent(), '0');
   assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'the last configured hint runs without converting');
   await page.locator('#hint').click();
-  assert.equal(await page.locator('#toast').textContent(), 'No hints remaining.');
+  assert.equal(await page.locator('#toast').isVisible(), false, 'the refill jump needs no toast — the fresh counter speaks for itself');
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 1, 'the refill grant lands before the store return');
   const refillLog = await page.evaluate(() => window.qaSdk);
   const refillClick = refillLog.findLast(call => call[0] === 'click');
@@ -268,6 +268,8 @@ try {
     await page.locator('#hint').click();
     assert.equal(await page.locator('#hint-count').textContent(), '0');
     assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'first-playable hint limit does not interrupt the video flow');
+    await page.locator('#hint').click();
+    assert.equal(await page.locator('#toast').textContent(), 'No hints remaining.', 'rounds without the refill keep the toast as their only feedback');
     await fail(16, false);
     assert.equal(await page.locator('#result-reset').isVisible(), true, 'first failure always offers retry, independent of the final-playable setting');
     assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'first failure waits for the retry button to request CTA');

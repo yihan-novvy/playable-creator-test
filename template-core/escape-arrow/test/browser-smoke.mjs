@@ -159,7 +159,7 @@ try {
   assert.equal((await page.evaluate(() => window.qaSdk.filter(e => e[0] === 'click'))).length, 0, 'the last configured hint runs instead of converting');
   await page.screenshot({ path: path.join(tmp, 'bulb-hint-limited.png') });
   await page.locator('#hint').click();
-  assert.equal(await page.locator('#toast').textContent(), 'No hints remaining.');
+  assert.equal(await page.locator('#toast').isVisible(), false, 'the refill jump needs no toast — the fresh counter speaks for itself');
   assert.equal((await page.evaluate(() => window.qaEvents)).filter(e => e.name === 'novvy:cta-moment').length, 0, 'the refill is a user request, not an automatic CTA moment');
   assert.equal((await page.evaluate(() => window.qaSdk.filter(e => e[0] === 'click'))).length, 1, 'asking past the hint limit converts once as an explicit refill');
   assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 1, 'the store return finds one fresh hint');
