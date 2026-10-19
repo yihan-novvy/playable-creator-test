@@ -100,7 +100,6 @@
     "intro": {
       "enabled": false,
       "ariaLabel": "",
-      "hookText": "",
       "goEnabled": false,
       "goText": "GO"
     },
@@ -143,7 +142,7 @@
     },
     "replay": {
       "enabled": false,
-      "text": "拼画完成！再玩一次？",
+      "text": "Puzzle complete! Play again?",
       "button": "Replay"
     },
     "secondPlayable": {

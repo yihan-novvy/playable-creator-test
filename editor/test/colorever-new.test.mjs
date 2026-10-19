@@ -19,7 +19,7 @@ export default async function run(assert){
   assert.equal(normalizeOpening({mode:'scattered',seed:17,speed:3}),{mode:'medium',coverage:95,batchSize:30,seed:17},'旧零散配置转为全局，测试速度不进入正式开局配置');
   const workbench=fs.readFileSync(path.join(next.dir,'workbench.js'),'utf8');
   assert.check(workbench.includes('全局大块归位')&&!workbench.includes("['scattered',")&&!workbench.includes('测试搬运速度'),'正式 editor 仅展示两种模式，无测试调速控件');
-  assert.check(workbench.includes('此后每 M 步再跳一次')&&workbench.includes('结算重玩弹窗')&&workbench.includes('倒计时钩子与 GO 按钮'),'工作台提供循环跳转、重玩弹窗与倒计时 GO 配置');
+  assert.check(workbench.includes('此后每 M 步再跳一次')&&workbench.includes('结算重玩弹窗')&&workbench.includes('倒计时标题与 GO 按钮'),'工作台提供循环跳转、重玩弹窗与倒计时 GO 配置');
   const newScript=fs.readFileSync(path.join(next.templateDir,'game/game.js'),'utf8');
   assert.check(newScript.includes('__COLOREVER_REPLAY__')&&newScript.includes('novvy:replay-cta')&&newScript.includes('novvy:playable-replay')&&newScript.includes('replay-prompt'),'重玩弹窗契约进入引擎');
   // 白名单与步骤输入沿用 colorever 家族契约(纯 store 层字符串映射,不依赖注册表)。
@@ -130,7 +130,7 @@ export default async function run(assert){
     const packed=fs.readFileSync(path.join(taskResultDir(id),'index.html'),'utf8');
     assert.check(!packed.includes('__COLOREVER_PREVIEW__'),'交付 HTML 无测试速度上下文，运行使用基础速度');
     assert.check(packed.includes('data-novvy-outro')&&packed.includes('__COLOREVER_PHASE2__')&&packed.includes('background2.webp')&&packed.includes('data-novvy-cta-bridge'),'沿用视频、换关、背景和 CTA 注入');
-    assert.check(packed.includes('"cta":{"mode":"steps","afterSteps":5,"everySteps":7}')&&packed.includes('novvy-intro-go')&&packed.includes('"intro":{"ariaLabel":"","hookText":"宝石拼图 目标颜色始终可见","goEnabled":true,"goText":"开始"}'),'第二关循环策略与倒计时钩子/GO 随包注入');
+    assert.check(packed.includes('"cta":{"mode":"steps","afterSteps":5,"everySteps":7}')&&packed.includes('novvy-intro-go')&&packed.includes('"intro":{"ariaLabel":"","goEnabled":true,"goText":"开始"}'),'第二关循环策略与倒计时 GO 配置随包注入');
     assert.check(!packed.includes('window.__novvyReplayable=true')&&packed.includes('__COLOREVER_REPLAY__=null'),'未开重玩弹窗的包不携带可重玩标记');
     assert.check(packed.includes('data-colorever-decorators')&&packed.includes('["orange-pixel-cat"]=function')&&packed.includes('["house"]=function'),'双关各自的装饰片段去重注入');
     const beforeSwitch=readTask(id);

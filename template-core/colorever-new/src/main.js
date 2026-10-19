@@ -199,7 +199,7 @@ function reset(){wasWon=false;previewLastBatch=0;for(const f of flights)scene.re
    (转化桥手动转化,不读自动闩锁),再页内重建本关开局重玩,并派发
    playable-replay 让段桥调 SDK onReplay、重置本轮转化窗口与步数。 —— */
 function showReplayPrompt(){
-  $('replay-text').textContent=replaySpec.text||'拼画完成！再玩一次？';
+  $('replay-text').textContent=replaySpec.text||'Puzzle complete! Play again?';
   $('replay-btn').textContent=replaySpec.button||'Replay';
   $('replay-prompt').hidden=false;
 }

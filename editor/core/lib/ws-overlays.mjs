@@ -104,15 +104,12 @@ export function buildWsOverlayInjection({ overlaysRoot, template, config, media,
       .replaceAll('__NOVVY_INTRO_POSTER__', media.introPoster);
     headStyles.push(`<style data-novvy-intro>${intro.css}</style>`);
     bodyScripts.push(`<script data-novvy-intro>${intro.script}</script>`);
-    // 倒计时钩子与 GO 按钮(素材自可选实现):goEnabled 开启后,片尾 3-2-1
-    // 倒计时下方亮一行钩子文案(未显式配置时取 HUD 标题),倒计时结束后不再
-    // 直接进试玩,底部先亮 GO 按钮等点击。未开启时两者不注入,行为与旧版一致。
+    // 倒计时标题与 GO 按钮(素材自可选实现):goEnabled 开启后,真实的 HUD 标题
+    // div 直接参演(倒计时数字下方 → 中央 → 点击后归位),倒计时结束后不再
+    // 直接进试玩,底部先亮 GO 按钮等点击。未开启时行为与旧版一致。
     const goEnabled = config?.intro?.goEnabled === true;
-    const hookText = String(config?.intro?.hookText ?? '').trim()
-      || (goEnabled ? [config?.hud?.titleLine1, config?.hud?.titleLine2].map(value => String(value ?? '').trim()).filter(Boolean).join(' ') : '');
     uiConfig.intro = {
       ariaLabel: String(config?.intro?.ariaLabel ?? ''),
-      hookText,
       goEnabled,
       goText: String(config?.intro?.goText ?? '').trim() || 'GO',
     };

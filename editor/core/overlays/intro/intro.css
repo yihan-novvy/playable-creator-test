@@ -80,34 +80,19 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* 倒计时钩子文案(默认取 HUD 标题):倒计时期间悬在数字下方;GO 亮出时
-   过渡到画面中央;GO 点击后再飞往真实 HUD 标题的位置(见 intro.js)。 */
-.novvy-intro-hook {
-  position: absolute;
-  left: 6%;
-  right: 6%;
-  top: calc(50% + clamp(56px, 15vw, 104px));
-  z-index: 2;
-  margin: 0;
-  text-align: center;
-  color: #fff;
-  font-size: clamp(15px, 4.4vw, 22px);
-  font-weight: 600;
-  line-height: 1.45;
-  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5), 0 0 2px rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-  animation: novvy-countdown-pop 0.42s cubic-bezier(0.2, 0.8, 0.3, 1.08);
+/* 倒计时期间真实 HUD 标题参演(不用替身 div):把 HUD 容器抬到片头之上,
+   并解除 transform/filter/container-type —— 三者都会让标题的 position:fixed
+   退化成相对容器定位;除标题外的立绘/进度暂隐(片头视频本来就盖着它们),
+   撤场时一并恢复。标题的位置与归位动画全部由 intro.js 用 transform 驱动。 */
+#novvy-training-hud.novvy-intro-title-live {
+  transform: none !important;
+  filter: none !important;
+  container-type: normal !important;
+  z-index: 2147483647 !important;
 }
 
-.novvy-intro-hook[hidden] {
-  display: none;
-}
-
-.novvy-intro-hook.is-center {
-  top: 50%;
-  transform: translateY(-50%);
-  animation: none;
-  transition: top 0.45s cubic-bezier(0.3, 0.7, 0.3, 1), transform 0.45s cubic-bezier(0.3, 0.7, 0.3, 1);
+#novvy-training-hud.novvy-intro-title-live > :not(.novvy-hud-title) {
+  visibility: hidden;
 }
 
 /* GO 按钮:倒计时结束后压在片尾帧底部的进入按钮,点击才切入 playable。 */
@@ -146,12 +131,11 @@
 
 @media (prefers-reduced-motion: reduce) {
   .novvy-countdown span,
-  .novvy-intro-hook,
   .novvy-intro-go {
     animation: none;
   }
 
-  .novvy-intro-hook.is-center {
-    transition: none;
+  #novvy-training-hud.novvy-intro-title-live .novvy-hud-title {
+    transition: none !important;
   }
 }

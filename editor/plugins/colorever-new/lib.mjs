@@ -95,7 +95,7 @@ export { normalizeCtaPolicy };
 // 完全一致;文案/按钮留空回退默认。
 export function normalizeReplay(raw) {
   if (raw?.enabled !== true) return null;
-  return { enabled: true, text: String(raw?.text ?? '').trim() || '拼画完成！再玩一次？', button: String(raw?.button ?? '').trim() || 'Replay' };
+  return { enabled: true, text: String(raw?.text ?? '').trim() || 'Puzzle complete! Play again?', button: String(raw?.button ?? '').trim() || 'Replay' };
 }
 
 // 双 playable 数据:仅在片尾已启用(存在片尾视频才算)时允许,否则视为未配置。

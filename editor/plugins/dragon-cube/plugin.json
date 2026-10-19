@@ -96,7 +96,6 @@
     "intro": {
       "enabled": false,
       "ariaLabel": "",
-      "hookText": "",
       "goEnabled": false,
       "goText": "GO"
     },

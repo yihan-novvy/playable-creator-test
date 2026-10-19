@@ -37,7 +37,6 @@
     "intro": {
       "enabled": true,
       "ariaLabel": "",
-      "hookText": "",
       "goEnabled": false,
       "goText": "GO"
     },
