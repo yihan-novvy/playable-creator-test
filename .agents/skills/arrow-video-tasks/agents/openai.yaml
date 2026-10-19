@@ -1,0 +1,4 @@
+interface:
+  display_name: "Arrow 视频任务批量初始化"
+  short_description: "从两层素材目录批量创建 Escape Arrow 任务，导入文案并处理开场和片尾视频"
+  default_prompt: "使用 $arrow-video-tasks，按给定素材目录创建 Arrow 任务，读取 config.json，只运行开场和片尾视频。"
