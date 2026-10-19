@@ -85,8 +85,14 @@
      连点交给 SDK 的冷却护栏;300ms 去抖只过滤同一次触压的多发事件。
      CTA 区域由 Download 处理,避免 pointerdown 与按钮 click 重复转化。
      武装点见各转化终点(目标时刻已到即武装,即使自动闩锁拦下了重复
-     跳转)。 */
+     跳转)。
+     例外:可重玩回合(detail.replayable=true 且模板声明 __novvyReplayable)
+     转化后用户还会切回来继续玩/重开,回访触压保持纯游玩,不武装——重玩
+     按钮(Try again/Play again)与常驻底卡的主动点击照常转化。 */
   var interactArmed = false, interactListening = false, lastInteractAt = -1e9;
+  function replayContinues(event) {
+    return !!(window.__novvyReplayable && event && event.detail && event.detail.replayable);
+  }
   function armInteractConvert() {
     interactArmed = true;
     if (interactListening) return;
@@ -94,7 +100,10 @@
     document.addEventListener('pointerdown', function (event) {
       if (!interactArmed) return;
       var target = event && event.target;
-      if (target && target.closest && target.closest('#novvy-cta,[data-novvy-replay]')) return;
+      /* .novvy-intro-go = 片头/片尾 GO 闸门按钮:点 GO 是继续漏斗(进下一段
+         playable),不是再跳一次商店——真机上 pointerdown 先转化跳店会把
+         click 打断,震动与换关全都跑不到。 */
+      if (target && target.closest && target.closest('#novvy-cta,[data-novvy-replay],.novvy-intro-go')) return;
       var now = Date.now();
       if (now - lastInteractAt < 300) return;
       lastInteractAt = now;
@@ -162,7 +171,7 @@
     // Explicit opt-in for a round that immediately continues into another
     // video/playable. Keep manual CTA available without interrupting the flow.
     if (event && event.detail && event.detail.continuing === true) return;
-    if (!END_MASK) armInteractConvert();
+    if (!END_MASK && !replayContinues(event)) armInteractConvert();
     if (autoConverted) return;
     autoConverted = true;
     convert('playable-complete');
@@ -177,7 +186,7 @@
       }
       return;
     }
-    if (!END_MASK) armInteractConvert();
+    if (!END_MASK && !replayContinues(event)) armInteractConvert();
     if (autoConverted) return;
     autoConverted = true;
     convert('victory');
@@ -197,7 +206,8 @@
 
   /* CTA 时刻(引擎在武装策略命中时派发:第 N 步,或完成兜底):
      遮罩开启时双 playable 升级为全屏接管;关闭时不弹遮罩,只主动转化一次,
-     并交由回访每击转化接管后续。autoConverted 闩锁只对自动时机去重。
+     并交由回访每击转化接管后续(可重玩回合除外,见上方例外)。autoConverted
+     闩锁只对自动时机去重。
      单 playable 不接管 —— 底部卡自试玩起常驻,这里只补主动转化。
      步数循环素材(detail.everySteps>0):游玩期由"每 M 步"节奏驱动转化,
      不再武装回访每击(否则每次触压抢跑循环节奏);repeat=引擎在循环间隔
@@ -205,7 +215,7 @@
      保持不变。未携带 everySteps 的既有素材行为逐字节不变。 */
   window.addEventListener('novvy:cta-moment', function (event) {
     var everySteps = !!(event && event.detail && event.detail.everySteps > 0);
-    if (!everySteps && !END_MASK) armInteractConvert();
+    if (!everySteps && !END_MASK && !replayContinues(event)) armInteractConvert();
     if (everySteps && event.detail.repeat) {
       convert('cta-moment');
       return;

@@ -3,10 +3,10 @@ import vm from 'node:vm';
 
 const source = fs.readFileSync(new URL('../core/overlays/cta-bridge/cta-bridge.js', import.meta.url), 'utf8');
 
-function bridge({ twoPhase = true, endMask = true } = {}) {
+function bridge({ twoPhase = true, endMask = true, replayable = false } = {}) {
   const listeners = new Map(), clicks = [], phases = [], pointers = [];
   const window = {
-    __novvyTwoPhase: twoPhase, __NOVVY_CTA_END_MASK__: endMask,
+    __novvyTwoPhase: twoPhase, __NOVVY_CTA_END_MASK__: endMask, __novvyReplayable: replayable,
     NovvyPlayable: { click: detail => clicks.push(detail) },
     addEventListener(name, listener) { listeners.set(name, [...listeners.get(name) || [], listener]); },
     dispatchEvent(event) { for (const listener of listeners.get(event.type) || []) listener(event); },
@@ -17,7 +17,8 @@ function bridge({ twoPhase = true, endMask = true } = {}) {
   vm.runInNewContext(source, { window, document, console: { log() {} }, Date, setTimeout, clearTimeout,
     CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options.detail; } } });
   return { clicks, phases, emit: (type, detail) => window.dispatchEvent({ type, detail }),
-    tap: () => pointers.forEach(listener => listener({ target: { closest: () => null } })) };
+    tap: () => pointers.forEach(listener => listener({ target: { closest: () => null } })),
+    tapOn: selector => pointers.forEach(listener => listener({ target: { closest: s => (s.split(',').some(part => part.trim() === selector) ? { matches: selector } : null) } })) };
 }
 
 export default async function run(assert) {
@@ -56,6 +57,27 @@ export default async function run(assert) {
   loopFallback.emit('novvy:victory');
   loopFallback.tap();
   assert.equal(loopFallback.clicks.map(click => click.scene), ['cta-moment', 'post-complete-interact'], '循环素材完成兜底不重复跳转，完成后的回访触压照旧武装');
+  // GO 闸门按钮(片头/片尾)不参与回访每击转化:点 GO 是继续漏斗进下一段,
+  // 不是再跳一次商店——真机上 pointerdown 先跳店会打断 click,震动与换关全丢。
+  const gate = bridge({ endMask: false });
+  gate.emit('novvy:playable-complete');
+  gate.tapOn('.novvy-intro-go');
+  assert.equal(gate.clicks.length, 1, 'GO 触压不触发回访转化');
+  gate.tap();
+  assert.equal(gate.clicks.length, 2, 'GO 之外的触压照旧转化');
+  // 可重玩回合(detail.replayable=true 且模板声明 __novvyReplayable)转化后
+  // 不武装回访每击:用户从商店切回来继续玩/重开,触压保持纯游玩;不可重玩的
+  // 结算回合(纯结尾卡)维持每击转化。
+  const replay = bridge({ endMask: false, replayable: true });
+  replay.emit('novvy:cta-moment', { replayable: true });
+  replay.emit('novvy:playable-complete', { replayable: true });
+  replay.emit('novvy:victory', { replayable: true });
+  replay.tap();
+  assert.equal(replay.clicks.map(click => click.scene), ['cta-moment'], '可重玩回合转化一次后，回访触压不再逐击转化');
+  const finished = bridge({ endMask: false, replayable: true });
+  finished.emit('novvy:playable-complete', { replayable: false });
+  finished.tap();
+  assert.equal(finished.clicks.map(click => click.scene), ['playable-complete', 'post-complete-interact'], '不可重玩的结算回合转化后回访触压照旧武装');
   for (const continuing of [undefined, false]) {
     const legacy = bridge({ twoPhase: false });
     legacy.emit('novvy:playable-complete', { continuing });
