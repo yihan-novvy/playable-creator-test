@@ -139,9 +139,17 @@ $('copy-preview-link').onclick=async()=>{try{updatePreviewUrl();await navigator.
 function selectRenderer(version){if(version===renderer)return;renderer=version;syncPreviewFields();preview();}
 $('renderer-original').onclick=()=>selectRenderer('original');$('renderer-new').onclick=()=>selectRenderer('new');
 async function load(){const rev=++loadRevision;++revision;clearTimeout(timer);const id=$('pattern').value,level=await request('/api/patterns/'+id);if(rev!==loadRevision)return;draft=level;brush=Number(Object.keys(draft.colors)[0]);selectedPart=null;history=[];future=[];dirty=false;$('dirty').textContent='已保存';$('description').textContent=currentPicture().description;$('module').textContent=`专属装饰代码：colorever-new/src/patterns/${currentPicture().module}。新增造型由作者或 AI 修改该模块后运行 npm run build:template。`;setTool('draw');status('已读取模板。修改只保存在草稿，点击保存才生效。');render();await preview();}
+// 按名称或 ID 筛选图案下拉框；始终保留当前选中项，避免选项被筛掉后 select.value
+// 静默改变、保存写入别的图案。
+function renderPatternOptions(){const query=$('pattern-filter').value.trim().toLowerCase(),matched=catalog.filter(p=>!query||p.id.toLowerCase().includes(query)||p.name.toLowerCase().includes(query));
+ const current=$('pattern').value||previewQuery.get('pattern'),selected=catalog.find(p=>p.id===current);
+ if(selected&&!matched.includes(selected))matched.unshift(selected);
+ $('pattern').replaceChildren();for(const p of matched){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;if(p===selected)o.selected=true;$('pattern').append(o);}
+ $('pattern-count').textContent=query?`${matched.length}/${catalog.length} 个图案`:'';}
+$('pattern-filter').oninput=renderPatternOptions;
 $('pattern').onchange=()=>load().catch(e=>status(e.message,true));$('reload').onclick=()=>load().catch(e=>status(e.message,true));
 $('save').onclick=async()=>{const id=$('pattern').value,submitted=JSON.stringify(draft);$('save').disabled=true;try{const saved=await request('/api/patterns/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:submitted});if(id===$('pattern').value&&JSON.stringify(draft)===submitted){draft=saved;dirty=false;$('dirty').textContent='已保存';render();}status('已保存到 colorever-new。运行 npm run build:template 后广告项目才能使用新版本。');await preview();}catch(e){status(e.message,true);}finally{$('save').disabled=false;}};
 $('play').onclick=()=>{stopAuto();completed=false;$('play').classList.add('active');$('completed').classList.remove('active');preview();};$('completed').onclick=()=>{stopAuto();completed=true;$('completed').classList.add('active');$('play').classList.remove('active');preview();};
 $('apply-json').onclick=async()=>{try{const {validateLevel}=await import('/src/level.js');const next=validateLevel(JSON.parse($('json').value));if(next.decoration!==draft.decoration)throw new Error('不能替换专属装饰模块');remember();draft=next;changed();}catch(e){status(e.message,true);}};
 $('export').onclick=()=>{const url=URL.createObjectURL(new Blob([JSON.stringify(draft,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download=$('pattern').value+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
-(async()=>{catalog=await request('/api/patterns');for(const p of catalog){const o=document.createElement('option');o.value=p.id;o.textContent=p.name;$('pattern').append(o);}if(catalog.some(p=>p.id===previewQuery.get('pattern')))$('pattern').value=previewQuery.get('pattern');await load();})().catch(e=>status(e.message,true));
+(async()=>{catalog=await request('/api/patterns');renderPatternOptions();if(catalog.some(p=>p.id===previewQuery.get('pattern')))$('pattern').value=previewQuery.get('pattern');await load();})().catch(e=>status(e.message,true));
