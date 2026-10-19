@@ -168,6 +168,19 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const root = document.getElementById('steps'); root.textContent = '';
     const introInputs = [upload('intro-video', '片头视频 MP4', 'video/mp4'), upload('intro-poster', '可选海报 JPG', 'image/jpeg')];
     const intro = card('intro', 1, '开场视频', config().intro?.enabled ? '上传视频后运行。' : '已关闭，可直接跳过。', introInputs, renderIntroPreview);
+    // 片头倒计时钩子与 GO 按钮:通用能力(core intro 覆盖层),仅在启用片头时出现。
+    let introGate = null;
+    if (config().intro?.enabled) {
+      introGate = el('section', { class: 'step-card', id: 'intro-gate-settings' }, [
+        el('h3', {}, ['倒计时钩子与 GO 按钮']),
+        el('p', { class: 'hint' }, ['片头最后 3 秒倒计时数字下方显示一行钩子文案，吸引等待中的用户；倒计时结束后不再直接进入试玩，标题先升到画面中央、底部亮出 GO 按钮，点击后标题飞回顶部 HUD 原位并进入 playable。']),
+        checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
+        el('div', { class: 'dragon-config-grid' }, [
+          textField('钩子文案（留空=取 HUD 标题）', 'intro', 'hookText', config().intro?.hookText, '默认取 HUD 主标题'),
+          textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
+        ]),
+      ]);
+    }
     const outro = card('outro', 2, '片尾视频（可选）', '仅在游戏完成且完成效果结束后播放。未上传视频时直接跳过；有第二个 playable 时，播完立即换关；单 playable 播完停留最后一帧，等待 1 秒后转化跳转。', [upload('outro-video', '片尾视频 MP4（可选）', 'video/mp4')], (right) => {
       if (statusInfo?.uploads?.['outro-video']?.present) right.append(el('video', { controls: '', src: versioned(`/project/${taskId}/uploads/outro-video.mp4`, uploadVersion('outro-video')), style: 'max-height:300px' }));
       else right.append(el('span', { class: 'hint' }, ['未设置片尾视频，可直接跳过。']));
@@ -261,7 +274,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
         right.append(el('span', { class: 'hint' }, ['打包成功后，这里可下载 ZIP 并试玩产物。']));
       }
     });
-    root.append(intro, hud, background);
+    root.append(intro);
+    if (introGate) root.append(introGate);
+    root.append(hud, background);
     if (config().outro?.enabled) { root.append(outro); if (secondPlayable) root.append(secondPlayable); if (secondBackground) root.append(secondBackground); }
     if (!config().outro?.enabled) root.append(ctaTiming);
     root.append(ctaCopy, level, pack);

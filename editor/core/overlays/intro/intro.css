@@ -1,7 +1,9 @@
 .novvy-video-intro {
   position: fixed;
   inset: 0;
-  /* 层级契约:高于 HUD(10),低于片尾(30)与服务注入的结算卡片(999999)。 */
+  /* 层级契约:高于 HUD(10),低于片尾(30)与服务注入的结算卡片(999999)。
+     个别模板需要别的层级时,在自家 overlays/intro/intro.css 里写同选择器
+     覆盖(ws-overlays 会把它追加在核心样式之后)。 */
   z-index: 20;
   display: grid;
   place-items: center;
@@ -78,14 +80,8 @@
   100% { transform: scale(1); opacity: 1; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .novvy-countdown span {
-    animation: none;
-  }
-}
-
-/* 倒计时钩子文案:悬在倒计时数字下方一行,吸引点击(默认取 HUD 标题),
-   与数字同拍亮出、随倒计时一起收起。 */
+/* 倒计时钩子文案(默认取 HUD 标题):倒计时期间悬在数字下方;GO 亮出时
+   过渡到画面中央;GO 点击后再飞往真实 HUD 标题的位置(见 intro.js)。 */
 .novvy-intro-hook {
   position: absolute;
   left: 6%;
@@ -105,6 +101,13 @@
 
 .novvy-intro-hook[hidden] {
   display: none;
+}
+
+.novvy-intro-hook.is-center {
+  top: 50%;
+  transform: translateY(-50%);
+  animation: none;
+  transition: top 0.45s cubic-bezier(0.3, 0.7, 0.3, 1), transform 0.45s cubic-bezier(0.3, 0.7, 0.3, 1);
 }
 
 /* GO 按钮:倒计时结束后压在片尾帧底部的进入按钮,点击才切入 playable。 */
@@ -142,8 +145,13 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .novvy-countdown span,
   .novvy-intro-hook,
   .novvy-intro-go {
     animation: none;
+  }
+
+  .novvy-intro-hook.is-center {
+    transition: none;
   }
 }

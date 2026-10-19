@@ -81,7 +81,6 @@
   },
   "overlays": {
     "hud": "overlays/hud",
-    "intro": "overlays/intro",
     "outro": "overlays/outro",
     "background": "overlays/background",
     "cta": "overlays/cta"

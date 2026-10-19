@@ -77,7 +77,6 @@
   },
   "overlays": {
     "hud": "overlays/hud",
-    "intro": "overlays/intro",
     "outro": "overlays/outro",
     "background": "overlays/background"
   },
@@ -95,7 +94,10 @@
     },
     "intro": {
       "enabled": false,
-      "ariaLabel": ""
+      "ariaLabel": "",
+      "hookText": "",
+      "goEnabled": false,
+      "goText": "GO"
     },
     "outro": {
       "enabled": false

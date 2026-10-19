@@ -1,5 +1,6 @@
 (() => {
-  /* Intro video phase owner. Injected by repack as the data-novvy-intro script
+  /* Intro video phase owner — core-shared across templates (editor/core/
+     overlays/intro); ws-overlays.mjs injects it as the data-novvy-intro script
      before the closing body tag; the analytics lib (head) and the hud/cta DOM
      already exist. This file must never emit a literal closing head/body/script
      tag — not even in comments — because repack splices on those anchors and a
@@ -11,6 +12,9 @@
   const root = document.getElementById('novvy-video-intro');
   const video = document.getElementById('novvy-intro-video');
   const soundButton = document.getElementById('novvy-intro-sound');
+  const countdown = document.getElementById('novvy-intro-countdown');
+  const hook = document.getElementById('novvy-intro-hook');
+  const goButton = document.getElementById('novvy-intro-go');
   if (!root || !video || !soundButton) return;
 
   // Package mode carries the aria text in materials.js; see hud.js note.
@@ -19,9 +23,113 @@
     root.setAttribute('aria-label', introUi.ariaLabel);
   }
 
+  /* —— 倒计时钩子文案 + GO 闸门:goEnabled 开启后,倒计时下方亮一行钩子文案
+     (注入时已解析,空串=未配置),倒计时结束后不直接进试玩,底部亮 GO 按钮
+     等待点击。三段式标题动线:倒计时数字下方 → GO 亮出时升到画面中央 →
+     GO 点击后飞往真实 HUD 标题的位置(#novvy-training-hud .novvy-hud-title,
+     各模板 HUD 结构同构;缺失时退回顶部居中)淡出,落定后才派发
+     novvy:intro-finished 进入试玩,标题在用户感知里"从倒计时一路归位"。 —— */
+  const goGate = !!(introUi && introUi.goEnabled === true);
+  const GO_GRACE_MS = 12000;
+  const TITLE_FLIGHT_MS = 520;
+  let goWaiting = false;
+  let goConfirmed = false;
+  if (hook && introUi && typeof introUi.hookText === 'string' && introUi.hookText) {
+    hook.textContent = introUi.hookText;
+  }
+  if (goButton && introUi && typeof introUi.goText === 'string' && introUi.goText) {
+    goButton.textContent = introUi.goText;
+  }
+  function hudTitleRect() {
+    const node = document.querySelector('#novvy-training-hud .novvy-hud-title');
+    if (!node) return null;
+    const rect = node.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0 ? rect : null;
+  }
+  // 飞行落点:优先真实 HUD 标题块的视口中心;页面没有 HUD 标题(未启用立绘
+  // 且未配标题)时退回顶部居中,文案就地淡出,不挡试玩。
+  function flyTitleHome() {
+    if (!hook || !hook.textContent || hook.hidden) { finish('video_ended'); return; }
+    goConfirmed = true;
+    const from = hook.getBoundingClientRect();
+    hook.classList.remove('is-center');
+    hook.style.transition = 'none';
+    hook.style.left = `${from.left + from.width / 2}px`;
+    hook.style.right = 'auto';
+    hook.style.top = `${from.top + from.height / 2}px`;
+    hook.style.transform = 'translate(-50%, -50%)';
+    const target = hudTitleRect();
+    const toX = target ? target.left + target.width / 2 : window.innerWidth / 2;
+    const toY = target ? target.top + target.height / 2 : Math.max(44, window.innerHeight * 0.06);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        hook.style.transition = `left ${TITLE_FLIGHT_MS}ms cubic-bezier(0.3, 0.7, 0.3, 1), top ${TITLE_FLIGHT_MS}ms cubic-bezier(0.3, 0.7, 0.3, 1), opacity 260ms ease ${TITLE_FLIGHT_MS - 180}ms`;
+        hook.style.left = `${toX}px`;
+        hook.style.top = `${toY}px`;
+        hook.style.opacity = '0';
+      });
+    });
+    track('go_title_flew');
+    window.setTimeout(() => finish('video_ended'), TITLE_FLIGHT_MS + 80);
+  }
+  goButton?.addEventListener('click', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (goWaiting && !goConfirmed) flyTitleHome(); // 用户确认进入试玩,标题先归位
+  });
+
   const track = (name, params) => {
     if (window.NovvyAnalytics) window.NovvyAnalytics.track(name, params);
   };
+
+  /* —— 进入 playable 前的 3-2-1 倒计时:取视频真实剩余时间,最后 3 秒逐秒
+     亮出白色浮字;数字 3 为重震动、2 为 error 连拍、1 为 error + 150ms 后补一记 heavy
+     (error/双端 SDK 都有原生实现,是不改 SDK 的最强震动;桥 haptic,预览退回 vibrate),
+     配合数字的缩放回落动画提醒用户 playable 马上开始。 —— */
+  let countdownPulse = null, browserPulse = false;
+  const cancelPulse = () => {
+    if (countdownPulse !== null) { clearTimeout(countdownPulse); countdownPulse = null; }
+    if (browserPulse) { try { navigator.vibrate?.(0); } catch (_) {} browserPulse = false; }
+  };
+  // Build anticipation: heavy on 3, error pulse on 2, error + heavy follow-up on 1.
+  const buzz = n => {
+    cancelPulse();
+    try {
+      if (typeof window.novvy?.haptic === 'function') {
+        window.novvy.haptic(n === 3 ? 'heavy' : 'error');
+        if (n === 1) countdownPulse = setTimeout(() => {
+          countdownPulse = null;
+          if (countdownShown !== 1 || document.hidden || video.paused || video.ended) return;
+          try { window.novvy.haptic('heavy'); } catch (_) {}
+        }, 150);
+        return;
+      }
+    } catch (_) {}
+    try { navigator.vibrate?.(n === 3 ? 65 : n === 2 ? [65, 50] : [65, 50, 65, 120]); browserPulse = n === 1; } catch (_) {}
+  };
+  let countdownShown = 0;
+  function hideCountdown() {
+    cancelPulse();
+    if (!countdownShown) return;
+    countdownShown = 0;
+    if (countdown) { countdown.hidden = true; countdown.innerHTML = ''; }
+    // 钩子文案不随倒计时收起:GO 闸门开启时它要从数字下方续接到画面中央。
+  }
+  function syncCountdown() {
+    if (!countdown) return;
+    const duration = video.duration;
+    const remaining = duration - video.currentTime;
+    if (!Number.isFinite(duration) || duration <= 0 || video.ended || remaining > 3 || remaining <= 0) { hideCountdown(); return; }
+    const n = Math.ceil(remaining);
+    if (n === countdownShown) return;
+    countdownShown = n;
+    buzz(n);
+    countdown.hidden = false;
+    countdown.innerHTML = '<span>' + n + '</span>';
+    if (hook && hook.textContent) hook.hidden = false;
+  }
+  video.addEventListener('timeupdate', syncCountdown);
+  video.addEventListener('ended', hideCountdown);
 
   // Icon + label live in one place; the button itself ships empty because the
   // SVG strings are static template content (safe to bake into the shell).
@@ -48,13 +156,19 @@
   // user_skip stays in the contract but is no longer fired — tapping the
   // video focuses it (unlock sound) instead of skipping. The DOM event
   // decouples this overlay from analytics.
-  const finish = (reason) => {
+  // gated=true(视频自然结束/解码出错)且 GO 闸门开启时,先亮 GO 按钮等待
+  // 点击,不立即收尾;GO 点击与 failsafe 走非门控路径真正收尾。
+  const finish = (reason, gated = false) => {
     if (finished) return;
+    if (gated && goGate && !goWaiting) { showGoGate(); return; }
     finished = true;
     let switchSeconds = 0;
     try { switchSeconds = Math.round(video.currentTime || 0); } catch (_error) {}
     ownerPaused = true;
     try { video.pause(); } catch (_error) {}
+    hideCountdown();
+    if (goButton) goButton.hidden = true;
+    if (hook) hook.hidden = true;
     teardown(reason || 'video_ended'); // release close BEFORE playable_entry lands
     window.__novvyIntroFinished = true;
     try {
@@ -65,6 +179,20 @@
     root.classList.add('is-finished');
     window.setTimeout(() => root.remove(), 220);
   };
+
+  // GO 停留帧也是素材可见时间:给足最短停留窗(不缩水 30s failsafe 的剩余量),
+  // 超时仍未点击则按 timer_reached 自动进试玩,不把用户困在片尾帧上。
+  // 钩子文案在此刻从数字下方升到画面中央(.is-center 过渡),GO 按钮垫在下方。
+  function showGoGate() {
+    if (finished || goWaiting) return;
+    goWaiting = true;
+    hideCountdown();
+    if (hook && hook.textContent) { hook.hidden = false; hook.classList.add('is-center'); }
+    if (goButton) goButton.hidden = false;
+    failsafeRemaining = Math.max(failsafeRemaining, GO_GRACE_MS);
+    armFailsafe();
+    track('go_gate_shown');
+  }
 
   function releaseCustomClose(reason) {
     if (!customCloseRequested) return;
@@ -180,11 +308,11 @@
     });
   }
 
-  // The 12s failsafe bounds the video phase.  The reference has no timer; ours
+  // The 30s failsafe bounds the video phase.  The reference has no timer; ours
   // must not keep ticking while the SDK has us paused — a timer_reached finish
   // during a backgrounded ad would drop the user into the playable with the
   // video unseen.  Count only creative-visible time.
-  const FAILSAFE_MS = 12000;
+  const FAILSAFE_MS = 30000;
   let failsafeTimer = null;
   let failsafeRemaining = FAILSAFE_MS;
   let failsafeArmedAt = 0;
@@ -309,8 +437,10 @@
     else playVideo();
   });
 
-  video.addEventListener('ended', () => finish('video_ended'), { once: true });
-  video.addEventListener('error', () => finish('video_ended'), { once: true });
+  // 视频自然结束/解码出错都先过 GO 闸门(开启时亮按钮等待);failsafe 的
+  // timer_reached 直接收尾,防止无人点击时永远停在片尾帧。
+  video.addEventListener('ended', () => finish('video_ended', true), { once: true });
+  video.addEventListener('error', () => finish('video_ended', true), { once: true });
 
   // Playback starts through the lifecycle above (startCreative → playVideo);
   // with no bridge, run(true) already fired synchronously there.

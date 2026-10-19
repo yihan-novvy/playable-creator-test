@@ -306,7 +306,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       const goEnabled=config().intro?.goEnabled===true;
       introGate=el('section',{class:'step-card',id:'intro-gate-settings'},[
         el('h3',{},['倒计时钩子与 GO 按钮']),
-        el('p',{class:'hint'},['片头最后 3 秒倒计时数字下方显示一行钩子文案，吸引等待中的用户；倒计时结束后不再直接进入试玩，底部先亮出 GO 按钮，点击后才进入 playable。']),
+        el('p',{class:'hint'},['片头最后 3 秒倒计时数字下方显示一行钩子文案，吸引等待中的用户；倒计时结束后不再直接进入试玩，标题升到画面中央、底部亮出 GO 按钮，点击后标题飞回顶部 HUD 原位并进入 playable。']),
         checkbox('倒计时结束后显示 GO 按钮','intro','goEnabled',goEnabled),
         el('div',{class:'dragon-config-grid'},[
           textField('钩子文案（留空=取 HUD 标题）','intro','hookText',config().intro?.hookText,'默认取 HUD 主标题'),

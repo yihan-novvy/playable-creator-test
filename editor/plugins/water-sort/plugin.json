@@ -4,18 +4,57 @@
   "template": "water-sort",
   "workbench": "water-sort",
   "steps": [
-    { "id": "intro", "runner": "core:intro" },
-    { "id": "hud", "runner": "core:hud" },
-    { "id": "background", "runner": "core:background" },
-    { "id": "level", "runner": "./steps/level.mjs" },
-    { "id": "pack", "runner": "./steps/pack.mjs" }
+    {
+      "id": "intro",
+      "runner": "core:intro"
+    },
+    {
+      "id": "hud",
+      "runner": "core:hud"
+    },
+    {
+      "id": "background",
+      "runner": "core:background"
+    },
+    {
+      "id": "level",
+      "runner": "./steps/level.mjs"
+    },
+    {
+      "id": "pack",
+      "runner": "./steps/pack.mjs"
+    }
   ],
   "uploads": {
-    "intro-video": { "file": "intro-video.mp4", "magic": "mp4" },
-    "intro-poster": { "file": "intro-poster.jpg", "magic": "jpg" },
-    "background": { "file": "background.png", "magic": ["png", "jpg"] },
-    "portrait-src-left": { "file": "portrait-src-left.png", "magic": ["png", "jpg"] },
-    "portrait-src-right": { "file": "portrait-src-right.png", "magic": ["png", "jpg"] }
+    "intro-video": {
+      "file": "intro-video.mp4",
+      "magic": "mp4"
+    },
+    "intro-poster": {
+      "file": "intro-poster.jpg",
+      "magic": "jpg"
+    },
+    "background": {
+      "file": "background.png",
+      "magic": [
+        "png",
+        "jpg"
+      ]
+    },
+    "portrait-src-left": {
+      "file": "portrait-src-left.png",
+      "magic": [
+        "png",
+        "jpg"
+      ]
+    },
+    "portrait-src-right": {
+      "file": "portrait-src-right.png",
+      "magic": [
+        "png",
+        "jpg"
+      ]
+    }
   },
   "overlays": {
     "hud": "overlays/hud",
@@ -24,13 +63,36 @@
     "background": "overlays/background",
     "analytics": "overlays/analytics"
   },
-  "level": { "assetPath": "level.json" },
-  "background": { "width": 1560, "height": 2598, "defaultSigma": 12 },
+  "level": {
+    "assetPath": "level.json"
+  },
+  "background": {
+    "width": 1560,
+    "height": 2598,
+    "defaultSigma": 12
+  },
   "defaults": {
-    "hud": { "enabled": true, "titleLine1": "", "titleLine2": "", "ariaLabel": "" },
-    "intro": { "enabled": true, "ariaLabel": "" },
-    "cta": { "enabled": true },
-    "background": { "blurSigma": 12 },
-    "win": { "placements": 5 }
+    "hud": {
+      "enabled": true,
+      "titleLine1": "",
+      "titleLine2": "",
+      "ariaLabel": ""
+    },
+    "intro": {
+      "enabled": true,
+      "ariaLabel": "",
+      "hookText": "",
+      "goEnabled": false,
+      "goText": "GO"
+    },
+    "cta": {
+      "enabled": true
+    },
+    "background": {
+      "blurSigma": 12
+    },
+    "win": {
+      "placements": 5
+    }
   }
 }

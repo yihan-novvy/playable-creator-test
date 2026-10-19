@@ -35,9 +35,24 @@ function escapeInlineJson(value) {
 
 // analytics=false 出"纯净包":不注入埋点库与 boot 接线(交付给落地页打包
 // 服务再注入其官方 analytics.js 的交付形态),其余组不受影响。
+
+// 片头覆盖层是通用能力(core/overlays/intro):模板自带 overlays/intro/intro.html
+// 时整套装用模板自己的(废弃模板保持旧片头不动);否则回落核心版,并允许模板
+// 用同目录的 intro.css 追加覆盖(如 water-sort 的层级契约)。
+const CORE_OVERLAYS_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'overlays');
+
 export function buildWsOverlayInjection({ overlaysRoot, template, config, media, optionalHudPortraits = false, analytics = true }) {
   const overlayPath = (dir, name) => path.join(overlaysRoot, template.overlays?.[dir] || path.join('overlays', dir), name);
   const readOverlay = (dir, name) => fs.readFileSync(overlayPath(dir, name), 'utf8');
+  const hasOverlay = (dir, name) => fs.existsSync(overlayPath(dir, name));
+  // intro 组的三件套:模板自有整套优先;否则核心版 + 模板级 css 覆盖。
+  const introFiles = () => {
+    if (hasOverlay('intro', 'intro.html')) {
+      return { html: readOverlay('intro', 'intro.html'), css: readOverlay('intro', 'intro.css'), script: readOverlay('intro', 'intro.js') };
+    }
+    const core = name => fs.readFileSync(path.join(CORE_OVERLAYS_ROOT, 'intro', name), 'utf8');
+    return { html: core('intro.html'), css: core('intro.css') + (hasOverlay('intro', 'intro.css') ? readOverlay('intro', 'intro.css') : ''), script: core('intro.js') };
+  };
 
   const hasHudTitle = [config?.hud?.titleLine1, config?.hud?.titleLine2].some(value => String(value ?? '').trim());
   const titlesEnabled = !optionalHudPortraits || (config?.hud?.titleEnabled ?? hasHudTitle);
@@ -83,11 +98,12 @@ export function buildWsOverlayInjection({ overlaysRoot, template, config, media,
     };
   }
   if (introEnabled) {
-    introDom = fillIntroHtml(readOverlay('intro', 'intro.html'), { ariaLabel: '' })
+    const intro = introFiles();
+    introDom = fillIntroHtml(intro.html, { ariaLabel: '' })
       .replaceAll('__NOVVY_INTRO_VIDEO__', media.introVideo)
       .replaceAll('__NOVVY_INTRO_POSTER__', media.introPoster);
-    headStyles.push(`<style data-novvy-intro>${readOverlay('intro', 'intro.css')}</style>`);
-    bodyScripts.push(`<script data-novvy-intro>${readOverlay('intro', 'intro.js')}</script>`);
+    headStyles.push(`<style data-novvy-intro>${intro.css}</style>`);
+    bodyScripts.push(`<script data-novvy-intro>${intro.script}</script>`);
     // 倒计时钩子与 GO 按钮(素材自可选实现):goEnabled 开启后,片尾 3-2-1
     // 倒计时下方亮一行钩子文案(未显式配置时取 HUD 标题),倒计时结束后不再
     // 直接进试玩,底部先亮 GO 按钮等点击。未开启时两者不注入,行为与旧版一致。

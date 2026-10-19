@@ -1,48 +1,6 @@
+/* water-sort 的片头层级契约:整个页面(含基础包壳的 footer#hud)都压在片头
+   之下,沿用原 zip 移植时的最大层级;其余样式全部来自 core/overlays/intro,
+   ws-overlays.mjs 把本文件追加在核心样式之后做覆盖。 */
 .novvy-video-intro {
-  position: fixed;
-  inset: 0;
   z-index: 2147483646;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  background: #120b08;
-  opacity: 1;
-  transition: opacity 180ms ease-out;
-  touch-action: manipulation;
-}
-
-.novvy-video-intro.is-finished {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.novvy-intro-video {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  object-position: center;
-  background: #120b08;
-}
-
-.novvy-intro-sound {
-  position: absolute;
-  top: max(12px, env(safe-area-inset-top));
-  left: 12px;
-  z-index: 2;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-}
-
-.novvy-intro-sound:active {
-  transform: scale(0.92);
 }

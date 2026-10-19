@@ -225,6 +225,18 @@ function wsRenderEditor() {
   copySection.append(wsConfigRow('片头 aria-label(高级)', (config) => config.intro?.ariaLabel ?? '', (value) => ({ intro: { ariaLabel: value } })));
   copySection.append(wsConfigRow('背景模糊 sigma(高级,默认 12)', (config) => config.background?.blurSigma ?? 12, (value) => ({ background: { blurSigma: Number(value) } }), 'number'));
 
+  // 片头倒计时钩子与 GO 按钮(通用能力,core intro 覆盖层):goEnabled 开启后,
+  // 片尾 3-2-1 下方亮钩子文案(留空回退 HUD 标题),倒计时结束先亮 GO 等点击,
+  // 标题升到画面中央;点击 GO 标题飞回顶部 HUD 原位再进入试玩。
+  const introGoRow = el('div', { class: 'ws-color-row' });
+  const introGoCheck = el('input', { type: 'checkbox' });
+  introGoCheck.checked = getConfig().intro?.goEnabled === true;
+  introGoCheck.addEventListener('change', () => wsQueueConfig({ intro: { goEnabled: introGoCheck.checked } }));
+  introGoRow.append(el('span', { class: 'hint', style: 'min-width:150px;display:inline-block' }, ['倒计时结束后显示 GO 按钮']), introGoCheck);
+  copySection.append(introGoRow);
+  copySection.append(wsConfigRow('倒计时钩子文案(留空=取 HUD 标题)', (config) => config.intro?.hookText ?? '', (value) => ({ intro: { hookText: value } })));
+  copySection.append(wsConfigRow('GO 按钮文字(默认 GO)', (config) => config.intro?.goText ?? '', (value) => ({ intro: { goText: value } })));
+
   const colorSection = el('div', {});
   colorSection.append(el('div', { class: 'ws-section-title' }, ['颜色']));
   for (const [key, hex] of Object.entries(wsLevel.colors)) {

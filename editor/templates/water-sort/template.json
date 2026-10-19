@@ -36,7 +36,10 @@
     },
     "intro": {
       "enabled": true,
-      "ariaLabel": ""
+      "ariaLabel": "",
+      "hookText": "",
+      "goEnabled": false,
+      "goText": "GO"
     },
     "cta": {
       "enabled": true
