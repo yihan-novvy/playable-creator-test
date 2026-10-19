@@ -554,9 +554,19 @@ return {validateLevel,createState,escapeRoute,attemptEscape,availableArrows,solv
   $('result-reset').onclick = replay;
   $('hint').onclick = () => {
     if (!playable() || state.won || state.failed) return;
-    // Hint limits stay gameplay-only: the CTA timing belongs to the playable
-    // policy (completion or step N), so an exhausted hint tap just toasts.
-    if (hintsRemaining === 0) { toast('No hints remaining.'); return; }
+    // Asking past the limit is an explicit user request, not an automatic CTA
+    // moment: one jump buys one more hint, granted synchronously so the store
+    // return shows it ready. First playables and no-replay rounds just toast —
+    // conversion there belongs to the policy (completion or step N).
+    if (hintsRemaining === 0) {
+      toast('No hints remaining.');
+      if (replayAllowed() && !hasNextPlayable()) {
+        fire('novvy:hint-refill', { levelId: level.Index });
+        hintsRemaining++;
+        progress(false);
+      }
+      return;
+    }
     unlockAudio(); sound('click');
     hintId = M.availableArrows(state).find(id => !motions.has(id)) ?? null;
     if (hintId === null) { toast('Wait for the arrows to settle, then try again.'); return; }

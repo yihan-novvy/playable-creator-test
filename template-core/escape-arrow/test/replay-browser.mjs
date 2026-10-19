@@ -238,9 +238,9 @@ try {
   await replayAndReturn(16, false);
   console.log('PASS single playable: failure offers Try again; CTA precedes reset, lives/hints/progress reset, and intro never repeats');
 
-  // Hints: every configured hint takes effect and taps past the limit stay
-  // gameplay-only — conversion timing belongs to the CTA policy (complete),
-  // so nothing jumps from a hint and no per-click conversion gets armed.
+  // Hints: every configured hint takes effect; a tap past the limit is an
+  // explicit refill request — one CTA jump buys one more hint, granted before
+  // the store opens, without touching the automatic conversion latch.
   await pack({ levelId: 1, intro: { enabled: false }, gameplay: { lives: 2, hints: 2, allowReplay: true } });
   await page.locator('#hint').click();
   await page.locator('#hint').click();
@@ -248,10 +248,19 @@ try {
   assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'the last configured hint runs without converting');
   await page.locator('#hint').click();
   assert.equal(await page.locator('#toast').textContent(), 'No hints remaining.');
+  assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 1, 'the refill grant lands before the store return');
+  const refillLog = await page.evaluate(() => window.qaSdk);
+  const refillClick = refillLog.findLast(call => call[0] === 'click');
+  assert.equal(refillLog.filter(call => call[0] === 'click').length, 1, 'the past-limit tap converts exactly once');
+  assert.equal(refillClick[1].scene, 'hint-refill');
+  assert.equal(refillClick[2].hintsRemaining, 0, 'the refill CTA snapshots the exhausted round');
   await page.locator('#recenter').click();
-  await page.locator('#recenter').click();
-  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 0, 'taps past the hint limit never convert under the complete policy');
-  console.log('PASS single playable: all configured hints run; taps past the limit never convert');
+  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 1, 'the user-requested refill never arms per-click conversion');
+  await page.locator('#hint').click();
+  assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 0, 'the refilled hint is usable');
+  await page.locator('#hint').click();
+  assert.equal(await page.evaluate(() => window.qaSdk.filter(call => call[0] === 'click').length), 2, 'each exhausted tap is one refill request');
+  console.log('PASS single playable: all configured hints run; exhausted taps refill one hint per CTA jump');
 
   for (const allowReplay of [true, false]) {
     await pack({ levelId: 16, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2 }, gameplay: { lives: 2, hints: 2, allowReplay }, cta: { endMask: !allowReplay } });

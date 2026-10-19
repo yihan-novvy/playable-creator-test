@@ -160,11 +160,12 @@ try {
   await page.screenshot({ path: path.join(tmp, 'bulb-hint-limited.png') });
   await page.locator('#hint').click();
   assert.equal(await page.locator('#toast').textContent(), 'No hints remaining.');
-  assert.equal((await page.evaluate(() => window.qaEvents)).filter(e => e.name === 'novvy:cta-moment').length, 0);
-  assert.equal((await page.evaluate(() => window.qaSdk.filter(e => e[0] === 'click'))).length, 0, 'asking past the hint limit only toasts; the CTA policy owns conversion timing');
+  assert.equal((await page.evaluate(() => window.qaEvents)).filter(e => e.name === 'novvy:cta-moment').length, 0, 'the refill is a user request, not an automatic CTA moment');
+  assert.equal((await page.evaluate(() => window.qaSdk.filter(e => e[0] === 'click'))).length, 1, 'asking past the hint limit converts once as an explicit refill');
+  assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 1, 'the store return finds one fresh hint');
   await page.evaluate(() => window.EscapeArrow.reset());
-  assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 0, 'an unfinished round cannot bypass limits via reset');
-  console.log('PASS packed unlimited lives, limited hints, past-limit taps stay gameplay-only, and reset restricted to finished rounds');
+  assert.equal(await page.evaluate(() => window.EscapeArrow.getState().hintsRemaining), 1, 'an unfinished round cannot bypass limits via reset');
+  console.log('PASS packed unlimited lives, limited hints, exhausted-tap refill, and reset restricted to finished rounds');
 
   updateTaskConfig(task.id, { gameplay: { lives: 3, hints: 'unlimited', allowReplay: true } });
   updateTaskConfig(task.id, { levelId: 1, intro: { enabled: true }, outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 20, cta: { mode: 'steps', afterSteps: 4 }, background: { enabled: false } } });

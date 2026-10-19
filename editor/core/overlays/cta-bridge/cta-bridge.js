@@ -15,7 +15,8 @@
    (novvy:phase2-start)重置闩锁,第二关的 novvy:cta-moment(第 N 步或完成
    兜底)升级全屏接管并再次转化。自动时机经分相 autoConverted 闩锁去重;
    手动点击统一复用 Download,预览兜底经 novvy:cta-interact 回到桥,
-   每次点击都可请求转化,不读写自动时机的闩锁。
+   每次点击都可请求转化,不读写自动时机的闩锁。显式资源交换同理绕过自动
+   闩锁:novvy:replay-cta(重玩)与 novvy:hint-refill(提示用完再点换一条)。
    结束遮罩(colorever 注入 __NOVVY_CTA_END_MASK__):false = 到转化时刻不再
    弹全屏接管,直接跳转,并武装"回访每击转化"—— 用户从商店切回来后,每一次
    触压既操作 playable、也再触发一次跳转(takeover"每一击都是一次转化"的
@@ -77,6 +78,12 @@
   // automatic-conversion latch. The game resets its current round afterwards.
   window.addEventListener('novvy:replay-cta', function () {
     if (window.__novvyReplayable) convert('playable-replay');
+  });
+  // 用尽限次资源后再点 = 用户主动要资源的转化(提示用完换一条),与 replay-cta
+  // 同类:绕过自动闩锁,每次请求都转化,也不武装回访每击。素材在派发后同步补
+  // 发资源,回店即见新提示;完成时的自动转化(autoConverted)不受影响。
+  window.addEventListener('novvy:hint-refill', function () {
+    if (window.__novvyReplayable) convert('hint-refill');
   });
 
   /* 遮罩关闭形态的"回访每击转化":转化时刻(主动跳转)过后,用户从商店切

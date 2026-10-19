@@ -78,6 +78,18 @@ export default async function run(assert) {
   finished.emit('novvy:playable-complete', { replayable: false });
   finished.tap();
   assert.equal(finished.clicks.map(click => click.scene), ['playable-complete', 'post-complete-interact'], '不可重玩的结算回合转化后回访触压照旧武装');
+  // 显式资源交换(novvy:hint-refill):用户主动要资源的转化,绕过自动闩锁每次
+  // 请求都跳,不武装回访每击;完成时的自动转化窗口不受影响。
+  const refill = bridge({ endMask: false, replayable: true });
+  refill.emit('novvy:hint-refill');
+  refill.emit('novvy:hint-refill');
+  refill.tap();
+  assert.equal(refill.clicks.map(click => click.scene), ['hint-refill', 'hint-refill'], '提示用完的显式换条每次请求都转化，触压不抢跑');
+  refill.emit('novvy:cta-moment', { replayable: true });
+  assert.equal(refill.clicks.map(click => click.scene), ['hint-refill', 'hint-refill', 'cta-moment'], '资源交换不消耗完成时机的自动转化窗口');
+  const plain = bridge({ endMask: false });
+  plain.emit('novvy:hint-refill');
+  assert.equal(plain.clicks.length, 0, '未声明重玩的模板不做资源交换转化');
   for (const continuing of [undefined, false]) {
     const legacy = bridge({ twoPhase: false });
     legacy.emit('novvy:playable-complete', { continuing });
