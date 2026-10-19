@@ -70,6 +70,7 @@
   var wrap = document.getElementById('board-wrap');
   var hintNode = document.getElementById('hint');
   var resultNode = document.getElementById('win');
+  var replayNode = document.getElementById('replay');
   var state, layout, drag = null, particles = [], ghosts = [];
   var floorCanvas = document.createElement('canvas');
   var floorCtx = floorCanvas.getContext('2d');
@@ -96,10 +97,22 @@
   var armedPolicy = phase2Spec ? null : (window.__DRAGON_CUBE_CTA_POLICY__ || null);
   var ctaAnnounced = false;
   var dragSteps = 0;
+  // —— 结算重玩弹窗:仅作用于最后一个 playable(无片尾=唯一 playable;有片尾
+  // 时第二关就绪后才武装)。结算时亮出小弹窗,点击先请求一次 CTA(novvy:replay-cta,
+  // 转化桥的手动转化,不读自动闩锁),再页内重开本关原版布局,并派发
+  // novvy:playable-replay 让段桥调 SDK onReplay、重置本轮转化窗口。未注入
+  // (裸包试玩)时结算行为与旧版完全一致。可重玩回合的转化事件带
+  // replayable:true,转化桥因此不武装"回访每击转化",段桥按 continue_playing
+  // 保留当前段等待重玩。 ——
+  var replaySpec = window.__DRAGON_CUBE_REPLAY__ || null;
+  var phase2Active = false;
+  function replayRoundActive() {
+    return !!(replaySpec && replaySpec.enabled && (!window.__novvyOutroEnabled || phase2Active));
+  }
   function announceCtaMoment() {
     if (ctaAnnounced) return;
     ctaAnnounced = true;
-    fire('novvy:cta-moment');
+    fire('novvy:cta-moment', { levelId: level.Index, replayable: replayRoundActive() });
   }
   function registerStep() {
     dragSteps += 1;
@@ -339,23 +352,43 @@
     if (el) el.addEventListener('ended', settle);
     setTimeout(settle, seconds * 1000 + 400);
   }
+  // 结算重玩弹窗:亮出可重玩回合的结算引导(替代原生结算卡);文案/按钮留空回默认。
+  function showReplayPrompt() {
+    document.getElementById('replay-text').textContent = replaySpec.text || '挑战完成！再来一次？';
+    document.getElementById('replay-btn').textContent = replaySpec.button || '再玩一次';
+    replayNode.hidden = false;
+  }
   function finish() {
     if (state.finished) return;
     state.finished = true;
     // 最后一步完成即宣告可转化(不等胜利音乐收尾):novvy:playable-complete
     // 先于 novvy:victory,转化桥取前者;胜利音乐与结算反馈照常播完。
-    fire('novvy:playable-complete', { levelId: level.Index, collected: state.collected });
+    fire('novvy:playable-complete', { levelId: level.Index, collected: state.collected, replayable: replayRoundActive() });
     var snapshot = state;
     document.getElementById('result-title').textContent = '关卡完成！';
     document.getElementById('result-copy').textContent = '所有小猫都回家了';
-    resultNode.hidden = false;
+    if (replayRoundActive()) showReplayPrompt(); else resultNode.hidden = false;
     playWinThen(function () {
       if (state !== snapshot) return; // 音乐期间被重开:放弃这次结算
-      fire('novvy:victory', { levelId: level.Index, collected: snapshot.collected });
+      fire('novvy:victory', { levelId: level.Index, collected: snapshot.collected, replayable: replayRoundActive() });
       // 武装策略的转化时刻:complete 的主时刻,也是 steps 完成时未满 N 步的兜底。
       if (armedPolicy) announceCtaMoment();
     });
   }
+  // 重玩:旧回合仍在画面上时先请求转化(手动转化,不读自动闩锁),随后同步
+  // 重开本关原版布局;新回合就绪后派发 playable-replay。胜利音乐期间点击会
+  // 换掉 state,挂起的收尾回调按 snapshot 失配自行放弃,不会双发胜利事件。
+  function replay() {
+    if (!replayRoundActive() || !state.finished) return;
+    play('click');
+    fire('novvy:replay-cta', { levelId: level.Index });
+    ctaAnnounced = false;
+    dragSteps = 0;
+    replayNode.hidden = true;
+    reset();
+    fire('novvy:playable-replay', { levelId: level.Index });
+  }
+  document.getElementById('replay-btn').addEventListener('click', replay);
   function bounds() {
     var xs = level.Cells.map(function (cell) { return cell.Index.x; });
     var ys = level.Cells.map(function (cell) { return cell.Index.y; });
@@ -659,6 +692,7 @@
         armedPolicy = phase2Spec.cta || null;
         ctaAnnounced = false;
         dragSteps = 0;
+        phase2Active = true; // 重玩弹窗只在最后一个 playable(第二关)武装
         applyHudTitle(phase2Spec.hud);
         loadLevel(phase2Spec.level);
         render(performance.now());

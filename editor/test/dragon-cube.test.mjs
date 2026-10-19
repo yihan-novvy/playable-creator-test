@@ -45,6 +45,9 @@ export default async function run(assert) {
   assert.check(preview.includes('min-height:calc(138px + env(safe-area-inset-bottom))'), '棋盘为底部卡片预留空间');
   assert.check(preview.includes('window.__novvyTwoPhase=false') && preview.includes('window.__DRAGON_CUBE_PHASE2__=null'), '默认配置无双 playable');
   assert.check(preview.includes('window.__DRAGON_CUBE_CTA_POLICY__={"mode":"complete","afterSteps":8}'), '默认第一关 CTA 策略注入');
+  assert.check(preview.includes('window.__DRAGON_CUBE_REPLAY__=null') && !preview.includes('window.__novvyReplayable=true;'), '未开启重玩弹窗注入 null,包行为与旧版一致');
+  const replayOn = dragonHtml({ root: templateRoot, template, level: dragonLevel(templateRoot, 1), config: { replay: { enabled: true, text: '猫咪都回家啦！', button: '再玩一次！' } }, media: { ctaIcon: 'app-icon.png' } }).html;
+  assert.check(replayOn.includes('window.__DRAGON_CUBE_REPLAY__={"enabled":true,"text":"猫咪都回家啦！","button":"再玩一次！"}') && replayOn.includes('window.__novvyReplayable=true;'), '开启重玩弹窗注入文案与 __novvyReplayable');
   assert.check(!/2147483000|2147482000|2147483646/.test(preview), '小值层级契约替换旧 2^31 级 z-index');
   const shell = fs.readFileSync(path.join(templateRoot, 'game', 'game.js'), 'utf8');
   assert.check(shell.includes('function loadLevel') && shell.includes('novvy:cta-moment') && shell.includes('novvy:phase2-start'), '页内换关与转化时机契约进入引擎');
@@ -53,6 +56,10 @@ export default async function run(assert) {
   assert.check(shell.includes('playWinThen') && /playWinThen[\s\S]*?novvy:victory/.test(shell), '胜利音乐播完才派发 novvy:victory');
   assert.check(shell.includes("fire('novvy:playable-complete'") && /novvy:playable-complete[\s\S]*?playWinThen/.test(shell), '最后一步完成即派发 novvy:playable-complete（先于胜利音乐收尾）');
   assert.check(/if \(armedPolicy\) announceCtaMoment\(\)/.test(shell), 'steps 策略完成时兜底派发转化时刻');
+  assert.check(shell.includes('replayRoundActive') && shell.includes("fire('novvy:replay-cta'") && shell.includes("fire('novvy:playable-replay'"), '重玩弹窗契约进入引擎(手动转化→重开→playable-replay)');
+  assert.check(/novvy:playable-complete[\s\S]*?replayable: replayRoundActive\(\)/.test(shell), '结算事件携带 replayable 标注(桥不武装回访每击/按 continue_playing 结算)');
+  const gameHtml = fs.readFileSync(path.join(templateRoot, 'game', 'index.html'), 'utf8');
+  assert.check(gameHtml.includes('id="replay"') && gameHtml.includes('data-novvy-replay') && gameHtml.includes('id="replay-btn"'), '重玩弹窗 DOM 随包且默认 hidden');
   assert.check(!shell.includes('level-number') && shell.includes('applyHudTitle') && shell.includes('hud-title-line1'), '顶栏 LEVEL 角标已换成 HUD 标题（第二关换关时切换）');
   assert.check(preview.includes('window.__DRAGON_CUBE_HUD_TITLE__={"titleLine1":"DragonCube"'), 'HUD 标题配置注入预览');
   assert.check(preview.includes('data-novvy-hud') && preview.includes('id="novvy-training-hud" data-title-only') && preview.includes('novvy-hud-title-line1'), '仅标题 HUD 叠层随 colorever 同款样式注入');
@@ -110,8 +117,10 @@ export default async function run(assert) {
     id = created.body.id;
     const defaults = effectiveConfig(template, created.body.config);
     assert.check(defaults.cta.enabled && defaults.cta.endMask === false, '新任务默认显示下载卡并关闭全屏遮罩');
-    const patched = await api(`/api/tasks/${id}`, { config: { outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2, cta: { mode: 'steps', afterSteps: 5 } } } }, 'PATCH');
+    assert.check(defaults.replay?.enabled === false, '新任务默认关闭结算重玩弹窗');
+    const patched = await api(`/api/tasks/${id}`, { config: { outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2, cta: { mode: 'steps', afterSteps: 5 } }, replay: { enabled: true } } }, 'PATCH');
     assert.check(patched.status === 200 && patched.body.config.secondPlayable.enabled, '双 playable 与片尾设置可以保存');
+    assert.check(patched.body.config.replay?.enabled === true, '结算重玩弹窗配置可以保存(白名单放行)');
     const videoPath = path.join(phase2Temp, 'outro.mp4');
     await execFile('ffmpeg', ['-y', '-f', 'lavfi', '-i', 'color=c=blue:s=32x32:r=5:d=1', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', videoPath]);
     const uploaded = await fetch(base + `/api/tasks/${id}/uploads/outro-video`, { method: 'PUT', headers: { 'Content-Type': 'video/mp4' }, body: fs.readFileSync(videoPath) });
@@ -126,6 +135,7 @@ export default async function run(assert) {
     assert.check(packed.includes('window.__novvyTwoPhase=true'), '交付包内联双 playable 开关');
     assert.check(packed.includes('window.__DRAGON_CUBE_PHASE2__={"levelId":2'), '交付包内联第二关数据');
     assert.check(packed.includes('"mode":"steps","afterSteps":5'), '第二关转化时机进入内联数据');
+    assert.check(packed.includes('window.__DRAGON_CUBE_REPLAY__={"enabled":true,"text":"挑战完成！再来一次？","button":"再玩一次"}') && packed.includes('window.__novvyReplayable=true;'), '重玩弹窗默认文案进入交付包并声明 __novvyReplayable');
     assert.check(packed.includes('window.__DRAGON_CUBE_HUD_TITLE__'), 'HUD 标题配置进入交付包');
     assert.check(packed.includes('data-novvy-cta-bridge') && packed.includes('__DRAGON_CUBE_CTA_URL__'), '转化桥进入交付包');
     assert.check(packed.includes('id="novvy-cta"') && packed.includes('src="app-icon.png"'), '双 playable 注入与 colorever 相同的常驻卡片');

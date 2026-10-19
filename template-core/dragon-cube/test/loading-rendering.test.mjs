@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 
 const source = fs.readFileSync(new URL('../src/game.js', import.meta.url), 'utf8');
-const introSource = fs.readFileSync(new URL('../../../editor/plugins/dragon-cube/overlays/intro/intro.js', import.meta.url), 'utf8');
+const introSource = fs.readFileSync(new URL('../../../editor/core/overlays/intro/intro.js', import.meta.url), 'utf8');
 const cardSource = fs.readFileSync(new URL('../../../editor/core/overlays/cta-card/cta-card.js', import.meta.url), 'utf8');
 const bridgeSource = fs.readFileSync(new URL('../../../editor/core/overlays/cta-bridge/cta-bridge.js', import.meta.url), 'utf8').replaceAll('__CTA_URL_KEY__', '__DRAGON_CUBE_CTA_URL__');
 const readLevel = id => JSON.parse(fs.readFileSync(new URL(`../src/levels/${id}.json`, import.meta.url)));
@@ -56,7 +56,7 @@ function game({ first = readLevel(4), second = readLevel(10), intro = false, ext
   document.readyState = 'complete';
   document.getElementById = id => nodes.get(id) || null;
   document.createElement = tag => tag === 'canvas' ? new Canvas() : new Node();
-  for (const id of ['board-wrap', 'hint', 'win', 'hud-title-line1', 'hud-title-line2', 'result-title', 'result-copy', 'reset', 'result-reset']) nodes.set(id, new Node(id));
+  for (const id of ['board-wrap', 'hint', 'win', 'replay', 'hud-title-line1', 'hud-title-line2', 'result-title', 'result-copy', 'reset', 'result-reset', 'replay-text', 'replay-btn']) nodes.set(id, new Node(id));
   nodes.set('board', new Canvas('board'));
   if (intro) for (const id of ['novvy-video-intro', 'novvy-intro-video', 'novvy-intro-sound', 'novvy-intro-countdown']) nodes.set(id, new Node(id));
   const setTimeout = (fn, ms) => { timers.set(++timerId, { fn, ms }); return timerId; };
@@ -210,19 +210,19 @@ test('HUD 与两关自定义背景也等待解码，资源 URL 相对页面解�
   assert.equal(g.window.DragonCube.getState().levelId, 10);
 });
 
-test('视频先结束、游戏脚本后到时保留视频层，首帧就绪只切换一次', async () => {
+test('视频先结束：core 片头立即收尾只派发一次，晚到的游戏脚本直接进试玩', async () => {
   const g = game({ intro: true, second: null });
   g.intro();
   let entries = 0;
   g.window.addEventListener('novvy:intro-finished', () => entries++);
   g.nodes.get('novvy-intro-video').dispatchEvent(new Event('ended'));
-  assert.equal(entries, 0);
-  assert.equal(g.nodes.get('novvy-video-intro').classList.contains('is-finished'), false);
+  assert.equal(entries, 1);
+  assert.equal(g.window.__novvyIntroFinished, true);
+  assert.equal(g.nodes.get('novvy-video-intro').classList.contains('is-finished'), true);
   g.boot();
   g.finish(g.images);
   await g.window.DragonCube.ready;
   assert.equal(entries, 1);
-  assert.equal(g.nodes.get('novvy-video-intro').classList.contains('is-finished'), true);
   g.emit('dragon-cube:ready');
   assert.equal(entries, 1);
   g.runTimers(220);
@@ -234,8 +234,9 @@ test('游戏脚本未能启动时视频层有超时出口，不会永久遮住�
   g.intro();
   let entries = 0;
   g.window.addEventListener('novvy:intro-finished', () => entries++);
-  g.nodes.get('novvy-intro-video').dispatchEvent(new Event('ended'));
   g.runTimers(12000);
+  assert.equal(entries, 0, 'core 片头的 failsafe 是 30s，12s 时不应收尾');
+  g.runTimers(30000);
   assert.equal(entries, 1);
   assert.equal(g.window.__novvyIntroFinished, true);
   g.cta();
@@ -254,17 +255,18 @@ test('共享 CTA 卡片在片头结束且游戏就绪后显示，第一关最后
   };
   const g = game({ first, second: null, intro: true });
   let jumps = 0;
-  g.window.novvyHandleAdClick = () => jumps++;
+  g.window.NovvyPlayable = { click: () => jumps++ };
   g.cta(); g.intro();
   const card = g.nodes.get('novvy-cta');
   assert.equal(card.hidden, true);
   g.nodes.get('novvy-intro-video').dispatchEvent(new Event('ended'));
-  assert.equal(card.hidden, true);
-  g.boot(); g.finish(g.images);
-  await g.window.DragonCube.ready;
-  assert.equal(card.hidden, false);
+  assert.equal(g.window.__novvyIntroFinished, true);
+  assert.equal(card.hidden, false, 'core 片头一收尾（不等游戏脚本）就亮出底部下载卡');
   assert.equal(g.window.__novvyCtaCardPhase, 'bar');
   assert.equal(jumps, 0, '显示卡片不会自动跳转');
+  g.boot(); g.finish(g.images);
+  await g.window.DragonCube.ready;
+  assert.equal(jumps, 0, '游戏加载完成也不触发跳转');
   const board = g.nodes.get('board');
   for (const [type, clientX] of [['pointerdown', 163], ['pointermove', 227], ['pointerup', 227]]) {
     const event = new Event(type, { cancelable: true });
@@ -287,7 +289,7 @@ test('第二关重置第一关转化状态，满 N 次有效拖放才跳转，�
   const g = game({ first: row(1), second: row(2) });
   g.window.__DRAGON_CUBE_PHASE2__.cta.afterSteps = 2;
   let jumps = 0;
-  g.window.novvyHandleAdClick = () => jumps++;
+  g.window.NovvyPlayable = { click: () => jumps++ };
   g.cta(); g.finish(g.images);
   await g.window.DragonCube.ready;
   const board = g.nodes.get('board');

@@ -50,6 +50,14 @@ function dragonPhase2(root, config, outroActive) {
   return { levelId: level.Index, level, hud, cta: normalizeCtaPolicy(config.secondPlayable?.cta, 'steps') };
 }
 
+// 结算重玩弹窗(最后一个 playable 的结算时刻亮出):点击先请求一次 CTA,
+// 再页内重开本关原版布局重玩。enabled 未开时注入 null,包行为与旧版完全
+// 一致;文案/按钮留空回退默认(引擎内同款兜底文案)。
+export function normalizeReplay(raw) {
+  if (raw?.enabled !== true) return null;
+  return { enabled: true, text: String(raw?.text ?? '').trim() || '挑战完成！再来一次？', button: String(raw?.button ?? '').trim() || '再玩一次' };
+}
+
 export function dragonHtml({ root, overlaysRoot, template, level, config, media, preview = false }) {
   let html = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
   if (html.split(SCRIPT).length !== 2) throw new Error('DragonCube 基础包缺少唯一 game.js 脚本入口');
@@ -110,6 +118,10 @@ export function dragonHtml({ root, overlaysRoot, template, level, config, media,
   }
   injection.background2Enabled = background2Enabled;
   const ctaPolicy = injection.outroEnabled ? null : normalizeCtaPolicy(config?.playableCta, 'complete');
+  // 结算重玩弹窗:开启时共享段桥/转化桥按 __novvyReplayable 保留当前段等待
+  // 重玩(结算 continue_playing),重玩按钮的 CTA 请求不读自动闩锁;可重玩
+  // 回合的转化事件不武装"回访每击转化"。
+  const replaySpec = normalizeReplay(config?.replay);
   // 壳内结算卡与底部按钮在广告形态下让位:第一关的结算就是片尾/服务结算
   // 卡片(双 playable 时片尾之后还有第二关)。HUD 叠层(立绘或仅标题)在场时
   // 收起引擎原生顶栏标题卡,避免双标题。
@@ -118,7 +130,7 @@ export function dragonHtml({ root, overlaysRoot, template, level, config, media,
     first: [injection.backgroundEnabled && media.background, config?.hud?.enabled === true && media.hudLeft, config?.hud?.enabled === true && media.hudRight, injection.ctaCardEnabled && media.ctaIcon].filter(Boolean),
     second: background2Enabled ? [media.background2] : [],
   };
-  const configScript = `<script>window.__DRAGON_CUBE_LEVEL__=${inline(level)};window.__DRAGON_CUBE_CTA_URL__='';window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__DRAGON_CUBE_HUD_TITLE__=${inline({ titleLine1: String(config?.hud?.titleLine1 ?? ''), titleLine2: String(config?.hud?.titleLine2 ?? '') })};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__novvyStageChain__=${inline(stageChain)};window.__DRAGON_CUBE_CTA_POLICY__=${inline(ctaPolicy)};window.__DRAGON_CUBE_PHASE2__=${inline(phase2)};window.__DRAGON_CUBE_IMAGES__=${inline(images)};</script>`;
+  const configScript = `<script>window.__DRAGON_CUBE_LEVEL__=${inline(level)};window.__DRAGON_CUBE_CTA_URL__='';window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__DRAGON_CUBE_HUD_TITLE__=${inline({ titleLine1: String(config?.hud?.titleLine1 ?? ''), titleLine2: String(config?.hud?.titleLine2 ?? '') })};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__novvyStageChain__=${inline(stageChain)};window.__DRAGON_CUBE_CTA_POLICY__=${inline(ctaPolicy)};window.__DRAGON_CUBE_PHASE2__=${inline(phase2)};window.__DRAGON_CUBE_REPLAY__=${inline(replaySpec)};${replaySpec ? 'window.__novvyReplayable=true;' : ''}window.__DRAGON_CUBE_IMAGES__=${inline(images)};</script>`;
   const gameScript = preview ? `<script src="/templates/${template.id}/game/game.js" defer></script>` : SCRIPT;
   if (preview) html = html.replace('href="style.css"', `href="/templates/${template.id}/game/style.css"`);
   html = html.replace('</head>', () => `${[...injection.headStyles, extra, ...injection.headScripts].join('\n')}\n</head>`)

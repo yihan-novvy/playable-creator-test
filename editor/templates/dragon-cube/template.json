@@ -75,6 +75,11 @@
         "mode": "steps",
         "afterSteps": 8
       }
+    },
+    "replay": {
+      "enabled": false,
+      "text": "挑战完成！再来一次？",
+      "button": "再玩一次"
     }
   }
 }

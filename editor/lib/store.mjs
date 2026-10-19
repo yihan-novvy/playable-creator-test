@@ -115,7 +115,7 @@ const CONFIG_PATCH_WHITELIST = new Set(['hud', 'intro', 'cta', 'recolorPortraits
 const CONFIG_WHITELISTS = new Map([
   ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','opening','playableCta','replay','secondPlayable','music'])],
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
-  ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable'])],
+  ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable','replay'])],
 ]);
 
 export function isColoreverTemplate(templateId) {

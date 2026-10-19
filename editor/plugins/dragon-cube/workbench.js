@@ -260,6 +260,19 @@ window.PlayablePlugins = window.PlayablePlugins || {};
         mountPlayPreview(ctaCopy, versioned(`/api/tasks/${taskId}/preview?view=cta`, Date.now()));
       } }, ['预览 CTA 遮罩']));
     }
+    // 结算重玩弹窗:作用于最后一个 playable(无片尾=唯一 playable;双关=第二关)。
+    const replayOn = config().replay?.enabled === true;
+    const replayCard = el('section', { class: 'step-card', id: 'replay-settings' }, [
+      el('h3', {}, ['结算重玩弹窗']),
+      el('p', { class: 'hint' }, ['最后一个 playable（未开片尾时即唯一的 playable，双 playable 时为第二关）结算时亮出小弹窗引导重玩；点击后先请求一次跳转，再页内重开本关原版布局。建议保持「结束后全屏遮罩」关闭。']),
+      checkbox('启用结算重玩弹窗', 'replay', 'enabled', replayOn),
+    ]);
+    if (replayOn) {
+      replayCard.append(el('div', { class: 'dragon-config-grid' }, [
+        textField('弹窗文案', 'replay', 'text', config().replay?.text, '挑战完成！再来一次？'),
+        textField('按钮文字', 'replay', 'button', config().replay?.button, '再玩一次'),
+      ]));
+    }
     const phase2On = config().outro?.enabled && config().secondPlayable?.enabled;
     const levelDesc = `第 ${config().levelId} 关` + (phase2On ? ` + 第二关第 ${config().secondPlayable?.levelId ?? 2} 关 · 原版 JSON 校验与导出。` : ' · 原版 JSON 校验与导出。');
     const level = card('level', 6, '关卡', levelDesc, [], (right) => {
@@ -278,7 +291,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     root.append(hud, background);
     if (config().outro?.enabled) { root.append(outro); if (secondPlayable) root.append(secondPlayable); if (secondBackground) root.append(secondBackground); }
     if (!config().outro?.enabled) root.append(ctaTiming);
-    root.append(ctaCopy, level, pack);
+    root.append(ctaCopy, replayCard, level, pack);
     let number = 0;
     for (const section of root.children) { const badge = section.querySelector('.step-num'); if (badge) badge.textContent = String(++number); }
   }

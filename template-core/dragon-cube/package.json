@@ -1,6 +1,6 @@
 {
   "name": "dragon-cube-playable",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "build:template": "node scripts/build-template.mjs --out ../../editor/templates/dragon-cube",
     "build:game": "node scripts/build-game.mjs",
     "sync:unity": "node scripts/extract-unity-assets.mjs",
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "test:replay": "node test/replay-browser.mjs"
   }
 }

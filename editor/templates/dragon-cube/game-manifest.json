@@ -1,7 +1,7 @@
 {
   "id": "dragon-cube",
   "name": "DragonCube（Unity 前十关）",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entry": "game/index.html",
   "levels": [
     {
