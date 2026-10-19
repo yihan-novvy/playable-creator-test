@@ -138,8 +138,8 @@
     },
     "replay": {
       "enabled": false,
-      "text": "挑战完成！再来一次？",
-      "button": "再玩一次"
+      "text": "Level complete! Play again?",
+      "button": "Replay"
     }
   }
 }

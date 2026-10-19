@@ -52,10 +52,10 @@ function dragonPhase2(root, config, outroActive) {
 
 // 结算重玩弹窗(最后一个 playable 的结算时刻亮出):点击先请求一次 CTA,
 // 再页内重开本关原版布局重玩。enabled 未开时注入 null,包行为与旧版完全
-// 一致;文案/按钮留空回退默认(引擎内同款兜底文案)。
+// 一致;文案/按钮留空回退默认(与 colorever-new 同款英文句式,引擎内同款兜底)。
 export function normalizeReplay(raw) {
   if (raw?.enabled !== true) return null;
-  return { enabled: true, text: String(raw?.text ?? '').trim() || '挑战完成！再来一次？', button: String(raw?.button ?? '').trim() || '再玩一次' };
+  return { enabled: true, text: String(raw?.text ?? '').trim() || 'Level complete! Play again?', button: String(raw?.button ?? '').trim() || 'Replay' };
 }
 
 export function dragonHtml({ root, overlaysRoot, template, level, config, media, preview = false }) {

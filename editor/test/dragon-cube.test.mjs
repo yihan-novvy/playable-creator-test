@@ -135,7 +135,7 @@ export default async function run(assert) {
     assert.check(packed.includes('window.__novvyTwoPhase=true'), '交付包内联双 playable 开关');
     assert.check(packed.includes('window.__DRAGON_CUBE_PHASE2__={"levelId":2'), '交付包内联第二关数据');
     assert.check(packed.includes('"mode":"steps","afterSteps":5'), '第二关转化时机进入内联数据');
-    assert.check(packed.includes('window.__DRAGON_CUBE_REPLAY__={"enabled":true,"text":"挑战完成！再来一次？","button":"再玩一次"}') && packed.includes('window.__novvyReplayable=true;'), '重玩弹窗默认文案进入交付包并声明 __novvyReplayable');
+    assert.check(packed.includes('window.__DRAGON_CUBE_REPLAY__={"enabled":true,"text":"Level complete! Play again?","button":"Replay"}') && packed.includes('window.__novvyReplayable=true;'), '重玩弹窗默认文案进入交付包并声明 __novvyReplayable');
     assert.check(packed.includes('window.__DRAGON_CUBE_HUD_TITLE__'), 'HUD 标题配置进入交付包');
     assert.check(packed.includes('data-novvy-cta-bridge') && packed.includes('__DRAGON_CUBE_CTA_URL__'), '转化桥进入交付包');
     assert.check(packed.includes('id="novvy-cta"') && packed.includes('src="app-icon.png"'), '双 playable 注入与 colorever 相同的常驻卡片');

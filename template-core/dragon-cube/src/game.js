@@ -352,10 +352,11 @@
     if (el) el.addEventListener('ended', settle);
     setTimeout(settle, seconds * 1000 + 400);
   }
-  // 结算重玩弹窗:亮出可重玩回合的结算引导(替代原生结算卡);文案/按钮留空回默认。
+  // 结算重玩弹窗:亮出可重玩回合的结算引导(替代原生结算卡);文案/按钮留空回
+  // colorever-new 同款英文默认。
   function showReplayPrompt() {
-    document.getElementById('replay-text').textContent = replaySpec.text || '挑战完成！再来一次？';
-    document.getElementById('replay-btn').textContent = replaySpec.button || '再玩一次';
+    document.getElementById('replay-text').textContent = replaySpec.text || 'Level complete! Play again?';
+    document.getElementById('replay-btn').textContent = replaySpec.button || 'Replay';
     replayNode.hidden = false;
   }
   function finish() {

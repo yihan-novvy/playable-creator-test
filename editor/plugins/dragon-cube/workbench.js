@@ -269,8 +269,8 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]);
     if (replayOn) {
       replayCard.append(el('div', { class: 'dragon-config-grid' }, [
-        textField('弹窗文案', 'replay', 'text', config().replay?.text, '挑战完成！再来一次？'),
-        textField('按钮文字', 'replay', 'button', config().replay?.button, '再玩一次'),
+        textField('弹窗文案', 'replay', 'text', config().replay?.text, 'Level complete! Play again?'),
+        textField('按钮文字', 'replay', 'button', config().replay?.button, 'Replay'),
       ]));
     }
     const phase2On = config().outro?.enabled && config().secondPlayable?.enabled;
