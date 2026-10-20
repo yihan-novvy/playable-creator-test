@@ -109,8 +109,8 @@
     root.insertBefore(canvas, video.nextSibling);
     return true;
   }
-  // 定帧已垫底(freezeLastFrame)或整层即将隐藏:摘掉 src 释放媒体与解码器,
-  // ended 视频不再贯穿第二关常驻。active 已闩死,不存在再 play() 的路径。
+  // 摘掉 src 释放媒体与解码器,ended 视频不再贯穿第二关常驻;
+  // active 已闩死,不存在再 play() 的路径。
   function releaseVideo() {
     try { video.removeAttribute('src'); video.load(); } catch (_) {}
   }
@@ -164,14 +164,10 @@
     attempt++;
     video.pause();
     hideCountdown();
-    if (reason === 'video_ended') {
-      // 闸门路径 showGoGate 已冻结过,重复冻结同帧无害;冻结成功才释放,
-      // 失败保留视频原样(与 GO 闸门的兜底策略一致)。
-      if (freezeLastFrame()) releaseVideo();
-      revealCta();
-    } else {
-      releaseVideo();
-    }
+    // 模板自有游戏背景图兜底,视频播完直接摘掉 src 释放媒体与解码器,
+    // 不依赖视频尾帧;active 已闩死,不存在再 play() 的路径。
+    releaseVideo();
+    if (reason === 'video_ended') revealCta();
     root.hidden = reason !== 'video_ended';
     sound.hidden = reason === 'video_ended';
     play.hidden = true;
