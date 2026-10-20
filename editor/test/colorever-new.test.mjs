@@ -146,6 +146,17 @@ export default async function run(assert){
     assert.equal(JSON.parse(fs.readFileSync(path.join(taskGeneratedDir(id),'level2.json'),'utf8')),second,'第二关开局保持一致');
     assert.check((await api(url+'/run',{step:'pack'})).body.ok,'复用关卡与媒体重新打包通过');
     assert.equal(fs.readFileSync(path.join(taskResultDir(id),'game.js'),'utf8'),newScript,'交付脚本与模板引擎一致');
+    // 无片尾双 playable:secondPlayable 不再依赖 outro 视频链路 —— 段链直连,
+    // 第二关背景回退复用 background.webp(同 URL 单次解码),不生成 background2。
+    await patch({outro:{enabled:false},background:{enabled:true,source:'auto',blurSigma:2},secondPlayable:{enabled:true,patternId:'house',background:{enabled:true,source:'video-last',blurSigma:2},cta:{mode:'steps',afterSteps:5,everySteps:7}}});
+    const noOutro=await api(url+'/run',{step:'all'});
+    assert.check(noOutro.status===200&&noOutro.body.every(x=>x.ok),'无片尾双关卡全流程通过');
+    const directPacked=fs.readFileSync(path.join(taskResultDir(id),'index.html'),'utf8');
+    assert.check(directPacked.includes('__novvyStageChain__=["video","playable","playable"]'),'无片尾段链 playable 直连第二关');
+    assert.check(directPacked.includes('__novvyOutroEnabled=false')&&directPacked.includes('__novvyTwoPhase=true')&&directPacked.includes('__COLOREVER_PHASE2__'),'无片尾标记与第二关数据照常注入');
+    assert.check(!directPacked.includes('data-novvy-outro')&&!directPacked.includes('outro-video.mp4'),'无片尾链不携带片尾 overlay 与视频');
+    assert.check(!fs.existsSync(path.join(taskResultDir(id),'background2.webp'))&&directPacked.includes('novvy-dom-bg2')&&/novvy-dom-bg2[^}]*background\.webp/.test(directPacked.replace(/\s+/g,' ')),'第二关背景回退复用 background.webp');
+    assert.check(directPacked.includes('"cta":{"mode":"steps","afterSteps":5,"everySteps":7}'),'无片尾第二关独立 CTA 策略进包');
     const same=await api(url+'/template',{templateId:'colorever-new'},'PATCH');
     assert.equal(same.body,readTask(id),'重复选择当前版本不改动项目或打包状态');
     const stable=readTask(id);

@@ -10,9 +10,10 @@ export function prerequisites(config) {
   const uploads = config?.music?.source === 'custom' ? ['background-music'] : [];
   if (config?.intro?.enabled === true) { uploads.push('intro-video'); generated.push('poster.webp', 'intro-video.mp4'); }
   if (config?.background?.enabled === true) generated.push('background.webp');
-  if (config?.secondPlayable?.enabled === true && config?.outro?.enabled === true) {
+  if (config?.secondPlayable?.enabled === true) {
     generated.push('level2.json');
-    if (config.secondPlayable.background?.enabled === true) generated.push('background2.webp');
+    // background2.webp 仅由片尾尾帧生成;无片尾时 pack 回退复用 background.webp,不生成。
+    if (config.secondPlayable.background?.enabled === true && config?.outro?.enabled === true) generated.push('background2.webp');
   }
   return { uploads, generated };
 }
@@ -23,13 +24,14 @@ export async function run(ctx) {
   requireFiles([generated]);
   if (JSON.stringify(JSON.parse(fs.readFileSync(generated, 'utf8'))) !== JSON.stringify(level)) throw new Error('关卡已改变，请重新运行关卡步骤');
   const enabled = { intro: ctx.config.intro?.enabled === true, outro: ctx.config.outro?.enabled === true && fs.existsSync(ctx.uploads['outro-video']), hud: ctx.config.hud?.enabled === true, background: ctx.config.background?.enabled === true };
-  const phase2 = await coloreverPhase2(ctx.templateRoot, ctx.config, ctx.template, enabled.outro);
+  const phase2 = await coloreverPhase2(ctx.templateRoot, ctx.config, ctx.template);
   if (phase2) {
     const generated2 = path.join(ctx.generatedDir, 'level2.json');
     requireFiles([generated2]);
     if (JSON.stringify(JSON.parse(fs.readFileSync(generated2, 'utf8'))) !== JSON.stringify(phase2.level)) throw new Error('第二关已改变，请重新运行关卡步骤');
   }
-  enabled.background2 = phase2 !== null && ctx.config.secondPlayable?.background?.enabled === true;
+  // 第二关背景缺独立文件(无片尾未生成)时传 null,由 lib 回退复用 background.webp。
+  enabled.background2 = phase2 !== null && ctx.config.secondPlayable?.background?.enabled === true && fs.existsSync(path.join(ctx.generatedDir, 'background2.webp'));
   // 视频 pack 只发 intro/outro 步骤转码出的 720p 产物(上传原片不进包)。
   const files = [];
   if (enabled.intro) files.push([path.join(ctx.generatedDir, 'intro-video.mp4'), 'tail-ad-video.mp4'], [path.join(ctx.generatedDir, 'poster.webp'), 'poster.webp']);

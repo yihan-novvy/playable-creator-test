@@ -100,8 +100,10 @@ export function normalizeReplay(raw) {
 
 // 双 playable 数据:仅在片尾已启用(存在片尾视频才算)时允许,否则视为未配置。
 // 第二关数据全量内联进 index.html,打包文件列表不变。第二关开局同样由任务配置。
-export async function coloreverPhase2(root, config, template, outroActive) {
-  if (!outroActive || config?.secondPlayable?.enabled !== true) return null;
+export async function coloreverPhase2(root, config, template) {
+  // 双 playable 不再依赖片尾视频:无片尾时首关通关后页内直接换关,
+  // 第二关背景由 lib 回退复用 background.webp(简易背景,零额外解码)。
+  if (config?.secondPlayable?.enabled !== true) return null;
   const { level, patternId } = await coloreverLevel(root, { ...config, patternId: config.secondPlayable.patternId ?? 'house', opening: config.secondPlayable?.opening }, template);
   const title = config.secondPlayable?.hud;
   const hud = { titleLine1: title?.titleEnabled === false ? '' : String(title?.titleLine1 ?? level.name), titleLine2: title?.titleEnabled === false ? '' : String(title?.titleLine2 ?? '') };
@@ -136,7 +138,7 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   // 因此传给 ws 组的 media 始终剥掉 ctaIcon。
   const wsMedia = { ...media, ctaIcon: null };
   const outroEnabled = config?.outro?.enabled === true && !!media.outroVideo;
-  const phase2 = await coloreverPhase2(root, config, template, outroEnabled);
+  const phase2 = await coloreverPhase2(root, config, template);
   // 新事件规范(docs/original-zip-required-event-integration.md §2):段链打包时
   // 定稿 —— intro/outro 各算独立 video 段、第二关算独立 playable 段;字面量
   // 注入供静态预检与段桥(__novvyStageChain__)使用。
@@ -188,15 +190,18 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   }
   // 双 playable:第二关数据与两关各自的 CTA 时机策略。第一关策略仅武装于
   // 无片尾场景(有片尾时第一关只负责引出片尾,转化由片尾链/第二关负责)。
-  const background2Enabled = phase2 !== null && config?.secondPlayable?.background?.enabled === true && !!media.background2;
+  // 第二关背景:优先独立 background2.webp(片尾尾帧/上传);缺文件时回退
+  // 复用 background.webp —— 同 URL 浏览器只解码一次,零额外内存与包体。
+  const background2Media = media.background2 || media.background;
+  const background2Enabled = phase2 !== null && config?.secondPlayable?.background?.enabled === true && !!background2Media;
   if (phase2) {
     const backgroundRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template.overlays.background);
     injection.bodyScripts.push(`<script data-novvy-phase2-background>${fs.readFileSync(path.join(backgroundRoot, 'background.js'), 'utf8')}</script>`);
     if (background2Enabled) {
-      const imageUrl = media.background2.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+      const imageUrl = background2Media.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
       injection.headStyles.push(`<link rel="preload" as="image" href="${imageUrl}">`);
       injection.bodyDom.push('<div id="novvy-dom-bg2" hidden aria-hidden="true"></div>');
-      const css = fs.readFileSync(path.join(backgroundRoot, 'background.css'), 'utf8').replaceAll('#novvy-dom-bg', '#novvy-dom-bg2').replaceAll('__NOVVY_BG_FILE__', media.background2);
+      const css = fs.readFileSync(path.join(backgroundRoot, 'background.css'), 'utf8').replaceAll('#novvy-dom-bg', '#novvy-dom-bg2').replaceAll('__NOVVY_BG_FILE__', background2Media);
       injection.headStyles.push(`<style data-novvy-bg2>${css}#novvy-dom-bg2[hidden]{display:none}.novvy-phase2,.novvy-phase2 body,.novvy-phase2 .app{background:transparent}</style>`);
     }
   }
@@ -216,7 +221,8 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root:not(.novvy-phase2),:root:not(.novvy-phase2) body,:root:not(.novvy-phase2) .app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
   // 双 playable 的 GO 闸门:勾选 intro.goEnabled 后,片尾(通往第二段的视频)与片头
   // 同款等点击——倒计时标题 + 中线下方 GO 按钮,点击才派发 outro-finished 换关。
-  const outroGate = phase2 && config?.intro?.goEnabled === true ? { enabled: true, text: String(config?.intro?.goText ?? '').trim() || 'GO' } : null;
+  // 闸门由片尾 overlay 消费;无片尾链路首关通关后直接换关,不存在闸门。
+  const outroGate = phase2 && injection.outroEnabled && config?.intro?.goEnabled === true ? { enabled: true, text: String(config?.intro?.goText ?? '').trim() || 'GO' } : null;
   const phase2Spec = phase2 ? { ...phase2, go: outroGate } : null;
   const data = `<script>window.__COLOREVER_PATTERN_ID__=${inline(config?.patternId ?? 'cat')};window.__COLOREVER_LEVEL__=${inline(level)};window.__COLOREVER_CTA_URL__=${inline(url)};window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__novvyOutroEnabled=${injection.outroEnabled};window.__novvyTwoPhase=${phase2 !== null};window.__novvyStageChain__=${inline(stageChain)};window.__COLOREVER_CTA_POLICY__=${inline(ctaPolicy)};window.__COLOREVER_PHASE2__=${inline(phase2Spec)};window.__COLOREVER_REPLAY__=${inline(replaySpec)};${replaySpec ? 'window.__novvyReplayable=true;' : ''}</script>`;
   html = html.replace('</head>', () => `${[...injection.headStyles, styles, ...injection.headScripts].join('\n')}</head>`)

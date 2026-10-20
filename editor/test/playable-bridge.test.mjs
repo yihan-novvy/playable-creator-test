@@ -43,6 +43,7 @@ export default async function run(assert){
   [['playable','video'],'1:playable'],
   [['video','playable','video','playable'],'1:video'],
   [['playable','video','playable'],'1:playable'],
+  [['video','playable','playable'],'1:video'],
  ];
  for(const [chain,expected] of matrix){
   const run=bridgeRun({chain});
@@ -68,6 +69,17 @@ export default async function run(assert){
  full.emit('novvy:victory');
  assert.equal(full.completes().length,2,'phase2-start 重置闩锁，第二关单独结算一次');
  assert.equal(full.steps(),[[1,40],[1,70]],'第二关步骤计数同步重开');
+ // 无片尾直换链(colorever-new):playable 直连 playable,无 outro 段可切,
+ // phase2-start 仍正确进入链尾并重置结算闩锁。
+ const direct=bridgeRun({chain:['video','playable','playable'],introVideo:true});
+ direct.emit('novvy:intro-finished',{reason:'video_ended'});
+ assert.equal(direct.stages().at(-1),'2:playable','无片尾链:片头播完切入第一关');
+ direct.emit('novvy:hud-progress',{percent:50,correct:5,total:10});
+ direct.emit('novvy:playable-complete');
+ assert.equal(direct.completes().length,1,'无片尾链:首关完成即结算');
+ direct.emit('novvy:phase2-start');
+ assert.equal(direct.stages().at(-1),'3:playable','无片尾链:phase2-start 直入链尾第二关');
+ assert.equal(direct.stages().filter(stage=>stage.endsWith(':video')).length,1,'无片尾链:仅片头一个 video 段');
  // 双触发反向到达(victory 先)同样只结算一次。
  const reversed=bridgeRun({chain:['playable']});
  reversed.emit('novvy:victory');reversed.emit('novvy:playable-complete');

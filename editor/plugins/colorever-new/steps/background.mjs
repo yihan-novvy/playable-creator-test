@@ -5,7 +5,10 @@ import { run as spawnRun } from '../../../core/lib/exec.mjs';
 import { requireFiles } from '../../../core/lib/helpers.mjs';
 
 function secondBackground(config) {
-  return config?.secondPlayable?.enabled === true && config?.outro?.enabled === true && config?.secondPlayable?.background?.enabled === true;
+  if (config?.secondPlayable?.enabled !== true || config?.secondPlayable?.background?.enabled !== true) return false;
+  // video-last 依赖片尾视频(按配置门控,不看上传残留);upload 来源独立于片尾。
+  const source = config.secondPlayable.background.source ?? 'video-last';
+  return source === 'upload' || config?.outro?.enabled === true;
 }
 export function prerequisites(config) {
   const uploads = [];
@@ -19,17 +22,21 @@ export function prerequisites(config) {
 
 export function secondPrerequisites(config) {
   if (!secondBackground(config)) return { uploads: [], generated: [] };
-  return { uploads: config.secondPlayable.background.source === 'upload' ? ['outro-video', 'background2'] : ['outro-video'], generated: [] };
+  if (config.secondPlayable.background.source === 'upload') return { uploads: ['background2'], generated: [] };
+  // video-last 依赖片尾视频;未启用片尾时不声明,runSecond 自然跳过,
+  // pack 侧回退复用 background.webp 作为第二关简易背景。
+  return { uploads: config?.outro?.enabled === true ? ['outro-video'] : [], generated: [] };
 }
 
 export async function runSecond(ctx) {
   const output = path.join(ctx.generatedDir, 'background2.webp');
-  if (!secondBackground(ctx.config) || !fs.existsSync(ctx.uploads['outro-video'])) {
+  const settings = { source: 'video-last', blurSigma: 12, ...ctx.config.secondPlayable?.background };
+  if (settings.source === 'auto') settings.source = fs.existsSync(ctx.uploads.background2) ? 'upload' : 'video-last';
+  const missingSource = settings.source === 'upload' ? !fs.existsSync(ctx.uploads.background2) : !fs.existsSync(ctx.uploads['outro-video']);
+  if (!secondBackground(ctx.config) || missingSource) {
     fs.rmSync(output, { force: true });
     return { metrics: { skipped: true }, warnings: [] };
   }
-  const settings = { source: 'video-last', blurSigma: 12, ...ctx.config.secondPlayable.background };
-  if (settings.source === 'auto') settings.source = fs.existsSync(ctx.uploads.background2) ? 'upload' : 'video-last';
   // Isolate temporary files so the first background can never be overwritten.
   const temp = fs.mkdtempSync(path.join(ctx.generatedDir, 'background2-'));
   try {

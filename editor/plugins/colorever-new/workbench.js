@@ -270,7 +270,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       const source=el('select',{'aria-label':'第二关背景图来源'});
       for(const [value,label]of [['video-last','片尾视频的尾帧'],['video-first','片尾视频的首帧'],['upload','上传背景图片'],['auto','自动（上传图片优先，否则使用片尾尾帧）']])source.append(el('option',{value},[label]));
       source.value=bg.source??'video-last';source.onchange=()=>saveBackground({source:source.value});
-      const blur=el('input',{type:'number',min:0,max:50,step:1,value:bg.blurSigma??12});
+      const blur=el('input',{type:'number',min:0,max:50,step:1,value:bg.blurSigma??6});
       blur.onchange=()=>saveBackground({blurSigma:Number(blur.value)});
       const inputs=[field('启用第二关独立背景',enabled)];
       if(enabled.checked){
@@ -362,7 +362,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     for (const [value,label] of [['auto','自动（上传图片优先，否则使用海报）'],['upload','上传背景图片'],['video-first','片头视频的首帧'],['video-last','片头视频的尾帧']]) backgroundSource.append(el('option',{value},[label]));
     backgroundSource.value=config().background?.source??'auto';
     backgroundSource.onchange=async()=>{await save({background:{source:backgroundSource.value}});await refresh(true);};
-    const blur=el('input',{type:'number',min:0,max:50,step:1,value:config().background?.blurSigma??12});
+    const blur=el('input',{type:'number',min:0,max:50,step:1,value:config().background?.blurSigma??6});
     blur.onchange=async()=>{await save({background:{blurSigma:Number(blur.value)}});await refresh(true);};
     const backgroundInputs=[field('背景图来源',backgroundSource),field('背景模糊程度（0–50）',blur)];
     if(backgroundSource.value.startsWith('video-')) backgroundInputs.push(el('p',{class:'hint'},['使用“开场视频”步骤上传的 MP4，无需开启视频播放或先生成海报。']));

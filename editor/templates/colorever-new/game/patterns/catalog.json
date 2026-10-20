@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "engineSha256": "21981f76bc4be82dfbecb19be7a92f8f1e3c2dc030b147ac1a5d9f39082c8cc6",
+  "engineSha256": "1aca6cd4e795cddf0ca4e4df244be5f031e3c102c7560289545b9e905e3a5130",
   "levelEngine": "level-engine.mjs",
   "levelEngineSha256": "d7f2f9885334799f8a645825e3ef8da6991d2a317b28add5ebf6bc63e2b46156",
   "decorators": {

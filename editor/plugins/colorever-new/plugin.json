@@ -86,9 +86,9 @@
     "cta": "overlays/cta"
   },
   "background": {
-    "width": 1560,
-    "height": 2598,
-    "defaultSigma": 12
+    "width": 780,
+    "height": 1299,
+    "defaultSigma": 6
   },
   "patterns": {
     "catalog": "game/patterns/catalog.json"
@@ -115,7 +115,7 @@
     },
     "background": {
       "enabled": false,
-      "blurSigma": 12,
+      "blurSigma": 6,
       "source": "auto"
     },
     "cta": {
@@ -151,7 +151,7 @@
       "background": {
         "enabled": false,
         "source": "video-last",
-        "blurSigma": 12
+        "blurSigma": 6
       },
       "opening": {
         "mode": "easy",

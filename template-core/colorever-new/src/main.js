@@ -275,15 +275,15 @@ function render(now){
 }
 renderer.setAnimationLoop(render);$('loading').hidden=true;
 
-/* —— 双 playable:片尾播完后立即页内换关进入第二关。一次性闩锁;
+/* —— 双 playable:片尾播完(或无片尾时首关通关)后页内换关进入第二关。一次性闩锁;
    phase2-start 在新关卡就绪后派发,outro/audio 据此收尾。 —— */
 if(phase2Spec){
   const pattern2={decorate:resolveDecorate(phase2Spec.patternId)};
   const level2=validateLevel(phase2Spec.level);
   if(!level2.opening)throw new Error('Missing authored opening in phase-2 level');
   let switched=false;
-  window.addEventListener('novvy:outro-finished',event=>{
-    if(switched||event.detail?.reason!=='video_ended')return;
+  const switchToPhase2=()=>{
+    if(switched)return;
     switched=true;
     buildLevel(level2,pattern2,phase2Spec.patternId);
     armedPolicy=phase2Spec.cta??null;
@@ -294,5 +294,15 @@ if(phase2Spec){
     refresh();
     if(puzzle.complete)afterFlights(performance.now());
     document.dispatchEvent(new CustomEvent('novvy:phase2-start',{bubbles:true,detail:{hud:phase2Spec.hud}}));
+  };
+  window.addEventListener('novvy:outro-finished',event=>{
+    if(event.detail?.reason!=='video_ended')return;
+    switchToPhase2();
+  });
+  /* 无片尾链路:通关特效落定 + 'complete' 策略下载卡时刻已亮出后直接换关;
+     重玩弹窗开启时保留首关重玩语义,不自动换关。 */
+  if(!window.__novvyOutroEnabled)window.addEventListener('novvy:victory',()=>{
+    if(replayRoundActive())return;
+    setTimeout(switchToPhase2,1400);
   });
 }

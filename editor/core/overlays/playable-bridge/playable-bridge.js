@@ -36,12 +36,13 @@
      首段 = chain[0];intro 后的 playable 在 firstPlayable+1;紧随 playable
      的 video 即 outro 段(单关链里 playable 后没有 video,intro 段不会误认
      —— 判据是 firstPlayable+1 处,不是 lastIndexOf);链尾是 playable 且
-     前面有 outro 段,才是双关的第二 playable。 */
+     长于首关,才是双关的第二 playable —— 中间有无 outro 段均可
+     (colorever-new 无片尾直换链:['video','playable','playable'])。 */
   var introIndex = chain[0] === 'video' ? 1 : 0;
   var firstPlayable = chain.indexOf('playable');
   if (firstPlayable < 0) return;
   var outroIndex = chain[firstPlayable + 1] === 'video' ? firstPlayable + 2 : 0;
-  var phase2Index = outroIndex && chain[chain.length - 1] === 'playable' ? chain.length : 0;
+  var phase2Index = chain.length > firstPlayable + 1 && chain[chain.length - 1] === 'playable' ? chain.length : 0;
 
   /* —— 启动:声明完整链路 + 首段切入 —— */
   try { NovvyPlayable.setStageList(chain.slice()); } catch (e) {}
