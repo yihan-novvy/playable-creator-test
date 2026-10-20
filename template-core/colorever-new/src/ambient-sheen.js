@@ -36,6 +36,8 @@ export class AmbientSheen{
   this.mesh=new THREE.InstancedMesh(geometry,this.material,capacity);this.mesh.frustumCulled=false;this.mesh.renderOrder=5;this.mesh.count=0;scene.add(this.mesh);
   this.mesh.setColorAt(0,new THREE.Color());
  }
+ // 静置帧只推进时间(高光脉冲由着色器逐像素驱动),不重写实例矩阵。
+ setTime(now){this.material.uniforms.time.value=now*.001;}
  update(groups,flights,now=performance.now()){
   this.material.uniforms.time.value=now*.001;
   this.mesh.visible=this.enabled;let i=0;

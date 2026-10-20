@@ -28,7 +28,9 @@ const resolveDecorate=id=>globalThis.__COLOREVER_DECORATORS__?.[id]?.({THREE})??
 const pattern={decorate:resolveDecorate(patternId)};
 
 const canvas=document.getElementById('game');
-const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true,powerPreference:'high-performance'});
+// MSAA 关闭:珠子是高密度圆角面片,DPR2 下 4x 采样的 color+depth 附件常驻
+// ~140MB 显存,是低端 WebView WebGL 崩溃最大单点;视觉差异不可感知。
+const renderer=new THREE.WebGLRenderer({canvas,antialias:false,alpha:true,powerPreference:'high-performance'});
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=false;
 renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=1.0;
@@ -139,16 +141,38 @@ document.addEventListener('pointerdown',e=>{if(e.target.closest('#sound'))return
 document.addEventListener('click',e=>{if(e.target.closest('#sound'))return;audio.unlock();},{capture:true});
 function updateSound(){ $('sound').setAttribute('aria-pressed',String(audio.enabled));$('sound').setAttribute('aria-label',audio.enabled?'关闭音乐':'打开音乐');}
 updateSound();
-$('sheen').onclick=()=>{ambientSheen.enabled=!ambientSheen.enabled;$('sheen').setAttribute('aria-pressed',String(ambientSheen.enabled));$('sheen').setAttribute('aria-label',ambientSheen.enabled?'关闭常驻反光':'打开常驻反光');};
+$('sheen').onclick=()=>{ambientSheen.enabled=!ambientSheen.enabled;beadsDirty=true;$('sheen').setAttribute('aria-pressed',String(ambientSheen.enabled));$('sheen').setAttribute('aria-label',ambientSheen.enabled?'关闭常驻反光':'打开常驻反光');};
+/* —— 渲染门控状态(声明须先于 refresh() 的首次调用):片头/片尾视频播放
+   或页面隐藏时整帧跳过(视频解码期不与 GPU 满帧叠加,消除内存峰值窗口);
+   beadsDirty 置位时全量重写珠子/反光层实例矩阵。 —— */
+let introDone=globalThis.__novvyIntroFinished===true||!document.getElementById('novvy-video-intro');
+let outroActive=false,beadsDirty=true;
+window.addEventListener('novvy:intro-finished',()=>{introDone=true;});
+window.addEventListener('novvy:outro-started',()=>{outroActive=true;});
+window.addEventListener('novvy:outro-finished',()=>{outroActive=false;});
 const markers=new THREE.Group();scene.add(markers);
+let hintMesh=null;
 // Keep the wrong-bead cue on the bead, leaving its target-colored margin clear.
 const outline=rounded(BEAD_WIDTH+.012,BEAD_WIDTH+.012,.107);outline.holes.push(rounded(BEAD_WIDTH-.014,BEAD_WIDTH-.014,.094));
 const outlineGeometry=new THREE.ShapeGeometry(outline),outlineMaterial=new THREE.MeshBasicMaterial({color:'#ffc526',depthTest:false,transparent:true,opacity:.9});
 buildLevel(level,pattern,patternId);
 function refresh(){
   for(const g of groups){g.entries=[];for(const region of ['board','tray'])puzzle[region].forEach((color,index)=>{if(color===g.color){g.entries.push({region,index,point:point(region,index),lift:0});}});g.mesh.count=g.entries.length;}
-  while(markers.children.length)markers.remove(markers.children[0]);
-  for(const [index]of cells)if(puzzle.board[index]&&puzzle.board[index]!==target[index]){const m=new THREE.Mesh(outlineGeometry,outlineMaterial);m.position.copy(point('board',index));m.position.z=.5;m.scale.setScalar(boardScale);markers.add(m);}
+  // 金色提示框合批:单 InstancedMesh 承载全部错珠框(共享几何/材质,
+  // 516 颗错珠从 516 次 draw 降到 1 次);容量随关卡棋盘格数重建。
+  const needed=cells.size;
+  if(!hintMesh||hintMesh.userData.capacity<needed){
+    if(hintMesh){markers.remove(hintMesh);hintMesh.dispose();}
+    hintMesh=new THREE.InstancedMesh(outlineGeometry,outlineMaterial,needed);
+    hintMesh.frustumCulled=false;hintMesh.userData.capacity=needed;markers.add(hintMesh);
+  }
+  let hintIndex=0;
+  for(const [index]of cells)if(puzzle.board[index]&&puzzle.board[index]!==target[index]){
+    dummy.position.copy(point('board',index));dummy.position.z=.5;dummy.scale.setScalar(boardScale);dummy.updateMatrix();
+    hintMesh.setMatrixAt(hintIndex++,dummy.matrix);
+  }
+  hintMesh.count=hintIndex;hintMesh.instanceMatrix.needsUpdate=true;
+  beadsDirty=true;
   updateUI();
 }
 function updateUI(){
@@ -260,7 +284,39 @@ function afterFlights(now){
   else busy=colors.length>0;
   updateUI();
 }
+/* —— 珠子实例矩阵脏更新:动画中的珠子逐帧写,刚停下的补写一帧
+   (飞行的 scale 0 需归位),其余静置珠子仅在脏位时全量刷新;
+   返回是否仍有动画进行。 —— */
+function updateBeads(now){
+  let animating=false;
+  for(const {mesh,entries}of groups){
+    let touched=false;
+    for(let i=0;i<entries.length;i++){
+      const e=entries[i];
+      const selected=puzzle.selection?.region===e.region&&puzzle.selection.indices.includes(e.index);
+      let t=0;
+      if(selected){t=THREE.MathUtils.clamp((now-selectionStart)/150,0,1);e.lift=.38*(1-Math.pow(1-t,3));}
+      else if(e.lift>5e-3)e.lift=THREE.MathUtils.lerp(e.lift,0,.25);
+      else if(e.lift!==0)e.lift=0;
+      const flying=flights.length>0&&flights.some(f=>!f.landed&&f.toRegion===e.region&&f.to===e.index);
+      const moving=selected||flying||e.lift>5e-3;
+      if(moving)animating=true;
+      // 动画中的珠子逐帧写;刚停下的补写一帧(飞行的 scale 0 需归位);
+      // 其余静置珠子仅在脏位时全量刷新。
+      if(moving||e.moving||beadsDirty){
+        dummy.position.copy(e.point);dummy.position.z+=e.lift;
+        dummy.scale.setScalar(flying?0:(e.region==='tray'?trayScale:boardScale)*(selected?1+.07*Math.sin(Math.PI*t):1));
+        dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);touched=true;
+      }
+      e.moving=moving;
+    }
+    if(touched)mesh.instanceMatrix.needsUpdate=true;
+  }
+  beadsDirty=false;
+  return animating;
+}
 function render(now){
+  if(!introDone||outroActive||document.hidden)return;
   if(busy&&flights.length){
     for(const f of flights){const t=THREE.MathUtils.clamp((now-f.start)/f.duration,0,1),ease=1-Math.pow(1-t,3);f.mesh.position.lerpVectors(f.a,f.b,ease);f.mesh.position.z+=Math.sin(Math.PI*t)*(f.shift?.08:.8);f.mesh.scale.setScalar(THREE.MathUtils.lerp(f.fromRegion==='tray'?trayScale:boardScale,f.toRegion==='tray'?trayScale:boardScale,ease));
       if(t===1&&!f.landed){f.landed=true;f.mesh.visible=false;if(!f.shift){play(f.toRegion==='tray'?'store':'place-single');if(f.toRegion==='board')effects.sweep(f.to);}}}
@@ -270,8 +326,11 @@ function render(now){
   pendingColors=pendingColors.filter(event=>now<event.start+900);
   if(!pendingColors.length){$('celebration').hidden=true;if(busy&&!flights.length&&!completion){busy=false;updateUI();}}
   if(completion){if(now>=completion.start&&!completion.announced){completion.announced=true;play('success');$('instruction').textContent='拼画完成 · 全图扫光中…';}if(now>=completion.end){completion=null;busy=false;updateUI();if(armedPolicy&&!ctaAnnounced)announceCtaMoment();$('win-detail').textContent=`${puzzle.total} 颗珠子全部归位 · ${puzzle.moves} 步完成`;if(replayRoundActive())showReplayPrompt();else $('win').hidden=false;if(!wasWon){wasWon=true;document.dispatchEvent(new CustomEvent('novvy:victory',{bubbles:true,detail:{replayable:replayRoundActive()}}));}}}
-  for(const {mesh,entries}of groups){for(let i=0;i<entries.length;i++){const e=entries[i],selected=puzzle.selection?.region===e.region&&puzzle.selection.indices.includes(e.index);const t=THREE.MathUtils.clamp((now-selectionStart)/150,0,1);e.lift=selected?.38*(1-Math.pow(1-t,3)):THREE.MathUtils.lerp(e.lift,0,.25);const flying=flights.some(f=>!f.landed&&f.toRegion===e.region&&f.to===e.index);dummy.position.copy(e.point);dummy.position.z+=e.lift;dummy.scale.setScalar(flying?0:(e.region==='tray'?trayScale:boardScale)*(selected?1+.07*Math.sin(Math.PI*t):1));dummy.updateMatrix();mesh.setMatrixAt(i,dummy.matrix);}mesh.instanceMatrix.needsUpdate=true;}
-  ambientSheen.update(groups,flights,now);effects.update(now);renderer.render(scene,camera);
+  const dirty=beadsDirty;
+  const animating=updateBeads(now);
+  if(animating||dirty)ambientSheen.update(groups,flights,now);
+  else ambientSheen.setTime(now);
+  effects.update(now);renderer.render(scene,camera);
 }
 renderer.setAnimationLoop(render);$('loading').hidden=true;
 
