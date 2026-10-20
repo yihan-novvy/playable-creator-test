@@ -221,7 +221,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       for (const [value, label] of [['video-last', '片尾视频的尾帧'], ['video-first', '片尾视频的首帧'], ['upload', '上传背景图片'], ['auto', '自动（上传图片优先，否则使用片尾尾帧）']]) source.append(el('option', { value }, [label]));
       source.value = bg.source ?? 'video-last';
       source.addEventListener('change', () => saveBackground({ source: source.value }));
-      const blur = el('input', { type: 'number', min: 0, max: 50, step: 1, value: bg.blurSigma ?? 12 });
+      const blur = el('input', { type: 'number', min: 0, max: 50, step: 1, value: bg.blurSigma ?? 6 });
       blur.addEventListener('change', () => saveBackground({ blurSigma: Number(blur.value) }));
       const inputs = [field('启用第二关独立背景', enabled)];
       if (enabled.checked) {

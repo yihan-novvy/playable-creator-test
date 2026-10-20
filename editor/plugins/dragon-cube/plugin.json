@@ -87,9 +87,9 @@
     "max": 10
   },
   "background": {
-    "width": 1560,
-    "height": 2598,
-    "defaultSigma": 12
+    "width": 780,
+    "height": 1299,
+    "defaultSigma": 6
   },
   "defaults": {
     "levelId": 1,
@@ -111,7 +111,7 @@
     },
     "background": {
       "enabled": false,
-      "blurSigma": 12
+      "blurSigma": 6
     },
     "cta": {
       "enabled": true,
@@ -129,7 +129,7 @@
       "background": {
         "enabled": false,
         "source": "video-last",
-        "blurSigma": 12
+        "blurSigma": 6
       },
       "cta": {
         "mode": "steps",

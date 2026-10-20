@@ -69,12 +69,19 @@
     sound.setAttribute('aria-label', video.muted ? 'Unmute sound' : 'Mute sound');
     sound.setAttribute('title', video.muted ? 'Unmute sound' : 'Mute sound');
   }
+  // 模板自带背景图,片尾无需视频尾帧:finish 即摘掉 src 释放媒体与解码器,
+  // ended 视频不再贯穿第二关常驻。active 已闩死,不存在再 play() 的路径;
+  // 视频位腾出后露出整层底色,phase2-start 隐藏整层交还游戏。
+  function releaseVideo() {
+    try { video.removeAttribute('src'); video.load(); } catch (_) {}
+  }
   function finish(reason) {
     if (!active) return;
     active = false;
     attempt++;
     video.pause();
     hideCountdown();
+    releaseVideo();
     if (reason === 'video_ended') revealCta();
     root.hidden = reason !== 'video_ended';
     sound.hidden = reason === 'video_ended';

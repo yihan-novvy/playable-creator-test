@@ -98,15 +98,21 @@
     titleStyleBefore = '';
   }
   function freezeLastFrame() {
-    if (!video.videoWidth || !video.videoHeight) return;
+    if (!video.videoWidth || !video.videoHeight) return false;
     const canvas = document.createElement('canvas');
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    try { ctx.drawImage(video, 0, 0); } catch (_) { return; }
+    if (!ctx) return false;
+    try { ctx.drawImage(video, 0, 0); } catch (_) { return false; }
     canvas.className = 'novvy-intro-frame';
     root.insertBefore(canvas, video.nextSibling);
+    return true;
+  }
+  // 定帧已垫底(freezeLastFrame)或整层即将隐藏:摘掉 src 释放媒体与解码器,
+  // ended 视频不再贯穿第二关常驻。active 已闩死,不存在再 play() 的路径。
+  function releaseVideo() {
+    try { video.removeAttribute('src'); video.load(); } catch (_) {}
   }
   function buzzGo() {
     try {
@@ -158,7 +164,14 @@
     attempt++;
     video.pause();
     hideCountdown();
-    if (reason === 'video_ended') revealCta();
+    if (reason === 'video_ended') {
+      // 闸门路径 showGoGate 已冻结过,重复冻结同帧无害;冻结成功才释放,
+      // 失败保留视频原样(与 GO 闸门的兜底策略一致)。
+      if (freezeLastFrame()) releaseVideo();
+      revealCta();
+    } else {
+      releaseVideo();
+    }
     root.hidden = reason !== 'video_ended';
     sound.hidden = reason === 'video_ended';
     play.hidden = true;
