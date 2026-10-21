@@ -85,11 +85,11 @@ export default async function run(assert) {
   const engineSrc = fs.readFileSync(enginePath, 'utf8');
   const scheduleDefaults = originCtaSchedule(originCtaPolicy(defaults));
   const scope = globalThis;
-  const savedGlobals = { window: scope.window, document: scope.document, CustomEvent: scope.CustomEvent, setInterval: scope.setInterval, clearInterval: scope.clearInterval };
+  const savedGlobals = { window: scope.window, document: scope.document, CustomEvent: scope.CustomEvent, setInterval: scope.setInterval, clearInterval: scope.clearInterval, console: scope.console };
 
   function makeEnv() {
-    const docListeners = [], winListeners = [], events = [], timers = [];
-    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [] };
+    const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], stage: [] };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
     const fakeDocument = {
       getElementById: () => null,
@@ -107,7 +107,12 @@ export default async function run(assert) {
         for (const l of winListeners) if (l.type === event.type) l.fn(event);
       },
       PointerEvent: function () {},
-      NovvyPlayable: { click: (p) => calls.click.push(p), onStep: (step, detail) => calls.onStep.push({ step, detail }) },
+      NovvyPlayable: {
+        click: (p) => calls.click.push(p),
+        onStep: (step, detail) => calls.onStep.push({ step, detail }),
+        setStage: (index, type) => calls.stage.push([index, type]),
+        setStageList: (list) => calls.stageList ? calls.stageList.push(list) : (calls.stageList = [list]),
+      },
       super_html: { download: (url) => calls.download.push(url), game_end: () => { calls.gameEndOriginal += 1; } },
       open: (url) => calls.windowOpen.push(url),
     };
@@ -117,11 +122,12 @@ export default async function run(assert) {
     scope.CustomEvent = CustomEvent;
     scope.setInterval = (fn) => { timers.push(fn); return timers.length; };
     scope.clearInterval = () => {};
+    scope.console = { log: (m) => logs.push(String(m)), error: (m) => logs.push(String(m)), warn: (m) => logs.push(String(m)) };
     new Function(engineSrc)();
     const tap = () => { fakeDocument.dispatchEvent({ type: 'pointerdown', pointerId: 1 }); fakeDocument.dispatchEvent({ type: 'pointerup', pointerId: 1 }); };
     const fireTimers = () => { for (const fn of timers) fn(); };
     const of = (type) => events.filter((item) => item.type === type);
-    return { events, calls, tap, fireTimers, fakeWindow, of };
+    return { events, calls, logs, tap, fireTimers, fakeWindow, of };
   }
 
   try {
@@ -141,6 +147,13 @@ export default async function run(assert) {
     env.fireTimers();
     assert.equal(env.of('novvy:hud-progress').at(-1).detail, { percent: 90 }, '扫描命中后按真值派 hud-progress 90');
     assert.equal(env.of('novvy:hud-progress').length, 1, '同值不重复派发');
+    assert.check(env.logs.some((l) => l.includes('[novvy-origin] hud-progress percent=90')), 'hud-progress 派发打日志');
+    assert.check(env.logs.some((l) => l.includes('进度里程碑 25%（当前 90%）')) && env.logs.some((l) => l.includes('进度里程碑 75%（当前 90%）')), '25/50/75 里程碑跨越打日志');
+    assert.check(env.logs.some((l) => l.includes('[novvy-origin] 试玩开始')), '试玩开始打日志');
+    env.fakeWindow.NovvyPlayable.setStage(2, 'playable');
+    assert.equal(env.calls.stage.at(-1), [2, 'playable'], 'stage 包装透传原调用');
+    assert.check(env.logs.some((l) => l.includes('[novvy-origin] stage → 2 (playable)')), 'stage 切换打日志');
+    assert.check(env.logs.some((l) => l.includes('SDK 段切换日志已挂接')), 'stage 日志挂接提示');
     const onStepBefore = env.calls.onStep.length;
     env.tap();
     model.ratio = 0.92;
@@ -159,6 +172,7 @@ export default async function run(assert) {
     model.ratio = 1;
     env.fakeWindow.super_html.game_end();
     assert.equal(env.of('novvy:hud-progress').at(-1).detail, { percent: 100 }, '结算收尾读数给 100');
+    assert.check(env.logs.some((l) => l.includes('进度里程碑 100%（当前 100%）')), '100 里程碑在结算读数打日志');
     assert.equal(env.of('novvy:playable-complete').length, 1, 'game_end 派发 playable-complete');
     assert.equal(env.calls.gameEndOriginal, 1, '原 game_end 回调保留');
     const momentsBefore = env.of('novvy:cta-moment').length;

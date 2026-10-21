@@ -36,11 +36,20 @@
     return !!(window.NovvyPlayable && typeof window.NovvyPlayable.click === 'function');
   }
 
+  /* —— 调试日志（设备验收用,统一前缀方便抓取）:hud-progress 每次派发、
+     25/50/75/100 里程碑跨越、SDK 段切换/链声明、试玩开始。 —— */
+  var MILESTONES = [25, 50, 75, 100];
+  var seenMilestone = {};
+  function LOG(message) {
+    try { console.log('[novvy-origin] ' + message); } catch (e) {}
+  }
+
   /* 试玩开始判定与转化桥一致:有片头覆盖层时等 novvy:intro-finished
      (播完/跳过/出错收场都会派发),未启用片头 = 注入即开算。 */
   function begin() {
     if (started) return;
     started = true;
+    LOG('试玩开始（有效步开始计数）');
   }
   if (document.getElementById('novvy-video-intro') && !window.__novvyIntroFinished) {
     window.addEventListener('novvy:intro-finished', begin, { once: true });
@@ -84,6 +93,13 @@
       if (value >= 100) value = finalRead ? 100 : 99; /* 100 只在结算读数给(棋盘解完 ratio=1) */
       if (value > lastPercent) {
         lastPercent = value;
+        LOG('hud-progress percent=' + value);
+        for (var m = 0; m < MILESTONES.length; m += 1) {
+          if (value >= MILESTONES[m] && !seenMilestone[MILESTONES[m]]) {
+            seenMilestone[MILESTONES[m]] = 1;
+            LOG('进度里程碑 ' + MILESTONES[m] + '%（当前 ' + value + '%）');
+          }
+        }
         try { document.dispatchEvent(new CustomEvent('novvy:hud-progress', { bubbles: true, detail: { percent: value } })); } catch (e) {}
       }
     } catch (e) {}
@@ -100,6 +116,7 @@
   function nativeComplete() {
     if (ended) return;
     ended = true;
+    LOG('完成信号（game_end / 原生胜利跳转）');
     pollProgress(true);
     try { document.dispatchEvent(new CustomEvent('novvy:playable-complete', { bubbles: true, detail: {} })); } catch (e) {}
   }
@@ -209,10 +226,36 @@
     }
     return originalOpen.apply(window, arguments);
   };
+  /* —— SDK 段切换日志:包装 NovvyPlayable.setStage/setStageList（段桥的切段
+     都走这两个入口）。SDK 注入时序不定，随补丁定时器短周期重试直至包上。 —— */
+  var stageWrapped = null;
+  function patchSdkStageLog() {
+    var sdk = window.NovvyPlayable;
+    if (!sdk || sdk === stageWrapped || typeof sdk.setStage !== 'function') return;
+    var origSetStage = sdk.setStage;
+    var origSetStageList = sdk.setStageList;
+    try {
+      sdk.setStage = function (index, type) {
+        LOG('stage → ' + index + (type ? ' (' + type + ')' : ''));
+        return origSetStage.call(sdk, index, type);
+      };
+      if (typeof origSetStageList === 'function') {
+        sdk.setStageList = function (list) {
+          LOG('stage 链声明: ' + JSON.stringify(list));
+          return origSetStageList.call(sdk, list);
+        };
+      }
+      stageWrapped = sdk;
+      LOG('SDK 段切换日志已挂接');
+    } catch (e) {}
+  }
+  patchSdkStageLog();
   var elapsed = 0;
   var patchTimer = setInterval(function () {
     elapsed += 400;
-    if (window.super_html === patchedChannel && elapsed >= 4000) { clearInterval(patchTimer); return; }
+    patchSdkStageLog();
+    var sdkIdle = !window.NovvyPlayable || window.NovvyPlayable === stageWrapped;
+    if (window.super_html === patchedChannel && sdkIdle && elapsed >= 4000) { clearInterval(patchTimer); return; }
     patchChannel();
     if (elapsed >= 15000) clearInterval(patchTimer);
   }, 400);
