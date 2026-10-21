@@ -110,7 +110,7 @@ export default async function run(assert) {
 
   function makeEnv() {
     const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
-    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], stage: [], audioResumes: 0, audioPlay: 0 };
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0 };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
     const fakeDocument = {
       getElementById: () => null,
@@ -137,6 +137,8 @@ export default async function run(assert) {
       __audioCtxs: [],
       AudioContext: class {
         constructor() { this.state = 'suspended'; this.resume = () => { this.state = 'running'; calls.audioResumes += 1; }; fakeWindow.__audioCtxs.push(this); }
+        createBuffer() { return {}; }
+        createBufferSource() { return { buffer: null, connect() {}, start: () => { calls.bufferStarts += 1; } }; }
       },
       __silentWavs: [],
       super_html: { download: (url) => calls.download.push(url), game_end: () => { calls.gameEndOriginal += 1; } },
@@ -168,7 +170,10 @@ export default async function run(assert) {
     for (let i = 0; i < 10; i += 1) env.tap();
     assert.equal(gameCtx.state, 'running', '手势栈内解锁 WebAudio（suspended → running）');
     assert.check(env.calls.audioResumes > 0, '音频解锁走 ctx.resume');
+    assert.equal(gameCtx.__novvyUnlockedBuffer, true, '空 buffer 过上下文（Howler 式 iOS 解锁）');
+    assert.equal(env.calls.bufferStarts, 1, '空 buffer 每上下文只 start 一次');
     assert.equal(env.fakeWindow.__audioCtxs.length, 1, 'shim 记录全部 AudioContext');
+    assert.check(env.logs.some((l) => l.includes('WebAudio running ✓')), 'WebAudio running 打日志');
     assert.equal(env.fakeWindow.__silentWavs.length, 1, 'iOS 静音键解锁：静音 wav 只播一次');
     assert.check(env.fakeWindow.__silentWavs[0].startsWith('data:audio/wav;base64,'), '静音 wav 走 data URI');
     assert.check(env.logs.some((l) => l.includes('iOS 静音键解锁')), '静音键解锁打日志');

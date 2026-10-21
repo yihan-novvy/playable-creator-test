@@ -40,6 +40,7 @@
      25/50/75/100 里程碑跨越、SDK 段切换/链声明、试玩开始。 —— */
   var MILESTONES = [25, 50, 75, 100];
   var seenMilestone = {};
+  var audioRunningLogged = false;
   function LOG(message) {
     try { console.log('[novvy-origin] ' + message); } catch (e) {}
   }
@@ -50,7 +51,7 @@
      手势时用 <audio> 播一小段静音 wav,把 App 音频会话切到 playback 档,此后
      WebAudio 在震动模式下照常出声(Howler/Phaser 同款社区方案);试玩开始时
      也尝试一次(历史用户激活存在即可成功,否则等首次触压)。 —— */
-  var SILENT_WAV = 'data:audio/wav;base64,UklGRkQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+  var SILENT_WAV = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; /* Howler 同款:2 个非零采样(全零采样会被 iOS 跳过) */
   var silentPlayed = false;
   /* —— WebAudio 解锁:游戏 boot 于片头/覆盖层之下,引擎的"首触解锁"监听在画布
      上,前几触被覆盖层吃掉后上下文停在 suspended;游戏代码后续的 resume() 不在
@@ -73,11 +74,24 @@
     }
   } catch (e) {}
   function unlockAudio() {
-    for (var i = 0; i < audioContexts.length; i += 1) {
-      try {
-        if (audioContexts[i].state === 'suspended' && audioContexts[i].resume) audioContexts[i].resume();
-      } catch (e) {}
-    }
+    for (var i = 0; i < audioContexts.length; i += 1) unlockOne(audioContexts[i]);
+  }
+  /* Howler 同款组合拳:resume 之外再让一个"空 buffer"过一遍该上下文——部分
+     iOS 版本仅 resume 不生效,必须有 buffer 在手势栈内 start 过。 */
+  function unlockOne(ctx) {
+    try {
+      if (ctx.state === 'suspended' && ctx.resume) ctx.resume();
+    } catch (e) {}
+    try {
+      if (!ctx.__novvyUnlockedBuffer) {
+        var source = ctx.createBufferSource();
+        source.buffer = ctx.createBuffer(1, 1, 22050);
+        source.connect(ctx.destination);
+        if (source.start) source.start(0);
+        else if (source.noteOn) source.noteOn(0);
+        ctx.__novvyUnlockedBuffer = true;
+      }
+    } catch (e) {}
   }
   function playSilent() {
     if (silentPlayed) return;
@@ -176,10 +190,24 @@
     } catch (e) {}
   }
   setInterval(function () {
+    /* WebAudio 运行状态验收日志:任何上下文首次 running 即打一条 */
+    if (!audioRunningLogged) {
+      for (var i = 0; i < audioContexts.length; i += 1) {
+        try {
+          if (audioContexts[i].state === 'running') { audioRunningLogged = true; LOG('WebAudio running ✓'); break; }
+        } catch (e) {}
+      }
+    }
     if (ended) return;
     pollProgress(false);
     hideTitleSprite();
   }, 400);
+  /* iOS 兜底:pointer 事件可能被画布的 touch preventDefault 吞掉(此时
+     gestureEnd 不触发),原生 touchend 捕获段再挂一条纯解锁路(不计步)。 */
+  document.addEventListener('touchend', function () {
+    playSilent();
+    unlockAudio();
+  }, true);
 
   function onGameEnd() {
     nativeComplete();
@@ -242,6 +270,13 @@
     multiTouch = false;
     playSilent(); /* iOS 静音键:首个手势时切音频会话 */
     unlockAudio(); /* 手势栈内解锁音频,越早越好(含未开始计步的触压) */
+    if (!audioRunningLogged) {
+      for (var i = 0; i < audioContexts.length; i += 1) {
+        try {
+          if (audioContexts[i].state === 'running') { audioRunningLogged = true; LOG('WebAudio running ✓'); break; }
+        } catch (e) {}
+      }
+    }
     if (!same || multi || Date.now() - downAt > 8000) return;
     onValidTap();
   }
