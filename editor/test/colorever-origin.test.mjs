@@ -214,20 +214,25 @@ export default async function run(assert) {
     assert.equal(env.of('novvy:cta-moment').length, momentsBefore, '终局后手势停计');
     assert.equal(env.calls.download.length, 0, 'SDK 在场时原生 download 不直调');
 
-    { // 原生胜利跳转（window.open）归一到同一闩锁；终局后 download 静默
+    { // window.open 双路区分：棋盘解完=完成；横幅等=手动 CTA（不触发完成/武装）
       const env2 = makeEnv();
-      env2.tap();
-      env2.fakeWindow.open('store://win-jump');
-      assert.equal(env2.of('novvy:playable-complete').length, 1, 'window.open 原生跳转派发 playable-complete');
-      assert.equal(env2.calls.windowOpen.length, 0, 'SDK 在场拦截裸 window.open');
+      const model2 = { ratio: 0.3, getCorrectFillRatio() { return this.ratio; } };
+      env2.fakeWindow.cc = { director: { getScene: () => ({ children: [{ components: [{ _model: model2 }] }] }) } };
+      env2.fireTimers();
+      env2.fakeWindow.open('store://banner'); // 未解完的跳转 = 横幅/按钮手动 CTA
+      assert.equal(env2.of('novvy:cta-interact').length, 1, '未解完的 window.open 走手动 CTA（cta_click）');
+      assert.equal(env2.of('novvy:playable-complete').length, 0, '未解完不触发完成信号');
+      const momentsMid = env2.of('novvy:cta-moment').length;
+      for (let i = 0; i < 3; i += 1) env2.tap();
+      assert.equal(env2.of('novvy:cta-moment').length, momentsMid, '手动 CTA 不武装回访每击（节奏照常）');
+      model2.ratio = 1;
+      env2.fakeWindow.open('store://win-jump'); // 解完的跳转 = 原生胜利完成
+      assert.equal(env2.of('novvy:playable-complete').length, 1, '解完的 window.open 派发 playable-complete');
       env2.fakeWindow.open('store://again');
       assert.equal(env2.of('novvy:playable-complete').length, 1, '完成信号幂等（once 闩锁）');
       env2.fakeWindow.super_html.download('store://banner');
-      assert.equal(env2.of('novvy:cta-interact').length, 0, '终局后 download 不再派 cta-interact');
+      assert.equal(env2.of('novvy:cta-interact').length, 1, '终局后 download 不再派 cta-interact');
       assert.equal(env2.calls.download.length, 0, '终局后 download 不落裸跳转');
-      const moments2 = env2.of('novvy:cta-moment').length;
-      env2.tap();
-      assert.equal(env2.of('novvy:cta-moment').length, moments2, '终局后节奏停表');
     }
 
     // CTA：终局后的横幅 download 静默（完成转化已发，回访触压由桥接管）

@@ -44,10 +44,11 @@
   逐个间隔再跳，表耗尽后全部按最后一个间隔（2）循环。触发点表由
   `lib.mjs` 的 `originCtaSchedule`（纯函数）预计算注入；转化桥按
   `detail.everySteps` 循环语义绕自动闩锁逐次转化、不武装回访每击。
-- **完成兜底**：原生胜利跳转（阈值补丁后只在棋盘解完时发生）与
-  `super_html.game_end` 都归入同一个 once 闩锁 → `novvy:playable-complete` →
-  转化桥主动跳转一次（步骤数不是上限）。SDK 在场时 `window.open` 被拦截为
-  完成信号（裸跳在 SDK WebView 本是无声 no-op），预览保留裸跳。
+- **完成兜底**：`window.open` 跳转按棋盘真实进度分双路——解完（≥99.9%）=
+  原生胜利完成 → once 闩锁 `novvy:playable-complete` → 转化桥强制跳转一次；
+  未解完（自带横幅/按钮的手动 CTA）= `novvy:cta-interact`（`cta_click`），
+  不触发完成、不武装回访每击。`super_html.game_end` 仅透传原回调（游戏在
+  横幅点击时也会调它，不能当完成信号）。
 - **CTA UI**：playable 自带下载横幅（`super_html.download`）。SDK 在场时改走
   `novvy:cta-interact` → `NovvyPlayable.click(cta_click)`；预览（无 SDK）保留
   原始 mraid/window.open 裸跳转。不注入 cta-card、无全屏接管；

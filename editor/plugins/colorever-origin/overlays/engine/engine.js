@@ -270,14 +270,21 @@
     } catch (e) {}
   }
   patchChannel();
-  /* —— 原生胜利跳转归一:游戏内部胜利流程最终落到 window.open(gemsort 同款
-     installForGame 形态;SDK WebView 里本是无声 no-op)。GlobalConfig 阈值已由
-     打包侧补丁钉到"解完才触发",这里把这一次跳转拦截成统一的完成信号——
-     SDK 在场即派 playable-complete(强制跳转语义由转化桥落地),预览保留裸跳。 —— */
+  /* —— window.open 跳转归一:游戏有两处跳转都走 window.open(gemsort 同款
+     installForGame 形态;SDK WebView 里本是无声 no-op)——①棋盘解完的原生胜利
+     跳转(阈值补丁后只在解完时发生);②自带横幅/结算按钮的手动 CTA 跳转。拦截
+     后按棋盘真实进度区分:解完(≥99.9%)=完成信号 nativeComplete(强制跳转一次
+     并武装回访每击);其余=手动 CTA novvy:cta-interact(cta_click,不触发完成、
+     不武装)。预览(无 SDK)保留裸跳。 —— */
   var originalOpen = window.open;
   window.open = function () {
     if (sdkPresent()) {
-      nativeComplete();
+      var ratio = null;
+      try {
+        if (fillSource && typeof fillSource.getCorrectFillRatio === 'function') ratio = fillSource.getCorrectFillRatio();
+      } catch (e) {}
+      if (ratio !== null && ratio >= 0.999) nativeComplete();
+      else onCtaTap();
       return {};
     }
     return originalOpen.apply(window, arguments);
