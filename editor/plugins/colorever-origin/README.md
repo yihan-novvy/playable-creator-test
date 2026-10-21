@@ -25,9 +25,6 @@
   - `data-novvy-origin-splash`：隐藏 aplv 自带开机 splash（z-index 2147483646
     会压在片头视频上）
   - 片头组回落 core 三件套（本插件不自带 overlays/intro）
-- `bgm.mp3`：从 aplv `__zip` 提取的游戏 BGM（Gem_Bgm_ingame_play，40.5s），
-  冻结派生资产（sha 锁 manifest），由引擎适配在游戏启动长音频源时改道
-  循环播放——媒体元素在 iOS 静音键下照常有声（家族 GameAudio 同构）
 - `tail-ad-video.mp4` / `poster.webp`：intro 步骤的 720p 转码产物（启用片头时）
 
 预览形态（编辑器在线试玩）不拆分：playable 载荷保持内联单文件（预览无静态
@@ -37,13 +34,12 @@
 
 - **有效步**：引擎适配在 document 捕获段数"一次完成的单指点按"（多指/超长按
   不计），片头结束后开算，完成后停计。
-- **音频（iOS 重点）**：aplv 全部音频走 WebAudio，iOS 静音键会整体压住、
-  零激活也不出声。三层对策（产品语义 = 点击 playable 即有声）：
-  ① 每次手势栈内 resume + 空 buffer 过上下文 + 静音 wav 播放（切音频会话，
-  Howler 同款）；② BGM 改道媒体元素循环播放（静音键免疫，家族 GameAudio
-  同构），游戏启动 >10s 长音频源时触发，点击后即出音乐；③ touch 兜底路
-  （pointer 被 preventDefault 吞掉时仍解锁）。音效仍走 WebAudio（非静音
-  模式正常；静音模式下音效可能仍被 iOS 静音，BGM 不受影响）。
+- **音频（iOS）**：aplv 全部音频走 WebAudio，iOS 静音键会压住、零激活也不
+  出声。对策（产品语义 = 点击 playable 即有声）：每次手势栈内 resume +
+  空 buffer 过上下文 + 静音 wav 播放（切音频会话，Howler 同款），touch 兜底
+  路（pointer 被 preventDefault 吞掉时仍解锁）。已接受的平台边界：iOS 静音
+  模式下游戏音频无声（如需破静音键需媒体元素化音频，实测在该 SDK WebView
+  内不可靠，已回退）。
 - **真实进度 percent**：场景扫描 `BS_GameDirector → _model.getCorrectFillRatio()`
   （正确/已占 0..1，游戏获胜检查 `winTargetProgressPercent` 用的同一指标；寻路
   与 aplv 自带集成脚本同款，`window.cc` 运行时可用）。读数上涨即派

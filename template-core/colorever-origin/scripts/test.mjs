@@ -28,11 +28,6 @@ if (manifest.version !== pkg.version) throw new Error('manifest.version 与 pack
 if (manifest.entry !== 'game/index.html') throw new Error('manifest.entry 不符');
 if (manifest.constants?.sourceSha256 !== sha(source)) throw new Error('manifest.constants.sourceSha256 与源不符');
 
-const bgmSource = path.join(root, 'assets', 'bgm.mp3');
-const bgmBuilt = path.join(built, 'bgm.mp3');
-if (sha(bgmSource) !== sha(bgmBuilt)) throw new Error('BGM 产物与源不一致（bgm.mp3 被改动）');
-if (manifest.constants?.bgmSha256 !== sha(bgmBuilt)) throw new Error('manifest.constants.bgmSha256 与 BGM 不符');
-
 const html = fs.readFileSync(entry, 'utf8');
 for (const anchor of ['</head>', '<body>', '</body>']) {
   const count = html.split(anchor).length - 1;

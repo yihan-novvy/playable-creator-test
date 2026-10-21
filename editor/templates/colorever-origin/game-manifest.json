@@ -5,9 +5,6 @@
   "entry": "game/index.html",
   "constants": {
     "sourceSha256": "ad0aef2d99f9f98fce8e09fb73e58ef3f40b67fba229b2582df378eefe24e707",
-    "sourceName": "260827_GMP-真试玩-仿-colorever-5瓣花-v15-加15点_en_gc_aplv.html",
-    "bgmAsset": "bgm.mp3",
-    "bgmSha256": "40b2fe3589578ffbd2700540106c39c5cd283e988803ffd8a3807ecd33cb15a2",
-    "bgmName": "Gem_Bgm_ingame_play"
+    "sourceName": "260827_GMP-真试玩-仿-colorever-5瓣花-v15-加15点_en_gc_aplv.html"
   }
 }

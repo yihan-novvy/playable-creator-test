@@ -79,15 +79,7 @@
           if (origCreateSrc) ctx.createBufferSource = function () {
             var src = origCreateSrc();
             var origStart = src.start ? src.start.bind(src) : null;
-            if (origStart) src.start = function () {
-              /* BGM 改道:长音频源(>10s,唯一为 Gem_Bgm_ingame_play 40.5s)不走
-                 WebAudio,改由媒体元素循环播放——媒体元素在 iOS 静音键下照常有声。 */
-              try {
-                if (window.__ORIGIN_BGM__ && src.buffer && src.buffer.duration > 10 && startElementBgm()) return;
-              } catch (e) {}
-              audioSources += 1;
-              return origStart();
-            };
+            if (origStart) src.start = function () { audioSources += 1; return origStart(); };
             return src;
           };
         } catch (e) {}
@@ -108,35 +100,6 @@
   }
   function unlockAudio() {
     for (var i = 0; i < audioContexts.length; i += 1) unlockOne(audioContexts[i]);
-  }
-  /* —— BGM 媒体元素:长音频源改道后由这里循环播放(家族模板 GameAudio 同构:
-     <audio> + loop + volume .24)。iOS 静音键免疫;autoplay 被拒时随每次手势
-     重试,首次点击 playable 即出音乐。 —— */
-  var bgmElement = null, bgmStarted = false;
-  function startElementBgm() {
-    try {
-      if (!window.__ORIGIN_BGM__) return false;
-      if (!bgmElement) {
-        bgmElement = new Audio(window.__ORIGIN_BGM__);
-        bgmElement.loop = true;
-        bgmElement.volume = .24;
-        bgmElement.preload = 'auto';
-      }
-      if (bgmElement.paused) {
-        var played = bgmElement.play();
-        if (played && played.catch) played.catch(function () {});
-      }
-      if (!bgmStarted) {
-        bgmStarted = true;
-        LOG('BGM 已切媒体元素（iOS 静音键免疫）');
-      }
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-  function resumeElementBgm() {
-    try { if (bgmElement && bgmElement.paused) startElementBgm(); } catch (e) {}
   }
   /* Howler 同款组合拳:resume 之外再让一个"空 buffer"过一遍该上下文——部分
      iOS 版本仅 resume 不生效,必须有 buffer 在手势栈内 start 过。 */
@@ -268,7 +231,6 @@
   document.addEventListener('touchstart', function () {
     playSilent();
     unlockAudio();
-    resumeElementBgm();
     logAudioStatus('touchstart');
   }, true);
   document.addEventListener('touchend', function () {
@@ -334,7 +296,6 @@
   function gestureStart(event) {
     playSilent();
     unlockAudio();
-    resumeElementBgm();
     logAudioStatus('手势开始');
     if (activeId !== null) { multiTouch = true; return; }
     activeId = event && event.pointerId !== undefined ? event.pointerId : 1;

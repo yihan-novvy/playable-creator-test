@@ -27,7 +27,6 @@ export async function run(ctx) {
   fs.mkdirSync(ctx.resultDir, { recursive: true });
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
   fs.writeFileSync(path.join(ctx.resultDir, 'game.js'), built.gameJs);
-  if (built.gameBgm) fs.writeFileSync(path.join(ctx.resultDir, 'bgm.mp3'), Buffer.from(built.gameBgm.base64, 'base64'));
   if (intro) {
     fs.copyFileSync(path.join(ctx.generatedDir, 'intro-video.mp4'), path.join(ctx.resultDir, 'tail-ad-video.mp4'));
     fs.copyFileSync(path.join(ctx.generatedDir, 'poster.webp'), path.join(ctx.resultDir, 'poster.webp'));
