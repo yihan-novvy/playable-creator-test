@@ -393,13 +393,21 @@
     else onCtaTap();
   }
   var originalOpen = window.open;
-  window.open = function () {
+  var guardedOpen = function () {
     if (sdkPresent()) {
       sdkJumpDualPath('window.open');
       return {};
     }
     return originalOpen.apply(window, arguments);
   };
+  window.open = guardedOpen;
+  /* 与 guardMraid 同理:宿主可能在我方包装外再包一层裸跳侦测。定时器身份
+     比对,发现 window.open 被再包就把我方函数顶回最外——宿主那层成孤儿
+     (我方在 SDK 模式从不 call through,宿主包装收不到任何调用)。预览不守。 */
+  function guardWindowOpen() {
+    if (!sdkPresent()) return;
+    if (window.open !== guardedOpen) window.open = guardedOpen;
+  }
   /* mraid 假身:SDK 在场时整只替换 window.mraid。就地包 open 不够——宿主
      (SDK 侦测层)可能在同一对象上再包一层裸跳归因(forced_click_to_appstore/
      scene=playable),调用先过宿主包装再进我们的内层,双计照旧;换成假身后
@@ -482,6 +490,7 @@
     patchSdkStageLog();
     patchChannel();
     guardMraid();
+    guardWindowOpen();
   }
   patchAll();
   /* 守卫常驻不停表:boot 期 400ms 快频(SDK/包装层注入时序不定),4 秒后降为

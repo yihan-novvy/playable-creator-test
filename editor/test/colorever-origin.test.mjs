@@ -284,6 +284,17 @@ export default async function run(assert) {
         assert.equal(env4.of('novvy:cta-interact').length, 1, '同一击的 window.open/mraid.open/download 多入口去抖为一次转化');
       }
 
+      { // window.open 守卫:宿主在我方包装外再包一层(裸跳侦测)时,定时器把它孤儿化
+        const env6 = makeEnv();
+        let hostSawCall = 0;
+        const ourOpen = env6.fakeWindow.open;
+        env6.fakeWindow.open = function (url) { hostSawCall += 1; return ourOpen.call(this, url); };
+        env6.fireTimers();
+        env6.fakeWindow.open('store://x');
+        assert.equal(hostSawCall, 0, '宿主包在 window.open 外层的侦测被孤儿化(不再被调用)');
+        assert.equal(env6.of('novvy:cta-interact').length, 1, '裸跳仍收编为一次手动 CTA');
+      }
+
       { // 预览(无 SDK):guardMraid 不动手,mraid.open 放行原生跳转,不派发事件
         const env5 = makeEnv(true);
         assert.check(env5.fakeWindow.mraid.__novvyMraidDecoy !== true, '预览不替换 mraid');
