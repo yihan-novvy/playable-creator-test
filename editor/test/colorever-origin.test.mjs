@@ -61,6 +61,7 @@ export default async function run(assert) {
     assert.check(out.includes('"__novvyStageChain__"') || out.includes('window.__novvyStageChain__='), '段链字面量注入');
     assert.check(out.includes('window.__NOVVY_CTA_END_MASK__=false'), 'endMask 默认 false（colorever-new 回访每击语义）');
     assert.check(out.includes('"schedule":[{"step":10,"gap":5}'), '循环节奏表随策略注入');
+    assert.check(out.includes('id="novvy-origin-cta-zone"') && out.includes('data-novvy-click-source="cta_click"'), '注入 CTA 直连区(横幅上方标记透明层)');
     assert.check(out.includes('data-novvy-origin-splash') && out.includes('#__bootcover{display:none!important}'), '隐藏 aplv 自带开机 splash');
     assert.check(!out.includes('data-novvy-cta-card') && !out.includes('id="novvy-cta"'), '不注入 cta-card（CTA 用 playable 自带横幅）');
     assert.check(out.includes('GameCanvas') && out.includes('bundle_gemsort') && out.includes('super_html'), 'playable 本体结构完整');
@@ -112,8 +113,9 @@ export default async function run(assert) {
     const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
     const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], mraidOpen: [], stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
+    const zoneEl = { addEventListener(type, fn) { zoneEl.clickHandler = fn; } };
     const fakeDocument = {
-      getElementById: () => null,
+      getElementById: (id) => (id === 'novvy-origin-cta-zone' ? zoneEl : null),
       addEventListener: (type, fn) => docListeners.push({ type, fn }),
       dispatchEvent: (event) => {
         events.push({ bus: 'document', type: event.type, detail: event.detail });
@@ -163,7 +165,7 @@ export default async function run(assert) {
     const tap = () => { fakeDocument.dispatchEvent({ type: 'pointerdown', pointerId: 1 }); fakeDocument.dispatchEvent({ type: 'pointerup', pointerId: 1 }); };
     const fireTimers = () => { for (const fn of timers) fn(); };
     const of = (type) => events.filter((item) => item.type === type);
-    return { events, calls, logs, tap, fireTimers, fakeWindow, of };
+    return { events, calls, logs, tap, fireTimers, fakeWindow, of, zoneEl };
   }
 
   try {
@@ -302,6 +304,16 @@ export default async function run(assert) {
         assert.equal(env5.calls.mraidOpen, ['store://native'], '无 SDK 时 mraid.open 放行原生跳转');
         assert.equal(env5.of('novvy:cta-interact').length, 0, '预览 mraid 裸跳不派发事件');
       }
+    }
+
+    { // CTA 直连区:横幅点击直派 cta-interact,不走画布/裸跳链
+      const envZ = makeEnv();
+      assert.check(typeof envZ.zoneEl.clickHandler === 'function', '直连区在引擎 eval 时接线完成');
+      envZ.zoneEl.clickHandler();
+      assert.equal(envZ.of('novvy:cta-interact').length, 1, '直连区点击直派 cta-interact(不经画布/裸跳)');
+      envZ.zoneEl.clickHandler();
+      assert.equal(envZ.of('novvy:cta-interact').length, 1, '300ms 去抖:同击重复 click 只派一次');
+      assert.check(envZ.logs.some((l) => l.includes('CTA 直连区已接线')), '直连区接线打日志');
     }
 
     { // 预览形态（无 SDK）：download 保留裸跳转且不派发事件（避免桥兜底成环）

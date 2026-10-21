@@ -486,6 +486,27 @@
     } catch (e) {}
   }
   patchSdkStageLog();
+  /* —— CTA 直连区:横幅(DownButton)上方盖标记透明层(lib.mjs 注入
+      #novvy-origin-cta-zone),点击直派 novvy:cta-interact 走 click API——
+      画布收不到横幅触压,素材原生的 mraid.open/window.open 裸跳链
+      (installForGame 通道)彻底失活,这是"去掉原跳转逻辑、替换为 novvy 直连"
+      的落点;真机宿主对标记区域归因 cta_click,与显式上报同流,不再有第二组
+      forced 归因。预览时桥 openStoreFallback 兜底跳店。300ms 去抖同 onCtaTap。
+      这是本 shim 唯一一处主动摸 DOM(其余监听全在 document 捕获段)。 —— */
+  function wireCtaZone() {
+    var zone = document.getElementById('novvy-origin-cta-zone');
+    if (!zone || zone.__novvyWired) return;
+    zone.__novvyWired = true;
+    zone.addEventListener('click', function () {
+      var now = Date.now();
+      if (now - lastCtaTapAt < 300) return;
+      lastCtaTapAt = now;
+      LOG('CTA 直连区点击');
+      try { window.dispatchEvent(new CustomEvent('novvy:cta-interact')); } catch (e) {}
+    });
+    LOG('CTA 直连区已接线');
+  }
+  wireCtaZone();
   function patchAll() {
     patchSdkStageLog();
     patchChannel();

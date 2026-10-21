@@ -152,7 +152,14 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
     // 盖在片头视频(intro 根层 z-index 20)上直到场景建好;广告形态里品牌由片头
     // 视频承担,整层隐藏(场景就绪前画布短暂空白,可接受)。
     + `<style data-novvy-origin-splash>#__bootcover{display:none!important}</style>`;
-  const bodyExtra = [...injection.bodyDom, ...bodyScripts.filter(Boolean)].join('\n');
+  // CTA 直连区(2026-10-23,横幅双计转化终版方案):DownButton 横幅上方盖一层
+  // 带 data-novvy-click-source=cta_click 标记的透明层,点击由 engine.js 直派
+  // novvy:cta-interact 走 click API——画布收不到横幅触压,素材原生的
+  // mraid.open/window.open 裸跳链(installForGame 通道)彻底失活;真机宿主对
+  // 标记区域归因 cta_click,与其他模板 cta-card 单流模式同构。几何按横幅
+  // 实测(底缘 ~8% 高,盖 9%)。
+  const ctaZone = '<div id="novvy-origin-cta-zone" data-novvy-click-source="cta_click" aria-label="Download Colorever" style="position:fixed;left:0;right:0;bottom:0;height:9%;z-index:15;background:transparent;-webkit-tap-highlight-color:transparent;touch-action:manipulation"></div>';
+  const bodyExtra = [...injection.bodyDom, ctaZone, ...bodyScripts.filter(Boolean)].join('\n');
   html = html.replace(HEAD, () => headExtra ? `${headExtra}\n${HEAD}` : HEAD)
     .replace(BODY_END, () => bodyExtra ? `${bodyExtra}\n${BODY_END}` : BODY_END);
   return { html, gameJs, stageChain, policy, introEnabled: injection.introEnabled };
