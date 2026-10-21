@@ -49,16 +49,14 @@
      (播完/跳过/出错收场都会派发),未启用片头 = 注入即开算。 */
   /* —— iOS 静音键:WebAudio 输出遵循 iOS 静音拨片(媒体元素不受限)——首次
      手势时用 <audio> 播一小段静音 wav,把 App 音频会话切到 playback 档,此后
-     WebAudio 在震动模式下照常出声(Howler/Phaser 同款社区方案);试玩开始时
-     也尝试一次(历史用户激活存在即可成功,否则等首次触压)。 —— */
+     WebAudio 在震动模式下照常出声(Howler/Phaser 同款社区方案)。 —— */
   var SILENT_WAV = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA'; /* Howler 同款:2 个非零采样(全零采样会被 iOS 跳过) */
   var silentPlayed = false;
   /* —— WebAudio 解锁:游戏 boot 于片头/覆盖层之下,引擎的"首触解锁"监听在画布
      上,前几触被覆盖层吃掉后上下文停在 suspended;游戏代码后续的 resume() 不在
      用户手势栈内,浏览器策略会忽略 → 永久静音。shim 在加载期记录全部
-     AudioContext,并在每次有效触压的手势栈内逐个 resume（resume 只在手势栈内
-     生效,这正是浏览器的要求）。本段必须先于 begin()（无片头形态 begin 在 IIFE
-     求值期即调用）。 —— */
+     AudioContext,并在每次有效触压的手势栈内逐个解锁。产品语义:点击 playable
+     即有声,不追求零点击自动出声（iOS 系统本就禁止零激活出声）。 —— */
   var audioContexts = [];
   try {
     var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
@@ -109,8 +107,6 @@
     if (started) return;
     started = true;
     LOG('试玩开始（有效步开始计数）');
-    playSilent();
-    unlockAudio();
   }
   if (document.getElementById('novvy-video-intro') && !window.__novvyIntroFinished) {
     window.addEventListener('novvy:intro-finished', begin, { once: true });
