@@ -110,7 +110,7 @@ export default async function run(assert) {
 
   function makeEnv() {
     const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
-    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], stage: [] };
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], stage: [], audioResumes: 0 };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
     const fakeDocument = {
       getElementById: () => null,
@@ -134,6 +134,10 @@ export default async function run(assert) {
         setStage: (index, type) => calls.stage.push([index, type]),
         setStageList: (list) => calls.stageList ? calls.stageList.push(list) : (calls.stageList = [list]),
       },
+      __audioCtxs: [],
+      AudioContext: class {
+        constructor() { this.state = 'suspended'; this.resume = () => { this.state = 'running'; calls.audioResumes += 1; }; fakeWindow.__audioCtxs.push(this); }
+      },
       super_html: { download: (url) => calls.download.push(url), game_end: () => { calls.gameEndOriginal += 1; } },
       open: (url) => calls.windowOpen.push(url),
     };
@@ -143,7 +147,7 @@ export default async function run(assert) {
     scope.CustomEvent = CustomEvent;
     scope.setInterval = (fn) => { timers.push(fn); return timers.length; };
     scope.clearInterval = () => {};
-    scope.console = { log: (m) => logs.push(String(m)), error: (m) => logs.push(String(m)), warn: (m) => logs.push(String(m)) };
+    scope.console = { log: (m) => { logs.push(String(m)); savedGlobals.console.log(m); }, error: (m) => { logs.push(String(m)); savedGlobals.console.error(m); }, warn: (m) => { logs.push(String(m)); savedGlobals.console.warn(m); } };
     new Function(engineSrc)();
     const tap = () => { fakeDocument.dispatchEvent({ type: 'pointerdown', pointerId: 1 }); fakeDocument.dispatchEvent({ type: 'pointerup', pointerId: 1 }); };
     const fireTimers = () => { for (const fn of timers) fn(); };
@@ -153,7 +157,13 @@ export default async function run(assert) {
 
   try {
     const env = makeEnv();
+    // 音频解锁：引擎 boot 后创建的上下文（suspended），首次触压手势栈内解锁
+    const gameCtx = new env.fakeWindow.AudioContext();
+    assert.equal(gameCtx.state, 'suspended', '引擎创建的上下文初始 suspended');
     for (let i = 0; i < 10; i += 1) env.tap();
+    assert.equal(gameCtx.state, 'running', '手势栈内解锁 WebAudio（suspended → running）');
+    assert.check(env.calls.audioResumes > 0, '音频解锁走 ctx.resume');
+    assert.equal(env.fakeWindow.__audioCtxs.length, 1, 'shim 记录全部 AudioContext');
     assert.equal(env.calls.onStep.map((item) => item.step), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], '进度源缺席时直接上报 onStep 步数');
     assert.equal(env.of('novvy:cta-moment').at(-1), { bus: 'document', type: 'novvy:cta-moment', detail: { repeat: false, everySteps: 5 } }, '第 10 步首跳 cta-moment（repeat=false, gap=5）');
     for (let i = 0; i < 5; i += 1) env.tap();

@@ -172,6 +172,33 @@
     }
   }
 
+  /* —— 音频解锁:游戏 boot 于片头/覆盖层之下,引擎的"首触解锁"监听在画布上,
+     前几触被覆盖层吃掉后 WebAudio 上下文停在 suspended;游戏代码后续的
+     resume() 不在用户手势栈内,浏览器策略会忽略 → 永久静音。shim 在加载期
+     记录全部 AudioContext,并在每次有效触压的手势栈内逐个 resume
+     （resume 只在手势栈内生效,这正是浏览器的要求）。 —— */
+  var audioContexts = [];
+  try {
+    var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
+    if (NativeAudioContext) {
+      var WrappedAudioContext = function () {
+        var ctx = new NativeAudioContext();
+        audioContexts.push(ctx);
+        return ctx;
+      };
+      WrappedAudioContext.prototype = NativeAudioContext.prototype;
+      window.AudioContext = WrappedAudioContext;
+      if (window.webkitAudioContext) window.webkitAudioContext = WrappedAudioContext;
+    }
+  } catch (e) {}
+  function unlockAudio() {
+    for (var i = 0; i < audioContexts.length; i += 1) {
+      try {
+        if (audioContexts[i].state === 'suspended' && audioContexts[i].resume) audioContexts[i].resume();
+      } catch (e) {}
+    }
+  }
+
   /* —— 手势计数:单指按下→抬起算一次;第二指按下/超长按不计。
       pointer 事件优先,老内核回落 touch(单指)。 —— */
   var activeId = null, multiTouch = false, downAt = 0;
@@ -187,6 +214,7 @@
     var multi = multiTouch;
     activeId = null;
     multiTouch = false;
+    unlockAudio(); /* 手势栈内解锁音频,越早越好(含未开始计步的触压) */
     if (!same || multi || Date.now() - downAt > 8000) return;
     onValidTap();
   }
