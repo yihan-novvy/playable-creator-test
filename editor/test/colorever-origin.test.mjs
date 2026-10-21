@@ -110,7 +110,7 @@ export default async function run(assert) {
 
   function makeEnv() {
     const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
-    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], mraidOpen: [], stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
     const fakeDocument = {
       getElementById: () => null,
@@ -143,6 +143,7 @@ export default async function run(assert) {
       },
       __silentWavs: [],
       super_html: { download: (url) => calls.download.push(url), game_end: () => { calls.gameEndOriginal += 1; } },
+      mraid: { open: (url) => calls.mraidOpen.push(url) },
       open: (url) => calls.windowOpen.push(url),
     };
     // 引擎闭包在事件回调期才读全局，桩必须在整个场景块期间保持安装
@@ -265,6 +266,41 @@ export default async function run(assert) {
     env.fakeWindow.super_html.download('store://x');
     assert.equal(env.of('novvy:cta-interact').length, 1, '终局后不再追加 cta-interact（仅终局前一次）');
     assert.equal(env.calls.download.length, 0, 'SDK 在场不落裸跳转');
+
+    { // mraid.open 裸跳归一:包装层原版 download 首选 mraid.open(SDK WebView 的
+      // MRAID 兼容层),漏网即产生第二组 SDK 归因,一次点击双计转化
+      const env3 = makeEnv();
+      const model3 = { ratio: 0.3, getCorrectFillRatio() { return this.ratio; } };
+      env3.fakeWindow.cc = { director: { getScene: () => ({ children: [{ components: [{ _model: model3 }] }] }) } };
+      env3.fireTimers();
+      assert.check(env3.logs.some((l) => l.includes('mraid.open 裸跳已接管')), 'mraid.open 补丁随定时器挂接');
+      env3.fakeWindow.mraid.open('store://banner');
+      assert.equal(env3.of('novvy:cta-interact').length, 1, '未解完的 mraid.open 走手动 CTA（cta_click）');
+      assert.equal(env3.calls.mraidOpen.length, 0, 'SDK 在场 mraid.open 不落裸跳');
+      model3.ratio = 1;
+      env3.fakeWindow.mraid.open('store://win');
+      assert.equal(env3.of('novvy:playable-complete').length, 1, '解完的 mraid.open 派发 playable-complete');
+      assert.check(env3.logs.some((l) => l.includes('裸跳 mraid.open 拦截')), 'mraid 拦截打验收日志');
+
+      { // 一击多口:横幅 window.open + 包装层 download 的 mraid.open 前后脚 → 只派一次
+        const env4 = makeEnv();
+        const model4 = { ratio: 0.3, getCorrectFillRatio() { return this.ratio; } };
+        env4.fakeWindow.cc = { director: { getScene: () => ({ children: [{ components: [{ _model: model4 }] }] }) } };
+        env4.fireTimers();
+        env4.fakeWindow.open('store://banner');
+        env4.fakeWindow.mraid.open('store://banner');
+        env4.fakeWindow.super_html.download('store://banner');
+        assert.equal(env4.of('novvy:cta-interact').length, 1, '同一击的 window.open/mraid.open/download 多入口去抖为一次转化');
+      }
+
+      { // 预览(无 SDK):mraid.open 放行原生跳转,不派发事件
+        const env5 = makeEnv();
+        delete env5.fakeWindow.NovvyPlayable;
+        env5.fakeWindow.mraid.open('store://native');
+        assert.equal(env5.calls.mraidOpen, ['store://native'], '无 SDK 时 mraid.open 放行原生跳转');
+        assert.equal(env5.of('novvy:cta-interact').length, 0, '预览 mraid 裸跳不派发事件');
+      }
+    }
 
     { // 预览形态（无 SDK）：download 保留裸跳转且不派发事件（避免桥兜底成环）
       const env = makeEnv();

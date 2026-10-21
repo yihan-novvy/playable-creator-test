@@ -22,10 +22,15 @@
       改派 novvy:cta-interact(桥 → NovvyPlayable.click,click_source=cta_click),
       由 SDK 统一跳转;SDK 不在场(编辑器预览)保留原始 mraid/window.open 裸
       跳转且不派发事件——桥的 openStoreFallback 兜底会再入本函数,派发会成环。
+   5. 裸跳归一:全素材出站跳转原语只有 window.open 与包装层原版 download 内的
+      mraid.open(MRAID 兼容层)。SDK 在场时两口都按棋盘进度分双路(解完=完成,
+      其余=手动 CTA)——否则 SDK 对绕过 click API 的裸跳再归因一次
+      (forced_click_to_appstore/scene=playable),一次点击双计转化;补丁定时器
+      常驻低频不停表,防包装层换回原版 super_html 复活裸跳。
 
    super_html 由 aplv 包装层脚本在本脚本之前同步定义;引擎 boot 是异步资源
-   加载,启动后仍短周期重试补丁,防包装层替换对象。全程 try/catch + 零 DOM
-   依赖(监听在 document 捕获段)。 */
+   加载,启动后先快频后常驻低频重试补丁,防包装层替换对象。全程 try/catch +
+   零 DOM 依赖(监听在 document 捕获段)。 */
 (function () {
   var policy = window.__ORIGIN_CTA_POLICY__ || null;
   if (!policy) return;
@@ -287,8 +292,15 @@
     try { document.dispatchEvent(new CustomEvent('novvy:playable-complete', { bubbles: true, detail: {} })); } catch (e) {}
   }
 
+  /* 同一次触压可能前后脚命中多个 CTA 入口(横幅 window.open + 包装层原版
+     download 的 mraid.open),300ms 去抖只派一次——与桥的回访每击去抖同款;
+     人工连点由 SDK 冷却护栏管,这里只管"一击多口"双计转化。 */
+  var lastCtaTapAt = -1e9;
   function onCtaTap() {
     if (!sdkPresent()) return false;
+    var now = Date.now();
+    if (now - lastCtaTapAt < 300) return true;
+    lastCtaTapAt = now;
     try { window.dispatchEvent(new CustomEvent('novvy:cta-interact')); } catch (e) {}
     return true;
   }
@@ -372,7 +384,7 @@
 
   /* —— super_html 缝:download = CTA 跳转,game_end = 结算回调。不改对象
       本体之外的任何状态;包装层若在 boot 后替换 super_html,靠身份比对
-      重新接线(补丁成功且稳定 4 秒,或总时长 15 秒后停表)。 —— */
+      重新接线(补丁定时器常驻低频,不再停表——见文末守卫注释)。 —— */
   var patchedChannel = null;
   function patchChannel() {
     var channel = window.super_html;
@@ -399,25 +411,49 @@
     } catch (e) {}
   }
   patchChannel();
-  /* —— window.open 跳转归一:游戏有两处跳转都走 window.open(gemsort 同款
-     installForGame 形态;SDK WebView 里本是无声 no-op)——①棋盘解完的原生胜利
-     跳转(阈值补丁后只在解完时发生);②自带横幅/结算按钮的手动 CTA 跳转。拦截
-     后按棋盘真实进度区分:解完(≥99.9%)=完成信号 nativeComplete(强制跳转一次
-     并武装回访每击);其余=手动 CTA novvy:cta-interact(cta_click,不触发完成、
-     不武装)。预览(无 SDK)保留裸跳。 —— */
+  /* —— 裸跳归一:SDK 在场时把全素材仅有的两个出站跳转原语都收编到统一双路,
+     否则 SDK 会把绕过 click API 的裸跳再归因一次(forced_click_to_appstore/
+     scene=playable),一次点击双计转化。两个口:window.open(横幅 DownButton/
+     原生胜利走它;SDK WebView 里本是无声 no-op)与包装层原版 super_html.download
+     首选的 window.mraid.open(MRAID 兼容层,下载补丁被包装层换回原版时复活)。
+     拦截后按棋盘真实进度区分:解完(≥99.9%)=完成信号 nativeComplete(强制跳转
+     一次并武装回访每击);其余=手动 CTA novvy:cta-interact(cta_click,不触发
+     完成、不武装)。预览(无 SDK)保留裸跳。 —— */
+  function sdkJumpDualPath(source) {
+    var ratio = null;
+    try {
+      if (fillSource && typeof fillSource.getCorrectFillRatio === 'function') ratio = fillSource.getCorrectFillRatio();
+    } catch (e) {}
+    LOG('裸跳 ' + source + ' 拦截（进度 ' + (ratio === null ? '未知' : Math.round(ratio * 100) + '%') + '）');
+    if (ratio !== null && ratio >= 0.999) nativeComplete();
+    else onCtaTap();
+  }
   var originalOpen = window.open;
   window.open = function () {
     if (sdkPresent()) {
-      var ratio = null;
-      try {
-        if (fillSource && typeof fillSource.getCorrectFillRatio === 'function') ratio = fillSource.getCorrectFillRatio();
-      } catch (e) {}
-      if (ratio !== null && ratio >= 0.999) nativeComplete();
-      else onCtaTap();
+      sdkJumpDualPath('window.open');
       return {};
     }
     return originalOpen.apply(window, arguments);
   };
+  /* mraid 注入时序不定,随补丁定时器重试;身份比对防重复包。 */
+  var patchedMraid = null;
+  function patchMraidOpen() {
+    var mraid = window.mraid;
+    if (!mraid || typeof mraid.open !== 'function' || mraid === patchedMraid) return;
+    var originalMraidOpen = mraid.open;
+    try {
+      mraid.open = function (url) {
+        if (sdkPresent()) {
+          sdkJumpDualPath('mraid.open');
+          return;
+        }
+        return originalMraidOpen.apply(mraid, arguments);
+      };
+      patchedMraid = mraid;
+      LOG('mraid.open 裸跳已接管');
+    } catch (e) {}
+  }
   /* —— SDK 段切换日志:包装 NovvyPlayable.setStage/setStageList（段桥的切段
      都走这两个入口）。SDK 注入时序不定，随补丁定时器短周期重试直至包上。 —— */
   var stageWrapped = null;
@@ -442,13 +478,22 @@
     } catch (e) {}
   }
   patchSdkStageLog();
-  var elapsed = 0;
-  var patchTimer = setInterval(function () {
-    elapsed += 400;
+  function patchAll() {
     patchSdkStageLog();
-    var sdkIdle = !window.NovvyPlayable || window.NovvyPlayable === stageWrapped;
-    if (window.super_html === patchedChannel && sdkIdle && elapsed >= 4000) { clearInterval(patchTimer); return; }
     patchChannel();
-    if (elapsed >= 15000) clearInterval(patchTimer);
+    patchMraidOpen();
+  }
+  patchAll();
+  /* 守卫常驻不停表:boot 期 400ms 快频(SDK/包装层注入时序不定),4 秒后降为
+     2s 一拍。旧版 15 秒停表是个漏洞——窗口一过,包装层换回的原版 super_html
+     连同 download 内的 mraid.open 裸跳一起复活;身份比对让常驻守卫开销可忽略。 */
+  var elapsed = 0;
+  var fastTimer = setInterval(function () {
+    elapsed += 400;
+    patchAll();
+    if (elapsed >= 4000) {
+      clearInterval(fastTimer);
+      setInterval(patchAll, 2000);
+    }
   }, 400);
 })();
