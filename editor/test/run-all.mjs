@@ -56,6 +56,7 @@ export const TESTS = [
   { name: 'water-sort', file: path.join(TEST_DIR, 'water-sort.test.mjs') },
   { name: 'dragon-cube', file: path.join(TEST_DIR, 'dragon-cube.test.mjs') },
   { name: 'escape-arrow', file: path.join(TEST_DIR, 'escape-arrow.test.mjs') },
+  { name: 'colorever-origin', file: path.join(TEST_DIR, 'colorever-origin.test.mjs') },
 ];
 
 async function main() {

@@ -1,0 +1,33 @@
+{
+  "id": "colorever-origin",
+  "name": "Colorever Origin（5瓣花片头+试玩）",
+  "template": "colorever-origin",
+  "workbench": "colorever-origin",
+  "steps": [
+    { "id": "intro", "runner": "core:intro" },
+    { "id": "pack", "runner": "./steps/pack.mjs" }
+  ],
+  "uploads": {
+    "intro-video": { "file": "intro-video.mp4", "magic": "mp4" },
+    "intro-poster": { "file": "intro-poster.jpg", "magic": "jpg" }
+  },
+  "overlays": {
+    "engine": "overlays/engine"
+  },
+  "defaults": {
+    "intro": {
+      "enabled": false,
+      "ariaLabel": "",
+      "goEnabled": false,
+      "goText": "GO"
+    },
+    "cta": {
+      "endMask": false
+    },
+    "playableCta": {
+      "mode": "steps",
+      "afterSteps": 10,
+      "intervals": [5, 4, 3, 2]
+    }
+  }
+}

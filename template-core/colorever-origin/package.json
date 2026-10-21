@@ -1,0 +1,11 @@
+{
+  "name": "template-colorever-origin",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "colorever-origin 冻结静态模板：game/ 为外部交付的 Cocos 单文件 playable（aplv 原样入库），build 即纯复制",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node scripts/test.mjs"
+  }
+}

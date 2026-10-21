@@ -1,0 +1,13 @@
+# colorever-origin（冻结静态模板）
+
+外部交付的 Cocos Creator 单文件 playable（`260827_GMP-真试玩-仿-colorever-5瓣花-v15-加15点_en_gc_aplv.html`），
+原样入库为 `src-game/index.html`。模板形态 = **片头视频 + 本 playable**，无片尾、无第二关。
+
+- `build`（`scripts/build.mjs`）：纯复制 `src-game/` → `editor/templates/colorever-origin/game/`，
+  并写 `game-manifest.json`（`constants.sourceSha256` 构建时现算，供插件侧做新鲜度校验）。
+- `test`（`scripts/test.mjs`）：产物与源逐字节一致、manifest 一致性、注入锚点唯一、
+  无 CSP、Cocos/super_html 结构标记在场。
+- playable 本体一字节不改：CTA 用包内自带下载横幅（`super_html.download`），
+  结算回调 `super_html.game_end`、跳转函数 `super_html.download` 由
+  `editor/plugins/colorever-origin` 注入的引擎适配脚本在运行时接线
+  （novvy 事件规范见 `docs/original-zip-required-event-integration.md`）。
