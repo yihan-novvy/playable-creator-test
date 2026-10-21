@@ -34,7 +34,8 @@
     "background": {
       "enabled": false,
       "blurSigma": 12,
-      "source": "auto"
+      "source": "auto",
+      "color": "#e4f6ff"
     },
     "hudImageSource": {
       "left": "upload",

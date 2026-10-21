@@ -102,7 +102,7 @@ export function normalizeReplay(raw) {
 // 第二关数据全量内联进 index.html,打包文件列表不变。第二关开局同样由任务配置。
 export async function coloreverPhase2(root, config, template) {
   // 双 playable 不再依赖片尾视频:无片尾时首关通关后页内直接换关,
-  // 第二关背景由 lib 回退复用 background.webp(简易背景,零额外解码)。
+  // 第二关背景由常驻基底层(#novvy-dom-bg,纯色或第一关背景图)原样带过。
   if (config?.secondPlayable?.enabled !== true) return null;
   const { level, patternId } = await coloreverLevel(root, { ...config, patternId: config.secondPlayable.patternId ?? 'house', opening: config.secondPlayable?.opening }, template);
   const title = config.secondPlayable?.hud;
@@ -192,8 +192,18 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   // 无片尾场景(有片尾时第一关只负责引出片尾,转化由片尾链/第二关负责)。
   // 第二关背景:优先独立 background2.webp(片尾尾帧/上传);缺文件时回退
   // 复用 background.webp —— 同 URL 浏览器只解码一次,零额外内存与包体。
+  // 未配置第二关背景时基底层(纯色或第一关背景图)原样带过,不再退回壳渐变。
   const background2Media = media.background2 || media.background;
   const background2Enabled = phase2 !== null && config?.secondPlayable?.background?.enabled === true && !!background2Media;
+  // 背景基底层 #novvy-dom-bg 常驻:开启背景图时由 ws 组注入图片版;未开
+  // (交付默认)时这里注入一张纯色 div 垫底 —— 免掉整屏大图解码与叠加合成,
+  // 交付包也不再携带 background.webp。颜色默认 #e4f6ff,background.color
+  // (6 位 hex)可按任务覆盖,非法值回退默认(与 HUD 配色同一套纪律)。
+  if (!injection.backgroundEnabled) {
+    const backgroundColor = /^#[0-9a-f]{6}$/i.test(config?.background?.color ?? '') ? config.background.color : '#e4f6ff';
+    injection.headStyles.push(`<style data-novvy-bg>#novvy-dom-bg{position:fixed;inset:0;z-index:0;background:${backgroundColor}}</style>`);
+    injection.bodyDom.unshift('<div id="novvy-dom-bg" aria-hidden="true"></div>');
+  }
   if (phase2) {
     const backgroundRoot = path.join(overlaysRoot || path.resolve(root, '..', '..', 'plugins', template.id), template.overlays.background);
     injection.bodyScripts.push(`<script data-novvy-phase2-background>${fs.readFileSync(path.join(backgroundRoot, 'background.js'), 'utf8')}</script>`);
@@ -218,7 +228,9 @@ export async function coloreverHtml({ root, overlaysRoot, template, level, confi
   const nativeColors = `--colorever-progress-text:${color('progressTextColor','#326b83')};--colorever-progress-fill:${color('progressFillColor','#329fc2')};--colorever-progress-track:${color('progressTrackColor','#dff3fc')}`;
   const overlayColors = `--colorever-progress-text:${color('progressTextColor','#ffffff')};--colorever-progress-fill:${color('progressFillColor','#ffd91e')};--colorever-progress-track:${color('progressTrackColor','#b7834a')}`;
   injection.headStyles.push(`<style data-colorever-progress>.app{${nativeColors}}.app>.hud{top:15%;color:var(--colorever-progress-text)}.app progress{accent-color:var(--colorever-progress-fill);background:var(--colorever-progress-track)}.app progress::-webkit-progress-bar{background:var(--colorever-progress-track)}.app progress::-webkit-progress-value{background:var(--colorever-progress-fill)}.app progress::-moz-progress-bar{background:var(--colorever-progress-fill)}#novvy-training-hud{${overlayColors}}</style>`);
-  const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}${injection.backgroundEnabled ? ':root:not(.novvy-phase2),:root:not(.novvy-phase2) body,:root:not(.novvy-phase2) .app{background:transparent}' : ''}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
+  // 壳自带渐变一律透明:屏幕底色统一由常驻的 #novvy-dom-bg 基底层提供
+  // (纯色或背景图),两关共用同一层,不存在"换关退回壳渐变"的形态。
+  const styles = `<style data-colorever-shell>.app{z-index:1;position:fixed;top:calc(100svh * ${top});width:min(100vw,calc(100svh * (1 - ${top} - ${bottom}) * .558824));left:50%;transform:translateX(-50%)}:root,:root body,:root .app{background:transparent}${portraitHudEnabled ? '.app>.hud{visibility:hidden}' : ''}#win{display:none!important}</style>`;
   // 双 playable 的 GO 闸门:勾选 intro.goEnabled 后,片尾(通往第二段的视频)与片头
   // 同款等点击——倒计时标题 + 中线下方 GO 按钮,点击才派发 outro-finished 换关。
   // 闸门由片尾 overlay 消费;无片尾链路首关通关后直接换关,不存在闸门。

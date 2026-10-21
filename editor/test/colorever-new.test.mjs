@@ -176,6 +176,15 @@ export default async function run(assert){
     const archive=path.join(temp,'export.zip');fs.writeFileSync(archive,bytes);
     const listing=(await execFile('unzip',['-Z1',archive])).stdout.trim().split('\n').sort();
     assert.equal(listing,fs.readdirSync(taskResultDir(id)).sort(),'ZIP 文件与交付目录一致');
+    // 默认纯色背景:关闭背景图后包内只有纯色 div(#e4f6ff)垫底,壳渐变透明,
+    // 不再携带/引用 background.webp;第二关未配独立背景时基底层原样带过。
+    await patch({background:{enabled:false}});
+    assert.check((await api(url+'/run',{step:'pack'})).body.ok,'关闭背景图后重新打包通过');
+    const solidPacked=fs.readFileSync(path.join(taskResultDir(id),'index.html'),'utf8');
+    assert.check(!solidPacked.includes('background.webp')&&/data-novvy-bg>#novvy-dom-bg\{position:fixed;inset:0;z-index:0;background:#e4f6ff\}/.test(solidPacked),'未开背景图时纯色 div(#e4f6ff)垫底且不携带背景图片');
+    assert.check(solidPacked.includes(':root,:root body,:root .app{background:transparent}')&&!solidPacked.includes(':root:not(.novvy-phase2)'),'壳背景随基底层常驻透明,不再区分换关前后');
+    const liveSolid=await(await fetch(base+url+'/preview')).text();
+    assert.check(liveSolid.includes('id="novvy-dom-bg"')&&liveSolid.includes('#e4f6ff'),'即时试玩同样使用纯色基底层');
     await patch({cta:{takeoverText:'新的接管文案'}});
     const takeover=await(await fetch(base+url+'/preview?view=cta')).text();
     assert.check(takeover.includes('新的接管文案')&&takeover.includes("__novvyCtaCardPhase='takeover'"),'CTA 独立预览兼容');

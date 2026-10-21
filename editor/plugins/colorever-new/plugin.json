@@ -116,7 +116,8 @@
     "background": {
       "enabled": false,
       "blurSigma": 6,
-      "source": "auto"
+      "source": "auto",
+      "color": "#e4f6ff"
     },
     "cta": {
       "enabled": true,

@@ -197,7 +197,8 @@ window.PlayablePlugins = window.PlayablePlugins || {};
   }
   function renderBackgroundPreview(container) {
     if (!config().background?.enabled || !stepState('background').ok) {
-      container.append(el('span', { class: 'hint' }, [config().background?.enabled ? '运行后显示模糊背景成品。' : '已关闭：游戏使用自带纯色底。']));
+      const solid=/^#[0-9a-f]{6}$/i.test(config().background?.color??'')?config().background.color:'#e4f6ff';
+      container.append(el('span', { class: 'hint' }, [config().background?.enabled ? '运行后显示模糊背景成品。' : `已关闭：交付包用纯色背景（${solid}）垫底。`]));
       return;
     }
     container.append(el('img', {
@@ -277,7 +278,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
         inputs.push(field('背景图来源',source),field('背景模糊程度（0–50）',blur));
         if(source.value==='upload'||source.value==='auto')inputs.push(upload('background2','第二关背景图片 PNG / JPG','image/png,image/jpeg'));
       }
-      secondBackground=card('background2',4,'第二关自定义背景','从片尾视频提取首帧或尾帧，也可以单独上传；进入第二关时切换。关闭时使用游戏自带纯色底。',inputs,right=>{
+      secondBackground=card('background2',4,'第二关自定义背景','从片尾视频提取首帧或尾帧，也可以单独上传；进入第二关时切换。关闭时沿用第一关背景。',inputs,right=>{
         if(enabled.checked&&stepState('background2').ok&&!stepState('background2').metrics?.skipped)right.append(el('img',{src:versioned(`/project/${taskId}/generated/background2.webp`,stepVersion('background2')),style:'max-height:360px',title:'第二关背景'}));
       });
     }
@@ -364,10 +365,12 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     backgroundSource.onchange=async()=>{await save({background:{source:backgroundSource.value}});await refresh(true);};
     const blur=el('input',{type:'number',min:0,max:50,step:1,value:config().background?.blurSigma??6});
     blur.onchange=async()=>{await save({background:{blurSigma:Number(blur.value)}});await refresh(true);};
-    const backgroundInputs=[field('背景图来源',backgroundSource),field('背景模糊程度（0–50）',blur)];
+    const solidColor=el('input',{type:'color',value:/^#[0-9a-f]{6}$/i.test(config().background?.color??'')?config().background.color:'#e4f6ff','aria-label':'纯色背景颜色'});
+    solidColor.onchange=async()=>{await save({background:{color:solidColor.value}});await refresh(true);};
+    const backgroundInputs=[field('背景图来源',backgroundSource),field('背景模糊程度（0–50）',blur),field('纯色背景（关闭背景图时生效）',solidColor)];
     if(backgroundSource.value.startsWith('video-')) backgroundInputs.push(el('p',{class:'hint'},['使用“开场视频”步骤上传的 MP4，无需开启视频播放或先生成海报。']));
     else backgroundInputs.push(upload('background','背景图片 PNG / JPG','image/png,image/jpeg'));
-    const background = card('background', 4, '自定义背景', config().background?.enabled ? '选择上传图片或片头视频的首帧、尾帧，调整模糊程度后运行。' : '已关闭：游戏使用自带纯色底。', backgroundInputs, renderBackgroundPreview);
+    const background = card('background', 4, '自定义背景', config().background?.enabled ? '选择上传图片或片头视频的首帧、尾帧，调整模糊程度后运行。' : '已关闭：使用纯色背景 div 垫底，减少大图解码与绘制开销。', backgroundInputs, renderBackgroundPreview);
     const level = card('level', 5, '关卡生成与校验', '选择开局模式与随机种子，从所选图案生成开局，并以真实解法回放验证可完成。换种子即换一个开局。', [openingControls(()=>config().opening,patch=>({opening:patch}))], (right) => {
       right.append(coloreverTemplateSwitch());
       right.append(el('button', { onclick: () => mountPlayPreview(right, `/api/tasks/${taskId}/preview?v=${Date.now()}`) }, ['试玩当前关卡']));
@@ -384,7 +387,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     if(introGate)root.append(introGate);
     if(config().hud?.enabled)root.append(hud);
     if(titleEnabled())root.append(title);
-    if(config().background?.enabled)root.append(background);
+    root.append(background);
     if(config().outro?.enabled){root.append(outro);if(secondPlayable)root.append(secondPlayable);if(secondBackground)root.append(secondBackground);}
     root.append(progressStyle);
     if(!config().outro?.enabled)root.append(ctaTiming);
