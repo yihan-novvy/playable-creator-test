@@ -91,6 +91,13 @@
   setInterval(function () { if (!ended) pollProgress(false); }, 400);
 
   function onGameEnd() {
+    nativeComplete();
+  }
+
+  /* —— 完成信号统一闩锁:game_end(渠道结算回调)与原生胜利跳转(window.open,
+     GlobalConfig 阈值补丁后只在棋盘解完时发生)都汇到这里,只派一次
+     novvy:playable-complete(转化桥主动跳转一次),终局后手势/节奏停表。 —— */
+  function nativeComplete() {
     if (ended) return;
     ended = true;
     pollProgress(true);
@@ -176,7 +183,12 @@
         if (originalEnd) { try { return originalEnd.apply(channel, arguments); } catch (e) {} }
       };
       channel.download = function (url) {
-        if (onCtaTap()) return;
+        if (sdkPresent()) {
+          /* 终局前 = 玩家点自带横幅(手动 CTA,cta_click);终局后不再动作——
+             完成转化已由 nativeComplete 发出,回访触压由桥的回访每击接管。 */
+          if (!ended) onCtaTap();
+          return;
+        }
         if (originalDownload) return originalDownload.call(channel, url);
         if (window.mraid && typeof window.mraid.open === 'function') return window.mraid.open(url);
         return window.open(url, '_blank');
@@ -185,6 +197,18 @@
     } catch (e) {}
   }
   patchChannel();
+  /* —— 原生胜利跳转归一:游戏内部胜利流程最终落到 window.open(gemsort 同款
+     installForGame 形态;SDK WebView 里本是无声 no-op)。GlobalConfig 阈值已由
+     打包侧补丁钉到"解完才触发",这里把这一次跳转拦截成统一的完成信号——
+     SDK 在场即派 playable-complete(强制跳转语义由转化桥落地),预览保留裸跳。 —— */
+  var originalOpen = window.open;
+  window.open = function () {
+    if (sdkPresent()) {
+      nativeComplete();
+      return {};
+    }
+    return originalOpen.apply(window, arguments);
+  };
   var elapsed = 0;
   var patchTimer = setInterval(function () {
     elapsed += 400;

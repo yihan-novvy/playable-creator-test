@@ -7,10 +7,17 @@
 ## 包结构
 
 - `index.html`：aplv playable 原文件 + 注入（除锚点拼接外 playable 一字节不改）
-  - `data-novvy-playable-bridge`（段桥，最先）：声明段链 `['video'?,'playable']`、
+  - `data-novvy-origin-config`（最先）：运行时改写 `window.__res` 里的 GlobalConfig
+    ——原版烘焙 `"游戏获胜目标进度百分比": 15`（进度 15% 游戏自己跳，会抢在转化
+    时机之前）；钉到 99.99（棋盘解完才触发，任意 n-1 中间态 < 99.99 < 100），
+    levelStart/levelEnd 收敛到胜利关。语义与 colorever-gemsort 的
+    `patchGlobalConfig` 同源，但不动冻结字节
+  - `data-novvy-playable-bridge`（段桥）：声明段链 `['video'?,'playable']`、
     媒体注册、`onStep`/`onComplete` 结算
   - `data-novvy-origin-engine`（引擎适配）：见 `overlays/engine/engine.js` 头注释
   - `data-novvy-cta-bridge`（转化桥，最后）：`__CTA_URL_KEY__` → `__ORIGIN_CTA_URL__`
+  - `data-novvy-origin-splash`：隐藏 aplv 自带开机 splash（z-index 2147483646
+    会压在片头视频上）
   - 片头组回落 core 三件套（本插件不自带 overlays/intro）
 - `tail-ad-video.mp4` / `poster.webp`：intro 步骤的 720p 转码产物（启用片头时）
 
@@ -28,8 +35,10 @@
   逐个间隔再跳，表耗尽后全部按最后一个间隔（2）循环。触发点表由
   `lib.mjs` 的 `originCtaSchedule`（纯函数）预计算注入；转化桥按
   `detail.everySteps` 循环语义绕自动闩锁逐次转化、不武装回访每击。
-- **完成兜底**：游戏 `super_html.game_end` → `novvy:playable-complete` →
-  转化桥主动跳转一次（步骤数不是上限）。
+- **完成兜底**：原生胜利跳转（阈值补丁后只在棋盘解完时发生）与
+  `super_html.game_end` 都归入同一个 once 闩锁 → `novvy:playable-complete` →
+  转化桥主动跳转一次（步骤数不是上限）。SDK 在场时 `window.open` 被拦截为
+  完成信号（裸跳在 SDK WebView 本是无声 no-op），预览保留裸跳。
 - **CTA UI**：playable 自带下载横幅（`super_html.download`）。SDK 在场时改走
   `novvy:cta-interact` → `NovvyPlayable.click(cta_click)`；预览（无 SDK）保留
   原始 mraid/window.open 裸跳转。不注入 cta-card、无全屏接管；
@@ -48,6 +57,9 @@
 - 进度扫描依赖 aplv 自带集成脚本同款的结构假设（`BS_GameDirector` 节点 +
   `_model.getCorrectFillRatio`）；若未来换包破坏该结构，自动退化为无 percent
   的步数上报（不会报假进度），CTA 节奏不受影响。
+- 胜利阈值补丁假设配置资产在 `window.__res` 且字段名不变（`游戏获胜关卡条件` /
+  `游戏获胜目标进度百分比`）；缺失/结构不符时 pack 直接报错拒绝打包（宁可不交
+  付也不交付一个会按原版步数抢跳的包）。
 - 若游戏存在绕过 `super_html.download` 的自有跳转路径，SDK 包内该路径为裸
   `window.open`/`mraid.open`，不经过统一 click 上报（打包侧静态预检可能提示）。
 - 步数触发点表上限 999 步（防御性；广告会话内不可达）。

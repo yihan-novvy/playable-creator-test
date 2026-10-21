@@ -12,6 +12,48 @@ const BODY_END = '</body>';
 const inline = (value) => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 const hash = (text) => createHash('sha256').update(text).digest('hex');
 
+// aplv 烘焙的 GlobalConfig 带"游戏获胜目标进度百分比":15（进度 15% 游戏就自己
+// 跳转），会抢在转化时机之前按原版步数跳走。治理与 colorever-gemsort 的
+// patchGlobalConfig 同语义，但走运行时改写（冻结文件一字节不改）：boot 前把
+// window.__res 里的配置文本换成"解完才到"的阈值（棋盘全对=100%；99.99 高于
+// 任意 n-1 中间态（n<10000 格），等于只在最后一手触发），关卡循环收敛到胜利关。
+// 配置资产只在 __res 一份（__zip 内无同名文件），boot 是异步资源加载，body 末
+// 的同步改写必然先于引擎读取。
+function winConfigPatch(html) {
+  const MARKER = '游戏获胜目标进度百分比';
+  const markerAt = html.indexOf(MARKER);
+  if (markerAt < 0) throw new Error('Colorever Origin 未找到 GlobalConfig 胜利阈值字段，拒绝打包（原版会提前抢跳）');
+  // 值内转义的依赖路径（\"assets/…\"）会产生假键匹配：从最近的候选往前逐个
+  // 试解析，第一个解出且含标记的才是真键。
+  const candidates = [...html.matchAll(/"assets\/[^"]+\.json": "/g)].filter((match) => match.index < markerAt).reverse();
+  for (const keyMatch of candidates) {
+    const key = keyMatch[0].slice(1, -4); /* 尾部 ": " 共 4 字符（末位引号是值的开引号） */
+    const valueStart = keyMatch.index + keyMatch[0].length;
+    let valueEnd = valueStart + 1;
+    while (true) {
+      valueEnd = html.indexOf('"', valueEnd);
+      let backslashes = 0;
+      for (let p = valueEnd - 1; html[p] === '\\'; p -= 1) backslashes += 1;
+      if (backslashes % 2 === 0) break;
+      valueEnd += 1;
+    }
+    let text, packed;
+    try {
+      text = JSON.parse(html.slice(valueStart - 1, valueEnd + 1));
+      if (!text.includes(MARKER)) continue;
+      packed = JSON.parse(text);
+    } catch { continue; }
+    const payload = packed?.[5]?.[0]?.[2];
+    if (!payload || !(MARKER in payload) || !('游戏获胜关卡条件' in payload)) throw new Error('Colorever Origin GlobalConfig 结构不符（packed[5][0][2]），拒绝补丁');
+    payload['游戏获胜关卡条件'] = 1;
+    payload[MARKER] = 99.99;
+    if ('levelStart' in payload) payload.levelStart = 1;
+    if ('levelEnd' in payload) payload.levelEnd = 1;
+    return `<script data-novvy-origin-config>window.__res ? window.__res[${inline(key)}]=${inline(JSON.stringify(packed))} : console.error('[novvy-origin] window.__res 缺失,胜利阈值补丁未生效,原版会提前抢跳');</script>`;
+  }
+  throw new Error('Colorever Origin 无法定位 GlobalConfig 所属的 __res 键');
+}
+
 // CTA 时机策略（origin 专属，不动共享 normalizeCtaPolicy——dragon-cube/
 // escape-arrow 注入 JSON 逐字节稳定的老约束）：steps 模式下首次第 afterSteps
 // 步跳转，之后按 intervals 逐个间隔再跳；间隔表耗尽后全部按最后一个间隔循环
@@ -62,6 +104,7 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
   const readCore = (name) => fs.readFileSync(fileURLToPath(new URL(`../../core/overlays/${name}`, import.meta.url)), 'utf8');
   const engineFile = path.join(pluginDir, template.overlays.engine, 'engine.js');
   const bodyScripts = [
+    winConfigPatch(html),
     injection.uiScript,
     data,
     `<script data-novvy-playable-bridge>${readCore('playable-bridge/playable-bridge.js')}</script>`,

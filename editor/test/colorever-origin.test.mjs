@@ -55,6 +55,9 @@ export default async function run(assert) {
     assert.check(out.includes('data-novvy-playable-bridge') && out.includes('data-novvy-cta-bridge'), '段桥与转化桥都在场');
     assert.check(out.includes('__ORIGIN_CTA_URL__'), '转化桥 URL 变量替换为 origin 专属全局名');
     assert.check(out.includes('data-novvy-origin-engine'), '注入 origin 引擎适配');
+    assert.check(out.includes('data-novvy-origin-config'), '注入 GlobalConfig 胜利阈值补丁');
+    assert.check(out.includes('%E6%B8%B8%E6%88%8F') === false && out.includes('99.99') && out.includes('\\"levelStart\\":1,\\"levelEnd\\":1'), '胜利阈值钉到 99.99（解完才到）且关卡循环收敛');
+    assert.check(out.includes('15.0') || out.includes('15}'), '冻结源自身的烘焙阈值不被改动（运行时补丁）');
     assert.check(out.includes('"__novvyStageChain__"') || out.includes('window.__novvyStageChain__='), '段链字面量注入');
     assert.check(out.includes('window.__NOVVY_CTA_END_MASK__=false'), 'endMask 默认 false（colorever-new 回访每击语义）');
     assert.check(out.includes('"schedule":[{"step":10,"gap":5}'), '循环节奏表随策略注入');
@@ -66,6 +69,7 @@ export default async function run(assert) {
     // playable 本体除注入外一字节不改：剥掉注入后与源完全一致。
     const stripped = out
       .replace(/<style data-novvy-origin-splash>[\s\S]*?<\/style>\n?/, '')
+      .replace(/<script data-novvy-origin-config>[\s\S]*?<\/script>\n?/, '')
       .replace(/<script>window\.__novvyStageChain__[\s\S]*?<\/script>\n?/, '')
       .replace(/<style data-novvy-intro>[\s\S]*?<\/style>\n?<\/head>/, '</head>')
       .replace(/<div id="novvy-video-intro"[\s\S]*?<script data-novvy-cta-bridge>[\s\S]*?<\/script>\n?<\/body>/, '</body>')
@@ -85,7 +89,7 @@ export default async function run(assert) {
 
   function makeEnv() {
     const docListeners = [], winListeners = [], events = [], timers = [];
-    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0 };
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [] };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
     const fakeDocument = {
       getElementById: () => null,
@@ -105,6 +109,7 @@ export default async function run(assert) {
       PointerEvent: function () {},
       NovvyPlayable: { click: (p) => calls.click.push(p), onStep: (step, detail) => calls.onStep.push({ step, detail }) },
       super_html: { download: (url) => calls.download.push(url), game_end: () => { calls.gameEndOriginal += 1; } },
+      open: (url) => calls.windowOpen.push(url),
     };
     // 引擎闭包在事件回调期才读全局，桩必须在整个场景块期间保持安装
     scope.window = fakeWindow;
@@ -145,6 +150,11 @@ export default async function run(assert) {
     assert.equal(env.of('novvy:hud-progress').at(-1).detail, { percent: 92 }, '真值上涨继续派发');
     assert.equal(env.calls.onStep.length, onStepBefore, '进度源在场后不再直接上报步数（段桥接管 onStep）');
 
+    // 终局前的横幅 download = 手动 CTA
+    env.fakeWindow.super_html.download('store://banner');
+    assert.equal(env.of('novvy:cta-interact').map((item) => item.bus), ['window'], '终局前横幅 download 改派 cta-interact');
+    assert.equal(env.calls.download.length, 0, 'SDK 在场时原生 download 不直调');
+
     // 结算：game_end → 收尾读数 100 + playable-complete + 原回调；终局后手势停计
     model.ratio = 1;
     env.fakeWindow.super_html.game_end();
@@ -156,9 +166,25 @@ export default async function run(assert) {
     assert.equal(env.of('novvy:cta-moment').length, momentsBefore, '终局后手势停计');
     assert.equal(env.calls.download.length, 0, 'SDK 在场时原生 download 不直调');
 
-    // CTA：SDK 在场改派 cta-interact，不裸跳
+    { // 原生胜利跳转（window.open）归一到同一闩锁；终局后 download 静默
+      const env2 = makeEnv();
+      env2.tap();
+      env2.fakeWindow.open('store://win-jump');
+      assert.equal(env2.of('novvy:playable-complete').length, 1, 'window.open 原生跳转派发 playable-complete');
+      assert.equal(env2.calls.windowOpen.length, 0, 'SDK 在场拦截裸 window.open');
+      env2.fakeWindow.open('store://again');
+      assert.equal(env2.of('novvy:playable-complete').length, 1, '完成信号幂等（once 闩锁）');
+      env2.fakeWindow.super_html.download('store://banner');
+      assert.equal(env2.of('novvy:cta-interact').length, 0, '终局后 download 不再派 cta-interact');
+      assert.equal(env2.calls.download.length, 0, '终局后 download 不落裸跳转');
+      const moments2 = env2.of('novvy:cta-moment').length;
+      env2.tap();
+      assert.equal(env2.of('novvy:cta-moment').length, moments2, '终局后节奏停表');
+    }
+
+    // CTA：终局后的横幅 download 静默（完成转化已发，回访触压由桥接管）
     env.fakeWindow.super_html.download('store://x');
-    assert.equal(env.of('novvy:cta-interact').map((item) => item.bus), ['window'], 'download 改派 novvy:cta-interact');
+    assert.equal(env.of('novvy:cta-interact').length, 1, '终局后不再追加 cta-interact（仅终局前一次）');
     assert.equal(env.calls.download.length, 0, 'SDK 在场不落裸跳转');
 
     { // 预览形态（无 SDK）：download 保留裸跳转且不派发事件（避免桥兜底成环）
@@ -168,6 +194,9 @@ export default async function run(assert) {
       assert.equal(env.calls.download, ['store://x'], '无 SDK 时保留原始裸跳转');
       assert.equal(env.of('novvy:cta-interact').length, 0, '裸跳转路径不派发事件');
       assert.equal(env.of('novvy:cta-moment').length, 0, '未到步数不派发 cta-moment');
+      env.fakeWindow.open('store://y');
+      assert.equal(env.calls.windowOpen, ['store://y'], '无 SDK 时 window.open 保留原始裸跳转');
+      assert.equal(env.of('novvy:playable-complete').length, 0, '预览不派发 playable-complete');
     }
   } finally {
     Object.assign(scope, savedGlobals);
