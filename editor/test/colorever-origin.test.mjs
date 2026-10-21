@@ -58,12 +58,14 @@ export default async function run(assert) {
     assert.check(out.includes('"__novvyStageChain__"') || out.includes('window.__novvyStageChain__='), '段链字面量注入');
     assert.check(out.includes('window.__NOVVY_CTA_END_MASK__=false'), 'endMask 默认 false（colorever-new 回访每击语义）');
     assert.check(out.includes('"schedule":[{"step":10,"gap":5}'), '循环节奏表随策略注入');
+    assert.check(out.includes('data-novvy-origin-splash') && out.includes('#__bootcover{display:none!important}'), '隐藏 aplv 自带开机 splash');
     assert.check(!out.includes('data-novvy-cta-card') && !out.includes('id="novvy-cta"'), '不注入 cta-card（CTA 用 playable 自带横幅）');
     assert.check(out.includes('GameCanvas') && out.includes('bundle_gemsort') && out.includes('super_html'), 'playable 本体结构完整');
     assert.check(out.includes('__CTA_URL_KEY__') === false, '桥占位符无残留');
     assert.check(!/__NOVVY_INTRO_VIDEO__|__NOVVY_INTRO_POSTER__|__HUD_[LR]/.test(out), '覆盖层占位符无残留');
     // playable 本体除注入外一字节不改：剥掉注入后与源完全一致。
     const stripped = out
+      .replace(/<style data-novvy-origin-splash>[\s\S]*?<\/style>\n?/, '')
       .replace(/<script>window\.__novvyStageChain__[\s\S]*?<\/script>\n?/, '')
       .replace(/<style data-novvy-intro>[\s\S]*?<\/style>\n?<\/head>/, '</head>')
       .replace(/<div id="novvy-video-intro"[\s\S]*?<script data-novvy-cta-bridge>[\s\S]*?<\/script>\n?<\/body>/, '</body>')

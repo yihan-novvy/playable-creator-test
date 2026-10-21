@@ -69,7 +69,11 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
     `<script data-novvy-origin-engine>${fs.readFileSync(engineFile, 'utf8').replace(/<\/script/gi, '<\\/script')}</script>`,
     `<script data-novvy-cta-bridge>${readCore('cta-bridge/cta-bridge.js').replaceAll('__CTA_URL_KEY__', '__ORIGIN_CTA_URL__')}</script>`,
   ];
-  const headExtra = injection.headStyles.join('\n');
+  const headExtra = injection.headStyles.join('\n')
+    // aplv 自带开机 splash(#__bootcover,"Colorever"+转圈,z-index 2147483646)会
+    // 盖在片头视频(intro 根层 z-index 20)上直到场景建好;广告形态里品牌由片头
+    // 视频承担,整层隐藏(场景就绪前画布短暂空白,可接受)。
+    + `<style data-novvy-origin-splash>#__bootcover{display:none!important}</style>`;
   const bodyExtra = [...injection.bodyDom, ...bodyScripts.filter(Boolean)].join('\n');
   html = html.replace(HEAD, () => headExtra ? `${headExtra}\n${HEAD}` : HEAD)
     .replace(BODY_END, () => bodyExtra ? `${bodyExtra}\n${BODY_END}` : BODY_END);
