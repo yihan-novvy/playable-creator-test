@@ -108,7 +108,7 @@ export default async function run(assert) {
   const scope = globalThis;
   const savedGlobals = { window: scope.window, document: scope.document, CustomEvent: scope.CustomEvent, setInterval: scope.setInterval, clearInterval: scope.clearInterval, console: scope.console, Audio: scope.Audio };
 
-  function makeEnv() {
+  function makeEnv(noSdk = false) {
     const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
     const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], mraidOpen: [], stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
@@ -128,12 +128,14 @@ export default async function run(assert) {
         for (const l of winListeners) if (l.type === event.type) l.fn(event);
       },
       PointerEvent: function () {},
-      NovvyPlayable: {
-        click: (p) => calls.click.push(p),
-        onStep: (step, detail) => calls.onStep.push({ step, detail }),
-        setStage: (index, type) => calls.stage.push([index, type]),
-        setStageList: (list) => calls.stageList ? calls.stageList.push(list) : (calls.stageList = [list]),
-      },
+      ...(noSdk ? {} : {
+        NovvyPlayable: {
+          click: (p) => calls.click.push(p),
+          onStep: (step, detail) => calls.onStep.push({ step, detail }),
+          setStage: (index, type) => calls.stage.push([index, type]),
+          setStageList: (list) => calls.stageList ? calls.stageList.push(list) : (calls.stageList = [list]),
+        },
+      }),
       __audioCtxs: [],
       AudioContext: class {
         constructor() { this.state = 'suspended'; this.resume = () => { this.state = 'running'; calls.audioResumes += 1; }; fakeWindow.__audioCtxs.push(this); }
@@ -261,10 +263,11 @@ export default async function run(assert) {
       const model3 = { ratio: 0.3, getCorrectFillRatio() { return this.ratio; } };
       env3.fakeWindow.cc = { director: { getScene: () => ({ children: [{ components: [{ _model: model3 }] }] }) } };
       env3.fireTimers();
-      assert.check(env3.logs.some((l) => l.includes('mraid.open 裸跳已接管')), 'mraid.open 补丁随定时器挂接');
+      assert.check(env3.logs.some((l) => l.includes('mraid 已换受控假身')), 'mraid 假身随定时器替换');
+      assert.check(env3.fakeWindow.mraid.__novvyMraidDecoy === true, 'window.mraid 已整只换假身（宿主侦测层成孤儿）');
       env3.fakeWindow.mraid.open('store://banner');
       assert.equal(env3.of('novvy:cta-interact').length, 1, '未解完的 mraid.open 走手动 CTA（cta_click）');
-      assert.equal(env3.calls.mraidOpen.length, 0, 'SDK 在场 mraid.open 不落裸跳');
+      assert.equal(env3.calls.mraidOpen.length, 0, 'SDK 在场原始 mraid.open 不再被调用（裸调用到不了 SDK）');
       model3.ratio = 1;
       env3.fakeWindow.mraid.open('store://win');
       assert.equal(env3.of('novvy:playable-complete').length, 1, '解完的 mraid.open 派发 playable-complete');
@@ -281,9 +284,9 @@ export default async function run(assert) {
         assert.equal(env4.of('novvy:cta-interact').length, 1, '同一击的 window.open/mraid.open/download 多入口去抖为一次转化');
       }
 
-      { // 预览(无 SDK):mraid.open 放行原生跳转,不派发事件
-        const env5 = makeEnv();
-        delete env5.fakeWindow.NovvyPlayable;
+      { // 预览(无 SDK):guardMraid 不动手,mraid.open 放行原生跳转,不派发事件
+        const env5 = makeEnv(true);
+        assert.check(env5.fakeWindow.mraid.__novvyMraidDecoy !== true, '预览不替换 mraid');
         env5.fakeWindow.mraid.open('store://native');
         assert.equal(env5.calls.mraidOpen, ['store://native'], '无 SDK 时 mraid.open 放行原生跳转');
         assert.equal(env5.of('novvy:cta-interact').length, 0, '预览 mraid 裸跳不派发事件');

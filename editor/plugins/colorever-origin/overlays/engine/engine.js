@@ -22,11 +22,12 @@
       改派 novvy:cta-interact(桥 → NovvyPlayable.click,click_source=cta_click),
       由 SDK 统一跳转;SDK 不在场(编辑器预览)保留原始 mraid/window.open 裸
       跳转且不派发事件——桥的 openStoreFallback 兜底会再入本函数,派发会成环。
-   5. 裸跳归一:全素材出站跳转原语只有 window.open 与包装层原版 download 内的
-      mraid.open(MRAID 兼容层)。SDK 在场时两口都按棋盘进度分双路(解完=完成,
-      其余=手动 CTA)——否则 SDK 对绕过 click API 的裸跳再归因一次
-      (forced_click_to_appstore/scene=playable),一次点击双计转化;补丁定时器
-      常驻低频不停表,防包装层换回原版 super_html 复活裸跳。
+   5. 裸跳归一:全素材出站跳转原语只有 window.open 与横幅通道的 mraid.open。
+      SDK 在场时两口都按棋盘进度分双路(解完=完成,其余=手动 CTA)——否则 SDK
+      的裸跳侦测会对同一击再归因一次(forced_click_to_appstore/scene=playable),
+      一次点击双计转化;mraid 用整只假身替换(宿主的侦测包装挂在原对象上,
+      就地包拦不住),补丁定时器常驻低频不停表,防包装层换回原版 super_html
+      复活裸跳。
 
    super_html 由 aplv 包装层脚本在本脚本之前同步定义;引擎 boot 是异步资源
    加载,启动后先快频后常驻低频重试补丁,防包装层替换对象。全程 try/catch +
@@ -375,8 +376,10 @@
   /* —— 裸跳归一:SDK 在场时把全素材仅有的两个出站跳转原语都收编到统一双路,
      否则 SDK 会把绕过 click API 的裸跳再归因一次(forced_click_to_appstore/
      scene=playable),一次点击双计转化。两个口:window.open(横幅 DownButton/
-     原生胜利走它;SDK WebView 里本是无声 no-op)与包装层原版 super_html.download
-     首选的 window.mraid.open(MRAID 兼容层,下载补丁被包装层换回原版时复活)。
+     原生胜利走它;SDK WebView 里本是无声 no-op)与 window.mraid.open(横幅的
+     installForGame 通道首选它;真实链路见 QA 追踪:onDownButton → installForGame
+     → super_eval → mraid.open)。window.open 就地包;mraid 整只换受控假身
+     (见 guardMraid——宿主可能已在原对象上包了侦测层,就地包拦不住外层归因)。
      拦截后按棋盘真实进度区分:解完(≥99.9%)=完成信号 nativeComplete(强制跳转
      一次并武装回访每击);其余=手动 CTA novvy:cta-interact(cta_click,不触发
      完成、不武装)。预览(无 SDK)保留裸跳。 —— */
@@ -397,22 +400,58 @@
     }
     return originalOpen.apply(window, arguments);
   };
-  /* mraid 注入时序不定,随补丁定时器重试;身份比对防重复包。 */
-  var patchedMraid = null;
-  function patchMraidOpen() {
-    var mraid = window.mraid;
-    if (!mraid || typeof mraid.open !== 'function' || mraid === patchedMraid) return;
-    var originalMraidOpen = mraid.open;
+  /* mraid 假身:SDK 在场时整只替换 window.mraid。就地包 open 不够——宿主
+     (SDK 侦测层)可能在同一对象上再包一层裸跳归因(forced_click_to_appstore/
+     scene=playable),调用先过宿主包装再进我们的内层,双计照旧;换成假身后
+     宿主包在原对象上的那层彻底不可达,裸调用永远到不了 SDK,跳转全部走
+     click API 统一开店。包装层的用法只有 open(跳转)/addEventListener+
+     getState(MRAID 可见性桥,换假身后桥空挂,生命周期由 SDK 自己驱动)。
+     替换被宿主钉死(defineProperty)时退回就地包 open。预览(无 SDK)不动。
+     注入时序不定,随补丁定时器重试;身份比对防重复换。 */
+  var mraidDecoy = null;
+  function guardMraid() {
+    if (!sdkPresent()) return;
+    if (mraidDecoy && window.mraid === mraidDecoy) return;
+    var real = window.mraid;
+    if (!real || typeof real.open !== 'function' || real === mraidDecoy) return;
+    var decoy = {
+      __novvyMraidDecoy: true,
+      open: function () { sdkJumpDualPath('mraid.open'); },
+      addEventListener: function () {},
+      removeEventListener: function () {},
+      dispatchEvent: function () { return false; },
+      getState: function () { return 'ready'; },
+      getVersion: function () { return '2.0'; },
+      getPlacementType: function () { return 'default'; },
+      getViewable: function () { return 'visible'; },
+      isViewable: function () { return true; },
+      getScreenSize: function () { return { width: window.innerWidth || 0, height: window.innerHeight || 0 }; },
+      getMaxSize: function () { return null; },
+      getCurrentPosition: function () { return null; },
+      getDefaultPosition: function () { return null; },
+      setOrientationProperties: function () {},
+      setExpandProperties: function () {},
+      expand: function () {},
+      close: function () {},
+      createCalendarEvent: function () {},
+      storePicture: function () {},
+      playVideo: function () {},
+      supports: function () { return false; },
+      useCustomClose: function () {}
+    };
     try {
-      mraid.open = function (url) {
-        if (sdkPresent()) {
-          sdkJumpDualPath('mraid.open');
-          return;
-        }
-        return originalMraidOpen.apply(mraid, arguments);
-      };
-      patchedMraid = mraid;
-      LOG('mraid.open 裸跳已接管');
+      window.mraid = decoy;
+      if (window.mraid === decoy) {
+        mraidDecoy = decoy;
+        LOG('mraid 已换受控假身（裸跳归一）');
+        return;
+      }
+    } catch (e) {}
+    if (real.__novvyGuardedOpen) return;
+    try {
+      real.open = function () { sdkJumpDualPath('mraid.open'); };
+      real.__novvyGuardedOpen = true;
+      LOG('mraid 假身替换失败,open 已就地接管');
     } catch (e) {}
   }
   /* —— SDK 段切换日志:包装 NovvyPlayable.setStage/setStageList（段桥的切段
@@ -442,7 +481,7 @@
   function patchAll() {
     patchSdkStageLog();
     patchChannel();
-    patchMraidOpen();
+    guardMraid();
   }
   patchAll();
   /* 守卫常驻不停表:boot 期 400ms 快频(SDK/包装层注入时序不定),4 秒后降为
