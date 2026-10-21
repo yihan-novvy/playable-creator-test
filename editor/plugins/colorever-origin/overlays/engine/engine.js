@@ -1,18 +1,24 @@
 /* Colorever Origin 引擎适配(shim)。aplv playable 是外部交付的 Cocos 单文件
-   包,游戏逻辑混淆不可改;本脚本只通过运行时的三个缝把素材接进 novvy 事件
+   包,游戏逻辑混淆不可改;本脚本只通过运行时的几个缝把素材接进 novvy 事件
    规范,转化/切段语义与 colorever-new 对齐(core playable-bridge + cta-bridge
    共享注入,本文件只派发事件、不直接触碰 SDK API 之外的东西):
 
-   1. 有效步(一次完成的单指点按 = 一步):document 捕获段数指针手势,驱动
+   1. 真实进度:棋盘模型的 getCorrectFillRatio(正确/已占,0..1)是游戏获胜检查
+      (winTargetProgressPercent)用的同一指标。寻路与 aplv 自带集成脚本同款:
+      window.cc.director.getScene() 找 BS_GameDirector 组件的 _model;扫描退化
+      为通用组件遍历(gemsort hud 同款,属性名在混淆下保留)。读数上涨即派
+      novvy:hud-progress,由共享段桥统一 onStep(step,{progress}) 上报 —— SDK
+      的进度曲线由此获得真值;扫描未命中前,有效步退回直接 onStep(step,{})
+      (无 percent,不编造,docs/original-zip-required-event-integration.md §4)。
+   2. 有效步(一次完成的单指点按 = 一步):document 捕获段数指针手势,驱动
       CTA 循环节奏——触发点表由打包侧 lib.mjs 纯函数预计算注入
       (__ORIGIN_CTA_POLICY__.schedule),命中即派发 novvy:cta-moment(首次
-      repeat:false,其后 repeat:true,由转化桥绕自动闩锁逐次转化)。步数同时
-      经 NovvyPlayable.onStep 上报;游戏真实进度不可知,不编造 percent
-      (docs/original-zip-required-event-integration.md §4)。
-   2. 完成:游戏自带结算回调 super_html.game_end 被替换为先派发
-      novvy:playable-complete(转化桥在该时刻主动跳转一次并武装回访每击,
-      endMask=false 与 colorever-new 同款),再调用原回调。
-   3. CTA:playable 自带下载横幅最终走 super_html.download(url)。SDK 在场时
+      repeat:false,其后 repeat:true,由转化桥绕自动闩锁逐次转化)。
+   3. 完成:游戏自带结算回调 super_html.game_end 被替换为收尾读一次进度
+      (棋盘解完 ratio=1 → percent 100 真值入流)后派发 novvy:playable-complete
+      (转化桥在该时刻主动跳转一次并武装回访每击,endMask=false 与
+      colorever-new 同款),再调用原回调。
+   4. CTA:playable 自带下载横幅最终走 super_html.download(url)。SDK 在场时
       改派 novvy:cta-interact(桥 → NovvyPlayable.click,click_source=cta_click),
       由 SDK 统一跳转;SDK 不在场(编辑器预览)保留原始 mraid/window.open 裸
       跳转且不派发事件——桥的 openStoreFallback 兜底会再入本函数,派发会成环。
@@ -40,9 +46,54 @@
     window.addEventListener('novvy:intro-finished', begin, { once: true });
   } else begin();
 
+  /* —— 真实进度:BS_GameDirector._model.getCorrectFillRatio 场景扫描 —— */
+  var fillSource = null, lastPercent = 0, progressLive = false;
+  function findFillSource() {
+    try {
+      var scene = window.cc && window.cc.director && window.cc.director.getScene && window.cc.director.getScene();
+      if (!scene) return null;
+      var stack = [scene];
+      while (stack.length > 0) {
+        var node = stack.pop();
+        if (!node) continue;
+        var comps = node.components || node._components;
+        if (comps) {
+          for (var i = 0; i < comps.length; i++) {
+            var comp = comps[i];
+            if (!comp) continue;
+            if (comp._model && typeof comp._model.getCorrectFillRatio === 'function') return comp._model;
+            if (typeof comp.getCorrectFillRatio === 'function') return comp;
+          }
+        }
+        var kids = node.children;
+        if (kids) for (var j = 0; j < kids.length; j++) stack.push(kids[j]);
+      }
+    } catch (e) {}
+    return null;
+  }
+  function pollProgress(finalRead) {
+    if (!fillSource || typeof fillSource.getCorrectFillRatio !== 'function') {
+      fillSource = findFillSource();
+      if (!fillSource) return;
+    }
+    try {
+      var ratio = fillSource.getCorrectFillRatio();
+      if (typeof ratio !== 'number' || !(ratio > 0)) return;
+      progressLive = true;
+      var value = Math.round(Math.min(1, ratio) * 100);
+      if (value >= 100) value = finalRead ? 100 : 99; /* 100 只在结算读数给(棋盘解完 ratio=1) */
+      if (value > lastPercent) {
+        lastPercent = value;
+        try { document.dispatchEvent(new CustomEvent('novvy:hud-progress', { bubbles: true, detail: { percent: value } })); } catch (e) {}
+      }
+    } catch (e) {}
+  }
+  setInterval(function () { if (!ended) pollProgress(false); }, 400);
+
   function onGameEnd() {
     if (ended) return;
     ended = true;
+    pollProgress(true);
     try { document.dispatchEvent(new CustomEvent('novvy:playable-complete', { bubbles: true, detail: {} })); } catch (e) {}
   }
 
@@ -55,7 +106,9 @@
   function onValidTap() {
     if (!started || ended) return;
     step += 1;
-    if (window.NovvyPlayable && typeof window.NovvyPlayable.onStep === 'function') {
+    /* 真实进度在场时段桥按 percent 上涨统一 onStep;未命中(或尚无读数)才
+       直接上报步数 —— 两条路互斥,SDK 侧不重复计步。 */
+    if (!progressLive && window.NovvyPlayable && typeof window.NovvyPlayable.onStep === 'function') {
       try { window.NovvyPlayable.onStep(step, {}); } catch (e) {}
     }
     while (scheduleIndex < schedule.length && schedule[scheduleIndex].step === step) {

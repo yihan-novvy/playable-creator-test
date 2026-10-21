@@ -17,8 +17,13 @@
 ## 事件与跳转语义（= colorever-new）
 
 - **有效步**：引擎适配在 document 捕获段数"一次完成的单指点按"（多指/超长按
-  不计），片头结束后开算，完成后停计；步数经 `NovvyPlayable.onStep` 上报
-  （游戏真实进度不可知，不编造 percent）。
+  不计），片头结束后开算，完成后停计。
+- **真实进度 percent**：场景扫描 `BS_GameDirector → _model.getCorrectFillRatio()`
+  （正确/已占 0..1，游戏获胜检查 `winTargetProgressPercent` 用的同一指标；寻路
+  与 aplv 自带集成脚本同款，`window.cc` 运行时可用）。读数上涨即派
+  `novvy:hud-progress {percent}`，由共享段桥统一 `onStep(step, {progress})` ——
+  SDK 的进度曲线拿到真值；100% 只在结算读数（棋盘解完 ratio=1）给。扫描未
+  命中前有效步退回直接 `onStep(step, {})`（无 percent，不编造），两条路互斥。
 - **CTA 循环节奏**（默认）：第 **10** 步首跳；之后按 **+5 → +4 → +3 → +2**
   逐个间隔再跳，表耗尽后全部按最后一个间隔（2）循环。触发点表由
   `lib.mjs` 的 `originCtaSchedule`（纯函数）预计算注入；转化桥按
@@ -40,6 +45,9 @@
 ## 已知边界
 
 - "一步"是输入层口径：无法区分游戏内有效/无效操作（游戏逻辑混淆）。
+- 进度扫描依赖 aplv 自带集成脚本同款的结构假设（`BS_GameDirector` 节点 +
+  `_model.getCorrectFillRatio`）；若未来换包破坏该结构，自动退化为无 percent
+  的步数上报（不会报假进度），CTA 节奏不受影响。
 - 若游戏存在绕过 `super_html.download` 的自有跳转路径，SDK 包内该路径为裸
   `window.open`/`mraid.open`，不经过统一 click 上报（打包侧静态预检可能提示）。
 - 步数触发点表上限 999 步（防御性；广告会话内不可达）。

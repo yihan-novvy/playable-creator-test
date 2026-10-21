@@ -73,4 +73,101 @@ export default async function run(assert) {
 
   // —— previewHtml 钩子签名 ——
   assert.equal(typeof (await import('../plugins/colorever-origin/lib.mjs')).previewHtml, 'function', '提供在线预览钩子');
+
+  // —— 引擎适配 shim：桩环境全链路（手势节奏 / 真实进度 / 结算 / CTA 接线） ——
+  const enginePath = path.join(root, 'editor/plugins/colorever-origin/overlays/engine/engine.js');
+  const engineSrc = fs.readFileSync(enginePath, 'utf8');
+  const scheduleDefaults = originCtaSchedule(originCtaPolicy(defaults));
+  const scope = globalThis;
+  const savedGlobals = { window: scope.window, document: scope.document, CustomEvent: scope.CustomEvent, setInterval: scope.setInterval, clearInterval: scope.clearInterval };
+
+  function makeEnv() {
+    const docListeners = [], winListeners = [], events = [], timers = [];
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0 };
+    class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
+    const fakeDocument = {
+      getElementById: () => null,
+      addEventListener: (type, fn) => docListeners.push({ type, fn }),
+      dispatchEvent: (event) => {
+        events.push({ bus: 'document', type: event.type, detail: event.detail });
+        for (const l of docListeners) if (l.type === event.type) l.fn(event);
+      },
+    };
+    const fakeWindow = {
+      __ORIGIN_CTA_POLICY__: { mode: 'steps', afterSteps: 10, intervals: [5, 4, 3, 2], schedule: scheduleDefaults },
+      addEventListener: (type, fn) => winListeners.push({ type, fn }),
+      dispatchEvent: (event) => {
+        events.push({ bus: 'window', type: event.type, detail: event.detail });
+        for (const l of winListeners) if (l.type === event.type) l.fn(event);
+      },
+      PointerEvent: function () {},
+      NovvyPlayable: { click: (p) => calls.click.push(p), onStep: (step, detail) => calls.onStep.push({ step, detail }) },
+      super_html: { download: (url) => calls.download.push(url), game_end: () => { calls.gameEndOriginal += 1; } },
+    };
+    // 引擎闭包在事件回调期才读全局，桩必须在整个场景块期间保持安装
+    scope.window = fakeWindow;
+    scope.document = fakeDocument;
+    scope.CustomEvent = CustomEvent;
+    scope.setInterval = (fn) => { timers.push(fn); return timers.length; };
+    scope.clearInterval = () => {};
+    new Function(engineSrc)();
+    const tap = () => { fakeDocument.dispatchEvent({ type: 'pointerdown', pointerId: 1 }); fakeDocument.dispatchEvent({ type: 'pointerup', pointerId: 1 }); };
+    const fireTimers = () => { for (const fn of timers) fn(); };
+    const of = (type) => events.filter((item) => item.type === type);
+    return { events, calls, tap, fireTimers, fakeWindow, of };
+  }
+
+  try {
+    const env = makeEnv();
+    for (let i = 0; i < 10; i += 1) env.tap();
+    assert.equal(env.calls.onStep.map((item) => item.step), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], '进度源缺席时直接上报 onStep 步数');
+    assert.equal(env.of('novvy:cta-moment').at(-1), { bus: 'document', type: 'novvy:cta-moment', detail: { repeat: false, everySteps: 5 } }, '第 10 步首跳 cta-moment（repeat=false, gap=5）');
+    for (let i = 0; i < 5; i += 1) env.tap();
+    assert.equal(env.of('novvy:cta-moment').at(-1).detail, { repeat: true, everySteps: 4 }, '第 15 步重复跳（gap=4）');
+    for (let i = 0; i < 9; i += 1) env.tap();
+    assert.equal(env.of('novvy:cta-moment').length, 5, '10/15/19/22/24 各触发一次（循环间隔表）');
+    assert.equal(env.of('novvy:cta-moment').at(-1).detail.everySteps, 2, '表耗尽后按最后的 2 循环');
+
+    // 真实进度源上线：BS_GameDirector._model 场景扫描命中后，hud-progress 接管 onStep
+    const model = { ratio: 0.9, getCorrectFillRatio() { return this.ratio; } };
+    env.fakeWindow.cc = { director: { getScene: () => ({ children: [{ components: [{ _model: model }] }] }) } };
+    env.fireTimers();
+    assert.equal(env.of('novvy:hud-progress').at(-1).detail, { percent: 90 }, '扫描命中后按真值派 hud-progress 90');
+    assert.equal(env.of('novvy:hud-progress').length, 1, '同值不重复派发');
+    const onStepBefore = env.calls.onStep.length;
+    env.tap();
+    model.ratio = 0.92;
+    env.fireTimers();
+    env.tap();
+    env.fireTimers();
+    assert.equal(env.of('novvy:hud-progress').at(-1).detail, { percent: 92 }, '真值上涨继续派发');
+    assert.equal(env.calls.onStep.length, onStepBefore, '进度源在场后不再直接上报步数（段桥接管 onStep）');
+
+    // 结算：game_end → 收尾读数 100 + playable-complete + 原回调；终局后手势停计
+    model.ratio = 1;
+    env.fakeWindow.super_html.game_end();
+    assert.equal(env.of('novvy:hud-progress').at(-1).detail, { percent: 100 }, '结算收尾读数给 100');
+    assert.equal(env.of('novvy:playable-complete').length, 1, 'game_end 派发 playable-complete');
+    assert.equal(env.calls.gameEndOriginal, 1, '原 game_end 回调保留');
+    const momentsBefore = env.of('novvy:cta-moment').length;
+    for (let i = 0; i < 3; i += 1) env.tap();
+    assert.equal(env.of('novvy:cta-moment').length, momentsBefore, '终局后手势停计');
+    assert.equal(env.calls.download.length, 0, 'SDK 在场时原生 download 不直调');
+
+    // CTA：SDK 在场改派 cta-interact，不裸跳
+    env.fakeWindow.super_html.download('store://x');
+    assert.equal(env.of('novvy:cta-interact').map((item) => item.bus), ['window'], 'download 改派 novvy:cta-interact');
+    assert.equal(env.calls.download.length, 0, 'SDK 在场不落裸跳转');
+
+    { // 预览形态（无 SDK）：download 保留裸跳转且不派发事件（避免桥兜底成环）
+      const env = makeEnv();
+      delete env.fakeWindow.NovvyPlayable;
+      env.fakeWindow.super_html.download('store://x');
+      assert.equal(env.calls.download, ['store://x'], '无 SDK 时保留原始裸跳转');
+      assert.equal(env.of('novvy:cta-interact').length, 0, '裸跳转路径不派发事件');
+      assert.equal(env.of('novvy:cta-moment').length, 0, '未到步数不派发 cta-moment');
+    }
+  } finally {
+    Object.assign(scope, savedGlobals);
+  }
 }
