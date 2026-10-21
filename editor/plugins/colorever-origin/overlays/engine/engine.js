@@ -104,7 +104,35 @@
       }
     } catch (e) {}
   }
-  setInterval(function () { if (!ended) pollProgress(false); }, 400);
+  /* —— aplv 原标题横幅隐藏:TitleSprite 节点("The Best Brain-Training Game"
+     图),视觉由 HUD 标题在原位接管。按名查找(与 aplv 自带集成脚本同款寻路),
+     随进度轮询重试直至隐藏。 —— */
+  var titleHidden = false;
+  function hideTitleSprite() {
+    if (titleHidden) return;
+    try {
+      var scene = window.cc && window.cc.director && window.cc.director.getScene && window.cc.director.getScene();
+      if (!scene) return;
+      var stack = [scene];
+      while (stack.length > 0) {
+        var node = stack.pop();
+        if (!node) continue;
+        if (node.name === 'TitleSprite') {
+          node.active = false;
+          titleHidden = true;
+          LOG('TitleSprite 已隐藏(HUD 标题接管)');
+          return;
+        }
+        var kids = node.children;
+        if (kids) for (var i = 0; i < kids.length; i += 1) stack.push(kids[i]);
+      }
+    } catch (e) {}
+  }
+  setInterval(function () {
+    if (ended) return;
+    pollProgress(false);
+    hideTitleSprite();
+  }, 400);
 
   function onGameEnd() {
     nativeComplete();

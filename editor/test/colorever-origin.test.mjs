@@ -69,10 +69,12 @@ export default async function run(assert) {
     // playable 本体除注入外一字节不改：剥掉注入后与源完全一致。
     const stripped = out
       .replace(/<style data-novvy-origin-splash>[\s\S]*?<\/style>\n?/, '')
+      .replace(/<style data-novvy-hud>[\s\S]*?<\/style>\n?/, '')
       .replace(/<script data-novvy-origin-config>[\s\S]*?<\/script>\n?/, '')
       .replace(/<script>window\.__novvyStageChain__[\s\S]*?<\/script>\n?/, '')
       .replace(/<style data-novvy-intro>[\s\S]*?<\/style>\n?<\/head>/, '</head>')
       .replace(/<div id="novvy-video-intro"[\s\S]*?<script data-novvy-cta-bridge>[\s\S]*?<\/script>\n?<\/body>/, '</body>')
+      .replace(/<div id="novvy-training-hud"[\s\S]*?<script data-novvy-cta-bridge>[\s\S]*?<\/script>\n?<\/body>/, '</body>')
       .replace(/<script data-novvy-playable-bridge>[\s\S]*?<script data-novvy-cta-bridge>[\s\S]*?<\/script>\n?<\/body>/, '</body>');
     assert.equal(stripped, html, '剥离注入后与冻结源逐字节一致');
   }
@@ -85,12 +87,15 @@ export default async function run(assert) {
   assert.check(!packed.html.includes('window.__zip'), 'index.html 不再内联可玩载荷');
   assert.check(packed.html.includes('data-novvy-origin-config') && packed.html.includes('99.99'), '胜利阈值补丁仍注入 index.html');
   assert.check(packed.gameJs.includes('15.0'), 'game.js 内烘焙阈值保持原版（补丁是运行时的）');
-  const rebuilt = packed.html
+  // HUD 标题（TitleSprite 原位接管）
+  assert.check(packed.html.includes('id="novvy-training-hud"') && packed.html.includes('data-title-only'), 'HUD 标题层注入（title-only 形态）');
+  assert.check(packed.html.includes('top: 7.5%'), 'HUD 钉在原标题横幅位置（top 7.5%）');
+  assert.check(packed.html.includes('"titleLine1":"Colorever"') && packed.html.includes('"titleLine2":"The Best Brain-Training Game"'), '标题文案随 __NOVVY_UI__ 注入');
+  const injectionCut = Math.min(...['<div id="novvy-training-hud"', '<div id="novvy-video-intro"'].map((s) => { const i = packed.html.indexOf(s); return i < 0 ? Infinity : i; }));
+  const rebuilt = (packed.html.slice(0, injectionCut)
     .replace('<script src="game.js"></script>', () => '<script type="text/javascript">' + packed.gameJs + '</script>')
     .replace(/<style data-novvy-origin-splash>[\s\S]*?<\/style>\n?/, '')
-    .replace(/<script data-novvy-origin-config>[\s\S]*?<\/script>\n?/, '')
-    .replace(/<script>window\.__novvyStageChain__[\s\S]*?<\/script>\n?/, '')
-    .replace(/<script data-novvy-playable-bridge>[\s\S]*?<script data-novvy-cta-bridge>[\s\S]*?<\/script>\n?<\/body>/, '</body>');
+    .replace(/<style data-novvy-hud>[\s\S]*?<\/style>\n?/, '')) + '</body></html>';
   assert.equal(rebuilt, html, '回填 game.js 并剥离注入后与冻结源逐字节一致');
 
   // —— previewHtml 钩子签名 ——
@@ -159,8 +164,11 @@ export default async function run(assert) {
 
     // 真实进度源上线：BS_GameDirector._model 场景扫描命中后，hud-progress 接管 onStep
     const model = { ratio: 0.9, getCorrectFillRatio() { return this.ratio; } };
-    env.fakeWindow.cc = { director: { getScene: () => ({ children: [{ components: [{ _model: model }] }] }) } };
+    const titleNode = { name: 'TitleSprite', active: true, children: [] };
+    env.fakeWindow.cc = { director: { getScene: () => ({ children: [{ components: [{ _model: model }] }, titleNode] }) } };
     env.fireTimers();
+    assert.equal(titleNode.active, false, 'TitleSprite 隐藏（HUD 标题接管）');
+    assert.check(env.logs.some((l) => l.includes('TitleSprite 已隐藏')), 'TitleSprite 隐藏打日志');
     assert.equal(env.of('novvy:hud-progress').at(-1).detail, { percent: 90 }, '扫描命中后按真值派 hud-progress 90');
     assert.equal(env.of('novvy:hud-progress').length, 1, '同值不重复派发');
     assert.check(env.logs.some((l) => l.includes('[novvy-origin] hud-progress percent=90')), 'hud-progress 派发打日志');

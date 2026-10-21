@@ -62,6 +62,11 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const wrap = el('div', { class: 'dragon-config' });
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
       checkbox('使用开场视频', 'intro', 'enabled'),
+      checkbox('显示顶部 HUD 标题', 'hud', 'titleEnabled', config().hud?.titleEnabled === true),
+    ]));
+    wrap.append(el('div', { class: 'dragon-config-grid' }, [
+      textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'Colorever'),
+      textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2, 'The Best Brain-Training Game'),
     ]));
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
       checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),

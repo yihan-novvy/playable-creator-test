@@ -12,9 +12,17 @@
     "intro-poster": { "file": "intro-poster.jpg", "magic": "jpg" }
   },
   "overlays": {
+    "hud": "overlays/hud",
     "engine": "overlays/engine"
   },
   "defaults": {
+    "hud": {
+      "enabled": false,
+      "titleEnabled": true,
+      "titleLine1": "Colorever",
+      "titleLine2": "The Best Brain-Training Game",
+      "ariaLabel": ""
+    },
     "intro": {
       "enabled": false,
       "ariaLabel": "",
