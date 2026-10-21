@@ -108,6 +108,20 @@ function extractPlayableScript(html) {
   return { gameJs, start: scriptOpen, end: innerEnd + '</script>'.length };
 }
 
+// BGM 媒体元素化:aplv 全部音频走 WebAudio（iOS 静音键会整体压住），而家族
+// 模板（colorever-new 等）的 BGM 走 <audio> 媒体元素——静音键免疫。BGM 音源
+// （Gem_Bgm_ingame_play，40.5s，游戏里唯一的长音频）在 aplv 的 __zip 载荷内
+// 无法运行时提取，故作为冻结派生资产随模板入库（assets/bgm.mp3，sha 锁进
+// manifest），pack 发为兄弟文件 bgm.mp3；shim 拦截游戏对"长音频源"的启动
+// 改走媒体元素循环播放。
+function extractBgm(root, template) {
+  const constants = template.constants || {};
+  const file = path.join(root, constants.bgmAsset || 'bgm.mp3');
+  if (!fs.existsSync(file)) throw new Error('Colorever Origin 缺少 BGM 资产 bgm.mp3，请重新 npm run build');
+  const base64 = fs.readFileSync(file).toString('base64');
+  return { base64 };
+}
+
 // 把 playable（aplv 单文件）+ 片头覆盖层 + 三座共享桥组装成最终产物。
 // pack 形态：index.html（壳 + 注入）+ game.js（可玩载荷）；预览形态：单文件内联。
 // 注入纪律与 colorever-new/escape-arrow 同源：胜利阈值补丁最先（boot 前
@@ -120,8 +134,9 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
   for (const anchor of [HEAD, BODY_END]) if (html.split(anchor).length !== 2) throw new Error(`Colorever Origin playable 缺少唯一锚点 ${anchor}`);
 
   // 胜利阈值补丁必须先于拆分定位（标记在载荷里）；注入脚本运行时改写
-  // window.__res，与载荷在哪个文件无关。
+  // window.__res，与载荷在哪个文件无关。BGM 提取同理（标记在载荷里）。
   const configScript = winConfigPatch(html);
+  const bgm = extractBgm(root, template);
 
   let gameJs = null;
   if (!preview) {
@@ -129,6 +144,8 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
     gameJs = playable.gameJs;
     html = html.slice(0, playable.start) + '<script src="game.js"></script>' + html.slice(playable.end);
   }
+  // BGM 媒体元素源:pack = 兄弟文件 bgm.mp3；预览 = data URI（无静态路由）。
+  const bgmSource = bgm ? (preview ? 'data:audio/mpeg;base64,' + bgm.base64 : 'bgm.mp3') : null;
 
   // 片头组回落 core 三件套（插件不自带 overlays/intro）；hud/background/cta
   // 组的 media 恒为 null，天然不注入——CTA UI 由 playable 自带横幅承担。
@@ -136,7 +153,7 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
   const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config, media, optionalHudPortraits: true, analytics: false });
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
   const policy = originCtaPolicy(config?.playableCta, 'steps');
-  const data = `<script>window.__novvyStageChain__=${inline(stageChain)};window.__novvyOutroEnabled=false;window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__ORIGIN_CTA_URL__='';window.__ORIGIN_CTA_POLICY__=${inline({ ...policy, schedule: originCtaSchedule(policy) })};</script>`;
+  const data = `<script>window.__novvyStageChain__=${inline(stageChain)};window.__novvyOutroEnabled=false;window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__ORIGIN_CTA_URL__='';window.__ORIGIN_BGM__=${inline(bgmSource)};window.__ORIGIN_CTA_POLICY__=${inline({ ...policy, schedule: originCtaSchedule(policy) })};</script>`;
   const readCore = (name) => fs.readFileSync(fileURLToPath(new URL(`../../core/overlays/${name}`, import.meta.url)), 'utf8');
   const engineFile = path.join(pluginDir, template.overlays.engine, 'engine.js');
   const bodyScripts = [
@@ -156,7 +173,7 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
   const bodyExtra = [...injection.bodyDom, ...bodyScripts.filter(Boolean)].join('\n');
   html = html.replace(HEAD, () => headExtra ? `${headExtra}\n${HEAD}` : HEAD)
     .replace(BODY_END, () => bodyExtra ? `${bodyExtra}\n${BODY_END}` : BODY_END);
-  return { html, gameJs, stageChain, policy, introEnabled: injection.introEnabled };
+  return { html, gameJs, gameBgm: bgm, stageChain, policy, introEnabled: injection.introEnabled };
 }
 
 // 在线试玩预览（server /api/tasks/:id/preview 的插件钩子）。片头用上传原片

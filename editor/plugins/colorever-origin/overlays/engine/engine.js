@@ -58,12 +58,34 @@
      AudioContext,并在每次有效触压的手势栈内逐个解锁。产品语义:点击 playable
      即有声,不追求零点击自动出声（iOS 系统本就禁止零激活出声）。 —— */
   var audioContexts = [];
+  var audioDecoded = 0, audioSources = 0, audioStatusLogged = false;
   try {
     var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
     if (NativeAudioContext) {
       var WrappedAudioContext = function () {
         var ctx = new NativeAudioContext();
         audioContexts.push(ctx);
+        try {
+          var origDecode = ctx.decodeAudioData ? ctx.decodeAudioData.bind(ctx) : null;
+          if (origDecode) ctx.decodeAudioData = function () { audioDecoded += 1; return origDecode.apply(null, arguments); };
+        } catch (e) {}
+        try {
+          var origCreateSrc = ctx.createBufferSource ? ctx.createBufferSource.bind(ctx) : null;
+          if (origCreateSrc) ctx.createBufferSource = function () {
+            var src = origCreateSrc();
+            var origStart = src.start ? src.start.bind(src) : null;
+            if (origStart) src.start = function () {
+              /* BGM 改道:长音频源(>10s,唯一为 Gem_Bgm_ingame_play 40.5s)不走
+                 WebAudio,改由媒体元素循环播放——媒体元素在 iOS 静音键下照常有声。 */
+              try {
+                if (window.__ORIGIN_BGM__ && src.buffer && src.buffer.duration > 10 && startElementBgm()) return;
+              } catch (e) {}
+              audioSources += 1;
+              return origStart();
+            };
+            return src;
+          };
+        } catch (e) {}
         return ctx;
       };
       WrappedAudioContext.prototype = NativeAudioContext.prototype;
@@ -71,8 +93,45 @@
       if (window.webkitAudioContext) window.webkitAudioContext = WrappedAudioContext;
     }
   } catch (e) {}
+  function logAudioStatus(tag) {
+    if (audioStatusLogged) return;
+    audioStatusLogged = true;
+    try {
+      var states = audioContexts.map(function (c) { return c.state; }).join(',') || '无';
+      LOG('音频状态[' + tag + ']: 上下文=' + audioContexts.length + ' [' + states + '] 解码=' + audioDecoded + ' 已启动源=' + audioSources);
+    } catch (e) {}
+  }
   function unlockAudio() {
     for (var i = 0; i < audioContexts.length; i += 1) unlockOne(audioContexts[i]);
+  }
+  /* —— BGM 媒体元素:长音频源改道后由这里循环播放(家族模板 GameAudio 同构:
+     <audio> + loop + volume .24)。iOS 静音键免疫;autoplay 被拒时随每次手势
+     重试,首次点击 playable 即出音乐。 —— */
+  var bgmElement = null, bgmStarted = false;
+  function startElementBgm() {
+    try {
+      if (!window.__ORIGIN_BGM__) return false;
+      if (!bgmElement) {
+        bgmElement = new Audio(window.__ORIGIN_BGM__);
+        bgmElement.loop = true;
+        bgmElement.volume = .24;
+        bgmElement.preload = 'auto';
+      }
+      if (bgmElement.paused) {
+        var played = bgmElement.play();
+        if (played && played.catch) played.catch(function () {});
+      }
+      if (!bgmStarted) {
+        bgmStarted = true;
+        LOG('BGM 已切媒体元素（iOS 静音键免疫）');
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  function resumeElementBgm() {
+    try { if (bgmElement && bgmElement.paused) startElementBgm(); } catch (e) {}
   }
   /* Howler 同款组合拳:resume 之外再让一个"空 buffer"过一遍该上下文——部分
      iOS 版本仅 resume 不生效,必须有 buffer 在手势栈内 start 过。 */
@@ -199,10 +258,18 @@
     hideTitleSprite();
   }, 400);
   /* iOS 兜底:pointer 事件可能被画布的 touch preventDefault 吞掉(此时
-     gestureEnd 不触发),原生 touchend 捕获段再挂一条纯解锁路(不计步)。 */
+     gestureStart/gestureEnd 都不触发),原生 touch 路再挂一对纯解锁监听
+     (不计步)。iOS 解锁惯例挂在 touchstart,这里 start/end 都覆盖。 */
+  document.addEventListener('touchstart', function () {
+    playSilent();
+    unlockAudio();
+    resumeElementBgm();
+    logAudioStatus('touchstart');
+  }, true);
   document.addEventListener('touchend', function () {
     playSilent();
     unlockAudio();
+    logAudioStatus('touchend');
   }, true);
 
   function onGameEnd() {
@@ -253,6 +320,10 @@
       pointer 事件优先,老内核回落 touch(单指)。 —— */
   var activeId = null, multiTouch = false, downAt = 0;
   function gestureStart(event) {
+    playSilent();
+    unlockAudio();
+    resumeElementBgm();
+    logAudioStatus('手势开始');
     if (activeId !== null) { multiTouch = true; return; }
     activeId = event && event.pointerId !== undefined ? event.pointerId : 1;
     multiTouch = false;

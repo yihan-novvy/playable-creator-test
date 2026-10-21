@@ -110,7 +110,7 @@ export default async function run(assert) {
 
   function makeEnv() {
     const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
-    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0 };
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
     const fakeDocument = {
       getElementById: () => null,
@@ -137,6 +137,7 @@ export default async function run(assert) {
       __audioCtxs: [],
       AudioContext: class {
         constructor() { this.state = 'suspended'; this.resume = () => { this.state = 'running'; calls.audioResumes += 1; }; fakeWindow.__audioCtxs.push(this); }
+        decodeAudioData(buffer) { return Promise.resolve(buffer); }
         createBuffer() { return {}; }
         createBufferSource() { return { buffer: null, connect() {}, start: () => { calls.bufferStarts += 1; } }; }
       },
@@ -151,7 +152,7 @@ export default async function run(assert) {
     scope.setInterval = (fn) => { timers.push(fn); return timers.length; };
     scope.clearInterval = () => {};
     scope.Audio = class {
-      constructor(src) { this.src = src; fakeWindow.__silentWavs.push(src); }
+      constructor(src) { this.src = src; fakeWindow.__silentWavs.push(src); calls.audioElements.push(src); }
       play() { calls.audioPlay += 1; return Promise.resolve(); }
     };
     scope.console = { log: (m) => { logs.push(String(m)); savedGlobals.console.log(m); }, error: (m) => { logs.push(String(m)); savedGlobals.console.error(m); }, warn: (m) => { logs.push(String(m)); savedGlobals.console.warn(m); } };
@@ -173,8 +174,20 @@ export default async function run(assert) {
     assert.equal(gameCtx.__novvyUnlockedBuffer, true, '空 buffer 过上下文（Howler 式 iOS 解锁）');
     assert.equal(env.calls.bufferStarts, 1, '空 buffer 每上下文只 start 一次');
     assert.equal(env.fakeWindow.__audioCtxs.length, 1, 'shim 记录全部 AudioContext');
+    // BGM 改道：长音频源（>10s）由媒体元素循环播放，不进 WebAudio
+    env.fakeWindow.__ORIGIN_BGM__ = 'bgm.mp3';
+    const bgmSrc = gameCtx.createBufferSource();
+    bgmSrc.buffer = { duration: 40.5 };
+    bgmSrc.start();
+    assert.check(env.calls.audioElements.includes('bgm.mp3'), 'BGM 长源改道媒体元素（bgm.mp3）');
+    assert.equal(env.calls.bufferStarts, 1, 'BGM 源不占用 WebAudio 启动计数');
+    assert.check(env.logs.some((l) => l.includes('BGM 已切媒体元素')), 'BGM 改道打日志');
+    const bgmShort = gameCtx.createBufferSource();
+    bgmShort.buffer = { duration: 0.5 };
+    bgmShort.start();
+    assert.equal(env.calls.bufferStarts, 2, '短音效仍走 WebAudio');
     assert.check(env.logs.some((l) => l.includes('WebAudio running ✓')), 'WebAudio running 打日志');
-    assert.equal(env.fakeWindow.__silentWavs.length, 1, 'iOS 静音键解锁：静音 wav 只播一次');
+    assert.equal(env.fakeWindow.__silentWavs.filter((s) => String(s).startsWith('data:audio/wav')).length, 1, 'iOS 静音键解锁：静音 wav 只播一次');
     assert.check(env.fakeWindow.__silentWavs[0].startsWith('data:audio/wav;base64,'), '静音 wav 走 data URI');
     assert.check(env.logs.some((l) => l.includes('iOS 静音键解锁')), '静音键解锁打日志');
     assert.equal(env.calls.onStep.map((item) => item.step), [1, 2, 3, 4, 5, 6, 7, 8, 9, 10], '进度源缺席时直接上报 onStep 步数');
