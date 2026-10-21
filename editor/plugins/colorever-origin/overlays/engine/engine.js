@@ -46,10 +46,57 @@
 
   /* 试玩开始判定与转化桥一致:有片头覆盖层时等 novvy:intro-finished
      (播完/跳过/出错收场都会派发),未启用片头 = 注入即开算。 */
+  /* —— iOS 静音键:WebAudio 输出遵循 iOS 静音拨片(媒体元素不受限)——首次
+     手势时用 <audio> 播一小段静音 wav,把 App 音频会话切到 playback 档,此后
+     WebAudio 在震动模式下照常出声(Howler/Phaser 同款社区方案);试玩开始时
+     也尝试一次(历史用户激活存在即可成功,否则等首次触压)。 —— */
+  var SILENT_WAV = 'data:audio/wav;base64,UklGRkQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YSAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==';
+  var silentPlayed = false;
+  /* —— WebAudio 解锁:游戏 boot 于片头/覆盖层之下,引擎的"首触解锁"监听在画布
+     上,前几触被覆盖层吃掉后上下文停在 suspended;游戏代码后续的 resume() 不在
+     用户手势栈内,浏览器策略会忽略 → 永久静音。shim 在加载期记录全部
+     AudioContext,并在每次有效触压的手势栈内逐个 resume（resume 只在手势栈内
+     生效,这正是浏览器的要求）。本段必须先于 begin()（无片头形态 begin 在 IIFE
+     求值期即调用）。 —— */
+  var audioContexts = [];
+  try {
+    var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
+    if (NativeAudioContext) {
+      var WrappedAudioContext = function () {
+        var ctx = new NativeAudioContext();
+        audioContexts.push(ctx);
+        return ctx;
+      };
+      WrappedAudioContext.prototype = NativeAudioContext.prototype;
+      window.AudioContext = WrappedAudioContext;
+      if (window.webkitAudioContext) window.webkitAudioContext = WrappedAudioContext;
+    }
+  } catch (e) {}
+  function unlockAudio() {
+    for (var i = 0; i < audioContexts.length; i += 1) {
+      try {
+        if (audioContexts[i].state === 'suspended' && audioContexts[i].resume) audioContexts[i].resume();
+      } catch (e) {}
+    }
+  }
+  function playSilent() {
+    if (silentPlayed) return;
+    try {
+      if (typeof Audio !== 'function') return;
+      var element = new Audio(SILENT_WAV);
+      var played = element.play();
+      if (played && played.catch) played.catch(function () { silentPlayed = false; });
+      silentPlayed = true;
+      LOG('iOS 静音键解锁:静音 wav 已播放（音频会话切 playback）');
+    } catch (e) {}
+  }
+
   function begin() {
     if (started) return;
     started = true;
     LOG('试玩开始（有效步开始计数）');
+    playSilent();
+    unlockAudio();
   }
   if (document.getElementById('novvy-video-intro') && !window.__novvyIntroFinished) {
     window.addEventListener('novvy:intro-finished', begin, { once: true });
@@ -177,27 +224,6 @@
      resume() 不在用户手势栈内,浏览器策略会忽略 → 永久静音。shim 在加载期
      记录全部 AudioContext,并在每次有效触压的手势栈内逐个 resume
      （resume 只在手势栈内生效,这正是浏览器的要求）。 —— */
-  var audioContexts = [];
-  try {
-    var NativeAudioContext = window.AudioContext || window.webkitAudioContext;
-    if (NativeAudioContext) {
-      var WrappedAudioContext = function () {
-        var ctx = new NativeAudioContext();
-        audioContexts.push(ctx);
-        return ctx;
-      };
-      WrappedAudioContext.prototype = NativeAudioContext.prototype;
-      window.AudioContext = WrappedAudioContext;
-      if (window.webkitAudioContext) window.webkitAudioContext = WrappedAudioContext;
-    }
-  } catch (e) {}
-  function unlockAudio() {
-    for (var i = 0; i < audioContexts.length; i += 1) {
-      try {
-        if (audioContexts[i].state === 'suspended' && audioContexts[i].resume) audioContexts[i].resume();
-      } catch (e) {}
-    }
-  }
 
   /* —— 手势计数:单指按下→抬起算一次;第二指按下/超长按不计。
       pointer 事件优先,老内核回落 touch(单指)。 —— */
@@ -214,6 +240,7 @@
     var multi = multiTouch;
     activeId = null;
     multiTouch = false;
+    playSilent(); /* iOS 静音键:首个手势时切音频会话 */
     unlockAudio(); /* 手势栈内解锁音频,越早越好(含未开始计步的触压) */
     if (!same || multi || Date.now() - downAt > 8000) return;
     onValidTap();
