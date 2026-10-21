@@ -85,14 +85,50 @@ export function originCtaSchedule(policy, cap = 999) {
   return schedule;
 }
 
-// 把 playable（aplv 单文件）+ 片头覆盖层 + 三座共享桥组装成最终 index.html。
-// 注入纪律与 colorever-new/escape-arrow 同源：段桥最先（声明段链与首段
-// setStage）、转化桥最后；playable 本体除锚点拼接外一字节不改。
+// 把 aplv 的可玩载荷（__zip 引擎 + __res 资产 + 启动链，约 2MB 的那个大
+// 内联脚本）从文档里抽出来：pack 形态写成兄弟文件 game.js（与 gemsort/
+// escape-arrow 的 game.js 同纪律——冻结 playable 载荷跨任务逐字节稳定，
+// 广告逻辑迭代只动 index.html），预览形态保持内联（无静态路由可挂）。
+// 抽取 = 定位含 window.__zip 的唯一 <script> 元素整体替换为
+// <script src="game.js"></script>，执行位置与原内联脚本完全一致。
+function extractPlayableScript(html) {
+  const zipAt = html.indexOf('window.__zip');
+  if (zipAt < 0) throw new Error('Colorever Origin 未找到可玩载荷（window.__zip），拒绝拆分');
+  const scriptOpen = html.lastIndexOf('<script', zipAt);
+  if (scriptOpen < 0) throw new Error('Colorever Origin 可玩载荷缺少 <script> 边界');
+  const innerStart = html.indexOf('>', scriptOpen) + 1;
+  const innerEnd = html.indexOf('</script>', zipAt);
+  if (innerEnd < 0) throw new Error('Colorever Origin 可玩载荷缺少 </script> 边界');
+  const tag = html.slice(scriptOpen, innerStart);
+  if (!/^<script type="text\/javascript">$/.test(tag)) throw new Error(`Colorever Origin 可玩载荷脚本标签形态不符: ${tag}`);
+  const gameJs = html.slice(innerStart, innerEnd);
+  for (const marker of ['window.__res', 'super_boot_engine', 'bundle_gemsort']) {
+    if (!gameJs.includes(marker)) throw new Error(`Colorever Origin 可玩载荷缺少结构标记 ${marker}，拒绝拆分`);
+  }
+  return { gameJs, start: scriptOpen, end: innerEnd + '</script>'.length };
+}
+
+// 把 playable（aplv 单文件）+ 片头覆盖层 + 三座共享桥组装成最终产物。
+// pack 形态：index.html（壳 + 注入）+ game.js（可玩载荷）；预览形态：单文件内联。
+// 注入纪律与 colorever-new/escape-arrow 同源：胜利阈值补丁最先（boot 前
+// 改写 __res）、段桥先于业务脚本（声明段链与首段 setStage）、转化桥最后；
+// playable 本体除"整体搬进 game.js"外一字节不改。
 export function originHtml({ root, overlaysRoot, template, config, media = {}, preview = false }) {
   let html = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
   const sourceSha = template.constants?.sourceSha256;
   if (sourceSha && hash(html) !== sourceSha) throw new Error('Colorever Origin playable 与清单 sha 不符，请重新 npm run build');
   for (const anchor of [HEAD, BODY_END]) if (html.split(anchor).length !== 2) throw new Error(`Colorever Origin playable 缺少唯一锚点 ${anchor}`);
+
+  // 胜利阈值补丁必须先于拆分定位（标记在载荷里）；注入脚本运行时改写
+  // window.__res，与载荷在哪个文件无关。
+  const configScript = winConfigPatch(html);
+
+  let gameJs = null;
+  if (!preview) {
+    const playable = extractPlayableScript(html);
+    gameJs = playable.gameJs;
+    html = html.slice(0, playable.start) + '<script src="game.js"></script>' + html.slice(playable.end);
+  }
 
   // 片头组回落 core 三件套（插件不自带 overlays/intro）；hud/background/cta
   // 组的 media 恒为 null，天然不注入——CTA UI 由 playable 自带横幅承担。
@@ -104,7 +140,7 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
   const readCore = (name) => fs.readFileSync(fileURLToPath(new URL(`../../core/overlays/${name}`, import.meta.url)), 'utf8');
   const engineFile = path.join(pluginDir, template.overlays.engine, 'engine.js');
   const bodyScripts = [
-    winConfigPatch(html),
+    configScript,
     injection.uiScript,
     data,
     `<script data-novvy-playable-bridge>${readCore('playable-bridge/playable-bridge.js')}</script>`,
@@ -120,7 +156,7 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
   const bodyExtra = [...injection.bodyDom, ...bodyScripts.filter(Boolean)].join('\n');
   html = html.replace(HEAD, () => headExtra ? `${headExtra}\n${HEAD}` : HEAD)
     .replace(BODY_END, () => bodyExtra ? `${bodyExtra}\n${BODY_END}` : BODY_END);
-  return { html, stageChain, policy, introEnabled: injection.introEnabled };
+  return { html, gameJs, stageChain, policy, introEnabled: injection.introEnabled };
 }
 
 // 在线试玩预览（server /api/tasks/:id/preview 的插件钩子）。片头用上传原片

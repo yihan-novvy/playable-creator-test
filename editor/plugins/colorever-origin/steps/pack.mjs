@@ -26,6 +26,7 @@ export async function run(ctx) {
   fs.rmSync(ctx.resultDir, { recursive: true, force: true });
   fs.mkdirSync(ctx.resultDir, { recursive: true });
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
+  fs.writeFileSync(path.join(ctx.resultDir, 'game.js'), built.gameJs);
   if (intro) {
     fs.copyFileSync(path.join(ctx.generatedDir, 'intro-video.mp4'), path.join(ctx.resultDir, 'tail-ad-video.mp4'));
     fs.copyFileSync(path.join(ctx.generatedDir, 'poster.webp'), path.join(ctx.resultDir, 'poster.webp'));
@@ -35,6 +36,7 @@ export async function run(ctx) {
     metrics: {
       packageFiles,
       outputBytes: packageFiles.reduce((n, name) => n + fs.statSync(path.join(ctx.resultDir, name)).size, 0),
+      gameJsBytes: fs.statSync(path.join(ctx.resultDir, 'game.js')).size,
       stageChain: built.stageChain,
       introEnabled: built.introEnabled,
       ctaPolicy: built.policy,

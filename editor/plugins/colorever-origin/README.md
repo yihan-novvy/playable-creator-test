@@ -6,7 +6,13 @@
 
 ## 包结构
 
-- `index.html`：aplv playable 原文件 + 注入（除锚点拼接外 playable 一字节不改）
+- `game.js`：aplv 可玩载荷整体抽出（`__zip` 引擎 + `__res` 资产 + 启动链，
+  ~2MB 的那个大内联脚本原样外置，pack 时从冻结源确定性切片）。与 gemsort/
+  escape-arrow 的 game.js 同纪律：**冻结 playable 载荷跨任务逐字节稳定**，
+  广告逻辑迭代只动 index.html，不碰 game.js
+- `index.html`：壳（head 元信息/bootcover/画布 DOM/importmap/aplv 头部集成
+  脚本保持原位）+ 注入层
+  - `<script src="game.js">`：回插在原内联脚本的位置，执行顺序不变
   - `data-novvy-origin-config`（最先）：运行时改写 `window.__res` 里的 GlobalConfig
     ——原版烘焙 `"游戏获胜目标进度百分比": 15`（进度 15% 游戏自己跳，会抢在转化
     时机之前）；钉到 99.99（棋盘解完才触发，任意 n-1 中间态 < 99.99 < 100），
@@ -20,6 +26,9 @@
     会压在片头视频上）
   - 片头组回落 core 三件套（本插件不自带 overlays/intro）
 - `tail-ad-video.mp4` / `poster.webp`：intro 步骤的 720p 转码产物（启用片头时）
+
+预览形态（编辑器在线试玩）不拆分：playable 载荷保持内联单文件（预览无静态
+路由可挂 game.js），由 `originHtml` 的 `preview` 开关区分。
 
 ## 事件与跳转语义（= colorever-new）
 
@@ -60,6 +69,9 @@
 - 胜利阈值补丁假设配置资产在 `window.__res` 且字段名不变（`游戏获胜关卡条件` /
   `游戏获胜目标进度百分比`）；缺失/结构不符时 pack 直接报错拒绝打包（宁可不交
   付也不交付一个会按原版步数抢跳的包）。
+- 载荷拆分假设可玩脚本是含 `window.__zip` 的唯一 `<script type="text/javascript">`
+  大块；换包形态变化时 pack 报错拒绝（结构标记：`window.__res` /
+  `super_boot_engine` / `bundle_gemsort`）。
 - 若游戏存在绕过 `super_html.download` 的自有跳转路径，SDK 包内该路径为裸
   `window.open`/`mraid.open`，不经过统一 click 上报（打包侧静态预检可能提示）。
 - 步数触发点表上限 999 步（防御性；广告会话内不可达）。

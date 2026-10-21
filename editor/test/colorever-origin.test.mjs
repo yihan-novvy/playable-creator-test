@@ -77,6 +77,22 @@ export default async function run(assert) {
     assert.equal(stripped, html, '剥离注入后与冻结源逐字节一致');
   }
 
+  // —— pack 形态：可玩载荷拆分到 game.js（广告逻辑迭代不再触碰载荷文件） ——
+  const packed = originHtml({ root: templateRoot, template: entry.template, config: entry.template.defaults, media: {} });
+  assert.check(packed.gameJs && packed.gameJs.length > 1000000, '可玩载荷整体抽出为 game.js（>1MB）');
+  assert.check(packed.gameJs.includes('window.__zip') && packed.gameJs.includes('window.__res') && packed.gameJs.includes('super_boot_engine') && packed.gameJs.includes('bundle_gemsort'), 'game.js 含引擎 zip/资产表/启动链');
+  assert.equal(packed.html.split('<script src="game.js"></script>').length - 1, 1, 'game.js 以唯一外链脚本回插原位');
+  assert.check(!packed.html.includes('window.__zip'), 'index.html 不再内联可玩载荷');
+  assert.check(packed.html.includes('data-novvy-origin-config') && packed.html.includes('99.99'), '胜利阈值补丁仍注入 index.html');
+  assert.check(packed.gameJs.includes('15.0'), 'game.js 内烘焙阈值保持原版（补丁是运行时的）');
+  const rebuilt = packed.html
+    .replace('<script src="game.js"></script>', () => '<script type="text/javascript">' + packed.gameJs + '</script>')
+    .replace(/<style data-novvy-origin-splash>[\s\S]*?<\/style>\n?/, '')
+    .replace(/<script data-novvy-origin-config>[\s\S]*?<\/script>\n?/, '')
+    .replace(/<script>window\.__novvyStageChain__[\s\S]*?<\/script>\n?/, '')
+    .replace(/<script data-novvy-playable-bridge>[\s\S]*?<script data-novvy-cta-bridge>[\s\S]*?<\/script>\n?<\/body>/, '</body>');
+  assert.equal(rebuilt, html, '回填 game.js 并剥离注入后与冻结源逐字节一致');
+
   // —— previewHtml 钩子签名 ——
   assert.equal(typeof (await import('../plugins/colorever-origin/lib.mjs')).previewHtml, 'function', '提供在线预览钩子');
 
