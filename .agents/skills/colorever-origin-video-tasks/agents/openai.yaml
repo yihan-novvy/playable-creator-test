@@ -1,0 +1,4 @@
+interface:
+  display_name: "Colorever Origin 视频任务批量初始化"
+  short_description: "从两层素材目录创建 Origin 任务，配置 HUD 与转化节奏，只处理片头视频"
+  default_prompt: "使用 $colorever-origin-video-tasks，按给定素材目录创建任务，开启片头和 HUD 标题，设置首跳 20 步及循环间隔 10,8,6,4，只上传并运行 1.mp4，不运行打包。"
