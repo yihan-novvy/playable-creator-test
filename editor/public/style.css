@@ -181,7 +181,7 @@ canvas.board-preview { image-rendering: pixelated; border: 1px solid var(--borde
   box-shadow: 0 0 0 2px var(--border), 0 12px 40px rgba(0,0,0,0.5);
   overflow: hidden; background: #000; transform-origin: top left;
 }
-.phone-frame iframe { width: 390px; height: 844px; border: 0; }
+.phone-frame iframe { width: 100%; height: 100%; border: 0; }
 .phone-scale { width: 390px; height: 844px; }
 
 .hint { color: var(--muted); font-size: 13px; }

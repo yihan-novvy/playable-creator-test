@@ -35,6 +35,13 @@ for (const file of srcFiles) {
   }
   JSON.parse(data.level1Text);
   JSON.parse(data.guideText);
+  if (data.assets !== undefined) {
+    if (typeof data.assets !== 'object' || data.assets === null) throw new Error(`levels/${file} assets 必须是对象`);
+    for (const [key, value] of Object.entries(data.assets)) {
+      if (!/^assets\/[\w/.-]+$/.test(key)) throw new Error(`levels/${file} assets 键形态不符: ${key}`);
+      if (typeof value !== 'string' || !value.startsWith('data:')) throw new Error(`levels/${file} assets 值必须是 data URI: ${key}`);
+    }
+  }
 }
 
 const manifest = JSON.parse(fs.readFileSync(path.join(built, 'game-manifest.json'), 'utf8'));

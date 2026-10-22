@@ -127,6 +127,18 @@ export function originLevelData(templateRoot, config) {
   if (data.id !== id) throw new Error(`Colorever Origin 图案文件 id 不符：${data.id} ≠ ${id}`);
   JSON.parse(data.level1Text);
   JSON.parse(data.guideText);
+  /* 变体专属贴图覆盖表(可选):键必须是 __res 里的 native 资产路径,值必须是
+     data URI——引擎建场景时从 __res 读贴图,boot 包装在读取前改写。 */
+  if (data.assets !== undefined) {
+    if (typeof data.assets !== 'object' || data.assets === null || Array.isArray(data.assets)) {
+      throw new Error(`Colorever Origin 图案 ${id} 的 assets 必须是对象`);
+    }
+    for (const [key, value] of Object.entries(data.assets)) {
+      if (!/^assets\/[\w/.-]+$/.test(key) || typeof value !== 'string' || !value.startsWith('data:')) {
+        throw new Error(`Colorever Origin 图案 ${id} assets 覆盖表形态不符: ${key}`);
+      }
+    }
+  }
   return data;
 }
 

@@ -139,6 +139,38 @@ async function handleApi(req, res, url) {
     return sendJson(res,200,lib.patterns(linked.root,linked.template));
   }
 
+  // ----------------------- 图案库直接试玩 -----------------------
+  // patterns.html 的卡片点击即玩:按图案 id 现场组装单文件预览形态 playable
+  // (originHtml preview=true:载荷/图案数据全内联,无片头无任务),不落盘不取锁。
+  // 图案 id 只认 levels/ 目录里实际存在的文件,天然挡住路径拼接。
+  if (pathname === '/api/colorever-pattern-play' && req.method === 'GET') {
+    const linked = templateById('colorever-origin');
+    if (!linked) return sendError(res, 404, '未知模板');
+    const id = url.searchParams.get('pattern') || 'flower5-original';
+    let known = [];
+    try {
+      known = fs.readdirSync(path.join(linked.root, 'levels')).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5));
+    } catch { /* levels 缺失时下面按未知图案拒绝 */ }
+    if (!known.includes(id)) return sendError(res, 404, `未知图案: ${id}`);
+    const lib = await getLib(linked.plugin);
+    if (!lib || typeof lib.originHtml !== 'function') return sendError(res, 404, '该模板不支持直接试玩');
+    try {
+      const html = fixedViewportHtml(lib.originHtml({
+        root: linked.root,
+        overlaysRoot: linked.plugin.dir,
+        template: linked.template,
+        config: effectiveConfig(linked.template, { patternId: id }),
+        media: {},
+        preview: true,
+      }).html);
+      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+      res.end(html);
+    } catch (error) {
+      return sendError(res, error?.code === 'ENOENT' ? 404 : 500, error.message);
+    }
+    return undefined;
+  }
+
   if (segments[0] !== 'api') return sendError(res, 404, '未知接口');
 
   // /api/tasks...

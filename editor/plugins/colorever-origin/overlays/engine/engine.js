@@ -36,11 +36,12 @@
 /* —— 图案变体注入(levels/ 图案库,2026-10-24):window.__ORIGIN_LEVEL_DATA__
    由 pack 产物 level.js 定义(预览形态内联)。aplv 的 super_load 用 JSZip 把
    __zip 全量解压合并进 window.__res,合并完才调 super_boot() 启动引擎——
-   包一层 super_boot,在"解压后、引擎读资产前"用选中图案的 Level_1 JSON 与
-   GuideConfig 文本覆盖 __res 对应键:改动落在解压产物上,冻结 zip 一字节不改,
-   同一 game.js 服务全部变体。未选变体时本段零操作;super_boot 是顶层函数
-   声明,裸调用走全局查找,重绑 window 属性即可拦截。拦不到(形态变化)就
-   放弃覆盖,游戏渲染包内原始图案——宁回退不破坏启动。 */
+   包一层 super_boot,在"解压后、引擎读资产前"用选中图案的 Level_1 JSON、
+   GuideConfig 文本与变体专属贴图(assets 覆盖表)改写 __res 对应键:改动落在
+   解压产物上,冻结 zip 一字节不改,同一 game.js 服务全部变体。未选变体时
+   本段零操作;super_boot 是顶层函数声明,裸调用走全局查找,重绑 window 属性
+   即可拦截。拦不到(形态变化)就放弃覆盖,游戏渲染包内原始图案——宁回退
+   不破坏启动。 */
 (function () {
   var data = window.__ORIGIN_LEVEL_DATA__;
   if (!data) return;
@@ -49,6 +50,11 @@
       if (!window.__res || typeof window.__res !== 'object') return false;
       window.__res[data.level1ZipPath] = data.level1Text;
       window.__res[data.guideResKey] = data.guideText;
+      /* 变体专属贴图(如变色五瓣花的整张重上色珠子图集,assets 覆盖表
+         __res 键 → data URI):贴图在引擎建场景时读取,同样早于一切读取。 */
+      if (data.assets && typeof data.assets === 'object') {
+        for (var key in data.assets) window.__res[key] = data.assets[key];
+      }
       try { console.log('[novvy-origin] 图案变体已生效: ' + data.name + ' (' + data.id + ')'); } catch (e) {}
       return true;
     } catch (e) {

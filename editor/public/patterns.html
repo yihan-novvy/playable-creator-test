@@ -18,11 +18,15 @@
   th { color: #7f8fa4; font-weight: normal; }
   .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
   .src { color: #7f8fa4; font-size: 11px; margin-top: 8px; line-height: 1.5; }
+  .thumb { position: relative; display: block; width: 272px; border-radius: 6px; cursor: pointer; }
+  .thumb canvas { pointer-events: none; }
+  .play-chip { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); background: rgba(31,45,61,.85); color: #fff; font-size: 12px; padding: 6px 14px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
+  .thumb:hover .play-chip, .thumb:focus-visible .play-chip { background: #2f6fed; }
 </style>
 </head>
 <body>
 <h1>Colorever Origin 图案库</h1>
-<div class="sub">数据源: <code>/templates/colorever-origin/levels/*.json</code>(打包进产物的 level.js 与此同源)·渲染 = Level_1 Board 层·色块 = 真实贴图主色</div>
+<div class="sub">数据源: <code>/templates/colorever-origin/levels/*.json</code>(打包进产物的 level.js 与此同源)·渲染 = Level_1 Board 层·色块 = 真实贴图主色·点击任意图案画面即开新标签页直接试玩</div>
 <div class="grid" id="grid">加载中…</div>
 <script>
 /* 34 色主色板:从 bundle_gemsort 拼豆_棋盘模块 图集(bd4e154b….webp)逐 sprite 主色采样,
@@ -36,6 +40,12 @@ const PALETTE = {
   31:[196,188,180],32:[236,228,164],33:[36,44,60],34:[140,140,140],
 };
 const COLOR_NAMES = { 1:'红1',2:'红2',3:'红3',4:'红4',5:'红5',6:'红6',7:'紫1',8:'紫2',9:'紫3',10:'紫4',11:'紫5',12:'紫6',13:'蓝1',14:'蓝1',15:'蓝3',16:'蓝4',17:'蓝5',18:'蓝6',19:'绿1',20:'绿2',21:'绿3',22:'绿4',23:'绿5',24:'绿6',25:'黄1',26:'黄2',27:'黄3',28:'黄4',29:'黄5',30:'黄6',31:'灰1',32:'灰2',33:'灰3',34:'灰4' };
+/* 变体专属贴图色板覆盖(levels/<id>.json 的 assets 覆盖表会替换整张珠子图集,
+   如变色五瓣花把 灰1→浅绿、黄3→黄绿):与 assets 覆盖同源采样,查看页颜色
+   因此与真机渲染一致。新增带 assets 的变体时同步维护这里。 */
+const PALETTE_OVERRIDES = {
+  'flower5-changing': { 31: [92,204,92], 27: [156,212,4] },
+};
 const VARIANTS = ['flower5-original', 'flower4-blue', 'flower5-changing', 'apple-red'];
 
 function rgbCss(c) { return `rgb(${c[0]},${c[1]},${c[2]})`; }
@@ -47,6 +57,7 @@ async function loadVariant(id) {
 }
 
 function render(data) {
+  const palette = { ...PALETTE, ...((PALETTE_OVERRIDES[data.id] || {})) };
   const level = JSON.parse(data.level1Text);
   const map = level[5][0][2];
   const board = map.layers.find((l) => l.name === 'Board').data;
@@ -59,7 +70,7 @@ function render(data) {
   const ctx = canvas.getContext('2d');
   for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
     const g = board[y * W + x];
-    ctx.fillStyle = PALETTE[g] ? rgbCss(PALETTE[g]) : '#fff';
+    ctx.fillStyle = palette[g] ? rgbCss(palette[g]) : '#fff';
     ctx.fillRect(x, y, 1, 1);
   }
 
@@ -73,10 +84,22 @@ function render(data) {
     if (gems[i] === board[i] + 68) matched += 1;
   }
   const rows = Object.entries(counts).sort((a, b) => b[1] - a[1])
-    .map(([g, n]) => `<tr><th><span class="swatch" style="background:${rgbCss(PALETTE[g] || [255,255,255])}"></span>${COLOR_NAMES[g] || '?'}</th><td>${n}</td></tr>`).join('');
+    .map(([g, n]) => `<tr><th><span class="swatch" style="background:${rgbCss(palette[g] || [255,255,255])}"></span>${COLOR_NAMES[g] || '?'}</th><td>${n}</td></tr>`).join('');
 
   const guide = JSON.parse(data.guideText)[5][0][2];
   const guideColors = [1, 2, 3, 4, 5, 6].map((s) => guide[`阶段${s}颜色`]).filter(Boolean);
+
+  // 点击画面直接试玩该图案:服务端按 id 现场组装单文件预览形态 playable。
+  const playLink = document.createElement('a');
+  playLink.className = 'thumb';
+  playLink.href = `/api/colorever-pattern-play?pattern=${encodeURIComponent(data.id)}`;
+  playLink.target = '_blank';
+  playLink.rel = 'noopener';
+  playLink.title = `试玩 ${data.name}`;
+  const chip = document.createElement('span');
+  chip.className = 'play-chip';
+  chip.textContent = '▶ 点击试玩';
+  playLink.append(canvas, chip);
 
   const card = document.createElement('div');
   card.className = 'card';
@@ -89,7 +112,7 @@ function render(data) {
   card.querySelector('h2').textContent = data.name;
   card.querySelector('.pid').textContent = data.id;
   card.querySelector('.src').textContent = data.source || '';
-  card.insertBefore(canvas, card.querySelector('table'));
+  card.insertBefore(playLink, card.querySelector('table'));
   return card;
 }
 

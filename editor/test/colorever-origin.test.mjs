@@ -126,7 +126,23 @@ export default async function run(assert) {
         const color = guide[`阶段${s}颜色`];
         if (color) assert.check(names.has(color), `图案 ${data.id} 引导阶段${s}颜色 ${color} 在图案色板内`);
       }
+      // 变体专属贴图覆盖表(可选字段):键必须是 __res native 路径,值必须是 data URI
+      if (data.assets !== undefined) {
+        assert.check(typeof data.assets === 'object' && !Array.isArray(data.assets), `图案 ${data.id} assets 是对象`);
+        for (const [key, value] of Object.entries(data.assets)) {
+          assert.check(/^assets\/[\w/.-]+$/.test(key), `图案 ${data.id} assets 键形态 ${key}`);
+          assert.check(typeof value === 'string' && value.startsWith('data:'), `图案 ${data.id} assets 值是 data URI: ${key}`);
+        }
+      }
     }
+    // 变色五瓣花必须携带重上色珠子图集(图案"变色"实现 = 贴图级覆盖)
+    const changing = JSON.parse(fs.readFileSync(path.join(root, 'template-core/colorever-origin/levels/flower5-changing.json'), 'utf8'));
+    assert.equal(
+      Object.keys(changing.assets ?? {}),
+      ['assets/bundle_gemsort/native/bd/bd4e154b-1b52-4d16-9f82-2cc323daf0db.webp'],
+      '变色五瓣花 assets 覆盖 = 珠子图集 bd4e154b.webp',
+    );
+    assert.check(changing.assets['assets/bundle_gemsort/native/bd/bd4e154b-1b52-4d16-9f82-2cc323daf0db.webp'].startsWith('data:image/webp;base64,'), '图集覆盖是 webp data URI');
     // 原始五瓣花 = 不注入（产物与历史任务同管线）
     assert.equal(originLevelData(templateRoot, { patternId: 'flower5-original' }), null, '原始五瓣花不产生图案注入');
     assert.equal(originLevelData(templateRoot, {}), null, '未选图案不产生注入');
@@ -150,6 +166,41 @@ export default async function run(assert) {
     const gameJsChanging = originHtml({ root: templateRoot, template: entry.template, config: { ...entry.template.defaults, patternId: 'flower5-changing' }, media: {} }).gameJs;
     assert.equal(gameJsBlue, gameJsDefault, 'game.js 与默认（原始五瓣花）逐字节一致');
     assert.equal(gameJsBlue, gameJsChanging, 'game.js 跨图案变体逐字节一致');
+    // 贴图覆盖随 level.js 走
+    const changingPack = originHtml({ root: templateRoot, template: entry.template, config: { ...entry.template.defaults, patternId: 'flower5-changing' }, media: {} });
+    assert.check(changingPack.levelJs.includes('bd4e154b-1b52-4d16-9f82-2cc323daf0db.webp'), '变色五瓣花 level.js 携带图集覆盖');
+    assert.check(changingPack.levelJs.includes('data:image/webp;base64,'), '图集覆盖以 webp data URI 进 level.js');
+    assert.equal(changingPack.gameJs, gameJsBlue, '携带贴图覆盖不改 game.js');
+  }
+
+  // —— 图案库直接试玩端点（patterns.html 卡片点击即玩） ——
+  {
+    const { createServer } = await import('../server.mjs');
+    const server = createServer();
+    await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+    const base = `http://127.0.0.1:${server.address().port}`;
+    try {
+      // 非默认变体：单文件内联（载荷 + 图案数据 + 视口锁定），无任务也能玩
+      const blue = await fetch(`${base}/api/colorever-pattern-play?pattern=flower4-blue`);
+      const blueText = await blue.text();
+      assert.equal(blue.status, 200, '试玩端点对库内变体返回 200');
+      assert.check(blueText.includes('window.__zip') && blueText.includes('data-novvy-origin-engine'), '试玩页是自包含单文件（载荷内联 + 引擎适配在场）');
+      assert.check(blueText.includes('<script data-novvy-origin-level>window.__ORIGIN_LEVEL_DATA__=') && blueText.includes('flower4-blue'), '试玩页内联所选变体图案数据');
+      assert.check(blueText.includes('data-novvy-fixed-viewport') && blueText.includes('user-scalable=no'), '试玩页应用公共视口和手势锁定');
+      // 默认（原始五瓣花）= 包内现装数据，不注入图案
+      const native = await fetch(`${base}/api/colorever-pattern-play`);
+      const nativeText = await native.text();
+      assert.equal(native.status, 200, '试玩端点缺省图案 = 原始五瓣花');
+      assert.check(!nativeText.includes('window.__ORIGIN_LEVEL_DATA__='), '默认图案不注入 level 数据（与历史任务同管线）');
+      // 库外图案拒绝
+      const missing = await fetch(`${base}/api/colorever-pattern-play?pattern=../../package.json`);
+      assert.equal(missing.status, 404, '库外图案（含路径拼接）返回 404');
+      // patterns.html 卡片接上了试玩端点
+      const page = await (await fetch(`${base}/patterns.html`)).text();
+      assert.check(page.includes('/api/colorever-pattern-play?pattern=') && page.includes('flower5-changing'), 'patterns.html 卡片携带试玩链接');
+    } finally {
+      server.close();
+    }
   }
 
   // —— 引擎适配 shim：桩环境全链路（手势节奏 / 真实进度 / 结算 / CTA 接线） ——
