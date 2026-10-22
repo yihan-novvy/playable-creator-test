@@ -111,7 +111,7 @@ export default async function run(assert) {
 
   function makeEnv(noSdk = false) {
     const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
-    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], mraidOpen: [], novvyOverlay: 0, stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], mraidOpen: [], novvyOverlay: 0, novvyOverlayHide: 0, stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
     const zoneEl = { addEventListener(type, fn) { zoneEl.clickHandler = fn; } };
     const fakeDocument = {
@@ -139,6 +139,7 @@ export default async function run(assert) {
         },
         novvy: {
           overlay: () => { calls.novvyOverlay += 1; },
+          overlay_hide: () => { calls.novvyOverlayHide += 1; },
         },
       }),
       __audioCtxs: [],
@@ -309,21 +310,45 @@ export default async function run(assert) {
       }
     }
 
-    { // novvy.overlay 横幅偏好:正式展示(viewable=true)调一次;存在性探测;一次性
+    { // novvy.overlay / overlay_hide 交替循环:正式展示先 show,此后每 5s 交替;
+      // 每步存在性探测;循环一次性(可见性反复不重启)
       const envO = makeEnv();
       assert.equal(envO.calls.novvyOverlay, 0, '初始不可见不调用');
       envO.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: false } });
-      assert.equal(envO.calls.novvyOverlay, 0, 'viewable=false 不调用');
+      assert.equal(envO.calls.novvyOverlay, 0, 'viewable=false 不启动循环');
       envO.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: true } });
-      assert.equal(envO.calls.novvyOverlay, 1, '正式展示(viewable=true)调用一次');
-      assert.check(envO.logs.some((l) => l.includes('novvy.overlay() 已调用')), 'overlay 调用打验收日志');
+      assert.equal(envO.calls.novvyOverlay, 1, '正式展示先 overlay() 一次');
+      assert.equal(envO.calls.novvyOverlayHide, 0, '尚未到隐藏节拍');
+      assert.check(envO.logs.some((l) => l.includes('novvy.overlay 5s 交替循环已启动')), '循环启动打验收日志');
+      envO.fireTimers(); // 第一个 5s 节拍
+      assert.equal(envO.calls.novvyOverlayHide, 1, '第一个 5s 节拍 overlay_hide()');
+      assert.equal(envO.calls.novvyOverlay, 1, 'show 不重复');
+      envO.fireTimers(); // 第二个 5s 节拍
+      assert.equal(envO.calls.novvyOverlay, 2, '第二个 5s 节拍再 overlay()');
+      envO.fireTimers(); // 第三个 5s 节拍
+      assert.equal(envO.calls.novvyOverlayHide, 2, '循环交替 hide/show');
       envO.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: false } });
       envO.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: true } });
-      assert.equal(envO.calls.novvyOverlay, 1, '暂停/恢复反复可见不重复调用(一次性闩锁)');
+      assert.equal(envO.calls.novvyOverlay + envO.calls.novvyOverlayHide, 4, '可见性反复不立即重启循环(一次性闩锁)');
+      envO.fireTimers();
+      assert.equal(envO.calls.novvyOverlay + envO.calls.novvyOverlayHide, 5, '循环自身继续交替推进');
 
-      const envNoBridge = makeEnv(true); // 无桥:window.novvy 不存在 → 存在性探测兜底
-      envNoBridge.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: true } });
-      assert.equal(envNoBridge.calls.novvyOverlay, 0, 'novvy.overlay 方法不存在时永不调用');
+      { // 旧桥:overlay_hide 缺席 → 跳过隐藏步,不抛错,show 照常
+        const envNoHide = makeEnv();
+        envNoHide.fakeWindow.novvy.overlay_hide = undefined;
+        envNoHide.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: true } });
+        assert.equal(envNoHide.calls.novvyOverlay, 1, 'hide 缺席时 overlay() 照常');
+        envNoHide.fireTimers();
+        assert.equal(envNoHide.calls.novvyOverlayHide, 0, 'hide 缺席时跳过隐藏步(typeof 探测)');
+        assert.equal(envNoHide.calls.novvyOverlay, 1, 'hide 缺席时 show 不误发');
+      }
+
+      { // 无桥:overlay 不存在 → 整条循环不启动
+        const envNoBridge = makeEnv(true);
+        envNoBridge.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: true } });
+        envNoBridge.fireTimers();
+        assert.equal(envNoBridge.calls.novvyOverlay, 0, 'overlay 不存在整条循环不启动(存在性探测)');
+      }
     }
 
     { // CTA 直连区:横幅点击直派 cta-interact,不走画布/裸跳链

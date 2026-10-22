@@ -507,21 +507,34 @@
     LOG('CTA 直连区已接线');
   }
   wireCtaZone();
-  /* —— novvy.overlay 横幅偏好(iOS 桥独有,iOS SDK d741056):广告正式展示
-      (viewable=true)时调用一次。无参——挂哪个 App 由服务端授权,SDK 侧严格
-      分派(回执 webview/browser 未授权则不落地);Android/旧版 iOS 桥故意不
-      定义该方法,按方法存在性探测,不存在即永不调用。一次性闩锁——
-      viewablechange 随暂停/恢复反复发,正式展示只算第一次。 —— */
-  var overlayCalled = false;
-  function tryNovvyOverlay() {
-    if (overlayCalled) return;
-    if (!(window.novvy && typeof window.novvy.overlay === 'function')) return;
-    overlayCalled = true;
-    try { window.novvy.overlay(); LOG('novvy.overlay() 已调用(横幅偏好)'); } catch (e) {}
+  /* —— novvy.overlay / overlay_hide 交替循环(iOS 桥独有,iOS SDK d741056+):
+      广告正式展示(viewable=true)调 overlay() 展示横幅,此后每 5 秒在
+      overlay_hide()/overlay() 之间交替。两步各自做方法存在性探测——
+      hide 缺席(旧桥)跳过隐藏步保持常显;overlay 缺席(预览/Android/旧桥)
+      整条循环不启动。循环一次性:自第一次正式展示启动,暂停/恢复不重启
+      (viewablechange 随前后台反复发)。 —— */
+  var overlayCycleStarted = false, overlayShown = false;
+  function novvyOverlayStep() {
+    if (overlayShown) {
+      if (typeof window.novvy.overlay_hide === 'function') {
+        try { window.novvy.overlay_hide(); LOG('novvy.overlay_hide() 已隐藏'); } catch (e) {}
+      }
+    } else {
+      try { window.novvy.overlay(); LOG('novvy.overlay() 已展示'); } catch (e) {}
+    }
+    overlayShown = !overlayShown;
   }
-  if (window.__novvyBridgeVersion >= 1 && window.__novvyViewable) tryNovvyOverlay();
+  function startNovvyOverlayCycle() {
+    if (overlayCycleStarted) return;
+    if (!(window.novvy && typeof window.novvy.overlay === 'function')) return;
+    overlayCycleStarted = true;
+    novvyOverlayStep();
+    setInterval(novvyOverlayStep, 5000);
+    LOG('novvy.overlay 5s 交替循环已启动');
+  }
+  if (window.__novvyBridgeVersion >= 1 && window.__novvyViewable) startNovvyOverlayCycle();
   window.addEventListener('novvy:viewablechange', function (event) {
-    if (event && event.detail && event.detail.viewable) tryNovvyOverlay();
+    if (event && event.detail && event.detail.viewable) startNovvyOverlayCycle();
   });
   function patchAll() {
     patchSdkStageLog();
