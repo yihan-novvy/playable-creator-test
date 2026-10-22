@@ -43,6 +43,9 @@ for (const file of srcFiles) {
     }
   }
 }
+for (const file of ['beads.webp', 'frames.json']) {
+  if (sha(path.join(root, 'preview', file)) !== sha(path.join(built, 'preview', file))) throw new Error(`珠子预览资源与源不一致: ${file}`);
+}
 
 const manifest = JSON.parse(fs.readFileSync(path.join(built, 'game-manifest.json'), 'utf8'));
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));

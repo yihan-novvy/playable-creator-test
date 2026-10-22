@@ -113,12 +113,12 @@ function extractPlayableScript(html) {
 // super_load 用 JSZip 把 __zip 全量解压合并进 window.__res，合并完才调
 // super_boot() 启动引擎；engine.js 顶部的图案补丁包一层 super_boot，在
 // "解压后、引擎读资产前"覆盖这两个 __res 键——冻结 zip 一字节不改，同一
-// game.js 服务全部变体，产物之间只差 level.js。"原始五瓣花"就是包内现装
-// 数据，选择它不注入（不产生 level.js），产物与历史任务走同一条管线。
+// game.js 服务全部变体。四变体统一产出 level.js（含原始五瓣花：它的
+// level1Text/guideText 就是从包内原文抽出的，覆盖 = 等值回写，产物结构与
+// 其余变体完全一致，行为与历史管线等价）。
 const ORIGIN_NATIVE_PATTERN = 'flower5-original';
 export function originLevelData(templateRoot, config) {
-  const id = String(config?.patternId ?? '').trim();
-  if (!id || id === ORIGIN_NATIVE_PATTERN) return null;
+  const id = String(config?.patternId ?? '').trim() || ORIGIN_NATIVE_PATTERN;
   const file = path.join(templateRoot, 'levels', `${id}.json`);
   const data = JSON.parse(fs.readFileSync(file, 'utf8'));
   for (const field of ['id', 'name', 'level1ZipPath', 'level1Text', 'guideResKey', 'guideText']) {
@@ -127,6 +127,17 @@ export function originLevelData(templateRoot, config) {
   if (data.id !== id) throw new Error(`Colorever Origin 图案文件 id 不符：${data.id} ≠ ${id}`);
   JSON.parse(data.level1Text);
   JSON.parse(data.guideText);
+  if (data.globalConfigOverrides !== undefined) {
+    if (!/^assets\/[\w/.-]+\.json$/.test(data.globalConfigResKey ?? '') ||
+        !data.globalConfigOverrides || typeof data.globalConfigOverrides !== 'object' || Array.isArray(data.globalConfigOverrides)) {
+      throw new Error(`Colorever Origin 图案 ${id} 暂存区配置形态不符`);
+    }
+    for (const [key, value] of Object.entries(data.globalConfigOverrides)) {
+      if (!['cacheCols', 'cacheRows'].includes(key) || !Number.isInteger(value) || value < 1 || value > 99) {
+        throw new Error(`Colorever Origin 图案 ${id} 暂存区配置非法: ${key}`);
+      }
+    }
+  }
   /* 变体专属贴图覆盖表(可选):键必须是 __res 里的 native 资产路径,值必须是
      data URI——引擎建场景时从 __res 读贴图,boot 包装在读取前改写。 */
   if (data.assets !== undefined) {
@@ -143,8 +154,8 @@ export function originLevelData(templateRoot, config) {
 }
 
 // 把 playable（aplv 单文件）+ 片头覆盖层 + 三座共享桥组装成最终产物。
-// pack 形态：index.html（壳 + 注入）+ game.js（可玩载荷）+ level.js（图案变体，
-// 选中非原始图案时才有）；预览形态：单文件内联（图案数据内联进 body）。
+// pack 形态：index.html（壳 + 注入）+ game.js（可玩载荷）+ level.js（图案数据，
+// 四变体统一携带）；预览形态：单文件内联（图案数据内联进 body）。
 // 注入纪律与 colorever-new/escape-arrow 同源：胜利阈值补丁最先（boot 前
 // 改写 __res）、段桥先于业务脚本（声明段链与首段 setStage）、转化桥最后；
 // playable 本体除"整体搬进 game.js"外一字节不改。

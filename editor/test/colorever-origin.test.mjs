@@ -11,6 +11,7 @@ const sha = (file) => createHash('sha256').update(fs.readFileSync(file)).digest(
 
 export default async function run(assert) {
   const entry = getEntry('colorever-origin');
+  assert.equal(entry.template.defaults.patternId, 'flower5-original', '默认珠子图案为原始五瓣花');
 
   // —— 冻结产物：源/产物/清单三方 sha 一致 ——
   const source = path.join(root, 'template-core/colorever-origin/src-game/index.html');
@@ -120,11 +121,30 @@ export default async function run(assert) {
       // 引导 6 阶段颜色必须落在该图案的 tileset 色名内（否则新手引导指空）
       const level = JSON.parse(data.level1Text);
       const map = level[5][0][2];
+      const board = map.layers.find((layer) => layer.name === 'Board').data;
+      const gems = map.layers.find((layer) => layer.name === 'Gems').data;
+      const cache = (map.cacheGemColor || []).filter((color) => color >= 0).map((color) => color + 1);
+      const counts = (values) => [...values.reduce((result, value) => result.set(value, (result.get(value) || 0) + 1), new Map())].sort(([a], [b]) => a - b);
+      assert.equal(counts([...gems.filter(Boolean).map((gid) => gid - 68), ...cache]), counts(board.filter(Boolean)), `图案 ${data.id} 棋盘和暂存区每色珠子数量与目标一致`);
       const names = new Set(map.tilesets[0].tiles.map((t) => t.image.split('/').pop().replace('.png', '').split('_')[2]));
       const guide = JSON.parse(data.guideText)[5][0][2];
       for (let s = 1; s <= 6; s += 1) {
         const color = guide[`阶段${s}颜色`];
         if (color) assert.check(names.has(color), `图案 ${data.id} 引导阶段${s}颜色 ${color} 在图案色板内`);
+      }
+      if (data.id === 'apple-red') {
+        const guideColor = guide['颜色映射'][guide['阶段1颜色']]['宝石索引'];
+        assert.check(gems.some((gid, index) => gid - 69 === guideColor && gid !== board[index] + 68), '苹果引导首步有未对色的可拾取珠子');
+        assert.equal([map.width, map.height, gems.filter(Boolean).length, cache.length], [13, 14, 98, 33], '苹果原版开局：13×14 格、棋盘 98 颗、暂存区 33 颗');
+        assert.equal([board[5 * 13], board[5 * 13 + 3], board[7 * 13 + 5], board[6 * 13 + 4]], [1, 32, 26, 28], '苹果目标保留红皮、浅黄色果瓤、棕色果核和橙色圈');
+        assert.check(gems.every((gid, index) => !gid || board[index] > 0), '苹果轮廓外没有珠子，原版留空格保留');
+        assert.equal(gems.filter((gid, index) => gid && gid === board[index] + 68).length, 0, '苹果原版开局的棋盘珠子全部未归位');
+        assert.equal(map.cacheGemColor, [...Array(33).fill(0), ...Array(15).fill(-1)], '原版 12×4 暂存区前 33 格为红珠');
+        const reference = JSON.parse(fs.readFileSync(path.join(root, 'template-core/colorever-origin/references/a-apple.json'), 'utf8'));
+        const palette = { '191,43,21': 1, '255,255,191': 32, '106,64,21': 26, '255,149,0': 28, '106,191,85': 20 };
+        const expected = Array(13 * 14).fill(0);
+        for (const [index, r, g, b] of reference.asset.data[8]) expected[(13 - Math.floor(index / 13)) * 13 + index % 13] = palette[[r, g, b].map((v) => Math.round(v * 255)).join(',')] + 68;
+        assert.equal(gems, expected, '开局每个位置和空格逐格匹配 a.html 原始固定记录');
       }
       // 变体专属贴图覆盖表(可选字段):键必须是 __res native 路径,值必须是 data URI
       if (data.assets !== undefined) {
@@ -143,9 +163,10 @@ export default async function run(assert) {
       '变色五瓣花 assets 覆盖 = 珠子图集 bd4e154b.webp',
     );
     assert.check(changing.assets['assets/bundle_gemsort/native/bd/bd4e154b-1b52-4d16-9f82-2cc323daf0db.webp'].startsWith('data:image/webp;base64,'), '图集覆盖是 webp data URI');
-    // 原始五瓣花 = 不注入（产物与历史任务同管线）
-    assert.equal(originLevelData(templateRoot, { patternId: 'flower5-original' }), null, '原始五瓣花不产生图案注入');
-    assert.equal(originLevelData(templateRoot, {}), null, '未选图案不产生注入');
+    // 四变体统一产出 level.js：原始五瓣花的数据 = 包内原文，覆盖 = 等值回写
+    const nativeData = originLevelData(templateRoot, { patternId: 'flower5-original' });
+    assert.equal(nativeData?.id, 'flower5-original', '原始五瓣花也解析出图案数据');
+    assert.equal(originLevelData(templateRoot, {})?.id, 'flower5-original', '未选图案缺省回落原始五瓣花');
     // 非法图案拒绝打包
     let rejected = false;
     try { originLevelData(templateRoot, { patternId: 'no-such-pattern' }); } catch { rejected = true; }
@@ -166,6 +187,11 @@ export default async function run(assert) {
     const gameJsChanging = originHtml({ root: templateRoot, template: entry.template, config: { ...entry.template.defaults, patternId: 'flower5-changing' }, media: {} }).gameJs;
     assert.equal(gameJsBlue, gameJsDefault, 'game.js 与默认（原始五瓣花）逐字节一致');
     assert.equal(gameJsBlue, gameJsChanging, 'game.js 跨图案变体逐字节一致');
+    // 默认打包与变体产物结构完全一致：都有 level.js，唯一差异是 level.js 内容
+    const defaultPack = originHtml({ root: templateRoot, template: entry.template, config: entry.template.defaults, media: {} });
+    assert.equal(defaultPack.pattern, { id: 'flower5-original', name: '原始五瓣花' }, '默认打包回传原始五瓣花元数据');
+    assert.check(defaultPack.levelJs?.includes('"flower5-original"') && defaultPack.levelJs.includes('level1Text'), '默认打包产出 level.js（包内原文数据）');
+    assert.check(defaultPack.html.includes('<script src="level.js"></script>'), '默认打包 index.html 同样外链 level.js');
     // 贴图覆盖随 level.js 走
     const changingPack = originHtml({ root: templateRoot, template: entry.template, config: { ...entry.template.defaults, patternId: 'flower5-changing' }, media: {} });
     assert.check(changingPack.levelJs.includes('bd4e154b-1b52-4d16-9f82-2cc323daf0db.webp'), '变色五瓣花 level.js 携带图集覆盖');
@@ -187,11 +213,11 @@ export default async function run(assert) {
       assert.check(blueText.includes('window.__zip') && blueText.includes('data-novvy-origin-engine'), '试玩页是自包含单文件（载荷内联 + 引擎适配在场）');
       assert.check(blueText.includes('<script data-novvy-origin-level>window.__ORIGIN_LEVEL_DATA__=') && blueText.includes('flower4-blue'), '试玩页内联所选变体图案数据');
       assert.check(blueText.includes('data-novvy-fixed-viewport') && blueText.includes('user-scalable=no'), '试玩页应用公共视口和手势锁定');
-      // 默认（原始五瓣花）= 包内现装数据，不注入图案
+      // 默认（原始五瓣花）= 统一管线，同样内联图案数据（包内原文等值覆盖）
       const native = await fetch(`${base}/api/colorever-pattern-play`);
       const nativeText = await native.text();
       assert.equal(native.status, 200, '试玩端点缺省图案 = 原始五瓣花');
-      assert.check(!nativeText.includes('window.__ORIGIN_LEVEL_DATA__='), '默认图案不注入 level 数据（与历史任务同管线）');
+      assert.check(nativeText.includes('<script data-novvy-origin-level>window.__ORIGIN_LEVEL_DATA__=') && nativeText.includes('flower5-original'), '默认图案同样内联 level 数据（统一管线）');
       // 库外图案拒绝
       const missing = await fetch(`${base}/api/colorever-pattern-play?pattern=../../package.json`);
       assert.equal(missing.status, 404, '库外图案（含路径拼接）返回 404');
@@ -206,6 +232,17 @@ export default async function run(assert) {
   // —— 引擎适配 shim：桩环境全链路（手势节奏 / 真实进度 / 结算 / CTA 接线） ——
   const enginePath = path.join(root, 'editor/plugins/colorever-origin/overlays/engine/engine.js');
   const engineSrc = fs.readFileSync(enginePath, 'utf8');
+  {
+    const apple = originLevelData(templateRoot, { patternId: 'apple-red' });
+    const packedConfig = Array(6).fill(null);
+    packedConfig[5] = [[null, null, { cacheCols: 13, cacheRows: 5, '游戏获胜目标进度百分比': 99.99 }]];
+    const window = { __ORIGIN_LEVEL_DATA__: apple, __res: { [apple.globalConfigResKey]: JSON.stringify(packedConfig) }, super_boot: () => 'booted' };
+    const levelShim = engineSrc.slice(0, engineSrc.indexOf('(function () {\n  var policy'));
+    new Function('window', levelShim)(window);
+    assert.equal(window.super_boot(), 'booted', '图案尺寸补丁保留原 boot 调用');
+    const config = JSON.parse(window.__res[apple.globalConfigResKey])[5][0][2];
+    assert.equal([config.cacheCols, config.cacheRows, config['游戏获胜目标进度百分比']], [12, 4, 99.99], '苹果恢复原版暂存区尺寸且不覆盖胜利阈值补丁');
+  }
   const scheduleDefaults = originCtaSchedule(originCtaPolicy(defaults));
   const scope = globalThis;
   const savedGlobals = { window: scope.window, document: scope.document, CustomEvent: scope.CustomEvent, setInterval: scope.setInterval, clearInterval: scope.clearInterval, console: scope.console, Audio: scope.Audio };
@@ -294,11 +331,14 @@ export default async function run(assert) {
 
     // 真实进度源上线：BS_GameDirector._model 场景扫描命中后，hud-progress 接管 onStep
     const model = { ratio: 0.9, getCorrectFillRatio() { return this.ratio; } };
-    const titleNode = { name: 'TitleSprite', active: true, children: [] };
+    // TitleSprite 有父节点 = 直接从场景树摘除（不是 active=false 的隐藏）
+    const titleNode = { name: 'TitleSprite', active: true, children: [], removed: false,
+      get parent() { return titleParent; } };
+    const titleParent = { removeChild(child) { child.removed = true; } };
     env.fakeWindow.cc = { director: { getScene: () => ({ children: [{ components: [{ _model: model }] }, titleNode] }) } };
     env.fireTimers();
-    assert.equal(titleNode.active, false, 'TitleSprite 隐藏（HUD 标题接管）');
-    assert.check(env.logs.some((l) => l.includes('TitleSprite 已隐藏')), 'TitleSprite 隐藏打日志');
+    assert.equal(titleNode.removed, true, 'TitleSprite 从场景树摘除（非隐藏）');
+    assert.check(env.logs.some((l) => l.includes('TitleSprite 已从场景移除')), '移除打日志');
     assert.equal(env.of('novvy:hud-progress').at(-1).detail, { percent: 90 }, '扫描命中后按真值派 hud-progress 90');
     assert.equal(env.of('novvy:hud-progress').length, 1, '同值不重复派发');
     assert.check(env.logs.some((l) => l.includes('[novvy-origin] hud-progress percent=90')), 'hud-progress 派发打日志');

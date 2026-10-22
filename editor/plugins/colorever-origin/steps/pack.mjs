@@ -42,7 +42,7 @@ export async function run(ctx) {
       stageChain: built.stageChain,
       introEnabled: built.introEnabled,
       ctaPolicy: built.policy,
-      pattern: built.pattern?.name ?? '原始五瓣花（包内默认）',
+      pattern: built.pattern?.name ?? '原始五瓣花',
     },
     warnings: [],
   };

@@ -11,3 +11,16 @@
   结算回调 `super_html.game_end`、跳转函数 `super_html.download` 由
   `editor/plugins/colorever-origin` 注入的引擎适配脚本在运行时接线
   （novvy 事件规范见 `docs/original-zip-required-event-integration.md`）。
+
+图案库默认使用 `d.html` 的原始五瓣花；蓝色四瓣花、变色五瓣花分别保留
+`b.html`、`c.html` 的关卡数据。`preview/` 是从原版冻结包抽出的珠子图集和
+SpriteFrame 坐标，图案页叠加 Board 与 Gems，显示真实开局；变色图案沿用
+自己的图集覆盖。
+
+苹果按 `a.html` 的 13×14 切面轮廓排珠，沿用原版关卡格式与珠子。
+运行 `node template-core/colorever-origin/scripts/apple-pattern.mjs` 可重新生成
+`levels/apple-red.json`，再执行模板 build 同步到编辑器。只保留苹果本体，
+轮廓之外没有底板、珠子或外框。一格一珠，共 131 颗；目标为红皮、浅黄色果瓤、
+中间橙色圈、棕色果核和绿叶。`references/a-apple.json` 原样冻结 a.html 的
+ScriptableObject 与暂存区组件；直接读取原版指定的 98 颗开局珠子（含原空位），
+剩余 33 颗红珠预置在原版 12×4 暂存区，不生成或轮转布局。

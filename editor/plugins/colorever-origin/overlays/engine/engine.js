@@ -34,11 +34,12 @@
    零 DOM 依赖(监听在 document 捕获段)。 */
 
 /* —— 图案变体注入(levels/ 图案库,2026-10-24):window.__ORIGIN_LEVEL_DATA__
-   由 pack 产物 level.js 定义(预览形态内联)。aplv 的 super_load 用 JSZip 把
-   __zip 全量解压合并进 window.__res,合并完才调 super_boot() 启动引擎——
-   包一层 super_boot,在"解压后、引擎读资产前"用选中图案的 Level_1 JSON、
+   由 pack 产物 level.js 定义(四变体统一携带,预览形态内联;原始五瓣花的
+   数据即包内原文,覆盖=等值回写)。aplv 的 super_load 用 JSZip 把 __zip
+   全量解压合并进 window.__res,合并完才调 super_boot() 启动引擎——包一层
+   super_boot,在"解压后、引擎读资产前"用选中图案的 Level_1 JSON、
    GuideConfig 文本与变体专属贴图(assets 覆盖表)改写 __res 对应键:改动落在
-   解压产物上,冻结 zip 一字节不改,同一 game.js 服务全部变体。未选变体时
+   解压产物上,冻结 zip 一字节不改,同一 game.js 服务全部变体。数据缺失时
    本段零操作;super_boot 是顶层函数声明,裸调用走全局查找,重绑 window 属性
    即可拦截。拦不到(形态变化)就放弃覆盖,游戏渲染包内原始图案——宁回退
    不破坏启动。 */
@@ -50,6 +51,13 @@
       if (!window.__res || typeof window.__res !== 'object') return false;
       window.__res[data.level1ZipPath] = data.level1Text;
       window.__res[data.guideResKey] = data.guideText;
+      // a.html 原版暂存区为 12×4；只覆写尺寸，保留已补丁的胜利阈值等配置。
+      if (data.globalConfigResKey && data.globalConfigOverrides) {
+        var packedConfig = JSON.parse(window.__res[data.globalConfigResKey]);
+        var config = packedConfig[5][0][2];
+        for (var setting in data.globalConfigOverrides) config[setting] = data.globalConfigOverrides[setting];
+        window.__res[data.globalConfigResKey] = JSON.stringify(packedConfig);
+      }
       /* 变体专属贴图(如变色五瓣花的整张重上色珠子图集,assets 覆盖表
          __res 键 → data URI):贴图在引擎建场景时读取,同样早于一切读取。 */
       if (data.assets && typeof data.assets === 'object') {
@@ -238,30 +246,43 @@
       }
     } catch (e) {}
   }
-  /* —— aplv 原标题横幅隐藏:TitleSprite 节点("The Best Brain-Training Game"
-     图),视觉由 HUD 标题在原位接管。按名查找(与 aplv 自带集成脚本同款寻路),
-     随进度轮询重试直至隐藏。 —— */
-  var titleHidden = false;
+  /* —— aplv 原标题横幅彻底移除:TitleSprite 节点("The Best Brain-Training
+     Game" 图)按名查找(与 aplv 自带集成脚本同款寻路),从场景树直接摘除
+     (removeFromParent,不是 active=false 的隐藏),视觉由 HUD 标题在原位
+     接管。场景一建立就以 100ms 快频先移除(压掉 boot 闪现),命中后回落到
+     常驻 400ms 轮询继续重摘——游戏重启/关卡重载可能把节点重新挂回,一次
+     性移除不够。无父节点的桩环境兜底 active=false。 —— */
+  var titleRemoved = false;
   function hideTitleSprite() {
-    if (titleHidden) return;
     try {
       var scene = window.cc && window.cc.director && window.cc.director.getScene && window.cc.director.getScene();
-      if (!scene) return;
+      if (!scene) return false;
+      var found = false;
       var stack = [scene];
       while (stack.length > 0) {
         var node = stack.pop();
         if (!node) continue;
         if (node.name === 'TitleSprite') {
-          node.active = false;
-          titleHidden = true;
-          LOG('TitleSprite 已隐藏(HUD 标题接管)');
-          return;
+          found = true;
+          if (node.parent && typeof node.parent.removeChild === 'function') {
+            node.parent.removeChild(node);
+            if (!titleRemoved) { titleRemoved = true; LOG('TitleSprite 已从场景移除(HUD 标题接管)'); }
+          } else if (node.active) {
+            node.active = false;
+            if (!titleRemoved) { titleRemoved = true; LOG('TitleSprite 已隐藏(无父节点,降级失活)'); }
+          }
         }
         var kids = node.children;
         if (kids) for (var i = 0; i < kids.length; i += 1) stack.push(kids[i]);
       }
-    } catch (e) {}
+      return found;
+    } catch (e) { return false; }
   }
+  var fastHideTimer = setInterval(function () {
+    /* 摘除后节点不再出现在场景树,found 恒 false——停条件只看 titleRemoved */
+    if (titleRemoved) clearInterval(fastHideTimer);
+    else hideTitleSprite();
+  }, 100);
   setInterval(function () {
     /* WebAudio 运行状态验收日志:任何上下文首次 running 即打一条 */
     if (!audioRunningLogged) {

@@ -20,6 +20,8 @@ fs.rmSync(path.join(out, 'levels'), { recursive: true, force: true });
 if (fs.existsSync(path.join(root, 'levels'))) {
   fs.cpSync(path.join(root, 'levels'), path.join(out, 'levels'), { recursive: true });
 }
+// 图案库缩略图复用冻结包里的珠子图集与裁切坐标。
+fs.cpSync(path.join(root, 'preview'), path.join(out, 'preview'), { recursive: true });
 const entrySha = createHash('sha256').update(fs.readFileSync(path.join(out, 'game', 'index.html'))).digest('hex');
 fs.writeFileSync(path.join(out, 'game-manifest.json'), `${JSON.stringify({
   id: 'colorever-origin',

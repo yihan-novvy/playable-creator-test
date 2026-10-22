@@ -12,43 +12,40 @@
   .card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
   .card h2 { font-size: 15px; margin: 0 0 2px; }
   .pid { color: #7f8fa4; font-size: 11px; font-family: monospace; margin-bottom: 10px; }
-  canvas { width: 272px; height: 272px; image-rendering: pixelated; border-radius: 6px; background: #fff; display: block; }
+  canvas.pattern { width: 272px; height: auto; border-radius: 6px; background: #fff; display: block; }
   table { border-collapse: collapse; margin-top: 10px; width: 100%; font-size: 11px; }
   td, th { padding: 2px 6px 2px 0; text-align: left; white-space: nowrap; }
   th { color: #7f8fa4; font-weight: normal; }
-  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+  .swatch { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; margin-right: 4px; }
   .src { color: #7f8fa4; font-size: 11px; margin-top: 8px; line-height: 1.5; }
   .thumb { position: relative; display: block; width: 272px; border-radius: 6px; cursor: pointer; }
   .thumb canvas { pointer-events: none; }
+  .apple-previews { display: flex; gap: 8px; width: 272px; }
+  .apple-previews figure { margin: 0; width: 132px; }
+  .apple-previews figcaption { font-size: 12px; color: #62748a; margin-bottom: 6px; }
+  .apple-previews .thumb, .apple-previews canvas.pattern { width: 132px; }
+  .apple-previews canvas.cache { width: 132px; height: auto; display: block; margin-top: 8px; background: #fff0d8; border-radius: 6px; }
+  .apple-previews .play-chip { font-size: 10px; padding: 4px 8px; bottom: 4px; }
   .play-chip { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); background: rgba(31,45,61,.85); color: #fff; font-size: 12px; padding: 6px 14px; border-radius: 999px; pointer-events: none; white-space: nowrap; }
   .thumb:hover .play-chip, .thumb:focus-visible .play-chip { background: #2f6fed; }
 </style>
 </head>
 <body>
 <h1>Colorever Origin 图案库</h1>
-<div class="sub">数据源: <code>/templates/colorever-origin/levels/*.json</code>(打包进产物的 level.js 与此同源)·渲染 = Level_1 Board 层·色块 = 真实贴图主色·点击任意图案画面即开新标签页直接试玩</div>
+<div class="sub">使用原版珠子贴图与关卡数据。苹果同时显示完成图案与 a.html 原版开局。原始五瓣花为默认图案。点击画面即可试玩。</div>
 <div class="grid" id="grid">加载中…</div>
 <script>
-/* 34 色主色板:从 bundle_gemsort 拼豆_棋盘模块 图集(bd4e154b….webp)逐 sprite 主色采样,
-   与 levels 数据同源于冻结资产;键 = Board_Images tileset 的 GID。 */
-const PALETTE = {
-  1:[196,52,36],2:[196,44,132],3:[196,44,84],4:[108,28,44],5:[244,164,180],6:[132,44,28],
-  7:[116,28,180],8:[132,52,124],9:[116,20,124],10:[108,52,132],11:[68,28,116],12:[116,28,92],
-  13:[4,116,180],14:[36,196,196],15:[36,60,92],16:[36,36,92],17:[76,76,212],18:[44,20,156],
-  19:[156,212,28],20:[28,132,76],21:[4,132,140],22:[4,124,4],23:[20,140,124],24:[12,84,4],
-  25:[220,148,4],26:[148,68,20],27:[252,180,124],28:[212,100,4],29:[172,108,4],30:[244,204,4],
-  31:[196,188,180],32:[236,228,164],33:[36,44,60],34:[140,140,140],
-};
 const COLOR_NAMES = { 1:'红1',2:'红2',3:'红3',4:'红4',5:'红5',6:'红6',7:'紫1',8:'紫2',9:'紫3',10:'紫4',11:'紫5',12:'紫6',13:'蓝1',14:'蓝1',15:'蓝3',16:'蓝4',17:'蓝5',18:'蓝6',19:'绿1',20:'绿2',21:'绿3',22:'绿4',23:'绿5',24:'绿6',25:'黄1',26:'黄2',27:'黄3',28:'黄4',29:'黄5',30:'黄6',31:'灰1',32:'灰2',33:'灰3',34:'灰4' };
-/* 变体专属贴图色板覆盖(levels/<id>.json 的 assets 覆盖表会替换整张珠子图集,
-   如变色五瓣花把 灰1→浅绿、黄3→黄绿):与 assets 覆盖同源采样,查看页颜色
-   因此与真机渲染一致。新增带 assets 的变体时同步维护这里。 */
-const PALETTE_OVERRIDES = {
-  'flower5-changing': { 31: [92,204,92], 27: [156,212,4] },
-};
 const VARIANTS = ['flower5-original', 'flower4-blue', 'flower5-changing', 'apple-red'];
+const PREVIEW_ROOT = '/templates/colorever-origin/preview';
+const ATLAS_KEY = 'assets/bundle_gemsort/native/bd/bd4e154b-1b52-4d16-9f82-2cc323daf0db.webp';
 
-function rgbCss(c) { return `rgb(${c[0]},${c[1]},${c[2]})`; }
+async function loadImage(src) {
+  const image = new Image();
+  image.src = src;
+  await image.decode();
+  return image;
+}
 
 async function loadVariant(id) {
   const res = await fetch(`/templates/colorever-origin/levels/${id}.json`);
@@ -56,71 +53,125 @@ async function loadVariant(id) {
   return res.json();
 }
 
-function render(data) {
-  const palette = { ...PALETTE, ...((PALETTE_OVERRIDES[data.id] || {})) };
+async function render(data, frames, originalAtlas) {
+  const atlas = data.assets?.[ATLAS_KEY] ? await loadImage(data.assets[ATLAS_KEY]) : originalAtlas;
   const level = JSON.parse(data.level1Text);
   const map = level[5][0][2];
   const board = map.layers.find((l) => l.name === 'Board').data;
   const gems = (map.layers.find((l) => l.name === 'Gems') || {}).data || [];
+  const cache = map.cacheGemColor || [];
   const W = map.width, H = map.height;
+  const tiles = new Map(map.tilesets.flatMap((set) => set.tiles.map((tile) => [set.firstgid + tile.id, tile.image.split('/').pop().replace('.png', '')])));
+  function drawTile(ctx, gid, x, y) {
+    if (!gid) return;
+    const rect = frames[tiles.get(gid)];
+    if (!rect) throw new Error(`缺少珠子贴图: ${gid}`);
+    const [sx, sy, width, height] = rect;
+    ctx.drawImage(atlas, sx, sy, width, height, x + (54 - width) / 2, y + (54 - height) / 2, width, height);
+  }
 
-  const canvas = document.createElement('canvas');
-  canvas.width = W; canvas.height = H;
-  canvas.title = `${W}×${H}`;
-  const ctx = canvas.getContext('2d');
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const g = board[y * W + x];
-    ctx.fillStyle = palette[g] ? rgbCss(palette[g]) : '#fff';
-    ctx.fillRect(x, y, 1, 1);
+  function drawPattern(completed = false) {
+    const canvas = document.createElement('canvas');
+    canvas.className = 'pattern';
+    canvas.width = W * 12; canvas.height = H * 12;
+    canvas.title = `${W}×${H} · ${completed ? '完成图案' : '开局排布'}`;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(12 / 54, 12 / 54);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      const index = y * W + x;
+      drawTile(ctx, board[index], x * 54, y * 54);
+      // 已对色使用平态（GID 35–68），未对色使用立体态（GID 69–102）。
+      const gem = completed ? (board[index] ? board[index] + 68 : 0) : gems[index];
+      drawTile(ctx, gem && gem === board[index] + 68 ? gem - 34 : gem, x * 54, y * 54);
+    }
+    return canvas;
   }
 
   // 统计:色块分布 + 开局对色
   const counts = {};
-  for (const g of board) counts[g] = (counts[g] || 0) + 1;
+  for (const g of board) if (g) counts[g] = (counts[g] || 0) + 1;
   let matched = 0, total = 0;
   for (let i = 0; i < gems.length; i++) {
     if (!gems[i]) continue;
     total += 1;
     if (gems[i] === board[i] + 68) matched += 1;
   }
+  const cacheTotal = cache.filter((color) => color >= 0).length;
   const rows = Object.entries(counts).sort((a, b) => b[1] - a[1])
-    .map(([g, n]) => `<tr><th><span class="swatch" style="background:${rgbCss(palette[g] || [255,255,255])}"></span>${COLOR_NAMES[g] || '?'}</th><td>${n}</td></tr>`).join('');
+    .map(([g, n]) => `<tr><th><canvas class="swatch" data-gid="${g}" width="54" height="54"></canvas>${COLOR_NAMES[g] || '?'}</th><td>${n}</td></tr>`).join('');
 
   const guide = JSON.parse(data.guideText)[5][0][2];
   const guideColors = [1, 2, 3, 4, 5, 6].map((s) => guide[`阶段${s}颜色`]).filter(Boolean);
 
   // 点击画面直接试玩该图案:服务端按 id 现场组装单文件预览形态 playable。
-  const playLink = document.createElement('a');
-  playLink.className = 'thumb';
-  playLink.href = `/api/colorever-pattern-play?pattern=${encodeURIComponent(data.id)}`;
-  playLink.target = '_blank';
-  playLink.rel = 'noopener';
-  playLink.title = `试玩 ${data.name}`;
-  const chip = document.createElement('span');
-  chip.className = 'play-chip';
-  chip.textContent = '▶ 点击试玩';
-  playLink.append(canvas, chip);
+  function playLink(completed = false) {
+    const link = document.createElement('a');
+    link.className = 'thumb';
+    link.href = `/api/colorever-pattern-play?pattern=${encodeURIComponent(data.id)}`;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.title = `试玩 ${data.name}`;
+    const chip = document.createElement('span');
+    chip.className = 'play-chip';
+    chip.textContent = '▶ 点击试玩';
+    link.append(drawPattern(completed));
+    if (!completed) link.append(chip);
+    return link;
+  }
+  let preview = playLink();
+  if (data.id === 'apple-red') {
+    preview = document.createElement('div');
+    preview.className = 'apple-previews';
+    for (const [label, completed] of [['完成图案', true], ['a.html 原版开局', false]]) {
+      const figure = document.createElement('figure');
+      const caption = document.createElement('figcaption');
+      caption.textContent = label;
+      figure.append(caption, playLink(completed));
+      if (!completed && cache.length) {
+        const cols = data.globalConfigOverrides.cacheCols, rows = data.globalConfigOverrides.cacheRows;
+        const tray = document.createElement('canvas');
+        tray.className = 'cache';
+        tray.width = cols * 12; tray.height = rows * 12;
+        tray.title = '原版暂存区 · 33 颗红珠';
+        const ctx = tray.getContext('2d');
+        ctx.scale(12 / 54, 12 / 54);
+        for (let i = 0; i < cache.length; i += 1) {
+          ctx.fillStyle = '#ead8c0';
+          ctx.fillRect((i % cols) * 54 + 3, Math.floor(i / cols) * 54 + 3, 48, 48);
+          if (cache[i] >= 0) drawTile(ctx, cache[i] + 69, (i % cols) * 54, Math.floor(i / cols) * 54);
+        }
+        figure.append(tray);
+      }
+      preview.append(figure);
+    }
+  }
 
   const card = document.createElement('div');
   card.className = 'card';
   card.innerHTML = `
     <h2></h2><div class="pid"></div>
-    <table><tr><th>棋盘</th><td>${W}×${H} · 宝石 ${total} · 开局对色 ${matched}</td></tr>
+    <table><tr><th>棋盘</th><td>${W}×${H} · 宝石 ${total + cacheTotal} · 开局对色 ${matched}</td></tr>
+    ${cacheTotal ? `<tr><th>开局</th><td>棋盘 ${total} · 暂存区 ${cacheTotal}</td></tr>` : ''}
     <tr><th>引导色</th><td>${guideColors.join(' / ')}</td></tr></table>
     <table>${rows}</table>
     <div class="src"></div>`;
   card.querySelector('h2').textContent = data.name;
   card.querySelector('.pid').textContent = data.id;
   card.querySelector('.src').textContent = data.source || '';
-  card.insertBefore(playLink, card.querySelector('table'));
+  for (const swatch of card.querySelectorAll('.swatch')) drawTile(swatch.getContext('2d'), Number(swatch.dataset.gid) + 68, 0, 0);
+  card.insertBefore(preview, card.querySelector('table'));
   return card;
 }
 
 (async () => {
   const grid = document.getElementById('grid');
   grid.textContent = '';
+  const [frames, atlas] = await Promise.all([
+    fetch(`${PREVIEW_ROOT}/frames.json`).then((res) => { if (!res.ok) throw new Error('无法读取珠子贴图坐标'); return res.json(); }),
+    loadImage(`${PREVIEW_ROOT}/beads.webp`),
+  ]);
   for (const id of VARIANTS) {
-    try { grid.append(render(await loadVariant(id))); }
+    try { grid.append(await render(await loadVariant(id), frames, atlas)); }
     catch (e) {
       const err = document.createElement('div');
       err.className = 'card';
@@ -128,7 +179,7 @@ function render(data) {
       grid.append(err);
     }
   }
-})();
+})().catch((error) => { document.getElementById('grid').textContent = `加载失败: ${error.message}`; });
 </script>
 </body>
 </html>
