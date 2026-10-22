@@ -111,7 +111,7 @@ export default async function run(assert) {
 
   function makeEnv(noSdk = false) {
     const docListeners = [], winListeners = [], events = [], timers = [], logs = [];
-    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], mraidOpen: [], stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
+    const calls = { onStep: [], click: [], download: [], gameEndOriginal: 0, windowOpen: [], mraidOpen: [], novvyOverlay: 0, stage: [], audioResumes: 0, audioPlay: 0, bufferStarts: 0, audioElements: [] };
     class CustomEvent { constructor(type, opts) { this.type = type; this.detail = opts && opts.detail; } }
     const zoneEl = { addEventListener(type, fn) { zoneEl.clickHandler = fn; } };
     const fakeDocument = {
@@ -136,6 +136,9 @@ export default async function run(assert) {
           onStep: (step, detail) => calls.onStep.push({ step, detail }),
           setStage: (index, type) => calls.stage.push([index, type]),
           setStageList: (list) => calls.stageList ? calls.stageList.push(list) : (calls.stageList = [list]),
+        },
+        novvy: {
+          overlay: () => { calls.novvyOverlay += 1; },
         },
       }),
       __audioCtxs: [],
@@ -304,6 +307,23 @@ export default async function run(assert) {
         assert.equal(env5.calls.mraidOpen, ['store://native'], '无 SDK 时 mraid.open 放行原生跳转');
         assert.equal(env5.of('novvy:cta-interact').length, 0, '预览 mraid 裸跳不派发事件');
       }
+    }
+
+    { // novvy.overlay 横幅偏好:正式展示(viewable=true)调一次;存在性探测;一次性
+      const envO = makeEnv();
+      assert.equal(envO.calls.novvyOverlay, 0, '初始不可见不调用');
+      envO.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: false } });
+      assert.equal(envO.calls.novvyOverlay, 0, 'viewable=false 不调用');
+      envO.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: true } });
+      assert.equal(envO.calls.novvyOverlay, 1, '正式展示(viewable=true)调用一次');
+      assert.check(envO.logs.some((l) => l.includes('novvy.overlay() 已调用')), 'overlay 调用打验收日志');
+      envO.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: false } });
+      envO.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: true } });
+      assert.equal(envO.calls.novvyOverlay, 1, '暂停/恢复反复可见不重复调用(一次性闩锁)');
+
+      const envNoBridge = makeEnv(true); // 无桥:window.novvy 不存在 → 存在性探测兜底
+      envNoBridge.fakeWindow.dispatchEvent({ type: 'novvy:viewablechange', detail: { viewable: true } });
+      assert.equal(envNoBridge.calls.novvyOverlay, 0, 'novvy.overlay 方法不存在时永不调用');
     }
 
     { // CTA 直连区:横幅点击直派 cta-interact,不走画布/裸跳链

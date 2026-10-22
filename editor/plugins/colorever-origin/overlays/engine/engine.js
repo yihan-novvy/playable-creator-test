@@ -507,6 +507,22 @@
     LOG('CTA 直连区已接线');
   }
   wireCtaZone();
+  /* —— novvy.overlay 横幅偏好(iOS 桥独有,iOS SDK d741056):广告正式展示
+      (viewable=true)时调用一次。无参——挂哪个 App 由服务端授权,SDK 侧严格
+      分派(回执 webview/browser 未授权则不落地);Android/旧版 iOS 桥故意不
+      定义该方法,按方法存在性探测,不存在即永不调用。一次性闩锁——
+      viewablechange 随暂停/恢复反复发,正式展示只算第一次。 —— */
+  var overlayCalled = false;
+  function tryNovvyOverlay() {
+    if (overlayCalled) return;
+    if (!(window.novvy && typeof window.novvy.overlay === 'function')) return;
+    overlayCalled = true;
+    try { window.novvy.overlay(); LOG('novvy.overlay() 已调用(横幅偏好)'); } catch (e) {}
+  }
+  if (window.__novvyBridgeVersion >= 1 && window.__novvyViewable) tryNovvyOverlay();
+  window.addEventListener('novvy:viewablechange', function (event) {
+    if (event && event.detail && event.detail.viewable) tryNovvyOverlay();
+  });
   function patchAll() {
     patchSdkStageLog();
     patchChannel();
