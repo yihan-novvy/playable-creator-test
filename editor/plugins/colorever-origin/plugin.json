@@ -16,6 +16,7 @@
     "engine": "overlays/engine"
   },
   "defaults": {
+    "patternId": "flower5-original",
     "hud": {
       "enabled": false,
       "titleEnabled": true,

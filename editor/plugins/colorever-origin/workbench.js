@@ -56,11 +56,27 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     }
     return wrap;
   }
+  // 图案库(对应 template-core/colorever-origin/levels/*.json,打包成产物里的
+  // level.js,游戏本体跨变体一致):原始五瓣花 = 包内现装数据,不产生 level.js。
+  const PATTERN_OPTIONS = [
+    ['flower5-original', '原始五瓣花（包内默认）'],
+    ['flower4-blue', '蓝色四瓣花'],
+    ['flower5-changing', '变色五瓣花'],
+    ['apple-red', '红色苹果'],
+  ];
+  function patternSelect() {
+    const select = el('select', { 'aria-label': '图案' });
+    for (const [value, label] of PATTERN_OPTIONS) select.append(el('option', { value }, [label]));
+    select.value = config().patternId ?? 'flower5-original';
+    select.addEventListener('change', async () => { await save({ patternId: select.value }); await refresh(true); });
+    return field('图案', select);
+  }
   function renderConfig() {
-    document.getElementById('config-hint').textContent = 'playable 为外部冻结的 Cocos 单文件（5瓣花），CTA 使用包内自带下载横幅；本任务只负责片头视频与跳转节奏。第 10 步自动跳转后，返回继续玩会按间隔表再次跳转（默认 +5/+4/+3/+2，之后每 2 步一次）；先完成则完成时兜底跳转。';
+    document.getElementById('config-hint').textContent = 'playable 为外部冻结的 Cocos 单文件，图案在下方选择：非默认图案会打成独立 level.js（游戏本体跨变体一致），新手引导颜色随图案自动配套。CTA 使用包内自带下载横幅。第 10 步自动跳转后，返回继续玩会按间隔表再次跳转（默认 +5/+4/+3/+2，之后每 2 步一次）；先完成则完成时兜底跳转。';
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
+      patternSelect(),
       checkbox('使用开场视频', 'intro', 'enabled'),
       checkbox('显示顶部 HUD 标题', 'hud', 'titleEnabled', config().hud?.titleEnabled === true),
     ]));

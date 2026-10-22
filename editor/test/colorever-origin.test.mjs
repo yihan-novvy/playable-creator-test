@@ -102,6 +102,56 @@ export default async function run(assert) {
   // —— previewHtml 钩子签名 ——
   assert.equal(typeof (await import('../plugins/colorever-origin/lib.mjs')).previewHtml, 'function', '提供在线预览钩子');
 
+  // —— 图案变体（levels/ 图案库，2026-10-24）：产物间只差 level.js，游戏本体跨变体逐字节一致 ——
+  const { originLevelData } = await import('../plugins/colorever-origin/lib.mjs');
+  {
+    // 数据文件全部可解析且字段齐备（levels/*.json 是打包时的唯一图案来源）
+    const levelsDir = path.join(root, 'template-core/colorever-origin/levels');
+    const levelFiles = fs.readdirSync(levelsDir).filter((f) => f.endsWith('.json'));
+    assert.check(levelFiles.length >= 3, `图案库至少 3 个变体（当前 ${levelFiles.length} 个）`);
+    for (const file of levelFiles) {
+      const data = JSON.parse(fs.readFileSync(path.join(levelsDir, file), 'utf8'));
+      assert.equal(data.id, file.replace('.json', ''), `图案 ${file} id 与文件名一致`);
+      for (const field of ['name', 'level1ZipPath', 'level1Text', 'guideResKey', 'guideText']) {
+        assert.check(typeof data[field] === 'string' && data[field].length > 0, `图案 ${data.id} 字段 ${field} 在场`);
+      }
+      JSON.parse(data.level1Text);
+      JSON.parse(data.guideText);
+      // 引导 6 阶段颜色必须落在该图案的 tileset 色名内（否则新手引导指空）
+      const level = JSON.parse(data.level1Text);
+      const map = level[5][0][2];
+      const names = new Set(map.tilesets[0].tiles.map((t) => t.image.split('/').pop().replace('.png', '').split('_')[2]));
+      const guide = JSON.parse(data.guideText)[5][0][2];
+      for (let s = 1; s <= 6; s += 1) {
+        const color = guide[`阶段${s}颜色`];
+        if (color) assert.check(names.has(color), `图案 ${data.id} 引导阶段${s}颜色 ${color} 在图案色板内`);
+      }
+    }
+    // 原始五瓣花 = 不注入（产物与历史任务同管线）
+    assert.equal(originLevelData(templateRoot, { patternId: 'flower5-original' }), null, '原始五瓣花不产生图案注入');
+    assert.equal(originLevelData(templateRoot, {}), null, '未选图案不产生注入');
+    // 非法图案拒绝打包
+    let rejected = false;
+    try { originLevelData(templateRoot, { patternId: 'no-such-pattern' }); } catch { rejected = true; }
+    assert.check(rejected, '未知 patternId 拒绝打包');
+    // 变体注入：预览内联 / pack 外链 level.js；引擎脚本必须晚于数据脚本
+    const variantPreview = originHtml({ root: templateRoot, template: entry.template, config: { ...entry.template.defaults, patternId: 'flower4-blue' }, media: {}, preview: true });
+    assert.equal(variantPreview.pattern, { id: 'flower4-blue', name: '蓝色四瓣花' }, '变体元数据回传');
+    assert.check(variantPreview.levelJs?.startsWith('window.__ORIGIN_LEVEL_DATA__='), 'levelJs 载荷生成');
+    assert.check(variantPreview.html.includes('<script data-novvy-origin-level>window.__ORIGIN_LEVEL_DATA__='), '预览形态内联图案数据');
+    assert.check(variantPreview.html.indexOf('data-novvy-origin-level') < variantPreview.html.indexOf('data-novvy-origin-engine'), '图案数据脚本先于引擎适配');
+    const variantPack = originHtml({ root: templateRoot, template: entry.template, config: { ...entry.template.defaults, patternId: 'flower4-blue' }, media: {} });
+    assert.check(variantPack.html.includes('<script src="level.js"></script>'), 'pack 形态外链 level.js');
+    assert.check(!variantPack.html.includes('window.__ORIGIN_LEVEL_DATA__='), 'pack 形态 index.html 不内联图案数据（只有 engine 里的标识符引用）');
+    assert.check(variantPack.levelJs.includes('flower4-blue'), 'level.js 载荷携带变体 id');
+    // game.js 跨变体逐字节一致（核心不变量）
+    const gameJsDefault = originHtml({ root: templateRoot, template: entry.template, config: entry.template.defaults, media: {} }).gameJs;
+    const gameJsBlue = variantPack.gameJs;
+    const gameJsChanging = originHtml({ root: templateRoot, template: entry.template, config: { ...entry.template.defaults, patternId: 'flower5-changing' }, media: {} }).gameJs;
+    assert.equal(gameJsBlue, gameJsDefault, 'game.js 与默认（原始五瓣花）逐字节一致');
+    assert.equal(gameJsBlue, gameJsChanging, 'game.js 跨图案变体逐字节一致');
+  }
+
   // —— 引擎适配 shim：桩环境全链路（手势节奏 / 真实进度 / 结算 / CTA 接线） ——
   const enginePath = path.join(root, 'editor/plugins/colorever-origin/overlays/engine/engine.js');
   const engineSrc = fs.readFileSync(enginePath, 'utf8');

@@ -21,6 +21,22 @@ const source = path.join(root, 'src-game', 'index.html');
 const entry = path.join(built, 'game', 'index.html');
 if (sha(source) !== sha(entry)) throw new Error('产物与源不一致（game/index.html 被改动）');
 
+// 图案库随源冻结：levels/ 逐文件与源一致，字段齐备且 level/guide 文本可解析。
+const levelsSrc = path.join(root, 'levels');
+const levelsOut = path.join(built, 'levels');
+const srcFiles = fs.existsSync(levelsSrc) ? fs.readdirSync(levelsSrc).filter((f) => f.endsWith('.json')).sort() : [];
+const outFiles = fs.existsSync(levelsOut) ? fs.readdirSync(levelsOut).filter((f) => f.endsWith('.json')).sort() : [];
+if (JSON.stringify(srcFiles) !== JSON.stringify(outFiles)) throw new Error(`levels 产物与源文件清单不一致: ${srcFiles} vs ${outFiles}`);
+for (const file of srcFiles) {
+  if (sha(path.join(levelsSrc, file)) !== sha(path.join(levelsOut, file))) throw new Error(`levels 产物与源不一致: ${file}`);
+  const data = JSON.parse(fs.readFileSync(path.join(levelsOut, file), 'utf8'));
+  for (const field of ['id', 'name', 'level1ZipPath', 'level1Text', 'guideResKey', 'guideText']) {
+    if (typeof data[field] !== 'string' || !data[field]) throw new Error(`levels/${file} 缺字段 ${field}`);
+  }
+  JSON.parse(data.level1Text);
+  JSON.parse(data.guideText);
+}
+
 const manifest = JSON.parse(fs.readFileSync(path.join(built, 'game-manifest.json'), 'utf8'));
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 if (manifest.id !== 'colorever-origin') throw new Error('manifest.id 不符');

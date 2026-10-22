@@ -32,6 +32,49 @@
    super_html 由 aplv 包装层脚本在本脚本之前同步定义;引擎 boot 是异步资源
    加载,启动后先快频后常驻低频重试补丁,防包装层替换对象。全程 try/catch +
    零 DOM 依赖(监听在 document 捕获段)。 */
+
+/* —— 图案变体注入(levels/ 图案库,2026-10-24):window.__ORIGIN_LEVEL_DATA__
+   由 pack 产物 level.js 定义(预览形态内联)。aplv 的 super_load 用 JSZip 把
+   __zip 全量解压合并进 window.__res,合并完才调 super_boot() 启动引擎——
+   包一层 super_boot,在"解压后、引擎读资产前"用选中图案的 Level_1 JSON 与
+   GuideConfig 文本覆盖 __res 对应键:改动落在解压产物上,冻结 zip 一字节不改,
+   同一 game.js 服务全部变体。未选变体时本段零操作;super_boot 是顶层函数
+   声明,裸调用走全局查找,重绑 window 属性即可拦截。拦不到(形态变化)就
+   放弃覆盖,游戏渲染包内原始图案——宁回退不破坏启动。 */
+(function () {
+  var data = window.__ORIGIN_LEVEL_DATA__;
+  if (!data) return;
+  function apply() {
+    try {
+      if (!window.__res || typeof window.__res !== 'object') return false;
+      window.__res[data.level1ZipPath] = data.level1Text;
+      window.__res[data.guideResKey] = data.guideText;
+      try { console.log('[novvy-origin] 图案变体已生效: ' + data.name + ' (' + data.id + ')'); } catch (e) {}
+      return true;
+    } catch (e) {
+      try { console.error('[novvy-origin] 图案变体注入失败,回退包内原始图案', e); } catch (e2) {}
+      return false;
+    }
+  }
+  var wrapped = false;
+  function wrap() {
+    if (wrapped || typeof window.super_boot !== 'function') return;
+    var nativeBoot = window.super_boot;
+    window.super_boot = function () { apply(); return nativeBoot.apply(this, arguments); };
+    wrapped = true;
+  }
+  wrap();
+  /* game.js 与本脚本同为文档同步脚本,走到这里 super_boot 必已声明;定时器
+     只防包装层形态变化,10s 后放弃(彼时 boot 多半已启动,拦不到就回退)。 */
+  if (!wrapped) {
+    var timer = setInterval(function () {
+      wrap();
+      if (wrapped) clearInterval(timer);
+    }, 100);
+    setTimeout(function () { if (timer) clearInterval(timer); }, 10000);
+  }
+})();
+
 (function () {
   var policy = window.__ORIGIN_CTA_POLICY__ || null;
   if (!policy) return;

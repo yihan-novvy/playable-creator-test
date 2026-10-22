@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Colorever Origin 图案库预览</title>
+<style>
+  body { font-family: -apple-system, "PingFang SC", sans-serif; background: #f4f6f8; margin: 0; padding: 24px; color: #1f2d3d; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  .sub { color: #7f8fa4; font-size: 12px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+  .card h2 { font-size: 15px; margin: 0 0 2px; }
+  .pid { color: #7f8fa4; font-size: 11px; font-family: monospace; margin-bottom: 10px; }
+  canvas { width: 272px; height: 272px; image-rendering: pixelated; border-radius: 6px; background: #fff; display: block; }
+  table { border-collapse: collapse; margin-top: 10px; width: 100%; font-size: 11px; }
+  td, th { padding: 2px 6px 2px 0; text-align: left; white-space: nowrap; }
+  th { color: #7f8fa4; font-weight: normal; }
+  .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 4px; }
+  .src { color: #7f8fa4; font-size: 11px; margin-top: 8px; line-height: 1.5; }
+</style>
+</head>
+<body>
+<h1>Colorever Origin 图案库</h1>
+<div class="sub">数据源: <code>/templates/colorever-origin/levels/*.json</code>(打包进产物的 level.js 与此同源)·渲染 = Level_1 Board 层·色块 = 真实贴图主色</div>
+<div class="grid" id="grid">加载中…</div>
+<script>
+/* 34 色主色板:从 bundle_gemsort 拼豆_棋盘模块 图集(bd4e154b….webp)逐 sprite 主色采样,
+   与 levels 数据同源于冻结资产;键 = Board_Images tileset 的 GID。 */
+const PALETTE = {
+  1:[196,52,36],2:[196,44,132],3:[196,44,84],4:[108,28,44],5:[244,164,180],6:[132,44,28],
+  7:[116,28,180],8:[132,52,124],9:[116,20,124],10:[108,52,132],11:[68,28,116],12:[116,28,92],
+  13:[4,116,180],14:[36,196,196],15:[36,60,92],16:[36,36,92],17:[76,76,212],18:[44,20,156],
+  19:[156,212,28],20:[28,132,76],21:[4,132,140],22:[4,124,4],23:[20,140,124],24:[12,84,4],
+  25:[220,148,4],26:[148,68,20],27:[252,180,124],28:[212,100,4],29:[172,108,4],30:[244,204,4],
+  31:[196,188,180],32:[236,228,164],33:[36,44,60],34:[140,140,140],
+};
+const COLOR_NAMES = { 1:'红1',2:'红2',3:'红3',4:'红4',5:'红5',6:'红6',7:'紫1',8:'紫2',9:'紫3',10:'紫4',11:'紫5',12:'紫6',13:'蓝1',14:'蓝1',15:'蓝3',16:'蓝4',17:'蓝5',18:'蓝6',19:'绿1',20:'绿2',21:'绿3',22:'绿4',23:'绿5',24:'绿6',25:'黄1',26:'黄2',27:'黄3',28:'黄4',29:'黄5',30:'黄6',31:'灰1',32:'灰2',33:'灰3',34:'灰4' };
+const VARIANTS = ['flower5-original', 'flower4-blue', 'flower5-changing', 'apple-red'];
+
+function rgbCss(c) { return `rgb(${c[0]},${c[1]},${c[2]})`; }
+
+async function loadVariant(id) {
+  const res = await fetch(`/templates/colorever-origin/levels/${id}.json`);
+  if (!res.ok) throw new Error(`${id}: HTTP ${res.status}`);
+  return res.json();
+}
+
+function render(data) {
+  const level = JSON.parse(data.level1Text);
+  const map = level[5][0][2];
+  const board = map.layers.find((l) => l.name === 'Board').data;
+  const gems = (map.layers.find((l) => l.name === 'Gems') || {}).data || [];
+  const W = map.width, H = map.height;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = W; canvas.height = H;
+  canvas.title = `${W}×${H}`;
+  const ctx = canvas.getContext('2d');
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const g = board[y * W + x];
+    ctx.fillStyle = PALETTE[g] ? rgbCss(PALETTE[g]) : '#fff';
+    ctx.fillRect(x, y, 1, 1);
+  }
+
+  // 统计:色块分布 + 开局对色
+  const counts = {};
+  for (const g of board) counts[g] = (counts[g] || 0) + 1;
+  let matched = 0, total = 0;
+  for (let i = 0; i < gems.length; i++) {
+    if (!gems[i]) continue;
+    total += 1;
+    if (gems[i] === board[i] + 68) matched += 1;
+  }
+  const rows = Object.entries(counts).sort((a, b) => b[1] - a[1])
+    .map(([g, n]) => `<tr><th><span class="swatch" style="background:${rgbCss(PALETTE[g] || [255,255,255])}"></span>${COLOR_NAMES[g] || '?'}</th><td>${n}</td></tr>`).join('');
+
+  const guide = JSON.parse(data.guideText)[5][0][2];
+  const guideColors = [1, 2, 3, 4, 5, 6].map((s) => guide[`阶段${s}颜色`]).filter(Boolean);
+
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.innerHTML = `
+    <h2></h2><div class="pid"></div>
+    <table><tr><th>棋盘</th><td>${W}×${H} · 宝石 ${total} · 开局对色 ${matched}</td></tr>
+    <tr><th>引导色</th><td>${guideColors.join(' / ')}</td></tr></table>
+    <table>${rows}</table>
+    <div class="src"></div>`;
+  card.querySelector('h2').textContent = data.name;
+  card.querySelector('.pid').textContent = data.id;
+  card.querySelector('.src').textContent = data.source || '';
+  card.insertBefore(canvas, card.querySelector('table'));
+  return card;
+}
+
+(async () => {
+  const grid = document.getElementById('grid');
+  grid.textContent = '';
+  for (const id of VARIANTS) {
+    try { grid.append(render(await loadVariant(id))); }
+    catch (e) {
+      const err = document.createElement('div');
+      err.className = 'card';
+      err.textContent = `加载失败 ${id}: ${e.message}`;
+      grid.append(err);
+    }
+  }
+})();
+</script>
+</body>
+</html>

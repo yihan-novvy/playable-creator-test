@@ -27,6 +27,8 @@ export async function run(ctx) {
   fs.mkdirSync(ctx.resultDir, { recursive: true });
   fs.writeFileSync(path.join(ctx.resultDir, 'index.html'), built.html);
   fs.writeFileSync(path.join(ctx.resultDir, 'game.js'), built.gameJs);
+  // 图案变体（选中非原始图案时才有）：产物间唯一差异文件，游戏本体跨变体逐字节一致。
+  if (built.levelJs) fs.writeFileSync(path.join(ctx.resultDir, 'level.js'), built.levelJs);
   if (intro) {
     fs.copyFileSync(path.join(ctx.generatedDir, 'intro-video.mp4'), path.join(ctx.resultDir, 'tail-ad-video.mp4'));
     fs.copyFileSync(path.join(ctx.generatedDir, 'poster.webp'), path.join(ctx.resultDir, 'poster.webp'));
@@ -40,6 +42,7 @@ export async function run(ctx) {
       stageChain: built.stageChain,
       introEnabled: built.introEnabled,
       ctaPolicy: built.policy,
+      pattern: built.pattern?.name ?? '原始五瓣花（包内默认）',
     },
     warnings: [],
   };

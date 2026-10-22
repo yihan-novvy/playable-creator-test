@@ -108,8 +108,31 @@ function extractPlayableScript(html) {
   return { gameJs, start: scriptOpen, end: innerEnd + '</script>'.length };
 }
 
+// —— 图案变体库（template-core/colorever-origin/levels/<id>.json）——
+// 每个变体 = Level_1 zip 条目原文 + GuideConfig __res 值原文。aplv 的
+// super_load 用 JSZip 把 __zip 全量解压合并进 window.__res，合并完才调
+// super_boot() 启动引擎；engine.js 顶部的图案补丁包一层 super_boot，在
+// "解压后、引擎读资产前"覆盖这两个 __res 键——冻结 zip 一字节不改，同一
+// game.js 服务全部变体，产物之间只差 level.js。"原始五瓣花"就是包内现装
+// 数据，选择它不注入（不产生 level.js），产物与历史任务走同一条管线。
+const ORIGIN_NATIVE_PATTERN = 'flower5-original';
+export function originLevelData(templateRoot, config) {
+  const id = String(config?.patternId ?? '').trim();
+  if (!id || id === ORIGIN_NATIVE_PATTERN) return null;
+  const file = path.join(templateRoot, 'levels', `${id}.json`);
+  const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+  for (const field of ['id', 'name', 'level1ZipPath', 'level1Text', 'guideResKey', 'guideText']) {
+    if (typeof data[field] !== 'string' || !data[field]) throw new Error(`Colorever Origin 图案 ${id} 缺字段 ${field}，拒绝打包`);
+  }
+  if (data.id !== id) throw new Error(`Colorever Origin 图案文件 id 不符：${data.id} ≠ ${id}`);
+  JSON.parse(data.level1Text);
+  JSON.parse(data.guideText);
+  return data;
+}
+
 // 把 playable（aplv 单文件）+ 片头覆盖层 + 三座共享桥组装成最终产物。
-// pack 形态：index.html（壳 + 注入）+ game.js（可玩载荷）；预览形态：单文件内联。
+// pack 形态：index.html（壳 + 注入）+ game.js（可玩载荷）+ level.js（图案变体，
+// 选中非原始图案时才有）；预览形态：单文件内联（图案数据内联进 body）。
 // 注入纪律与 colorever-new/escape-arrow 同源：胜利阈值补丁最先（boot 前
 // 改写 __res）、段桥先于业务脚本（声明段链与首段 setStage）、转化桥最后；
 // playable 本体除"整体搬进 game.js"外一字节不改。
@@ -138,12 +161,17 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
   const data = `<script>window.__novvyStageChain__=${inline(stageChain)};window.__novvyOutroEnabled=false;window.__NOVVY_CTA_END_MASK__=${inline(config?.cta?.endMask === true)};window.__ORIGIN_CTA_URL__='';window.__ORIGIN_CTA_POLICY__=${inline({ ...policy, schedule: originCtaSchedule(policy) })};</script>`;
   const readCore = (name) => fs.readFileSync(fileURLToPath(new URL(`../../core/overlays/${name}`, import.meta.url)), 'utf8');
   const engineFile = path.join(pluginDir, template.overlays.engine, 'engine.js');
+  // 图案变体数据必须在 engine.js 之前就位（engine 顶部的 super_boot 包装读它）。
+  // pack 形态写成兄弟文件 level.js（产物间唯一差异文件），预览形态内联。
+  const levelData = originLevelData(root, config);
+  const levelJs = levelData ? `window.__ORIGIN_LEVEL_DATA__=${inline(levelData)};` : null;
   const bodyScripts = [
     configScript,
     injection.uiScript,
     data,
     `<script data-novvy-playable-bridge>${readCore('playable-bridge/playable-bridge.js')}</script>`,
     ...injection.bodyScripts,
+    ...(levelJs ? [preview ? `<script data-novvy-origin-level>${levelJs}</script>` : '<script src="level.js"></script>'] : []),
     `<script data-novvy-origin-engine>${fs.readFileSync(engineFile, 'utf8').replace(/<\/script/gi, '<\\/script')}</script>`,
     `<script data-novvy-cta-bridge>${readCore('cta-bridge/cta-bridge.js').replaceAll('__CTA_URL_KEY__', '__ORIGIN_CTA_URL__')}</script>`,
   ];
@@ -162,7 +190,7 @@ export function originHtml({ root, overlaysRoot, template, config, media = {}, p
   const bodyExtra = [...injection.bodyDom, ctaZone, ...bodyScripts.filter(Boolean)].join('\n');
   html = html.replace(HEAD, () => headExtra ? `${headExtra}\n${HEAD}` : HEAD)
     .replace(BODY_END, () => bodyExtra ? `${bodyExtra}\n${BODY_END}` : BODY_END);
-  return { html, gameJs, stageChain, policy, introEnabled: injection.introEnabled };
+  return { html, gameJs, levelJs, pattern: levelData ? { id: levelData.id, name: levelData.name } : null, stageChain, policy, introEnabled: injection.introEnabled };
 }
 
 // 在线试玩预览（server /api/tasks/:id/preview 的插件钩子）。片头用上传原片
