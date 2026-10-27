@@ -1,0 +1,4 @@
+interface:
+  display_name: "Insightrackr Playable 模板制作"
+  short_description: "获取 Insightrackr playable 并适配项目模板与广告事件"
+  default_prompt: "使用 $insightrackr-playable-template 获取并分析指定游戏的 playable，按当前 playable-creator 项目规范制作模板，并遵循本次任务的开发授权范围。"
