@@ -1,0 +1,49 @@
+{
+  "id": "7ffa03d526a4b106c4f1f82c8ab1afae",
+  "sourceDetailUrl": "https://data.insightrackr.com/creative/preplay/detail/7ffa03d526a4b106c4f1f82c8ab1afae",
+  "observedDate": "2026-10-27",
+  "appStoreId": "6752672568",
+  "platformScope": "Insightrackr unified Block Out product, includes related apps; both payloads independently target iOS app ID 6752672568",
+  "channel": "Applovin",
+  "displayedEstimatedImpressions": "596亿",
+  "displayedLifeDays": 64,
+  "rankingScope": "First page, exposure estimate descending, date range 2025-10-28 through 2026-10-27; no country filter",
+  "engine": "PixiJS",
+  "sourceFormat": "AppLovin al_renderHtml JSON wrapper, inline editorParameters and Brotli compressed JavaScript",
+  "payloadBytes": 3891168,
+  "levels": [
+    {
+      "fileName": "lv1pink.json",
+      "blocks": 2,
+      "doors": 2,
+      "cells": 42
+    },
+    {
+      "fileName": "goat932_with_assets.json",
+      "blocks": 37,
+      "doors": 7,
+      "cells": 80
+    }
+  ],
+  "nativeStoreTriggers": {
+    "gotoMarketAfterXClick": 30,
+    "gotoMarketAfterXSeconds": 0,
+    "gotoMarketAfterXBlocksPass": 6,
+    "gotoMarketAfterXProgress": 0,
+    "endcardGoToMarketAfterXSeconds": 1,
+    "hasEndcardFullScreenClick": true
+  },
+  "nativeTimerEnabled": false,
+  "storeLinks": {
+    "android": "https://play.google.com/store/",
+    "ios": "https://apps.apple.com/US/app/id6752672568"
+  },
+  "requiresHostScript": "mraid.js",
+  "hashes": {
+    "decoded-core.js": "05f184eba44372e4c34158bad16fb5f4c19b1066f1b47a534c67fba40644240b",
+    "original-wrapper.html": "ec32bd691a82197db444c7d0793d66a39d7c8917c2beb2a65183fb15302e2ae0",
+    "unpacked-game.html": "e4dc06f17bf776b3aaa76daf4b71bcc5374455b9e3c7580a1518cce3db939fd8",
+    "original-loader.js": "5d4ebaf3a6741d25735514e4b6490fe61a2882671c6e3681775aee6a8c8e8cfa"
+  },
+  "verification": "A: browser drag interaction, completed first level and observed second level. B: wrong-color exit did not clear block; correct green exit cleared block. No implementation or event injection performed."
+}

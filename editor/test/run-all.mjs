@@ -39,6 +39,7 @@ export function createAssert() {
 }
 
 export const TESTS = [
+  { name: 'block-out-origin', file: path.join(TEST_DIR, 'block-out-origin.test.mjs') },
   { name: 'colorever-new', file: path.join(TEST_DIR, 'colorever-new.test.mjs') },
   { name: 'fixed-viewport', file: path.join(TEST_DIR, 'fixed-viewport.test.mjs') },
   // 旧模板已废弃改名 colorever-abandoned,其专属套件(colorever/colorever-music/

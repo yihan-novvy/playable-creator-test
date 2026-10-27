@@ -1,0 +1,24 @@
+{
+  "id": "block-out-origin",
+  "name": "Block Out Origin（原版两关）",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "constants": {
+    "sourceSha256": "e4dc06f17bf776b3aaa76daf4b71bcc5374455b9e3c7580a1518cce3db939fd8",
+    "game": {
+      "assetsJs": "game/assets.js",
+      "coreJs": "game/core.js"
+    },
+    "fileHashes": {
+      "game/index.html": "6a849b591489f5a2a7ec8e1771d3b099f361e50996da5000b26c03fa29736b50",
+      "game/assets.js": "d59bb063062b41a0d109dd44dc4807b73955244f7a850b9ae64d7a3c1713cb5b",
+      "game/core.js": "30f11a2acabf449719c7503a914264c0439449a9025662a19388eaab57d18501"
+    },
+    "blockCounts": [
+      2,
+      37
+    ],
+    "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/7ffa03d526a4b106c4f1f82c8ab1afae",
+    "appStoreUrl": "https://apps.apple.com/us/app/block-out-color-sort-puzzle/id6752672568"
+  }
+}
