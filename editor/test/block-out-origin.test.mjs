@@ -1,3 +1,4 @@
+import { installOriginCta } from './lib/origin-cta-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,7 +8,7 @@ import { blockOutHtml, ctaPolicy } from '../plugins/block-out-origin/lib.mjs';
 import { run, prerequisites } from '../plugins/block-out-origin/steps/pack.mjs';
 import { configWhitelistFor } from '../lib/store.mjs';
 
-function runtime(entry, intro = false) {
+export function runtime(entry, intro = false) {
   const listeners = new Map(), calls = [];
   const element = () => ({ hidden: false, muted: true, addEventListener() {}, setAttribute() {} });
   const elements = { 'novvy-cta': element(), 'block-out-sound': element(), ...(intro ? { 'novvy-intro-video': element() } : {}) };
@@ -22,7 +23,9 @@ function runtime(entry, intro = false) {
   };
   const document = { hidden: false, getElementById: id => elements[id] || null, addEventListener: window.addEventListener };
   const context = vm.createContext({ window, document, console: { log() {} }, CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } } });
-  for (const file of ['events.js', 'engine.js']) vm.runInContext(fs.readFileSync(path.join(entry.dir, 'overlays/engine', file), 'utf8'), context);
+  vm.runInContext(fs.readFileSync(path.join(entry.dir, 'overlays/engine/events.js'), 'utf8'), context);
+  const cta = installOriginCta(context);
+  vm.runInContext(fs.readFileSync(path.join(entry.dir, 'overlays/engine/engine.js'), 'utf8'), context);
   class Manager {
     constructor() { this.blocks = []; }
     setSelectedBlock(block) { this.selectedBlock = block; }
@@ -40,7 +43,7 @@ function runtime(entry, intro = false) {
   function block() { const b = { cellsData: [{ x: 0, y: 0 }], state: 'idle' }; manager.blocks.push(b); return b; }
   function select(b, id) { manager.setSelectedBlock(b, id); drag.selectedBlock = b; }
   function emit(type, detail) { window.dispatchEvent(type === 'pagehide' ? { type, ...detail } : { type, detail }); }
-  return { window, calls, manager, drag, block, select, emit, Boot };
+  return { cta, window, calls, manager, drag, block, select, emit, Boot };
 }
 
 export default async function test(assert) {

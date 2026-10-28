@@ -1,3 +1,4 @@
+import { installOriginCta } from './lib/origin-cta-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -7,7 +8,7 @@ import { getEntry } from '../core/registry.mjs';
 import { originHtml, originCtaPolicy, packOrigin, originPrerequisites } from '../core/lib/origin-playable.mjs';
 import { configWhitelistFor } from '../lib/store.mjs';
 
-function runtime(entry, intro = false) {
+export function runtime(entry, intro = false) {
   const listeners = new Map(), calls = [];
   const window = {
     __novvyStageChain__: intro ? ['video','playable'] : ['playable'],
@@ -23,7 +24,9 @@ function runtime(entry, intro = false) {
   const CONFIG = { application: { tapsToRedirect: 15, secToRedirect: 30 } };
   const context = vm.createContext({ window, Game, CONFIG, console: { log() {} }, document: { getElementById: () => intro ? {} : null },
     CustomEvent: class { constructor(type, options) { this.type=type; this.detail=options?.detail; } } });
-  for (const file of ['events.js','engine.js']) vm.runInContext(fs.readFileSync(path.join(entry.dir,'overlays/engine',file),'utf8'),context);
+  vm.runInContext(fs.readFileSync(path.join(entry.dir, 'overlays/engine/events.js'), 'utf8'), context);
+  const cta = installOriginCta(context);
+  vm.runInContext(fs.readFileSync(path.join(entry.dir, 'overlays/engine/engine.js'), 'utf8'), context);
   function field() {
     const result = new EventEmitter();
     result.engine = { foundations: { columns: Array.from({ length:4 },()=>({cards:[]})) }, foundationsFilled: () => result.engine.foundations.columns.every(c=>c.cards.length===13) };
@@ -32,7 +35,7 @@ function runtime(entry, intro = false) {
   }
   window.__ORIGIN_ADAPTER__.start(()=>Game.init());
   const emit = (type,detail) => window.dispatchEvent(type === 'pagehide' ? {type,...detail} : {type,detail});
-  return { window, Game, CONFIG, calls, field, emit };
+  return { cta, window, Game, CONFIG, calls, field, emit };
 }
 export default async function test(a) {
   const entry = getEntry('freecell-origin');

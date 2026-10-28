@@ -8,6 +8,11 @@ import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
 
 const inline = value => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 const script = (tag, source) => `<script data-novvy-${tag}>${source.replace(/<\/script/gi, '<\\/script')}</script>`;
+export function originCtaBridge(config) {
+  const source = fs.readFileSync(new URL('../overlays/cta-bridge/cta-bridge.js', import.meta.url), 'utf8');
+  return script('origin-cta-config', `window.__NOVVY_CTA_END_MASK__=${config?.cta?.endMask === true};window.__novvyDeferCanvasCta=true;window.__novvyCtaSdkOnly=true;`)
+    + script('cta-bridge', source.replaceAll('__CTA_URL_KEY__', '__ORIGIN_CTA_URL__'));
+}
 export function originCtaPolicy(raw) {
   const policy = normalizeCtaPolicy(raw, 'steps');
   return { mode: policy.mode, afterSteps: policy.afterSteps,
@@ -31,6 +36,7 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
     ...injection.bodyDom, injection.uiScript,
     script('origin-config', `window.__novvyStageChain__=${inline(stageChain)};window.__ORIGIN_CONFIG__=${inline(settings)};`),
     script('playable-bridge', readEngine('events.js')),
+    originCtaBridge(config),
     ...injection.bodyScripts,
     ...template.game.scripts.map(sourceScript),
     script('origin-adapter', readEngine('engine.js')),
@@ -45,8 +51,8 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
 export function originPreview({ plugin: entry, task, taskId }) {
   const config = effectiveConfig(entry.template, task.config);
   const generated = taskGeneratedDir(taskId);
-  const video = fs.existsSync(path.join(generated, 'intro-video.mp4')) ? `/project/${taskId}/generated/intro-video.mp4`
-    : fs.existsSync(path.join(taskUploadsDir(taskId), 'intro-video.mp4')) ? `/project/${taskId}/uploads/intro-video.mp4` : null;
+  const uploaded = path.join(taskUploadsDir(taskId), 'intro-video.mp4');
+  const video = fs.existsSync(uploaded) ? `/project/${taskId}/uploads/intro-video.mp4?v=${fs.statSync(uploaded).mtimeMs}` : null;
   const poster = fs.existsSync(path.join(generated, 'poster.webp')) ? `/project/${taskId}/generated/poster.webp` : null;
   return originHtml({ root: entry.templateDir, pluginDir: entry.dir, template: entry.template, config, preview: true,
     media: { introVideo: video, introPoster: poster } }).html;

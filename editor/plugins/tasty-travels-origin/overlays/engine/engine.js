@@ -2,23 +2,31 @@
   'use strict';
   var config = window.__ORIGIN_CONFIG__, active = !config.intro, settled = false, installed = false;
   var steps = 0, peakTier = 0, nextCta = config.policy.afterSteps, intervalIndex = 0;
+  var lastProgress = 0;
   function emit(name, detail) { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); }
-  function cta(manual, scene) { if (active) emit('novvy:origin-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene }); }
+  function cta(manual, scene, timing) { if (active) emit('novvy:origin-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene, everySteps: timing && timing.gap, repeat: timing && timing.repeat }); }
+  function reportProgress(force) {
+    if (!active || settled || !steps) return;
+    var progress = Math.min(100, peakTier / 9 * 100);
+    if (!force && progress <= lastProgress) return;
+    lastProgress = progress;
+    emit('novvy:origin-step', { step: steps, progress: progress });
+  }
   function step() {
     if (!active || settled) return;
     steps += 1;
-    emit('novvy:origin-step', { step: steps, progress: Math.min(100, peakTier / 9 * 100) });
+    reportProgress(true);
     if (config.policy.mode === 'steps' && steps >= nextCta) {
-      cta(false, 'valid-food-drop');
-      var gaps = config.policy.intervals, gap = gaps[Math.min(intervalIndex++, gaps.length - 1)];
+      var gaps = config.policy.intervals, gap = gaps[Math.min(intervalIndex, gaps.length - 1)];
+      cta(false, 'valid-food-drop', { gap: gap || 0, repeat: intervalIndex++ > 0 });
       nextCta = gap ? nextCta + gap : Infinity;
     }
   }
   function result(won) {
     if (!active || settled) return;
+    reportProgress(false);
     settled = true;
     emit('novvy:origin-result', { result: won ? 'win' : 'fail', replay: false });
-    if (won) cta(false, 'playable-complete');
   }
   function wrap(p, name, fn) { var original = p[name]; if (typeof original !== 'function') throw new Error('Missing original method: ' + name); p[name] = function () { return fn.call(this, original, arguments); }; }
   window.__ORIGIN_ADAPTER__ = {
@@ -47,7 +55,9 @@
       });
       wrap(p, 'createTool2', function (original, args) {
         peakTier = Math.max(peakTier, args[0]);
-        return original.apply(this, args);
+        var out = original.apply(this, args);
+        reportProgress(false);
+        return out;
       });
       wrap(p, 'EndStep', function (original, args) {
         var wasEnded = this.isEnd, out = original.apply(this, args);

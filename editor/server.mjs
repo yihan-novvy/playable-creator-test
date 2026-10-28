@@ -36,6 +36,7 @@ import {
   computeStatus,
   stepInputFilesFor,
   isColoreverTemplate,
+  isOriginTemplate,
   updateColoreverTemplate,
 } from './lib/store.mjs';
 import { STEP_IDS, runStep, runAll, templateSteps, stepPrerequisites, effectiveConfig } from './core/runner.mjs';
@@ -339,7 +340,12 @@ async function handleApi(req, res, url) {
           for (const single of results) recordStepResult(taskId, single);
           return results;
         }
-        const single = await runStep({ ...common, stepId, engine });
+        const introState = isOriginTemplate(patched.templateId) && stepId === 'pack'
+          && effectiveConfig(getEntry(patched.templateId).template, patched.config).intro?.enabled === true
+          ? computeStatus(taskId, steps, stepInputFilesFor(patched.templateId)).steps.intro : null;
+        const single = introState && (!introState.ok || introState.stale)
+          ? { stepId, ok: false, error: '片头素材尚未处理或已更新，请先重新运行开场视频。', metrics: null, warnings: [], durationMs: 0 }
+          : await runStep({ ...common, stepId, engine });
         recordStepResult(taskId, single);
         return single;
       });
@@ -400,7 +406,9 @@ async function handleApi(req, res, url) {
   // 目录里可能存在的历史 *.zip,避免把旧导出打进新导出。
   if (rest[0] === 'export' && req.method === 'GET') {
     const patched = readTask(taskId);
-    if (isColoreverTemplate(patched.templateId) && !patched.steps.pack?.ok) {
+    const originPack = isOriginTemplate(patched.templateId)
+      ? computeStatus(taskId, taskSteps(patched), stepInputFilesFor(patched.templateId)).steps.pack : null;
+    if ((isColoreverTemplate(patched.templateId) && !patched.steps.pack?.ok) || (originPack && (!originPack.ok || originPack.stale))) {
       return sendError(res, 409, '当前游戏效果尚未打包，请先重新运行打包');
     }
     const resultDir = taskResultDir(taskId);

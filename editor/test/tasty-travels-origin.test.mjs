@@ -1,17 +1,20 @@
+import { installOriginCta } from './lib/origin-cta-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { getEntry } from '../core/registry.mjs';
 import { originHtml } from '../core/lib/origin-playable.mjs';
 import { configWhitelistFor } from '../lib/store.mjs';
-function runtime(intro=false){
+export function runtime(intro=false){
  const entry=getEntry('tasty-travels-origin'),calls=[],listeners=new Map();
  const window={__novvyStageChain__:intro?['video','playable']:['playable'],__ORIGIN_CONFIG__:{intro,policy:{mode:'steps',afterSteps:2,intervals:[2]}},addEventListener(k,f){if(!listeners.has(k))listeners.set(k,[]);listeners.get(k).push(f);},dispatchEvent(e){for(const f of listeners.get(e.type)||[])f(e);},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStep','onComplete','onReplay','endStage','click'].map(k=>[k,(...args)=>calls.push([k,...args])])),NovvyAnalytics:{registerMedia(){calls.push(['media'])}}};
  const ctx=vm.createContext({window,console:{log(){}},document:{getElementById:()=>intro?{}:null},CustomEvent:class{constructor(type,o){this.type=type;this.detail=o?.detail;}}});
- for(const f of ['events','engine'])vm.runInContext(fs.readFileSync(`${entry.dir}/overlays/engine/${f}.js`,'utf8'),ctx);
+ vm.runInContext(fs.readFileSync(`${entry.dir}/overlays/engine/events.js`,'utf8'),ctx);
+ const cta=installOriginCta(ctx);
+ vm.runInContext(fs.readFileSync(`${entry.dir}/overlays/engine/engine.js`,'utf8'),ctx);
  class Game{constructor(){this.tool={};this.isEnd=false;}downLoadApp(){}game1_Start(){calls.push(['native-start']);}game1_End(){this.tool=null;}createTool2(tier){if(tier>=9)this.EndStep();}EndStep(){this.isEnd=true;}}
  const telemetry={report(){calls.push(['source-telemetry']);}};const req=k=>k==='GameScript'?{default:Game}:{MarkUtil:telemetry};
  window.__ORIGIN_ADAPTER__.install(req);window.__ORIGIN_ADAPTER__.install(req);window.__ORIGIN_ADAPTER__.start(()=>calls.push(['launch']));
- const game=new Game();return {window,calls,game,telemetry,drop(){game.tool={};game.game1_End();},emit:(type,detail)=>window.dispatchEvent({type,detail})};
+ const game=new Game();return {cta,window,calls,game,telemetry,drop(){game.tool={};game.game1_End();},emit:(type,detail)=>window.dispatchEvent({type,detail})};
 }
 export default async function test(a){
  const entry=getEntry('tasty-travels-origin');a.check(configWhitelistFor(entry.id).has('playableCta'),'settings persist');

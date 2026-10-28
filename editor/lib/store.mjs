@@ -128,6 +128,10 @@ export function isColoreverTemplate(templateId) {
   return templateId === 'colorever' || templateId === 'colorever-new';
 }
 
+export function isOriginTemplate(templateId) {
+  return ['colorever-origin', 'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin'].includes(templateId);
+}
+
 // Fixed level libraries declare their range and defaults in the plugin/manifest.
 // Adding another such template must not inherit DragonCube's ten-level limit.
 function fixedLevelTemplate(templateId) {
@@ -222,6 +226,8 @@ export function updateTaskConfig(id, patch) {
   if ('music' in (patch || {})) delete doc.steps.pack;
   // 转化时机只影响 pack 内联数据;第二关还影响 level 步骤写出的 level2.json。
   if ('playableCta' in (patch || {})) delete doc.steps.pack;
+  // Origin settings affect the composed HTML, not the transcoded media.
+  if (isOriginTemplate(doc.templateId) && ['hud', 'intro', 'cta', 'patternId'].some(key => key in (patch || {}))) delete doc.steps.pack;
   if (doc.templateId === 'escape-arrow' && 'gameplay' in (patch || {})) delete doc.steps.pack;
   // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
   if ('opening' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
@@ -251,6 +257,7 @@ export function recordUpload(id, slot, meta) {
   const doc = readTask(id);
   if (!doc) return null;
   doc.uploads[slot] = meta;
+  if (isOriginTemplate(doc.templateId) && ['intro-video', 'intro-poster'].includes(slot)) { delete doc.steps.intro; delete doc.steps.pack; }
   if (slot === 'background-music') delete doc.steps.pack;
   // 片尾视频/第二关背景的上传与清除,会让依赖它们的步骤过期(colorever 与
   // dragon-cube 的双 playable 管线同构)。
@@ -263,6 +270,7 @@ export function clearUpload(id, slot) {
   const doc = readTask(id);
   if (!doc) return null;
   delete doc.uploads[slot];
+  if (isOriginTemplate(doc.templateId) && ['intro-video', 'intro-poster'].includes(slot)) { delete doc.steps.intro; delete doc.steps.pack; }
   if (slot === 'background-music') {
     delete doc.steps.pack;
     if (isColoreverTemplate(doc.templateId)) { doc.config ||= {}; doc.config.music = { source: 'original' }; }

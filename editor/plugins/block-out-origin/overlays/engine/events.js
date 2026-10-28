@@ -28,13 +28,12 @@
   // Only an actual page departure ends an unfinished stage. Backgrounding or
   // opening a store can resume and must not fabricate a final result.
   window.addEventListener('pagehide', function (event) {
-    if (ended || event.persisted) return;
+    if (!entered || ended || event.persisted) return;
     ended = true;
     try { NovvyPlayable.endStage(); } catch (_) {}
   });
   window.addEventListener('novvy:block-out-cta', function (event) {
-    var detail = event.detail;
-    console.log('[NovvyCTA] Block Out', detail.scene, detail.click_source);
-    try { NovvyPlayable.click({ click_source: detail.click_source, scene: detail.scene }); } catch (_) {}
+    if (!entered) return;
+    window.dispatchEvent(new CustomEvent(event.detail.click_source === 'cta_click' ? 'novvy:cta-interact' : 'novvy:cta-moment', { detail: event.detail }));
   });
 })();

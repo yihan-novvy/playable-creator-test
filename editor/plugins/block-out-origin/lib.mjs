@@ -5,6 +5,7 @@ import { buildWsOverlayInjection } from '../../core/lib/ws-overlays.mjs';
 import { normalizeCtaPolicy } from '../../core/lib/helpers.mjs';
 import { effectiveConfig } from '../../core/runner.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
+import { originCtaBridge } from '../../core/lib/origin-playable.mjs';
 
 const inline = value => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 const script = (tag, source) => `<script data-novvy-${tag}>${source.replace(/<\/script/gi, '<\\/script')}</script>`;
@@ -34,6 +35,7 @@ export function blockOutHtml({ root, overlaysRoot, template, config, media = {},
     '<button id="block-out-sound" type="button" aria-label="Unmute sound">Sound off</button>',
     script('block-out-config', `window.__novvyStageChain__=${inline(stageChain)};window.__BLOCK_OUT_CONFIG__=${inline(settings)};`),
     script('playable-bridge', readEngine('events.js')),
+    originCtaBridge(config),
     script('block-out-engine', readEngine('engine.js')),
     ...injection.bodyScripts,
     preview ? script('block-out-assets', assetsJs) : '<script src="assets.js"></script>',

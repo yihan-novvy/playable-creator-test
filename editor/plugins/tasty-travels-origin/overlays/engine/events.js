@@ -18,16 +18,17 @@
     var detail = event.detail;
     ended = !detail.replay;
     try { window.NovvyPlayable.onComplete({ result: detail.result, continue_playing: !!detail.replay }); } catch (_) {}
+    if (detail.result === 'win') window.dispatchEvent(new CustomEvent('novvy:playable-complete', { detail: { replayable: !!detail.replay } }));
   });
   window.addEventListener('novvy:origin-replay', function () {
     if (!settled || ended) return;
     settled = false;
     try { window.NovvyPlayable.onReplay(); } catch (_) {}
+    window.dispatchEvent(new CustomEvent('novvy:playable-replay'));
   });
   window.addEventListener('novvy:origin-cta', function (event) {
     if (!entered) return;
-    console.log('[NovvyCTA]', event.detail.scene, event.detail.click_source);
-    try { window.NovvyPlayable.click({ click_source: event.detail.click_source, scene: event.detail.scene }); } catch (_) {}
+    window.dispatchEvent(new CustomEvent(event.detail.click_source === 'cta_click' ? 'novvy:cta-interact' : 'novvy:cta-moment', { detail: event.detail }));
   });
   window.addEventListener('pagehide', function (event) {
     if (!entered || ended || event.persisted) return;

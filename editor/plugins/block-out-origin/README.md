@@ -26,3 +26,5 @@
 纯试玩：`index.html`、`assets.js`、`core.js`。启用视频另带转码后的 `intro-video.mp4` 和 `poster.webp`。预览和打包共用同一组装逻辑；共享 `core:intro` 负责转码和海报。
 
 运行 `node editor/test/run-all.mjs block-out-origin` 和模板源测试。适配器回归覆盖移动/出门去重、累计进度、CTA 间隔、原生跳转治理、视频闸门、成功/失败和离开结算。正式投放仍需使用真实宿主 SDK 在 iOS/Android 广告 WebView 验收，编辑器预览不会发送生产埋点。
+
+转化统一复用 core CTA bridge：步数循环已触发后，通关不重复自动跳转；最终通关后普通触压可再次转化，Canvas 下载按钮保留 `cta_click` 且不重复。无 SDK 的编辑器预览只记录触发，不调用原版跳转兜底。

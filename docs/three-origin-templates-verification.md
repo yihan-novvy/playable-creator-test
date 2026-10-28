@@ -34,3 +34,14 @@
 ## 未验证范围
 
 生产广告 SDK、真实手机广告 WebView、三套最高目标完整通关尚未实测；成功分支以真实原生规则测试及适配器测试验证。浏览器安全策略禁止 file: 协议，因此双击本地 HTML 启动未验证；已验证本地 HTTP 启动及包内资源完整性。此次运行的是上述目标测试，并非全仓测试套件。
+
+## 2026-10-28 一致性修复复验
+
+- Block Out、FreeCell、Grill Sort、Tasty Travels 复用 Colorever 的 core CTA bridge；统一 `cta-card`、`cta-moment`、`playable-complete` 和 `post-complete-interact` 场景。已发生步数转化时，最终通关不重复自动转化；Canvas 原生下载点击优先于普通回访触压，避免同击双报。
+- Grill Sort 在原生 `releaseDone` 打包完成时补报进度，Tasty Travels 在真实合成时补报；100% 必须先于成功结算。异步读数使用当前 step，不推进 CTA 计数；SDK 的 interaction_count 不等于严格去重的手势次数。
+- 三套新模板在线预览使用当前上传视频，视频 URL 带文件版本。五套 Origin 模板修改标题、片头、GO、CTA 或图案后使旧包失效，文本保存后立即更新工作台。更换/删除视频或海报会使片头处理和打包失效；API 拒绝导出旧包或使用未更新的转码文件打包。
+- 628 项目标检查通过：新增 origin-consistency 64、origin-editor 148；既有四模板 99、Colorever Origin 215、playable-bridge 65、cta-continuation 27、config-patch 10。注册表 0 个警告。
+- 浏览器实测：标题修改后旧 ZIP 入口隐藏；Tasty 第二次投放后的合成自动补报 11.11%，不需要第三次投放；Grill 第三次拖拽后的打包自动补报 2.5%，不需要第四次拖拽；原生手动 CTA 使用 cta_click / cta-card。
+- FreeCell 原生按钮保留动画，将延迟 300ms 的下载上报改为手势内即时上报，避免通关后的双报；真实浏览器确认点击后仅一次手动 CTA，且可继续移牌。Block Out 的有效拖动和手动 CTA 也通过实测。
+- 四个示例任务已重新打包，修复验证服务位于 8093；旧 8091/8092 进程未重启。临时 QA 任务与测试 SDK 已清理，正式示例不含测试 SDK。
+- 原冻结 HTML、游戏构建产物与默认 CTA 节奏未改。最高目标的 100% 时序用原生回调/适配器测试验证，尚未新增真机 WebView 或生产 SDK 投放验收。

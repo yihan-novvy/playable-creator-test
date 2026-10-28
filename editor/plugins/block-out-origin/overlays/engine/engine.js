@@ -10,7 +10,7 @@
   cta.hidden = sound.hidden = !active;
   function emit(name, detail) { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); }
   function cells(block) { return JSON.stringify((block.cellsData || []).map(function (cell) { return [cell.x, cell.y]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; })); }
-  function convert(manual, scene) { emit('novvy:block-out-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene }); }
+  function convert(manual, scene, timing) { emit('novvy:block-out-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene, everySteps: timing && timing.gap, repeat: timing && timing.repeat }); }
   function commit(record, block) {
     if (!active || settled || !record || record.done || records.get(block) !== record) return;
     if (!removed.has(block) && record.cells === cells(block)) return;
@@ -19,9 +19,9 @@
     var progress = Math.min(100, cleared / config.totalBlocks * 100);
     emit('novvy:block-out-step', { step: steps, progress: progress });
     if (config.policy.mode === 'steps' && steps >= nextCta && cleared < config.totalBlocks) {
-      convert(false, 'valid-move');
       var gaps = config.policy.intervals;
-      var gap = gaps[Math.min(ctaIndex++, gaps.length - 1)];
+      var gap = gaps[Math.min(ctaIndex, gaps.length - 1)];
+      convert(false, 'valid-move', { gap: gap || 0, repeat: ctaIndex++ > 0 });
       nextCta = gap ? nextCta + gap : Infinity;
     }
   }
@@ -29,7 +29,7 @@
     if (settled || !active) return;
     settled = true;
     emit(won ? 'novvy:playable-complete' : 'novvy:playable-failed');
-    convert(false, won ? 'playable-complete' : 'playable-failed');
+    if (!won) convert(false, 'playable-failed');
   }
   function audio() {
     if (!api) return;

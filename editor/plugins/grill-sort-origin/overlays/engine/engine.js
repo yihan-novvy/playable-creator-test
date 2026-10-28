@@ -2,24 +2,34 @@
   'use strict';
   var config = window.__ORIGIN_CONFIG__, active = !config.intro, settled = false;
   var game = null, steps = 0, nextCta = config.policy.afterSteps, intervalIndex = 0;
+  var lastProgress = 0;
   var patched = new WeakSet();
   function emit(name, detail) { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); }
-  function cta(manual, scene) { if (active) emit('novvy:origin-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene }); }
+  function cta(manual, scene, timing) { if (active) emit('novvy:origin-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene, everySteps: timing && timing.gap, repeat: timing && timing.repeat }); }
+  function reportProgress(force) {
+    if (!active || settled || !steps) return;
+    var progress = Math.min(100, (game ? game._doneNum : 0) / 120 * 100);
+    if (!force && progress <= lastProgress) return;
+    lastProgress = progress;
+    // An animation can finish after the move. Update its progress without
+    // inventing another player action or advancing the CTA counter.
+    emit('novvy:origin-step', { step: steps, progress: progress });
+  }
   function step() {
     if (!active || settled) return;
     steps += 1;
-    emit('novvy:origin-step', { step: steps, progress: Math.min(100, (game ? game._doneNum : 0) / 120 * 100) });
+    reportProgress(true);
     if (config.policy.mode === 'steps' && steps >= nextCta) {
-      cta(false, 'valid-skewer-move');
-      var gaps = config.policy.intervals, gap = gaps[Math.min(intervalIndex++, gaps.length - 1)];
+      var gaps = config.policy.intervals, gap = gaps[Math.min(intervalIndex, gaps.length - 1)];
+      cta(false, 'valid-skewer-move', { gap: gap || 0, repeat: intervalIndex++ > 0 });
       nextCta = gap ? nextCta + gap : Infinity;
     }
   }
   function result(won) {
     if (!active || settled) return;
+    reportProgress(false);
     settled = true;
     emit('novvy:origin-result', { result: won ? 'win' : 'fail', replay: false });
-    if (won) cta(false, 'playable-complete');
   }
   function wrap(proto, name, fn) { var original = proto[name]; if (typeof original !== 'function') throw new Error('Missing original game method: ' + name); proto[name] = function () { return fn.call(this, original, arguments); }; }
   function patch(name, value) {
@@ -28,6 +38,7 @@
     if (name === 'Game') {
       patched.add(value);
       wrap(p, 'initGame', function (original, args) { game = this; return original.apply(this, args); });
+      wrap(p, 'releaseDone', function (original, args) { var out = original.apply(this, args); reportProgress(false); return out; });
       wrap(p, 'checkSuccess', function (original, args) { var valid = !this.isFail && this._doneNum >= 120; var out = original.apply(this, args); if (valid) result(true); return out; });
       wrap(p, 'checkFail', function (original, args) { var out = original.apply(this, args); result(false); return out; });
     } else if (name === 'Box') {

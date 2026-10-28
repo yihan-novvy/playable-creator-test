@@ -57,7 +57,9 @@
       } catch (e) {}
       return;
     }
-    openStoreFallback();
+    // Original-engine adapters route their native download API back here.
+    // Their editor previews have no SDK; calling that API would recurse.
+    if (!window.__novvyCtaSdkOnly) openStoreFallback();
   }
 
   /* 卡片显示事件:'bar'=底部常驻条(试玩开始,含双 playable 第一关);
@@ -72,6 +74,7 @@
   /* Download 的兜底交互入口:每次手动点击都请求转化,与自动时机去重独立。
      注入引擎的冷却/返回保护不会锁死后续点击,也不会提前消耗 CTA 时机。 */
   window.addEventListener('novvy:cta-interact', function () {
+    manualGestureVersion += 1;
     convert('cta-card');
   });
   // A replay is an explicit CTA request, independent of the completed round's
@@ -97,6 +100,14 @@
      转化后用户还会切回来继续玩/重开,回访触压保持纯游玩,不武装——重玩
      按钮(Try again/Play again)与常驻底卡的主动点击照常转化。 */
   var interactArmed = false, interactListening = false, lastInteractAt = -1e9;
+  var manualGestureVersion = 0, canvasGesture = null;
+  function postCompleteInteract() {
+    if (!interactArmed) return;
+    var now = Date.now();
+    if (now - lastInteractAt < 300) return;
+    lastInteractAt = now;
+    convert('post-complete-interact');
+  }
   function replayContinues(event) {
     return !!(window.__novvyReplayable && event && event.detail && event.detail.replayable);
   }
@@ -110,12 +121,26 @@
       /* .novvy-intro-go = 片头/片尾 GO 闸门按钮:点 GO 是继续漏斗(进下一段
          playable),不是再跳一次商店——真机上 pointerdown 先转化跳店会把
          click 打断,震动与换关全都跑不到。 */
-      if (target && target.closest && target.closest('#novvy-cta,[data-novvy-replay],.novvy-intro-go')) return;
-      var now = Date.now();
-      if (now - lastInteractAt < 300) return;
-      lastInteractAt = now;
-      convert('post-complete-interact');
+      if (target && target.closest && target.closest('#novvy-cta,[data-novvy-click-source="cta_click"],[data-novvy-replay],.novvy-intro-go,#origin-sound,#block-out-sound')) return;
+      // Canvas engines identify their download button on release. Let that
+      // native handler report cta_click before considering a background tap.
+      if (window.__novvyDeferCanvasCta && target && target.closest && target.closest('canvas')) {
+        canvasGesture = { id: event.pointerId, version: manualGestureVersion };
+        return;
+      }
+      postCompleteInteract();
     }, true);
+    if (window.__novvyDeferCanvasCta) {
+      document.addEventListener('pointerup', function (event) {
+        var gesture = canvasGesture;
+        if (!gesture || gesture.id !== event.pointerId) return;
+        canvasGesture = null;
+        setTimeout(function () {
+          if (gesture.version === manualGestureVersion && visible()) postCompleteInteract();
+        }, 0);
+      }, true);
+      document.addEventListener('pointercancel', function () { canvasGesture = null; }, true);
+    }
   }
 
   /* 试玩开始:亮出底部常驻卡(双 playable 第一关同样亮)。双 playable 的

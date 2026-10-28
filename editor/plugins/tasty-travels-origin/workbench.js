@@ -26,7 +26,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
   }
   function textField(label, key, subkey, value, placeholder = '') {
     const input = el('input', { type: 'text', placeholder }); input.value = value || '';
-    input.addEventListener('change', () => save({ [key]: { [subkey]: input.value.trim() } }));
+    input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.value.trim() } }); await refresh(true); });
     return field(label, input);
   }
   // CTA 循环节奏(colorever-new 步数循环同款语义):steps 模式首跳第 N 步,

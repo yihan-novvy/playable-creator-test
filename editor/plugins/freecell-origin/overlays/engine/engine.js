@@ -2,10 +2,11 @@
   'use strict';
   var config = window.__ORIGIN_CONFIG__, active = !config.intro, settled = false;
   var steps = 0, nextCta = config.policy.afterSteps, intervalIndex = 0;
+  window.__novvyReplayable = true;
   var attached = new WeakSet();
   function emit(name, detail) { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); }
-  function cta(manual, scene) {
-    if (active) emit('novvy:origin-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene });
+  function cta(manual, scene, timing) {
+    if (active) emit('novvy:origin-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene, everySteps: timing && timing.gap, repeat: timing && timing.repeat });
   }
   function progress(field) {
     return Math.min(100, field.engine.foundations.columns.reduce(function (sum, column) { return sum + column.cards.length; }, 0) / 52 * 100);
@@ -15,9 +16,9 @@
     steps += 1;
     emit('novvy:origin-step', { step: steps, progress: progress(field) });
     if (config.policy.mode === 'steps' && steps >= nextCta && !field.engine.foundationsFilled()) {
-      cta(false, 'valid-card-move');
       var gaps = config.policy.intervals;
-      var gap = gaps[Math.min(intervalIndex++, gaps.length - 1)];
+      var gap = gaps[Math.min(intervalIndex, gaps.length - 1)];
+      cta(false, 'valid-card-move', { gap: gap || 0, repeat: intervalIndex++ > 0 });
       nextCta = gap ? nextCta + gap : Infinity;
     }
   }
@@ -25,7 +26,6 @@
     if (!active || settled) return;
     settled = true;
     emit('novvy:origin-result', { result: won ? 'win' : 'fail', replay: !won });
-    if (won) cta(false, 'playable-complete');
   }
   function attach(field) {
     if (!field || attached.has(field)) return;
@@ -37,6 +37,12 @@
   }
   var showWindow = Game.showWindow;
   Game.showWindow = function (next) {
+    // Native buttons animate immediately but delay callSDK by 300ms. Report
+    // the hit during the gesture so the shared Canvas bridge can deduplicate
+    // it against a post-completion background tap; retain button animations.
+    if (next && typeof next.callSdk === 'function') {
+      next.callSdk = function () { cta(true, 'native-cta'); };
+    }
     var value = showWindow.apply(this, arguments);
     attach(next.field);
     return value;
