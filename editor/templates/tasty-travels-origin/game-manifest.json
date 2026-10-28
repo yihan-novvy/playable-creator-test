@@ -1,0 +1,29 @@
+{
+  "id": "tasty-travels-origin",
+  "name": "Tasty Travels Origin",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "constants": {
+    "game": {
+      "scripts": [
+        "game/assets.js",
+        "game/settings.js",
+        "game/main.js",
+        "game/loader.js"
+      ],
+      "boot": "game/boot.js"
+    },
+    "targetTier": 9,
+    "sourceSha256": "ea90ccbe663339d8534fccc256ebc1fbfcd0617d69e31a73b791c51d42c10bbe",
+    "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/b6ce2005e7d57fbd046717eba4bda411",
+    "appStoreUrl": "https://apps.apple.com/us/app/tasty-travels-merge-game/id6471045672",
+    "fileHashes": {
+      "game/assets.js": "7ef012d5a7b2f9f40a2befca33d772940239841b1f81093cf801ace0e9851b82",
+      "game/settings.js": "8a4099d671db0428dbd61ac90a7a79d13094dbb6a0f8b4726b304df0e47f09f8",
+      "game/main.js": "ee4240aa3020af2ce80d0dd8df4c6ec9eb0b0b03a158f9b583f95f3a770b9745",
+      "game/loader.js": "9833ec556a797200b13f00af878cf61a3f379768d010fd3569484606174c4166",
+      "game/boot.js": "d4b6555952c25170004c0eea361cab88b6b30b782fa1665ac83d51e9f9f85a29",
+      "game/index.html": "29b73f3997a025a52647f205377923ecfe7a87505bc1112811ecb3743d5c0689"
+    }
+  }
+}

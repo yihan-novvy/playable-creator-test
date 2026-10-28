@@ -120,6 +120,7 @@ const CONFIG_WHITELISTS = new Map([
   ['block-out-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
   ['freecell-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
   ['grill-sort-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
+  ['tasty-travels-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
   ['colorever-origin', new Set(['patternId', 'hud', 'intro', 'cta', 'playableCta'])],
 ]);
 

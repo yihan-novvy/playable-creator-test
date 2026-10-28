@@ -1,0 +1,21 @@
+{
+  "appStoreUrl": "https://apps.apple.com/us/app/tasty-travels-merge-game/id6471045672",
+  "publisher": "Century Games Pte. Ltd.",
+  "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/b6ce2005e7d57fbd046717eba4bda411",
+  "observedAt": "2026-10-27",
+  "originalSha256": "ea90ccbe663339d8534fccc256ebc1fbfcd0617d69e31a73b791c51d42c10bbe",
+  "fingerprint": "b6ce2005e7d57fbd046717eba4bda411",
+  "selection": {
+    "searchAppId": "6471045672",
+    "dateRange": [
+      "2025-10-28",
+      "2026-10-27"
+    ],
+    "candidates": 1389,
+    "estimatedImpressions": "244亿",
+    "activeDays": 303,
+    "channel": "AppLovin"
+  },
+  "attribution": "Insightrackr publisher and original core iOS store ID match; authorship not independently verified.",
+  "originalLoaderSha256": "b8f888a24591f9f6d11d37a363b5e88c4bad6b89e8ce8b464681ed8177f26482"
+}

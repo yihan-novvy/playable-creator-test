@@ -1,0 +1,58 @@
+{
+  "id": "tasty-travels-origin",
+  "name": "Tasty Travels Origin（片头+原版合成）",
+  "template": "tasty-travels-origin",
+  "workbench": "tasty-travels-origin",
+  "steps": [
+    {
+      "id": "intro",
+      "runner": "core:intro"
+    },
+    {
+      "id": "pack",
+      "runner": "./steps/pack.mjs"
+    }
+  ],
+  "uploads": {
+    "intro-video": {
+      "file": "intro-video.mp4",
+      "magic": "mp4"
+    },
+    "intro-poster": {
+      "file": "intro-poster.jpg",
+      "magic": "jpg"
+    }
+  },
+  "overlays": {
+    "hud": "overlays/hud",
+    "engine": "overlays/engine"
+  },
+  "defaults": {
+    "hud": {
+      "enabled": false,
+      "titleEnabled": false,
+      "titleLine1": "Tasty Travels",
+      "titleLine2": "Drop and merge tasty treats",
+      "ariaLabel": ""
+    },
+    "intro": {
+      "enabled": false,
+      "ariaLabel": "",
+      "goEnabled": false,
+      "goText": "GO"
+    },
+    "cta": {
+      "endMask": false
+    },
+    "playableCta": {
+      "mode": "steps",
+      "afterSteps": 20,
+      "intervals": [
+        10,
+        8,
+        6,
+        4
+      ]
+    }
+  }
+}
