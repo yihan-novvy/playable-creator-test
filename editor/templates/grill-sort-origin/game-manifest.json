@@ -1,0 +1,25 @@
+{
+  "id": "grill-sort-origin",
+  "name": "Grill Sort Origin",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "constants": {
+    "game": {
+      "scripts": [
+        "game/assets.js",
+        "game/loader.js"
+      ],
+      "boot": "game/boot.js"
+    },
+    "totalItems": 120,
+    "sourceSha256": "ea13118ca9ce19ccd6468343be013d6a59798e3079fc78c787e067e14186ceab",
+    "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/e1946a2340b3980912c17f0f89d62a9a",
+    "appStoreUrl": "https://apps.apple.com/us/app/grill-sort/id6742812903",
+    "fileHashes": {
+      "game/assets.js": "f8ed9e188ac377c9d2778f1af74339d1a3756034d89398facab9a0811074540a",
+      "game/loader.js": "f3e1a5bd5ab507a2ff36c3c2ab4c789a10ebd3938867d6c63b275444f35d6bd1",
+      "game/boot.js": "1a180e51a256a9a231c9c9763a75b4977428ea74e8c38af1b41c01deba27c8a0",
+      "game/index.html": "0fc198b6c652a171f8c05ed22c39a86463561a822bd7fcb28ae0b8dc58e56134"
+    }
+  }
+}

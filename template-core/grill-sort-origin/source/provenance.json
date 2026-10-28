@@ -1,0 +1,21 @@
+{
+  "appStoreUrl": "https://apps.apple.com/us/app/grill-sort/id6742812903",
+  "publisher": "Gloryway Puzzle",
+  "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/e1946a2340b3980912c17f0f89d62a9a",
+  "observedAt": "2026-10-27",
+  "originalSha256": "ea13118ca9ce19ccd6468343be013d6a59798e3079fc78c787e067e14186ceab",
+  "fingerprint": "e1946a2340b3980912c17f0f89d62a9a",
+  "selection": {
+    "searchAppId": "6742812903",
+    "dateRange": [
+      "2025-10-28",
+      "2026-10-27"
+    ],
+    "candidates": 549,
+    "estimatedImpressions": "289亿",
+    "activeDays": 404,
+    "channel": "AppLovin"
+  },
+  "attribution": "Insightrackr publisher and original core iOS store ID match; authorship not independently verified.",
+  "originalLoaderSha256": "57c05155fb82df7baab86f54004b8d9ce1e4b275d417be10dbce7a0d0595d3ad"
+}
