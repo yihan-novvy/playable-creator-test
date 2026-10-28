@@ -1,0 +1,41 @@
+{
+  "id": "freecell-origin",
+  "name": "FreeCell Origin",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": "original",
+      "name": "Original 52-card deal",
+      "path": "game/level.json"
+    }
+  ],
+  "constants": {
+    "game": {
+      "scripts": [
+        "game/vendor.js",
+        "game/config.js",
+        "game/runtime.js",
+        "game/core.js",
+        "game/assets.js",
+        "game/preloader.js"
+      ],
+      "boot": "game/boot.js"
+    },
+    "totalCards": 52,
+    "sourceSha256": "13c61707313af7557f4a2ae70f9e902cdd4e6e055a339457a95487e177d1377a",
+    "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/7a6c019f1f758903024fc87c04e8d747",
+    "appStoreUrl": "https://apps.apple.com/us/app/freecell-card-game/id301987699",
+    "fileHashes": {
+      "game/vendor.js": "edd3ffdb74c0387490cde27a4aea964ff29f91cd0f84f9c2ea0c1425174b3cc0",
+      "game/config.js": "48c15d86bfce8b254381f07a1c00e8053c8999820ab97a7130119b7bc916bedb",
+      "game/runtime.js": "5259e2474856a8ebcd750f6fe63e04a2c9411502065ef5a2413c688edc4e2add",
+      "game/core.js": "c1337aea9901ba4b37a98cec05aca58a2b50fde70469192882f3a2b33facca3a",
+      "game/assets.js": "5120fd44677250aa94c5e89d9213212fc0ae6df8d7e6fb1e83a38a9db5e31afa",
+      "game/preloader.js": "9199249bbeb7fa5db5c3dd4d3efcf908aa4b08814f50b4aa8fd9335a929a42e9",
+      "game/level.json": "3c10a5e2ae12d3173e6ec94b6762080ac86be3270476788f6041a1b4186adb33",
+      "game/boot.js": "b80dc4e6155f4ff9d397afcc7bb312c40da24b6d918c6faca71951944cf9564d",
+      "game/index.html": "9a2ae906020641639f6cf52b7fd1be05d275de8459c9aaf8cf207f472e6d0e5b"
+    }
+  }
+}

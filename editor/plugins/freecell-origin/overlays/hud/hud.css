@@ -1,0 +1,36 @@
+#novvy-training-hud {
+  position: fixed;
+  top: 3.5%;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.novvy-hud-title {
+  text-align: center;
+  font-family: 'Trebuchet MS', 'Arial Rounded MT Bold', Verdana, sans-serif;
+  line-height: 1.08;
+  color: #f8f8ff;
+  font-weight: 1000;
+  letter-spacing: .02em;
+  text-shadow: 0 2px 3px rgba(41, 22, 14, .72);
+}
+.novvy-hud-title #novvy-hud-title-line1 {
+  font-size: clamp(23px, 6.2vw, 34px);
+}
+.novvy-hud-title #novvy-hud-title-line2 {
+  margin-top: .3em;
+  font-size: clamp(15px, 4.6vw, 23px);
+  color: #ffdf4c;
+  text-shadow: 0 2px 3px rgba(75, 40, 9, .7);
+}
+.novvy-hud-title div:empty { display: none; }
+.novvy-hud-title div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92vw; }
+@media (orientation: landscape) {
+  #novvy-training-hud { top: 2%; }
+  .novvy-hud-title #novvy-hud-title-line1 { font-size: 26px; }
+  .novvy-hud-title #novvy-hud-title-line2 { font-size: 14px; margin-top: .2em; }
+}

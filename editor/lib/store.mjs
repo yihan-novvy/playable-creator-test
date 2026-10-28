@@ -118,6 +118,7 @@ const CONFIG_WHITELISTS = new Map([
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable','replay'])],
   ['block-out-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
+  ['freecell-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
   ['colorever-origin', new Set(['patternId', 'hud', 'intro', 'cta', 'playableCta'])],
 ]);
 

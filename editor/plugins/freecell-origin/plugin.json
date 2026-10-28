@@ -1,0 +1,58 @@
+{
+  "id": "freecell-origin",
+  "name": "FreeCell Origin（片头+原版纸牌）",
+  "template": "freecell-origin",
+  "workbench": "freecell-origin",
+  "steps": [
+    {
+      "id": "intro",
+      "runner": "core:intro"
+    },
+    {
+      "id": "pack",
+      "runner": "./steps/pack.mjs"
+    }
+  ],
+  "uploads": {
+    "intro-video": {
+      "file": "intro-video.mp4",
+      "magic": "mp4"
+    },
+    "intro-poster": {
+      "file": "intro-poster.jpg",
+      "magic": "jpg"
+    }
+  },
+  "overlays": {
+    "hud": "overlays/hud",
+    "engine": "overlays/engine"
+  },
+  "defaults": {
+    "hud": {
+      "enabled": false,
+      "titleEnabled": false,
+      "titleLine1": "FreeCell",
+      "titleLine2": "Move cards from Ace to King",
+      "ariaLabel": ""
+    },
+    "intro": {
+      "enabled": false,
+      "ariaLabel": "",
+      "goEnabled": false,
+      "goText": "GO"
+    },
+    "cta": {
+      "endMask": false
+    },
+    "playableCta": {
+      "mode": "steps",
+      "afterSteps": 20,
+      "intervals": [
+        10,
+        8,
+        6,
+        4
+      ]
+    }
+  }
+}

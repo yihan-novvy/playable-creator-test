@@ -1,0 +1,23 @@
+{
+  "appStoreUrl": "https://apps.apple.com/us/app/freecell-card-game/id301987699",
+  "appId": "301987699",
+  "publisher": "MobilityWare",
+  "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/7a6c019f1f758903024fc87c04e8d747",
+  "fingerprint": "7a6c019f1f758903024fc87c04e8d747",
+  "observedAt": "2026-10-27",
+  "selection": {
+    "range": "2025-10-28 through 2026-10-27",
+    "channel": "Applovin",
+    "listedDays": 355,
+    "estimatedImpressions": "29亿",
+    "reason": "App Store ID and publisher match; playable move verified; complete local source and assets."
+  },
+  "identityEvidence": "Downloaded CONFIG.appStoreUrl contains 301987699 and Android URL contains com.mobilityware.freecell. This identifies the advertised app, not authorship.",
+  "originalSha256": "13c61707313af7557f4a2ae70f9e902cdd4e6e055a339457a95487e177d1377a",
+  "loaderSha256": "0ffafd6ea6a9f3450af3576dc25d95539a34b742c827d4adb2148d97468defb1",
+  "originalTriggers": {
+    "tapsToRedirect": 15,
+    "secToRedirect": null,
+    "locksInputAfterThreshold": true
+  }
+}

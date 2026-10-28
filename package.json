@@ -6,7 +6,7 @@
   ],
   "scripts": {
     "dev": "node editor/server.mjs",
-    "build": "npm run build -w template-core/colorever-gemsort && npm run build -w template-core/dragon-cube && npm run build -w template-core/escape-arrow && npm run build -w template-core/water-sort && npm run build:template -w template-core/colorever-abandoned && npm run build -w template-core/colorever-new && npm run build -w template-core/colorever-origin && npm run build -w template-core/block-out-origin",
+    "build": "npm run build -w template-core/colorever-gemsort && npm run build -w template-core/dragon-cube && npm run build -w template-core/escape-arrow && npm run build -w template-core/water-sort && npm run build:template -w template-core/colorever-abandoned && npm run build -w template-core/colorever-new && npm run build -w template-core/colorever-origin && npm run build -w template-core/block-out-origin && npm run build -w template-core/freecell-origin",
     "test": "node editor/test/run-all.mjs && npm test --workspaces",
     "validate": "node editor/tools/validate-registry.mjs"
   }
