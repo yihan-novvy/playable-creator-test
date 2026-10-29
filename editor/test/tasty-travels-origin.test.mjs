@@ -19,6 +19,10 @@ export function runtime(intro=false){
 export default async function test(a){
  const entry=getEntry('tasty-travels-origin');a.check(configWhitelistFor(entry.id).has('playableCta'),'settings persist');
  const base={root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config:entry.template.defaults};
+ const titled=originHtml({...base,config:{...base.config,hud:{...base.config.hud,titleEnabled:true}}}).html;
+ a.check(!titled.includes('id="origin-sound"'),'game has no sound toggle');
+ a.check(titled.includes('id="novvy-training-hud"')&&!titled.includes('data-novvy-origin-shell'),'HUD overlays the full canvas');
+ a.check(titled.includes('id="novvy-cta"')&&titled.includes('data:image/svg+xml;base64,'),'shared CTA card includes its offline icon');
  a.equal(originHtml(base).stageChain,['playable'],'pure playable');a.equal(originHtml({...base,config:{...base.config,intro:{enabled:true}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'}}).stageChain,['video','playable'],'combined playable');
  const cta=runtime();cta.game.downLoadApp({stopPropagation(){}});cta.game.game1_End();a.equal(cta.calls.filter(c=>c[0]==='onStep').length,0,'CTA release does not launch food');cta.game.game1_Start();cta.game.game1_End();a.equal(cta.calls.filter(c=>c[0]==='onStep').length,1,'next gameplay gesture works after CTA');
  const r=runtime();r.telemetry.report('CHALLENGE_SOLVED');r.game.game1_Start();a.equal(r.calls.filter(c=>c[0]==='onComplete').length,0,'native touch telemetry is not success');

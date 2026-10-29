@@ -27,6 +27,16 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
   let html = read(template.game.indexHtml);
   const files = Object.fromEntries([...template.game.scripts, template.game.boot].map(file => [path.basename(file), read(file)]));
   const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config, media, optionalHudPortraits: true, analytics: false });
+  if (template.game.ctaCard) {
+    const card = template.game.ctaCard;
+    const readCard = name => fs.readFileSync(new URL(`../overlays/cta-card/cta-card.${name}`, import.meta.url), 'utf8');
+    const name = String(card.name).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
+    const values = { __CTA_NAME__: name, __CTA_ICON__: `data:image/svg+xml;base64,${Buffer.from(read(card.icon)).toString('base64')}`,
+      __CTA_TAKEOVER_TEXT__: '', __CTA_TAKEOVER_ACTION_TEXT__: '' };
+    injection.headStyles.push(`<style data-novvy-cta-card>${readCard('css')}</style>`);
+    injection.bodyDom.push(readCard('html').replace(/__CTA_(?:ICON|NAME|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]));
+    injection.bodyScripts.push(script('cta-card', readCard('js')));
+  }
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
   const policy = originCtaPolicy(config.playableCta);
   const settings = { intro: injection.introEnabled, title: injection.hudEnabled, policy };
@@ -45,7 +55,7 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
   if (html.split('<!--ORIGIN_SCRIPTS-->').length !== 2) throw new Error('Original playable boot anchor missing');
   html = html.replace(/<!--ORIGIN_SCRIPTS-->[\s\S]*?<!--ORIGIN_SCRIPTS_END-->/, () => boot);
   html = html.replace('</head>', () => [...injection.headStyles,
-    injection.hudEnabled ? '<style data-novvy-origin-shell>#origin-game{top:88px}#novvy-training-hud{top:12px}@media(orientation:landscape){#origin-game{top:64px}#novvy-training-hud{top:4px}}</style>' : '', '</head>'].join('\n'));
+    injection.hudEnabled && !template.game.hudInsideCanvas ? '<style data-novvy-origin-shell>#origin-game{top:88px}#novvy-training-hud{top:12px}@media(orientation:landscape){#origin-game{top:64px}#novvy-training-hud{top:4px}}</style>' : '', '</head>'].join('\n'));
   return { html, files, stageChain, policy, introEnabled: injection.introEnabled };
 }
 export function originPreview({ plugin: entry, task, taskId }) {

@@ -1,6 +1,7 @@
+:root { --tasty-hud-space: 88px; }
 #novvy-training-hud {
   position: fixed;
-  top: 3.5%;
+  top: max(14px, env(safe-area-inset-top));
   left: 0;
   right: 0;
   z-index: 10;
@@ -30,7 +31,8 @@
 .novvy-hud-title div:empty { display: none; }
 .novvy-hud-title div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 92vw; }
 @media (orientation: landscape) {
-  #novvy-training-hud { top: 2%; }
+  :root { --tasty-hud-space: 64px; }
+  #novvy-training-hud { top: 8px; }
   .novvy-hud-title #novvy-hud-title-line1 { font-size: 26px; }
   .novvy-hud-title #novvy-hud-title-line2 { font-size: 14px; margin-top: .2em; }
 }

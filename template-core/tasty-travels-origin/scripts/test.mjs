@@ -22,5 +22,30 @@ function trial({other='beike0',tier=0,y=5,ended=false,repeated=false}={}){
 trial({other:'beike1'});trial({tier:9});trial({y:-1});trial({ended:true});assert.equal(merges,0,'native merge rejects different types, max tier, lower partner and ended game');
 trial({repeated:true});assert.equal(merges,1,'native collision latch merges same pair only once');
 for(const [file,s]of Object.entries(a.files))if(file.endsWith('.js'))new vm.Script(s);
+// Camera framing must translate touch coordinates once without leaving the
+// shared Cocos Touch mutated (including a native handler that throws).
+const layoutWindow={}, manager={}, effects=new Map([['bgm',1],['bgm2',2]]);
+let bgmStarts=0, removedListeners=0;
+class LayoutGame {
+ constructor(){this.camera={getComponent:()=>({getScreenToWorldPoint:p=>({x:p.x*2,y:p.y+10})})};this.node={off(){removedListeners++;}};}
+ changeLV(){}
+ playBgm(){bgmStarts++;}
+ game1_Start(e){return e.touch.getLocation();}
+ game1_Move(e){return e.touch.getLocation();}
+ game1_End(){throw new Error('native release error');}
+}
+const layoutContext=vm.createContext({window:layoutWindow,cc:{Camera:class{},Node:{EventType:{TOUCH_START:'touchstart'}}}});
+vm.runInContext(a.files['game/layout.js'],layoutContext);
+const requireModule=k=>k==='GameScript'?{default:LayoutGame}:k==='SoundManager'?{SoundManager:{effectList:effects}}:{GameManager:manager};
+layoutWindow.__TASTY_LAYOUT__.install(requireModule);layoutWindow.__TASTY_LAYOUT__.install(requireModule);
+const layoutGame=new LayoutGame(),getLocation=()=>({x:30,y:40}),event={touch:{getLocation}};
+assert.deepEqual(layoutGame.game1_Start(event),{x:60,y:50});
+assert.deepEqual(layoutGame.game1_Move(event),{x:60,y:50});
+assert.equal(event.touch.getLocation,getLocation);
+assert.throws(()=>layoutGame.game1_End(event),/native release error/);
+assert.equal(event.touch.getLocation,getLocation);
+assert.equal(manager.canPlayAudio,true);
+layoutGame.playBgm();assert.equal(bgmStarts,0);assert.equal(removedListeners,1);
+effects.clear();layoutGame.playBgm();assert.equal(bgmStarts,1);
 assert.throws(()=>readArchive(Buffer.alloc(100)),/central directory/);
 build();console.log('tasty-travels-origin: frozen archive, native merge rules, collision deduplication, syntax and deterministic build passed');

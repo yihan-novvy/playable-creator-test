@@ -35,14 +35,19 @@ export function compileSource(html) {
   delete assets.__res;
   for (const key of Object.keys(assets)) if (key.startsWith('@')) delete assets[key];
   if (!assets['assets/main/index.js'].includes('/id6471045672')) throw new Error('Unexpected advertised app');
-  assets['assets/main/index.js'] += '\nif(window.__ORIGIN_ADAPTER__)window.__ORIGIN_ADAPTER__.install(window.__require);\n';
+  assets['assets/main/index.js'] += '\nif(window.__TASTY_LAYOUT__)window.__TASTY_LAYOUT__.install(window.__require);\nif(window.__ORIGIN_ADAPTER__)window.__ORIGIN_ADAPTER__.install(window.__require);\n';
+  const encodedLogo = assets['assets/main/native/06/06a5cf19-0881-4cf2-97c1-3beebb4c217e.png'];
+  // The frozen loader removes the sentinel at index 27 from encoded images.
+  const logo = encodedLogo.slice(0, 27) + encodedLogo.slice(28);
   const files = {
     'game/assets.js': `window.__res=${JSON.stringify(assets).replaceAll('<', '\\u003c')};\n`,
     'game/settings.js': archive['@src/settings.js'],
     'game/main.js': archive['@main.js'],
     'game/loader.js': archive['@src/cc.adapter.js'],
+    'game/layout.js': fs.readFileSync(path.join(root, 'src/layout.js'), 'utf8'),
+    'game/cta-icon.svg': `<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 667 667"><rect width="667" height="667" rx="100" fill="#b8cc7b"/><image href="${logo}" y="146" width="667" height="375"/></svg>`,
     'game/boot.js': fs.readFileSync(path.join(root, 'src/boot.js'), 'utf8'),
-    'game/index.html': `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Tasty Travels</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#43388b}#origin-game{position:fixed;inset:0;overflow:hidden}#GameCanvas{width:100%;height:100%;display:block;touch-action:none}#splash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;background:#43388b}#origin-sound{position:fixed;right:8px;top:8px;z-index:15;border:1px solid #fff8;border-radius:16px;padding:7px 10px;background:#292144bb;color:white}</style></head><body><div id="origin-game"><canvas id="GameCanvas" tabindex="0"></canvas><div id="splash"><div class="progress-bar"><span>Loading…</span></div></div></div><button id="origin-sound" aria-label="Unmute sound">Sound off</button><!--ORIGIN_SCRIPTS--><script src="assets.js"></script><script src="settings.js"></script><script src="main.js"></script><script src="loader.js"></script><script src="boot.js"></script><!--ORIGIN_SCRIPTS_END--></body></html>\n`,
+    'game/index.html': fs.readFileSync(path.join(root, 'src/index.html'), 'utf8'),
   };
   return { files, assets, archive };
 }
@@ -55,7 +60,7 @@ export function build() {
   fs.mkdirSync(path.join(out, 'game'), { recursive: true });
   for (const [file, content] of Object.entries(files)) fs.writeFileSync(path.join(out, file), content);
   fs.writeFileSync(path.join(out, 'game-manifest.json'), JSON.stringify({ id: 'tasty-travels-origin', name: 'Tasty Travels Origin', version: '1.0.0', entry: 'game/index.html',
-    constants: { game: { scripts: ['game/assets.js','game/settings.js','game/main.js','game/loader.js'], boot: 'game/boot.js' }, targetTier: 9,
+    constants: { game: { scripts: ['game/assets.js','game/settings.js','game/main.js','game/layout.js','game/loader.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: 'Tasty Travels', icon: 'game/cta-icon.svg' } }, targetTier: 9,
       sourceSha256: hash(raw), sourceUrl: provenance.sourceUrl, appStoreUrl: provenance.appStoreUrl,
       fileHashes: Object.fromEntries(Object.entries(files).map(([file, value]) => [file, hash(value)])) } }, null, 2) + '\n');
   console.log('tasty-travels-origin: built original physics merge game and local resources');

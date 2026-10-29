@@ -1,1 +1,24 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Tasty Travels</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#43388b}#origin-game{position:fixed;inset:0;overflow:hidden}#GameCanvas{width:100%;height:100%;display:block;touch-action:none}#splash{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:white;background:#43388b}#origin-sound{position:fixed;right:8px;top:8px;z-index:15;border:1px solid #fff8;border-radius:16px;padding:7px 10px;background:#292144bb;color:white}</style></head><body><div id="origin-game"><canvas id="GameCanvas" tabindex="0"></canvas><div id="splash"><div class="progress-bar"><span>Loading…</span></div></div></div><button id="origin-sound" aria-label="Unmute sound">Sound off</button><!--ORIGIN_SCRIPTS--><script src="assets.js"></script><script src="settings.js"></script><script src="main.js"></script><script src="loader.js"></script><script src="boot.js"></script><!--ORIGIN_SCRIPTS_END--></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Tasty Travels</title>
+  <style>
+    :root { --tasty-hud-space: 0px; --tasty-cta-space: 120px; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #43388b; }
+    #origin-game { position: fixed; inset: 0; overflow: hidden; }
+    #GameCanvas { width: 100%; height: 100%; display: block; touch-action: none; }
+    #splash { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: white; background: #43388b; }
+    #novvy-cta:not(.novvy-cta-takeover) { padding: 12px 14px max(14px, env(safe-area-inset-bottom)); }
+    #novvy-cta .novvy-cta-icon img { object-fit: contain; }
+    @media (orientation: landscape) { :root { --tasty-cta-space: 100px; } }
+  </style>
+</head>
+<body>
+  <div id="origin-game"><canvas id="GameCanvas" tabindex="0"></canvas><div id="splash"><div class="progress-bar"><span>Loading…</span></div></div></div>
+  <!--ORIGIN_SCRIPTS-->
+  <script src="assets.js"></script><script src="settings.js"></script><script src="main.js"></script><script src="layout.js"></script><script src="loader.js"></script><script src="boot.js"></script>
+  <!--ORIGIN_SCRIPTS_END-->
+</body>
+</html>
