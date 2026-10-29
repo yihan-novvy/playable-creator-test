@@ -6,6 +6,12 @@ import { createHash } from 'node:crypto';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.resolve(root, '../../editor/templates/freecell-origin');
 const hash = data => createHash('sha256').update(data).digest('hex');
+const appStore = JSON.parse(fs.readFileSync(path.join(root, 'source/app-store.json'), 'utf8'));
+function storeIcon() {
+  const icon = fs.readFileSync(path.join(root, 'source', appStore.icon.file));
+  if (hash(icon) !== appStore.icon.sha256) throw new Error('App Store icon hash mismatch');
+  return icon;
+}
 export function compileSource(html) {
   const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]).filter(s => s.trim());
   if (scripts.length !== 7) throw new Error('FreeCell source script layout changed');
@@ -18,9 +24,11 @@ export function compileSource(html) {
   const names = ['vendor', 'config', 'runtime', 'core', 'assets', 'preloader'];
   const files = Object.fromEntries(names.map((name, i) => [`game/${name}.js`, i === 1 ? `var CONFIG=${JSON.stringify(config).replaceAll('<', '\\u003c')};\n` : scripts[i]]));
   files['game/level.json'] = JSON.stringify(level, null, 2) + '\n';
+  files['game/cta-icon.webp'] = storeIcon();
+  files['game/layout.js'] = fs.readFileSync(path.join(root, 'src/layout.js'), 'utf8');
   files['game/boot.js'] = fs.readFileSync(path.join(root, 'src/boot.js'), 'utf8');
-  files['game/index.html'] = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>FreeCell</title><style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#144e20}#origin-game{position:fixed;inset:0;overflow:hidden}canvas{touch-action:none}#origin-sound{position:fixed;right:8px;top:8px;z-index:15;background:#123d24bb;color:white;border:1px solid #ffffff70;border-radius:16px;padding:7px 10px;cursor:pointer}#origin-sound[hidden]{display:none}</style></head><body><div id="origin-game"></div><button id="origin-sound" type="button" aria-label="Unmute sound">Sound off</button><!--ORIGIN_SCRIPTS-->${names.map(name => `<script src="${name}.js"></script>`).join('')}<script src="boot.js"></script><!--ORIGIN_SCRIPTS_END--></body></html>\n`;
-  return { files, scripts: names.map(name => `game/${name}.js`) };
+  files['game/index.html'] = fs.readFileSync(path.join(root, 'src/index.html'), 'utf8');
+  return { files, scripts: [...names.map(name => `game/${name}.js`), 'game/layout.js'] };
 }
 export function build() {
   const raw = fs.readFileSync(path.join(root, 'source/original.html'));
@@ -32,9 +40,9 @@ export function build() {
   for (const [file, content] of Object.entries(result.files)) fs.writeFileSync(path.join(out, file), content);
   const { version } = JSON.parse(fs.readFileSync(path.join(root, 'package.json')));
   fs.writeFileSync(path.join(out, 'game-manifest.json'), JSON.stringify({
-    id: 'freecell-origin', name: 'FreeCell Origin', version, entry: 'game/index.html',
+    id: 'freecell-origin', name: appStore.name, version, entry: 'game/index.html',
     levels: [{ id: 'original', name: 'Original 52-card deal', path: 'game/level.json' }],
-    constants: { game: { scripts: result.scripts, boot: 'game/boot.js' }, totalCards: 52,
+    constants: { game: { scripts: result.scripts, boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } }, totalCards: 52,
       sourceSha256: hash(raw), sourceUrl: provenance.sourceUrl, appStoreUrl: provenance.appStoreUrl,
       fileHashes: Object.fromEntries(Object.entries(result.files).map(([file, value]) => [file, hash(value)])) },
   }, null, 2) + '\n');

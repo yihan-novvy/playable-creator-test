@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+  <title>FreeCell: Card Game</title>
+  <style>
+    :root { --origin-hud-space: 0px; --origin-cta-space: 132px; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; background: #144e20; }
+    #origin-game { position: fixed; inset: 0; overflow: hidden; }
+    canvas { touch-action: none; }
+    #novvy-cta .novvy-cta-name { white-space: normal; }
+    @media (orientation: landscape) { :root { --origin-cta-space: 106px; } }
+  </style>
+</head>
+<body>
+  <div id="origin-game"></div>
+  <!--ORIGIN_SCRIPTS-->
+  <script src="vendor.js"></script><script src="config.js"></script><script src="runtime.js"></script><script src="core.js"></script><script src="assets.js"></script><script src="preloader.js"></script><script src="layout.js"></script><script src="boot.js"></script>
+  <!--ORIGIN_SCRIPTS_END-->
+</body>
+</html>

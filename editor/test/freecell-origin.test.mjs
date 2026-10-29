@@ -95,6 +95,6 @@ export default async function test(a) {
     a.equal(fs.readFileSync(path.join(ctx.resultDir,'intro-video.mp4'),'utf8'),'transcoded','pack selects transcoded video');
     ctx.config=base.config; await packOrigin(ctx);
     a.check(!fs.existsSync(path.join(ctx.resultDir,'intro-video.mp4')),'turning video off removes stale media');
-    a.equal(fs.readdirSync(ctx.resultDir).sort(),['assets.js','boot.js','config.js','core.js','index.html','preloader.js','runtime.js','vendor.js'],'package contains only local game runtime');
+    a.equal(fs.readdirSync(ctx.resultDir).sort(),['assets.js','boot.js','config.js','core.js','index.html','layout.js','preloader.js','runtime.js','vendor.js'],'package contains only local game runtime');
   } finally {fs.rmSync(dir,{recursive:true,force:true});}
 }

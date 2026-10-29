@@ -1,0 +1,11 @@
+{
+  "name": "FreeCell: Card Game",
+  "appStoreUrl": "https://apps.apple.com/us/app/freecell-card-game/id301987699",
+  "publisher": "MobilityWare",
+  "retrievedAt": "2026-10-29",
+  "icon": {
+    "file": "app-store-icon.webp",
+    "url": "https://is1-ssl.mzstatic.com/image/thumb/PurpleSource221/v4/0f/67/c2/0f67c270-b1bb-32a9-d6d2-1c98d2811049/Placeholder.mill/400x400Icon.ApSiOS01-75.webp",
+    "sha256": "4f7ac18e17cc39f8dec2f44384c69d2efda2b0a68f896d8e0e9b365987f56730"
+  }
+}

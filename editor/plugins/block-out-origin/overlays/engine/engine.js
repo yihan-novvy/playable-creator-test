@@ -4,10 +4,8 @@
   var active = !config.intro, ready = false, settled = false, viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
   var steps = 0, cleared = 0, nextCta = config.policy.afterSteps, ctaIndex = 0;
   var records = new WeakMap(), removed = new WeakSet();
-  var api, releaseIntro, touched = false, userMuted = false;
+  var api, releaseIntro;
   var gate = active ? Promise.resolve() : new Promise(function (resolve) { releaseIntro = resolve; });
-  var cta = document.getElementById('novvy-cta'), sound = document.getElementById('block-out-sound');
-  cta.hidden = sound.hidden = !active;
   function emit(name, detail) { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); }
   function cells(block) { return JSON.stringify((block.cellsData || []).map(function (cell) { return [cell.x, cell.y]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; })); }
   function convert(manual, scene, timing) { emit('novvy:block-out-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene, everySteps: timing && timing.gap, repeat: timing && timing.repeat }); }
@@ -32,11 +30,9 @@
     if (!won) convert(false, 'playable-failed');
   }
   function audio() {
-    if (!api) return;
-    var muted = userMuted || !touched || !active || !viewable || document.hidden;
+    if (!api || !ready) return;
+    var muted = !active || !viewable || document.hidden;
     if (muted) api.Sound.muteAll(); else api.Sound.unmuteAll();
-    sound.textContent = muted ? 'Sound off' : 'Sound on';
-    sound.setAttribute('aria-label', muted ? 'Unmute sound' : 'Mute sound');
   }
   function lifecycle() {
     if (!api || !ready) return;
@@ -45,18 +41,13 @@
   }
   window.addEventListener('novvy:intro-finished', function () {
     if (active) return;
-    var video = document.getElementById('novvy-intro-video');
-    if (video) userMuted = video.muted;
     active = true;
-    cta.hidden = sound.hidden = false;
     releaseIntro();
     lifecycle();
   });
   window.addEventListener('novvy:viewablechange', function (event) { viewable = !!event.detail.viewable; lifecycle(); });
   document.addEventListener('visibilitychange', lifecycle);
-  document.addEventListener('pointerdown', function (event) { if (event.target === sound) return; touched = true; audio(); }, true);
-  sound.addEventListener('click', function () { userMuted = touched ? !userMuted : false; touched = true; audio(); });
-  cta.addEventListener('click', function () { convert(true, 'cta-button'); });
+  document.addEventListener('pointerdown', audio, true);
   window.__BLOCK_OUT_ADAPTER__ = {
     // Native logo/endcard clicks use the same SDK route; no native hasOpenedStore
     // latch, AppLovin redirect, or gameplay lock survives a store visit.
@@ -69,8 +60,36 @@
       if (api) throw new Error('Block Out adapter installed twice');
       api = engine;
       if (config.title) {
-        window.editorParameters.hasInGameLogo = false;
-        window.editorParameters.hasInstructionText = false;
+        [window.editorParameters, api.Parameters].filter(Boolean).forEach(function (parameters) {
+          parameters.hasInGameLogo = false;
+          parameters.hasInstructionText = false;
+          parameters.hasLevelInstructionText = false;
+        });
+      }
+      if (api.Layout) {
+        var resize = api.Layout.resize;
+        api.Layout.resize = function (width, height) {
+          width = width || window.innerWidth; height = height || window.innerHeight;
+          var style = getComputedStyle(document.documentElement);
+          var top = parseFloat(style.getPropertyValue('--origin-hud-space')) || 64;
+          var card = document.getElementById('novvy-cta');
+          var bottom = Math.max(width > height ? 106 : 132, card ? card.getBoundingClientRect().height + 24 : 0);
+          var p = api.Parameters;
+          p.gameAreaPortraitTopOffsetY = p.gameAreaLandscapeTopOffsetY = top / height;
+          p.gameAreaBottomOffsetY = bottom / height;
+          p.gameAreaPortraitPosYRatios = String((top + height - bottom) / height / 2);
+          p.gameAreaWidthRatios = '1.04';
+          p.gameAreaHeightRatios = String(Math.max(100, height - top - bottom - 32) / height);
+          // The native viewport caches per-level ratios at construction time.
+          // Refresh those values before its resize, including on rotation.
+          var scene = api.Manager.instance && api.Manager.instance.gameScene;
+          var viewport = scene && scene.viewport;
+          if (viewport) viewport.refreshRatiosForCurrentLevel({
+            posXRatio: p.gameAreaPortraitPosXRatios, posYRatio: p.gameAreaPortraitPosYRatios,
+            widthRatio: p.gameAreaWidthRatios, heightRatio: p.gameAreaHeightRatios
+          });
+          return resize.apply(this, arguments);
+        };
       }
       var manager = api.Manager.prototype, drag = api.Drag.prototype;
       var select = manager.setSelectedBlock;

@@ -45,7 +45,7 @@ export const catalog = [
     note: '可在左侧演示选择前十关。工作台提供选关，不提供自定义关卡创作。',
   },
   {
-    id: 'block-out-origin', name: 'Block Out', subtitle: 'Origin · 方块出逃', group: 'origin', kind: '滑块解谜', color: '#3d5364', isNew: true,
+    id: 'block-out-origin', name: 'Block Out! - Color Sort Puzzle', subtitle: 'Origin · 方块出逃', group: 'origin', kind: '滑块解谜', color: '#3d5364', isNew: true,
     summary: '把方块滑向同色出口，从两块教学关进入完整挑战。',
     tags: ['原版两关', '滑动解谜'],
     description: '保留原版 Block Out 的滑块规则、物理、动画和音效，以简短教学引出更复杂的出逃挑战。',
@@ -55,7 +55,7 @@ export const catalog = [
     tools: [], note: '使用固定原版两关。素材配置、预览与打包集中在任务工作台。',
   },
   {
-    id: 'freecell-origin', name: 'FreeCell', subtitle: 'Origin · 经典空当接龙', group: 'origin', kind: '纸牌接龙', color: '#30574e', isNew: true,
+    id: 'freecell-origin', name: 'FreeCell: Card Game', subtitle: 'Origin · 经典空当接龙', group: 'origin', kind: '纸牌接龙', color: '#30574e', isNew: true,
     summary: '利用暂存格整理 52 张纸牌，按花色完成从 A 到 K 的收牌。',
     tags: ['52 张纸牌', '原生重玩'],
     description: '保留原版空当接龙的纸牌开局、暂存格、收牌规则与引导，提供完整的整理与推演体验。',
@@ -65,7 +65,7 @@ export const catalog = [
     tools: [], note: '原版牌局通过模板内规则运行。使用此模板创建任务后即可配置与导出。',
   },
   {
-    id: 'grill-sort-origin', name: 'Grill Sort', subtitle: 'Origin · 烧烤分类', group: 'origin', kind: '分类消除', color: '#63463c', isNew: true,
+    id: 'grill-sort-origin', name: 'Grill Sort™', subtitle: 'Origin · 烧烤分类', group: 'origin', kind: '分类消除', color: '#63463c', isNew: true,
     summary: '移动烤串凑齐三串同类，在倒计时结束前完成打包。',
     tags: ['三串匹配', '180 秒挑战'],
     description: '保留原版烧烤分类玩法，融合拖动、三串匹配与补货，形成清晰的整理和消除反馈。',

@@ -7,6 +7,12 @@ import { createHash } from 'node:crypto';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const out = path.resolve(root, '../../editor/templates/block-out-origin');
 const hash = value => createHash('sha256').update(value).digest('hex');
+const appStore = JSON.parse(fs.readFileSync(path.join(root, 'source/app-store.json'), 'utf8'));
+function storeIcon() {
+  const icon = fs.readFileSync(path.join(root, 'source', appStore.icon.file));
+  if (hash(icon) !== appStore.icon.sha256) throw new Error('App Store icon hash mismatch');
+  return icon;
+}
 export function replaceOnce(text, anchor, replacement) {
   if (text.split(anchor).length !== 2) throw new Error(`Block Out source anchor changed: ${anchor.slice(0, 90)}`);
   return text.replace(anchor, () => replacement);
@@ -28,19 +34,20 @@ export function compileSource(html) {
   // Expose only the versioned adapter seam. Original source stays frozen; any
   // upstream change fails these unique-anchor checks rather than guessing.
   const boot = '(async()=>await Or.instance.init())()';
-  core = replaceOnce(core, boot, 'window.__BLOCK_OUT_ADAPTER__&&window.__BLOCK_OUT_ADAPTER__.install({Manager:z,Drag:G2,App:vt,Boot:Or,Sound:st});' + boot);
+  core = replaceOnce(core, boot, 'window.__BLOCK_OUT_ADAPTER__&&window.__BLOCK_OUT_ADAPTER__.install({Manager:z,Drag:G2,App:vt,Boot:Or,Sound:st,Parameters:p,Layout:Nt});' + boot);
   const store = 'function Fo(r,e={}){return!p.hasMarketParams||e.automatic&&Nk()!==Tl.CANT_PLAY&&Tt.hasOpenedStore?!1:(MA.emit(Qf),Tt.hasOpenedStore=!0,Tt.adBridge?Tt.adBridge.openStore(r):window.open(r.ios,"_blank"),!0)}';
   core = replaceOnce(core, store, store.replace('{return', '{if(window.__BLOCK_OUT_ADAPTER__)return window.__BLOCK_OUT_ADAPTER__.openStore(e);return'));
   // The source bridge remains local but uses its browser lifecycle adapter.
   // Signed assets and store links remain intact for source integrity checks.
   params.adNetwork = 'web';
+  params.hasInGameCta = false;
   for (const key of ['gotoMarketAfterXClick', 'goToMarketAfterXClickOnFinalLevel', 'gotoMarketAfterXSeconds', 'gotoMarketAfterXBlocksPass', 'gotoMarketAfterXProgress', 'goToMarketWhenXBlockersRemain', 'endcardGoToMarketAfterXSeconds']) params[key] = 0;
   params.hasEndcardFullScreenClick = false;
   params.canPlayAfterStore = 1;
   const assets = `window.editorParameters=${JSON.stringify(params).replaceAll('<', '\\u003c')}${sourceParams.slice(end)}\n`;
   let shell = html;
   for (const script of scripts) shell = shell.replace(script[0], '');
-  shell = shell.replace('<title>Block Out - Applovin</title>', '<title>Block Out</title>');
+  shell = shell.replace('<title>Block Out - Applovin</title>', '<title>Block Out! - Color Sort Puzzle</title>');
   shell = replaceOnce(shell, '</body>', '<!--BLOCK_OUT_BOOT--><script src="assets.js"></script><script src="core.js"></script><!--BLOCK_OUT_BOOT_END-->\n</body>');
   return { shell, assets, core, counts };
 }
@@ -50,16 +57,16 @@ export function build() {
   const provenance = JSON.parse(fs.readFileSync(path.join(root, 'source/provenance.json'), 'utf8'));
   if (hash(source) !== provenance.hashes['unpacked-game.html']) throw new Error('Frozen Block Out source hash mismatch');
   const result = compileSource(source);
-  const files = { 'game/index.html': result.shell, 'game/assets.js': result.assets, 'game/core.js': result.core };
+  const files = { 'game/index.html': result.shell, 'game/assets.js': result.assets, 'game/core.js': result.core, 'game/cta-icon.webp': storeIcon() };
   fs.rmSync(path.join(out, 'game'), { recursive: true, force: true });
   fs.mkdirSync(path.join(out, 'game'), { recursive: true });
   for (const [file, content] of Object.entries(files)) fs.writeFileSync(path.join(out, file), content);
   const { version } = JSON.parse(fs.readFileSync(path.join(root, 'package.json')));
   fs.writeFileSync(path.join(out, 'game-manifest.json'), JSON.stringify({
-    id: 'block-out-origin', name: 'Block Out Origin（原版两关）', version, entry: 'game/index.html',
+    id: 'block-out-origin', name: appStore.name, version, entry: 'game/index.html',
     constants: {
       sourceSha256: hash(source),
-      game: { assetsJs: 'game/assets.js', coreJs: 'game/core.js' },
+      game: { assetsJs: 'game/assets.js', coreJs: 'game/core.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } },
       fileHashes: Object.fromEntries(Object.entries(files).map(([file, content]) => [file, hash(content)])),
       blockCounts: result.counts,
       sourceUrl: 'https://data.insightrackr.com/creative/preplay/detail/7ffa03d526a4b106c4f1f82c8ab1afae',

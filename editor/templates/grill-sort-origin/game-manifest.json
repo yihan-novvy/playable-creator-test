@@ -1,15 +1,21 @@
 {
   "id": "grill-sort-origin",
-  "name": "Grill Sort Origin",
+  "name": "Grill Sort™",
   "version": "1.0.0",
   "entry": "game/index.html",
   "constants": {
     "game": {
       "scripts": [
         "game/assets.js",
-        "game/loader.js"
+        "game/loader.js",
+        "game/layout.js"
       ],
-      "boot": "game/boot.js"
+      "boot": "game/boot.js",
+      "hudInsideCanvas": true,
+      "ctaCard": {
+        "name": "Grill Sort™",
+        "icon": "game/cta-icon.webp"
+      }
     },
     "totalItems": 120,
     "sourceSha256": "ea13118ca9ce19ccd6468343be013d6a59798e3079fc78c787e067e14186ceab",
@@ -18,8 +24,10 @@
     "fileHashes": {
       "game/assets.js": "f8ed9e188ac377c9d2778f1af74339d1a3756034d89398facab9a0811074540a",
       "game/loader.js": "f3e1a5bd5ab507a2ff36c3c2ab4c789a10ebd3938867d6c63b275444f35d6bd1",
-      "game/boot.js": "1a180e51a256a9a231c9c9763a75b4977428ea74e8c38af1b41c01deba27c8a0",
-      "game/index.html": "0fc198b6c652a171f8c05ed22c39a86463561a822bd7fcb28ae0b8dc58e56134"
+      "game/cta-icon.webp": "850072bcacd25dfab4403d95ab5c5a4a6e2ac3b5dae3914076b1ff3fc47f7fea",
+      "game/layout.js": "c986cc0f1be008edeef717091d516cf830b0f9dfce8fad10cf9f19211edf510c",
+      "game/boot.js": "9fdd1d949795a2c2c7f672d1cf36c17145b74f872e7ca94209f17c0b50d5805f",
+      "game/index.html": "f531c4c22a1c0613cb23e5f3993e8cc15e2d24076c05b42df21a256c55008f3e"
     }
   }
 }

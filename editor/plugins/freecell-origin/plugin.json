@@ -1,6 +1,6 @@
 {
   "id": "freecell-origin",
-  "name": "FreeCell Origin（片头+原版纸牌）",
+  "name": "FreeCell: Card Game（片头+原版试玩）",
   "template": "freecell-origin",
   "workbench": "freecell-origin",
   "steps": [

@@ -39,6 +39,26 @@ assert.equal(config.application.tapsToRedirect, 0);
 assert.equal(config.application.secToRedirect, null);
 for (const [file, content] of Object.entries(first.files)) {
   if (file.endsWith('.js')) new vm.Script(content, { filename: file });
-  assert.equal(fs.readFileSync(path.resolve(root, '../../editor/templates/freecell-origin', file), 'utf8'), content);
+  const generated = fs.readFileSync(path.resolve(root, '../../editor/templates/freecell-origin', file));
+  assert.equal(createHash('sha256').update(generated).digest('hex'), createHash('sha256').update(content).digest('hex'), `${file} matches its compiled source`);
 }
+// Exercise the real boot script: audio unlock belongs to SoundsManager,
+// while Sound only exposes the game's playback helpers.
+const listeners = {}, muteStates = [];
+let unlocked = 0;
+const document = { hidden: false, readyState: 'complete', getElementById: () => ({ clientWidth: 320, clientHeight: 568 }), addEventListener: (name, fn) => { listeners[name] = fn; } };
+vm.runInNewContext(first.files['game/boot.js'], {
+  document, window: { addEventListener() {} },
+  Howler: { mute: value => muteStates.push(value) },
+  SoundsManager: { unlock: () => unlocked++ },
+  LayoutManager: { fitLayout() {} },
+  Game: { app: {}, init() {}, on() {}, resume() {}, pause() {} },
+});
+assert.equal(muteStates.at(-1), false, 'visible game defaults to audio on');
+listeners.pointerdown();
+assert.equal(unlocked, 1, 'first interaction unlocks the native sound manager');
+document.hidden = true; listeners.visibilitychange();
+assert.equal(muteStates.at(-1), true, 'background game is muted');
+document.hidden = false; listeners.visibilitychange();
+assert.equal(muteStates.at(-1), false, 'returning to the game restores sound');
 console.log('FreeCell: frozen source, deterministic build, 52-card conservation, native foundation rules, source syntax and generated files passed');

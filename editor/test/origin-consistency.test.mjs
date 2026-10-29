@@ -5,6 +5,8 @@ import { runtime as freecellRuntime } from './freecell-origin.test.mjs';
 import { runtime as grillRuntime } from './grill-sort-origin.test.mjs';
 import { runtime as tastyRuntime } from './tasty-travels-origin.test.mjs';
 import { compileSource } from '../../template-core/grill-sort-origin/scripts/build.mjs';
+import { originHtml } from '../core/lib/origin-playable.mjs';
+import { blockOutHtml } from '../plugins/block-out-origin/lib.mjs';
 
 function game(id) {
   const r = id === 'block-out-origin' ? blockRuntime(getEntry(id)) : id === 'freecell-origin' ? freecellRuntime(getEntry(id)) : id === 'grill-sort-origin' ? grillRuntime() : tastyRuntime();
@@ -31,6 +33,13 @@ function game(id) {
 
 export default async function test(a) {
   for (const id of ['block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin']) {
+    const entry = getEntry(id), config = structuredClone(entry.template.defaults);
+    config.hud.titleEnabled = true;
+    const html = (id === 'block-out-origin' ? blockOutHtml : originHtml)({ root: entry.templateDir, pluginDir: entry.dir, overlaysRoot: entry.dir, template: entry.template, config }).html;
+    const icon = fs.readFileSync(`${entry.templateDir}/${entry.template.game.ctaCard.icon}`);
+    a.check(html.includes('id="novvy-training-hud"') && !html.includes('data-novvy-origin-shell'), `${id}: HUD shares the full game canvas`);
+    a.check(!/id="(?:origin|block-out)-sound"/.test(html), `${id}: no separate sound toggle`);
+    a.check(html.includes(`data:image/webp;base64,${icon.toString('base64')}`), `${id}: official icon is embedded for offline packages`);
     const r = game(id);
     await r.move(); await r.move();
     a.equal(r.clicks().map(c => c[1]), [{ click_source: 'forced_click_to_appstore', scene: 'cta-moment' }], `${id}: shared step CTA source and scene`);

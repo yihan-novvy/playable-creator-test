@@ -1,18 +1,24 @@
 {
   "id": "block-out-origin",
-  "name": "Block Out Origin（原版两关）",
+  "name": "Block Out! - Color Sort Puzzle",
   "version": "1.0.0",
   "entry": "game/index.html",
   "constants": {
     "sourceSha256": "e4dc06f17bf776b3aaa76daf4b71bcc5374455b9e3c7580a1518cce3db939fd8",
     "game": {
       "assetsJs": "game/assets.js",
-      "coreJs": "game/core.js"
+      "coreJs": "game/core.js",
+      "hudInsideCanvas": true,
+      "ctaCard": {
+        "name": "Block Out! - Color Sort Puzzle",
+        "icon": "game/cta-icon.webp"
+      }
     },
     "fileHashes": {
-      "game/index.html": "6a849b591489f5a2a7ec8e1771d3b099f361e50996da5000b26c03fa29736b50",
+      "game/index.html": "58520c6b6ab795d6ce23e92bb7e0135b5c90f4e04f5608208c3a68aa19afddba",
       "game/assets.js": "d59bb063062b41a0d109dd44dc4807b73955244f7a850b9ae64d7a3c1713cb5b",
-      "game/core.js": "30f11a2acabf449719c7503a914264c0439449a9025662a19388eaab57d18501"
+      "game/core.js": "31f1bff473b78f530112850ba5ec651f6b8803c874b9e3a5b9e3e040a84e6244",
+      "game/cta-icon.webp": "bb388403f67db467349f210b5a2688b33449a8e733d221681b7286a352e98683"
     },
     "blockCounts": [
       2,

@@ -1,6 +1,6 @@
 {
   "id": "freecell-origin",
-  "name": "FreeCell Origin",
+  "name": "FreeCell: Card Game",
   "version": "1.0.0",
   "entry": "game/index.html",
   "levels": [
@@ -18,9 +18,15 @@
         "game/runtime.js",
         "game/core.js",
         "game/assets.js",
-        "game/preloader.js"
+        "game/preloader.js",
+        "game/layout.js"
       ],
-      "boot": "game/boot.js"
+      "boot": "game/boot.js",
+      "hudInsideCanvas": true,
+      "ctaCard": {
+        "name": "FreeCell: Card Game",
+        "icon": "game/cta-icon.webp"
+      }
     },
     "totalCards": 52,
     "sourceSha256": "13c61707313af7557f4a2ae70f9e902cdd4e6e055a339457a95487e177d1377a",
@@ -34,8 +40,10 @@
       "game/assets.js": "5120fd44677250aa94c5e89d9213212fc0ae6df8d7e6fb1e83a38a9db5e31afa",
       "game/preloader.js": "9199249bbeb7fa5db5c3dd4d3efcf908aa4b08814f50b4aa8fd9335a929a42e9",
       "game/level.json": "3c10a5e2ae12d3173e6ec94b6762080ac86be3270476788f6041a1b4186adb33",
-      "game/boot.js": "b80dc4e6155f4ff9d397afcc7bb312c40da24b6d918c6faca71951944cf9564d",
-      "game/index.html": "9a2ae906020641639f6cf52b7fd1be05d275de8459c9aaf8cf207f472e6d0e5b"
+      "game/cta-icon.webp": "4f7ac18e17cc39f8dec2f44384c69d2efda2b0a68f896d8e0e9b365987f56730",
+      "game/layout.js": "d85affd510da79d9d00406baf44e185a8ec32553b47292fe3341544afa58b37a",
+      "game/boot.js": "9661e9cd658568158c4fd5cbc6816602a0baddc58d122e03d16e22b442519357",
+      "game/index.html": "b1a3aefe4bf37cfe4b21cd0c944c0b3a74df371975d2c0344ff57cd3532b26d2"
     }
   }
 }
