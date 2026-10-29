@@ -6,13 +6,20 @@
 <title>任务工作台 · 可玩广告编辑器</title>
 <link rel="stylesheet" href="/style.css">
 </head>
-<body>
+<body data-preview-device="island">
 <header class="topbar">
   <div class="row">
     <a href="/" class="hint" style="text-decoration:none">← 任务列表</a>
     <h1 id="task-title">任务工作台</h1>
   </div>
   <div class="row">
+    <label class="preview-device-control" title="模拟屏幕遮挡，不会自动给游戏增加安全区；iOS 安全区表现以真机为准。">
+      <span>模拟器</span>
+      <select id="preview-device" aria-label="模拟器遮挡样式">
+        <option value="island">iPhone · 灵动岛</option>
+        <option value="plain">无遮挡</option>
+      </select>
+    </label>
     <a href="/templates.html" class="hint">模板探索 ↗</a>
     <button id="run-all" class="primary">全部运行</button>
   </div>

@@ -177,12 +177,33 @@ a.primary:hover { filter: brightness(1.08); text-decoration: none; }
 canvas.board-preview { image-rendering: pixelated; border: 1px solid var(--border); border-radius: 6px; }
 
 .phone-frame {
-  width: 390px; height: 844px; border-radius: 28px; border: 8px solid #0a0a0d;
+  position: relative; isolation: isolate; box-sizing: content-box;
+  width: 390px; height: 844px; border-radius: 54px; border: 8px solid #0a0a0d;
   box-shadow: 0 0 0 2px var(--border), 0 12px 40px rgba(0,0,0,0.5);
   overflow: hidden; background: #000; transform-origin: top left;
 }
-.phone-frame iframe { width: 100%; height: 100%; border: 0; }
-.phone-scale { width: 390px; height: 844px; }
+.phone-frame iframe { display: block; width: 100%; height: 100%; border: 0; border-radius: 46px; }
+.phone-scale { width: 406px; height: 860px; flex-shrink: 0; }
+/* Hardware sits above the iframe, so an unsafe HUD is visibly obscured. Never
+   inset or pad the game to make it appear safe. Both modes keep a 390 × 844 viewport. */
+[data-preview-device="island"] .phone-frame::before,
+[data-preview-device="island"] .phone-frame::after {
+  content: ''; position: absolute; z-index: 2; left: 50%; transform: translateX(-50%);
+  pointer-events: none;
+}
+[data-preview-device="island"] .phone-frame::before {
+  top: 12px; width: 126px; height: 36px; border-radius: 22px;
+  background: radial-gradient(circle at 108px 18px, #122137 0 3px, #06090e 4px 7px, transparent 8px), #000;
+  box-shadow: inset 0 0 0 1px #111;
+}
+[data-preview-device="island"] .phone-frame::after {
+  bottom: 8px; width: 134px; height: 5px; border-radius: 4px;
+  background: #fff; box-shadow: 0 0 2px #0009;
+}
+[data-preview-device="plain"] .phone-frame,
+[data-preview-device="plain"] .phone-frame iframe { border-radius: 0; }
+.preview-device-control { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
+.preview-device-control select { font-size: 12px; }
 
 .hint { color: var(--muted); font-size: 13px; }
 .error-text { color: var(--fail); font-size: 12px; margin-top: 8px; white-space: pre-wrap; }

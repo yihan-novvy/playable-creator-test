@@ -1419,6 +1419,22 @@ function mountPhoneFrame(container) {
 
 /* -------------------------------- bootstrap ------------------------------ */
 
+// Preview-only hardware overlay: switching must not reload the iframe or change
+// the playable viewport. Desktop iframes do not emulate iOS safe-area env().
+function initPreviewDevice() {
+  const select = document.getElementById('preview-device');
+  const storageKey = 'playable-editor-preview-device';
+  try {
+    if (localStorage.getItem(storageKey) === 'plain') select.value = 'plain';
+  } catch { /* Storage may be disabled; the control still works for this page. */ }
+  const apply = () => { document.body.dataset.previewDevice = select.value; };
+  apply();
+  select.addEventListener('change', () => {
+    apply();
+    try { localStorage.setItem(storageKey, select.value); } catch { /* Optional preference. */ }
+  });
+}
+
 async function refresh(rerender) {
   // renderSteps() rebuilds the whole workbench; keep the viewport stable so
   // re-running a step doesn't look like a page reload.
@@ -1458,6 +1474,7 @@ function loadWorkbenchScript(pluginId) {
 }
 
 (async function init() {
+  initPreviewDevice();
   if (!taskId) {
     window.location.href = '/';
     return;
