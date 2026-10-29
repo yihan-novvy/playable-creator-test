@@ -119,7 +119,7 @@ const CONFIG_WHITELISTS = new Map([
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable','replay'])],
   ['block-out-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
   ['freecell-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
-  ['grill-sort-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
+  ['grill-sort-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
   ['tasty-travels-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
   ['colorever-origin', new Set(['patternId', 'hud', 'intro', 'cta', 'playableCta'])],
 ]);
@@ -188,6 +188,19 @@ export function updateTaskConfig(id, patch) {
   // Validate both selections before mutating or writing a task.
   if ('levelId' in (patch || {})) validateFixedLevel(doc.templateId, patch.levelId);
   if ('levelId' in (patch?.secondPlayable || {})) validateFixedLevel(doc.templateId, patch.secondPlayable.levelId);
+  if (doc.templateId === 'grill-sort-origin' && 'gameplay' in (patch || {})) {
+    const settings = patch.gameplay;
+    const invalid = !settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => {
+      if (key === 'allowReplay') return typeof value !== 'boolean';
+      if (key === 'countdownSeconds') return !Number.isInteger(value) || value < 1 || value > 3600;
+      return true;
+    });
+    if (invalid) {
+      const error = new Error('游戏倒计时须为 1–3600 秒的整数，重玩开关须为布尔值。');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
   if (doc.templateId === 'escape-arrow' && 'gameplay' in (patch || {})) {
     const settings = patch.gameplay;
     const invalid = !settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => {
@@ -228,7 +241,7 @@ export function updateTaskConfig(id, patch) {
   if ('playableCta' in (patch || {})) delete doc.steps.pack;
   // Origin settings affect the composed HTML, not the transcoded media.
   if (isOriginTemplate(doc.templateId) && ['hud', 'intro', 'cta', 'patternId'].some(key => key in (patch || {}))) delete doc.steps.pack;
-  if (doc.templateId === 'escape-arrow' && 'gameplay' in (patch || {})) delete doc.steps.pack;
+  if (['escape-arrow', 'grill-sort-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) delete doc.steps.pack;
   // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
   if ('opening' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
   if ('secondPlayable' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; if ('background' in (patch.secondPlayable || {}) || 'enabled' in (patch.secondPlayable || {})) delete doc.steps.background2; }

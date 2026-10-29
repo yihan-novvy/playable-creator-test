@@ -43,6 +43,7 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
   const policy = originCtaPolicy(config.playableCta);
   const settings = { intro: injection.introEnabled, title: injection.hudEnabled, policy };
+  if (template.id === 'grill-sort-origin') settings.gameplay = { countdownSeconds: 180, allowReplay: true, ...config.gameplay };
   const readEngine = name => fs.readFileSync(path.join(pluginDir, template.overlays.engine, name), 'utf8');
   const sourceScript = file => preview ? script('origin-source', files[path.basename(file)]) : `<script src="${path.basename(file)}"></script>`;
   const boot = [

@@ -57,7 +57,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     return wrap;
   }
   function renderConfig() {
-    document.getElementById('config-hint').textContent = '原版烧烤：120 串烧烤与原版引导。有效放置记步，实际打包数计算进度；保留 180 秒倒计时和原版结算。默认第 20 次有效操作首跳，之后间隔 10/8/6/4，末间隔循环。';
+    document.getElementById('config-hint').textContent = '原版烧烤：120 串烧烤与原版引导。有效放置记步，实际打包数计算进度。片头期间预加载游戏，进入试玩后首次操作开始倒计时。成功或超时后可按设置重玩。';
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
@@ -72,6 +72,15 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
       textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
     ]));
+    const seconds = el('input', { type: 'number', min: 1, max: 3600, step: 1, value: config().gameplay?.countdownSeconds ?? 180 });
+    seconds.addEventListener('change', async () => {
+      if (!seconds.checkValidity() || !seconds.value) { seconds.reportValidity(); return; }
+      await save({ gameplay: { countdownSeconds: Number(seconds.value) } }); await refresh(true);
+    });
+    wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
+      field('游戏倒计时（秒，1–3600）', seconds),
+      checkbox('允许重玩', 'gameplay', 'allowReplay', config().gameplay?.allowReplay !== false),
+    ]), el('p', { class: 'hint' }, ['开启后，成功显示 Play again、超时显示 Try again。点击先跳转 CTA，再重置当前局；返回后继续新一局，片头视频不重复播放。修改这些设置只需重新打包。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());
     root.append(wrap);
   }

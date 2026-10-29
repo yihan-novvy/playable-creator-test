@@ -27,6 +27,10 @@ export default async function test(a) {
           { playableCta: { afterSteps: 25, intervals: [7, 3] } },
         ];
         if (templateId === 'colorever-origin') patches.push({ patternId: 'apple-red' });
+        if (templateId === 'grill-sort-origin') {
+          recordStepResult(task.id, { stepId: 'intro', ok: true });
+          patches.push({ gameplay: { countdownSeconds: 45 } }, { gameplay: { allowReplay: false } });
+        }
         for (const patch of patches) {
           recordStepResult(task.id, { stepId: 'pack', ok: true });
           const saved = await fetch(`${base}/api/tasks/${task.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ config: patch }) });
@@ -37,11 +41,21 @@ export default async function test(a) {
           a.equal(blocked.status, 409, `${templateId}: stale ZIP is blocked`); await blocked.json();
         }
         const config = readTask(task.id).config;
+        if (templateId === 'grill-sort-origin') {
+          a.equal(config.gameplay, { countdownSeconds: 45, allowReplay: false }, 'Grill: gameplay sibling settings persist');
+          a.check(readTask(task.id).steps.intro.ok, 'Grill: gameplay edits retain the transcoded intro');
+          for (const gameplay of [{ countdownSeconds: 0 }, { countdownSeconds: 3601 }, { countdownSeconds: 1.5 }, { countdownSeconds: '45' }, { allowReplay: 'true' }, { unknown: true }, null]) {
+            const invalid = await fetch(`${base}/api/tasks/${task.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ config: { gameplay } }) });
+            a.equal(invalid.status, 400, 'Grill: invalid gameplay settings are rejected'); await invalid.json();
+          }
+          a.equal(readTask(task.id).config.gameplay, config.gameplay, 'Grill: rejected settings do not mutate the task');
+        }
         a.equal([config.hud.titleLine1, config.hud.titleLine2, config.intro.goText], ['Saved audit title', 'Saved subtitle', 'BEGIN'], `${templateId}: sibling edits persist`);
         const rebuilt = await request(task, 'run', { step: 'pack' });
         a.equal(rebuilt.status, 200, `${templateId}: edited pack rebuilds`); await rebuilt.json();
         const html = fs.readFileSync(path.join(taskResultDir(task.id), 'index.html'), 'utf8');
         a.check(html !== oldHtml && html.includes('Saved audit title') && html.includes('Saved subtitle'), `${templateId}: rebuilt HTML contains saved text`);
+        if (templateId === 'grill-sort-origin') a.check(html.includes('"countdownSeconds":45,"allowReplay":false'), 'Grill: package uses saved timer and replay settings');
         const fresh = await request(task, 'export'); a.equal(fresh.status, 200, `${templateId}: rebuilt ZIP exports`); await fresh.arrayBuffer();
 
         updateTaskConfig(task.id, { intro: { enabled: true } });

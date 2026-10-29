@@ -28,6 +28,10 @@
     "engine": "overlays/engine"
   },
   "defaults": {
+    "gameplay": {
+      "countdownSeconds": 180,
+      "allowReplay": true
+    },
     "hud": {
       "enabled": false,
       "titleEnabled": false,

@@ -11,12 +11,22 @@
     #GameDiv, #Cocos3dGameContainer, #GameCanvas { width: 100%; height: 100%; }
     canvas { display: block; touch-action: none; }
     #novvy-cta .novvy-cta-name { white-space: normal; }
+    #grill-loading, #grill-result { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 124px 20px 140px; box-sizing: border-box; font: 700 20px/1.4 'Trebuchet MS', Arial, sans-serif; color: #fff9ed; background: rgba(34, 20, 15, .72); text-align: center; }
+    #grill-loading[hidden], #grill-result[hidden], #grill-replay[hidden] { display: none; }
+    .grill-result-card { width: min(100%, 300px); padding: 28px 20px; box-sizing: border-box; border: 2px solid #e8b564; border-radius: 24px; background: #56372a; box-shadow: 0 16px 48px #0006; }
+    #grill-result-title { margin: 0; font-size: 32px; line-height: 1.1; }
+    #grill-result-copy { margin: 16px 0 20px; font-size: 16px; font-weight: 400; }
+    #grill-replay { border: 0; border-radius: 14px; padding: 14px 26px; background: #ffce68; color: #392012; font: inherit; cursor: pointer; touch-action: manipulation; }
+    #grill-replay:disabled { opacity: .65; cursor: wait; }
+    @media (orientation: landscape) { #grill-loading, #grill-result { padding: 64px 20px 110px; } .grill-result-card { padding: 12px 20px; } #grill-result-title { font-size: 24px; } #grill-result-copy { margin: 8px 0; } #grill-replay { padding: 8px 24px; } }
     @media (orientation: landscape) { :root { --origin-cta-space: 106px; } }
   </style>
   <script type="systemjs-importmap">{"imports":{"cc":"./cocos-js/cc.js"}}</script>
 </head>
 <body>
   <div id="origin-game"><div id="GameDiv" cc_exact_fit_screen="false"><div id="Cocos3dGameContainer"><canvas id="GameCanvas" tabindex="0"></canvas></div></div></div>
+  <div id="grill-loading" role="status">Preparing kitchen…</div>
+  <div id="grill-result" role="dialog" aria-modal="true" aria-labelledby="grill-result-title" hidden><div class="grill-result-card"><h1 id="grill-result-title"></h1><p id="grill-result-copy"></p><button id="grill-replay" data-novvy-replay type="button">Play again</button></div></div>
   <!--ORIGIN_SCRIPTS-->
   <script src="assets.js"></script><script src="loader.js"></script><script src="layout.js"></script><script src="boot.js"></script>
   <!--ORIGIN_SCRIPTS_END-->

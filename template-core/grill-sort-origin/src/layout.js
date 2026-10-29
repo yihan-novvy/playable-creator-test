@@ -2,6 +2,11 @@
   'use strict';
   var patched = new WeakSet();
   function reset(game) {
+    function hideWatermark(node) {
+      if (node.name.indexOf('watermark') !== -1) node.active = false;
+      node.children.forEach(hideWatermark);
+    }
+    hideWatermark(cc.director.getScene());
     var widget = game.node.getComponent('cc.Widget');
     if (widget) widget.enabled = false;
     game.node.setScale(1, 1, 1);
@@ -53,9 +58,6 @@
     if (name === 'Game') {
       var layout = p.dealBoardPos;
       p.dealBoardPos = function () { reset(this); var out = layout.apply(this, arguments); fit(this); return out; };
-    } else if (name === 'Main') {
-      var show = p.showRes;
-      p.showRes = function () { var out = show.apply(this, arguments); this.node.getChildByPath('endUI/button').active = false; return out; };
     } else if (name === 'KWGame') {
       var init = p.init;
       p.init = function () { var out = init.apply(this, arguments); this.enableAudio = true; return out; };
@@ -65,7 +67,7 @@
     install: function (system) {
       var register = system.register;
       system.register = function (id, deps, declare) {
-        if (typeof id !== 'string' || !/^chunks:\/\/\/_virtual\/(Game|Main|KWGame)\.ts$/.test(id)) return register.apply(this, arguments);
+        if (typeof id !== 'string' || !/^chunks:\/\/\/_virtual\/(Game|KWGame)\.ts$/.test(id)) return register.apply(this, arguments);
         return register.call(this, id, deps, function (publish, context) {
           return declare(function (name, value) { patch(name, value); return publish(name, value); }, context);
         });

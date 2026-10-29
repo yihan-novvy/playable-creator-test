@@ -25,9 +25,9 @@
       "game/assets.js": "f8ed9e188ac377c9d2778f1af74339d1a3756034d89398facab9a0811074540a",
       "game/loader.js": "f3e1a5bd5ab507a2ff36c3c2ab4c789a10ebd3938867d6c63b275444f35d6bd1",
       "game/cta-icon.webp": "850072bcacd25dfab4403d95ab5c5a4a6e2ac3b5dae3914076b1ff3fc47f7fea",
-      "game/layout.js": "c986cc0f1be008edeef717091d516cf830b0f9dfce8fad10cf9f19211edf510c",
-      "game/boot.js": "9fdd1d949795a2c2c7f672d1cf36c17145b74f872e7ca94209f17c0b50d5805f",
-      "game/index.html": "f531c4c22a1c0613cb23e5f3993e8cc15e2d24076c05b42df21a256c55008f3e"
+      "game/layout.js": "9526e205c4ab63818a80050e036564ffab0a990d85f127ba4db73acde2ac36bc",
+      "game/boot.js": "38f1bd38e26b241fba5de51592e7f8a914bb7b19096d4369e36670d0200f5c44",
+      "game/index.html": "38d5fd0dfa4687ecafdd5827e0af0ef71ace5996627af13e561fcf9bc0ed643c"
     }
   }
 }
