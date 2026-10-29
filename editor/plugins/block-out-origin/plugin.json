@@ -16,6 +16,7 @@
     "hud": { "enabled": false, "titleEnabled": false, "titleLine1": "Block Out", "titleLine2": "Slide blocks to matching exits", "ariaLabel": "" },
     "intro": { "enabled": false, "ariaLabel": "", "goEnabled": false, "goText": "GO" },
     "cta": { "endMask": false },
+    "gameplay": { "allowReplay": false },
     "playableCta": { "mode": "steps", "afterSteps": 20, "intervals": [10, 8, 6, 4] }
   }
 }

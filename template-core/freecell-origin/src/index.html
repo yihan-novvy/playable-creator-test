@@ -10,11 +10,22 @@
     #origin-game { position: fixed; inset: 0; overflow: hidden; }
     canvas { touch-action: none; }
     #novvy-cta .novvy-cta-name { white-space: normal; }
+    #freecell-result { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 124px 20px 140px; box-sizing: border-box; background: #062412b8; color: #fff; text-align: center; font: 700 20px/1.4 Arial, sans-serif; }
+    #freecell-result[hidden] { display: none; }
+    .freecell-result-card { width: min(100%, 300px); box-sizing: border-box; padding: 28px 20px; border: 2px solid #e6cf8b; border-radius: 22px; background: #17452d; box-shadow: 0 16px 48px #0006; }
+    #freecell-result-title { margin: 0; font-size: 32px; }
+    #freecell-result-copy { margin: 14px 0 22px; font-size: 16px; font-weight: 400; }
+    #freecell-replay { border: 0; border-radius: 12px; padding: 14px 28px; background: #f4d27b; color: #173b28; font: inherit; cursor: pointer; touch-action: manipulation; }
+    #freecell-replay:disabled { opacity: .65; cursor: wait; }
+    @media (orientation: landscape) { #freecell-result { padding: 64px 20px 110px; } .freecell-result-card { padding: 12px 20px; } #freecell-result-title { font-size: 24px; } #freecell-result-copy { margin: 8px 0; } #freecell-replay { padding: 8px 24px; } }
     @media (orientation: landscape) { :root { --origin-cta-space: 106px; } }
   </style>
 </head>
 <body>
   <div id="origin-game"></div>
+  <div id="freecell-result" role="dialog" aria-modal="true" aria-labelledby="freecell-result-title" hidden>
+    <div class="freecell-result-card"><h1 id="freecell-result-title">You win!</h1><p id="freecell-result-copy">All 52 cards are home.</p><button id="freecell-replay" data-novvy-replay type="button">Play again</button></div>
+  </div>
   <!--ORIGIN_SCRIPTS-->
   <script src="vendor.js"></script><script src="config.js"></script><script src="runtime.js"></script><script src="core.js"></script><script src="assets.js"></script><script src="preloader.js"></script><script src="layout.js"></script><script src="boot.js"></script>
   <!--ORIGIN_SCRIPTS_END-->

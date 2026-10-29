@@ -72,6 +72,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
       textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
     ]));
+    wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
+      checkbox('允许重玩', 'gameplay', 'allowReplay'),
+    ]), el('p', { class: 'hint' }, ['默认关闭。开启后，结算时显示重玩按钮；点击先触发 CTA-card 跳转，再从第一关开始。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());
     root.append(wrap);
   }

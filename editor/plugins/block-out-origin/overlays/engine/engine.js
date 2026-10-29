@@ -1,16 +1,20 @@
 (function () {
   'use strict';
   var config = window.__BLOCK_OUT_CONFIG__;
+  var allowReplay = !!(config.gameplay && config.gameplay.allowReplay === true), restarting = false;
   var active = !config.intro, ready = false, settled = false, viewable = window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true;
   var steps = 0, cleared = 0, nextCta = config.policy.afterSteps, ctaIndex = 0;
   var records = new WeakMap(), removed = new WeakSet();
   var api, releaseIntro;
   var gate = active ? Promise.resolve() : new Promise(function (resolve) { releaseIntro = resolve; });
+  window.__novvyReplayable = allowReplay;
+  function element(id) { return document.getElementById(id); }
+  function playable() { return active && !settled && !restarting; }
   function emit(name, detail) { window.dispatchEvent(new CustomEvent(name, { detail: detail || {} })); }
   function cells(block) { return JSON.stringify((block.cellsData || []).map(function (cell) { return [cell.x, cell.y]; }).sort(function (a, b) { return a[0] - b[0] || a[1] - b[1]; })); }
-  function convert(manual, scene, timing) { emit('novvy:block-out-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene, everySteps: timing && timing.gap, repeat: timing && timing.repeat }); }
+  function convert(manual, scene, timing) { emit('novvy:block-out-cta', { click_source: manual ? 'cta_click' : 'forced_click_to_appstore', scene: scene, everySteps: timing && timing.gap, repeat: timing && timing.repeat, replayable: allowReplay }); }
   function commit(record, block) {
-    if (!active || settled || !record || record.done || records.get(block) !== record) return;
+    if (!playable() || !record || record.done || records.get(block) !== record) return;
     if (!removed.has(block) && record.cells === cells(block)) return;
     record.done = true;
     steps += 1;
@@ -24,10 +28,66 @@
     }
   }
   function finish(won) {
-    if (settled || !active) return;
+    if (!playable()) return;
     settled = true;
-    emit(won ? 'novvy:playable-complete' : 'novvy:playable-failed');
-    if (!won) convert(false, 'playable-failed');
+    if (allowReplay) {
+      var manager = api.Manager.instance;
+      manager.setBlockInputLocked(true);
+      manager.hideInstructionalTutorial();
+      manager.gameScene.stopTutorialForLevelCompletion();
+      manager.uiScene.stopTimer();
+      element('block-out-result-title').textContent = won ? 'You win!' : 'Try again!';
+      element('block-out-result-copy').textContent = won ? 'All blocks cleared!' : 'Slide each block to its matching exit.';
+      element('block-out-replay').textContent = won ? 'Play again' : 'Try again';
+      element('block-out-result').hidden = false;
+    }
+    emit(won ? 'novvy:playable-complete' : 'novvy:playable-failed', { replayable: allowReplay });
+    if (!won && !allowReplay) convert(false, 'playable-failed');
+  }
+  async function replay() {
+    if (!active || !settled || !allowReplay || restarting || !ready) return false;
+    restarting = true;
+    var button = element('block-out-replay');
+    button.disabled = true; button.textContent = 'Preparing…';
+    emit('novvy:replay-cta');
+    try {
+      var manager = api.Manager.instance, scene = manager.gameScene;
+      // Reuse the native scene and its level teardown, preserving the app,
+      // music, intro and SDK stage. Only the two-level round starts over.
+      manager.hideInstructionalTutorial();
+      manager.setSelectedBlock(null);
+      manager.currentLevel = 0;
+      manager.nextLevelLoading = false;
+      manager.plannedLevelTransitionDuration = null;
+      manager.resetBlocks(); manager.resetDoors();
+      manager.blockInputLockOwners.clear();
+      manager.initializeChallengeProgress();
+      manager.blockPassesCounter = 0; manager.lastGlobalExitTime = 0;
+      if (manager.blockPassesCounterTimer) manager.blockPassesCounterTimer.kill();
+      manager.blockPassesCounterTimer = null;
+      scene.pendingTutorialRepeatDueTimeAfterLevelCompletionMs = null;
+      scene.suppressTutorialUntilNextLevel = false;
+      await scene.startLevel(api.Parameters.levelAssets[0], { transition: 'none' });
+      scene.eventMode = 'static';
+      // startLevel restores draw-attention tutorials itself; otherwise the
+      // initial hand is normally added by onReady, which must not run twice.
+      if (!api.Parameters.hasDrawAttentionOnStart && !scene.hand) scene.addTutorial();
+      manager.uiScene.reInstantiateTimer();
+      api.Layout.resize();
+      records = new WeakMap(); removed = new WeakSet();
+      steps = 0; cleared = 0; nextCta = config.policy.afterSteps; ctaIndex = 0;
+      restarting = false; settled = false;
+      element('block-out-result').hidden = true;
+      button.disabled = false;
+      emit('novvy:block-out-replay');
+      lifecycle();
+      return true;
+    } catch (error) {
+      restarting = false; button.disabled = false; button.textContent = 'Try again';
+      element('block-out-result-copy').textContent = 'Unable to restart. Please try again.';
+      console.error('Block Out restart failed', error);
+      return false;
+    }
   }
   function audio() {
     if (!api || !ready) return;
@@ -48,7 +108,9 @@
   window.addEventListener('novvy:viewablechange', function (event) { viewable = !!event.detail.viewable; lifecycle(); });
   document.addEventListener('visibilitychange', lifecycle);
   document.addEventListener('pointerdown', audio, true);
+  element('block-out-replay').addEventListener('click', replay);
   window.__BLOCK_OUT_ADAPTER__ = {
+    replay: replay,
     // Native logo/endcard clicks use the same SDK route; no native hasOpenedStore
     // latch, AppLovin redirect, or gameplay lock survives a store visit.
     openStore: function (options) {
@@ -94,12 +156,14 @@
       var manager = api.Manager.prototype, drag = api.Drag.prototype;
       var select = manager.setSelectedBlock;
       manager.setSelectedBlock = function (block, id) {
-        if (block && active && !settled) records.set(block, { id: id, cells: cells(block), done: false });
+        if (block && !playable()) return;
+        if (block) records.set(block, { id: id, cells: cells(block), done: false });
         return select.apply(this, arguments);
       };
       var pass = manager.onBlockPassedExit;
       manager.onBlockPassedExit = function (block) {
-        if (this.blocks.includes(block) && !removed.has(block)) {
+        if (!playable() || !this.blocks.includes(block)) return;
+        if (!removed.has(block)) {
           removed.add(block); cleared += 1;
           commit(records.get(block), block);
         }
@@ -113,9 +177,9 @@
         return value;
       };
       var end = manager.showEndcard;
-      manager.showEndcard = function () { finish(true); return end.apply(this, arguments); };
+      manager.showEndcard = function () { finish(true); if (!allowReplay) return end.apply(this, arguments); };
       var endScene = manager.startEndcardScene;
-      manager.startEndcardScene = function (won) { finish(!!won); return endScene.apply(this, arguments); };
+      manager.startEndcardScene = function (won) { finish(!!won); if (!allowReplay) return endScene.apply(this, arguments); };
       var start = api.Boot.prototype.start;
       api.Boot.prototype.start = async function () {
         await gate;

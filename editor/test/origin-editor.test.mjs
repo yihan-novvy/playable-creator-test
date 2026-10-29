@@ -27,6 +27,10 @@ export default async function test(a) {
           { playableCta: { afterSteps: 25, intervals: [7, 3] } },
         ];
         if (templateId === 'colorever-origin') patches.push({ patternId: 'apple-red' });
+        if (['block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(templateId)) {
+          recordStepResult(task.id, { stepId: 'intro', ok: true });
+          patches.push({ gameplay: { allowReplay: false } }, { gameplay: { allowReplay: true } });
+        }
         if (templateId === 'grill-sort-origin') {
           recordStepResult(task.id, { stepId: 'intro', ok: true });
           patches.push({ gameplay: { countdownSeconds: 45 } }, { gameplay: { allowReplay: false } });
@@ -41,6 +45,15 @@ export default async function test(a) {
           a.equal(blocked.status, 409, `${templateId}: stale ZIP is blocked`); await blocked.json();
         }
         const config = readTask(task.id).config;
+        if (['block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(templateId)) {
+          a.equal(config.gameplay, { allowReplay: true }, `${templateId}: replay setting persists`);
+          a.check(readTask(task.id).steps.intro.ok, `${templateId}: replay edits retain the transcoded intro`);
+          for (const gameplay of [{ allowReplay: 'true' }, { allowReplay: 1 }, { unknown: true }, null, []]) {
+            const invalid = await fetch(`${base}/api/tasks/${task.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ config: { gameplay } }) });
+            a.equal(invalid.status, 400, `${templateId}: invalid replay settings are rejected`); await invalid.json();
+          }
+          a.equal(readTask(task.id).config.gameplay, config.gameplay, `${templateId}: rejected settings do not mutate the task`);
+        }
         if (templateId === 'grill-sort-origin') {
           a.equal(config.gameplay, { countdownSeconds: 45, allowReplay: false }, 'Grill: gameplay sibling settings persist');
           a.check(readTask(task.id).steps.intro.ok, 'Grill: gameplay edits retain the transcoded intro');
@@ -56,6 +69,7 @@ export default async function test(a) {
         const html = fs.readFileSync(path.join(taskResultDir(task.id), 'index.html'), 'utf8');
         a.check(html !== oldHtml && html.includes('Saved audit title') && html.includes('Saved subtitle'), `${templateId}: rebuilt HTML contains saved text`);
         if (templateId === 'grill-sort-origin') a.check(html.includes('"countdownSeconds":45,"allowReplay":false'), 'Grill: package uses saved timer and replay settings');
+        if (['block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(templateId)) a.check(html.includes('"gameplay":{"allowReplay":true}'), `${templateId}: package uses saved replay setting`);
         const fresh = await request(task, 'export'); a.equal(fresh.status, 200, `${templateId}: rebuilt ZIP exports`); await fresh.arrayBuffer();
 
         updateTaskConfig(task.id, { intro: { enabled: true } });

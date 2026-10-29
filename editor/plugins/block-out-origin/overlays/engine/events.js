@@ -5,7 +5,7 @@
   var NovvyPlayable = window.NovvyPlayable;
   var NovvyAnalytics = window.NovvyAnalytics;
   var chain = window.__novvyStageChain__;
-  var ended = false, entered = chain[0] === 'playable';
+  var ended = false, settled = false, entered = chain[0] === 'playable';
   try { NovvyPlayable.setStageList(chain.slice()); NovvyPlayable.setStage(1, chain[0]); } catch (_) {}
   var video = document.getElementById('novvy-intro-video');
   try { if (video) NovvyAnalytics.registerMedia(video, { name: 'intro_video' }); } catch (_) {}
@@ -15,16 +15,24 @@
     try { NovvyPlayable.setStage(chain.length, 'playable'); } catch (_) {}
   });
   window.addEventListener('novvy:block-out-step', function (event) {
-    if (!entered || ended) return;
+    if (!entered || settled || ended) return;
     try { NovvyPlayable.onStep(event.detail.step, { progress: event.detail.progress }); } catch (_) {}
   });
-  function settle(result) {
-    if (ended || !entered) return;
-    ended = true;
-    try { NovvyPlayable.onComplete({ result: result }); } catch (_) {}
+  function settle(result, event) {
+    if (settled || ended || !entered) return;
+    settled = true;
+    var replayable = !!event.detail.replayable;
+    ended = !replayable;
+    try { NovvyPlayable.onComplete(replayable ? { result: result, continue_playing: true } : { result: result }); } catch (_) {}
   }
-  window.addEventListener('novvy:playable-complete', function () { settle('win'); });
-  window.addEventListener('novvy:playable-failed', function () { settle('fail'); });
+  window.addEventListener('novvy:playable-complete', function (event) { settle('win', event); });
+  window.addEventListener('novvy:playable-failed', function (event) { settle('fail', event); });
+  window.addEventListener('novvy:block-out-replay', function () {
+    if (!settled || ended) return;
+    settled = false;
+    try { NovvyPlayable.onReplay(); } catch (_) {}
+    window.dispatchEvent(new CustomEvent('novvy:playable-replay'));
+  });
   // Only an actual page departure ends an unfinished stage. Backgrounding or
   // opening a store can resume and must not fabricate a final result.
   window.addEventListener('pagehide', function (event) {

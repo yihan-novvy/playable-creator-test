@@ -28,6 +28,9 @@
     "engine": "overlays/engine"
   },
   "defaults": {
+    "gameplay": {
+      "allowReplay": false
+    },
     "hud": {
       "enabled": false,
       "titleEnabled": false,

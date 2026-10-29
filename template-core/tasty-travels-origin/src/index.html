@@ -13,11 +13,22 @@
     #novvy-cta:not(.novvy-cta-takeover) { padding: 12px 14px max(14px, env(safe-area-inset-bottom)); }
     #novvy-cta .novvy-cta-icon img { object-fit: contain; }
     #novvy-cta .novvy-cta-name { white-space: normal; }
+    #tasty-result { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 124px 20px 140px; box-sizing: border-box; background: #211840b8; color: #fff; text-align: center; font: 700 20px/1.4 Arial, sans-serif; }
+    #tasty-result[hidden] { display: none; }
+    .tasty-result-card { width: min(100%, 300px); box-sizing: border-box; padding: 28px 20px; border: 2px solid #f6d992; border-radius: 22px; background: #534095; box-shadow: 0 16px 48px #0006; }
+    #tasty-result-title { margin: 0; font-size: 32px; }
+    #tasty-result-copy { margin: 14px 0 22px; font-size: 16px; font-weight: 400; }
+    #tasty-replay { border: 0; border-radius: 12px; padding: 14px 28px; background: #ffe39a; color: #39265d; font: inherit; cursor: pointer; touch-action: manipulation; }
+    #tasty-replay:disabled { opacity: .65; cursor: wait; }
+    @media (orientation: landscape) { #tasty-result { padding: 64px 20px 110px; } .tasty-result-card { padding: 12px 20px; } #tasty-result-title { font-size: 24px; } #tasty-result-copy { margin: 8px 0; } #tasty-replay { padding: 8px 24px; } }
     @media (orientation: landscape) { :root { --tasty-cta-space: 100px; } }
   </style>
 </head>
 <body>
   <div id="origin-game"><canvas id="GameCanvas" tabindex="0"></canvas><div id="splash"><div class="progress-bar"><span>Loading…</span></div></div></div>
+  <div id="tasty-result" role="dialog" aria-modal="true" aria-labelledby="tasty-result-title" hidden>
+    <div class="tasty-result-card"><h1 id="tasty-result-title">You win!</h1><p id="tasty-result-copy">A delicious finish!</p><button id="tasty-replay" data-novvy-replay type="button">Play again</button></div>
+  </div>
   <!--ORIGIN_SCRIPTS-->
   <script src="assets.js"></script><script src="settings.js"></script><script src="main.js"></script><script src="layout.js"></script><script src="loader.js"></script><script src="boot.js"></script>
   <!--ORIGIN_SCRIPTS_END-->

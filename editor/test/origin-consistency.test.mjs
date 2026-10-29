@@ -84,6 +84,7 @@ export default async function test(a) {
   const onMainCta = new Function(core.match(/key:"onMainCta",value:function t\(\)\{([^}]+)\}/)[1]);
   let animations = 0, delayedDownloads = 0;
   const nativeWindow = {
+    field: freecell.Game.currentWindow.field,
     cta: { children: [{}] },
     animateButtonPress() { animations++; },
     callSdk() { delayedDownloads++; },

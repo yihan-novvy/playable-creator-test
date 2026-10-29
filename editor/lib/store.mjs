@@ -117,10 +117,10 @@ const CONFIG_WHITELISTS = new Map([
   ['colorever', new Set(['hud','intro','outro','cta','background','hudImageSource','hudCrop','patternId','opening','playableCta','replay','secondPlayable','music'])],
   ['water-sort', new Set([...CONFIG_PATCH_WHITELIST, 'level'])],
   ['dragon-cube', new Set([...CONFIG_PATCH_WHITELIST, 'levelId','outro','playableCta','secondPlayable','replay'])],
-  ['block-out-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
-  ['freecell-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
+  ['block-out-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
+  ['freecell-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
   ['grill-sort-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
-  ['tasty-travels-origin', new Set(['hud', 'intro', 'cta', 'playableCta'])],
+  ['tasty-travels-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
   ['colorever-origin', new Set(['patternId', 'hud', 'intro', 'cta', 'playableCta'])],
 ]);
 
@@ -188,6 +188,14 @@ export function updateTaskConfig(id, patch) {
   // Validate both selections before mutating or writing a task.
   if ('levelId' in (patch || {})) validateFixedLevel(doc.templateId, patch.levelId);
   if ('levelId' in (patch?.secondPlayable || {})) validateFixedLevel(doc.templateId, patch.secondPlayable.levelId);
+  if (['block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) {
+    const settings = patch.gameplay;
+    if (!settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => key !== 'allowReplay' || typeof value !== 'boolean')) {
+      const error = new Error('允许重玩须为布尔值。');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
   if (doc.templateId === 'grill-sort-origin' && 'gameplay' in (patch || {})) {
     const settings = patch.gameplay;
     const invalid = !settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => {
@@ -241,7 +249,7 @@ export function updateTaskConfig(id, patch) {
   if ('playableCta' in (patch || {})) delete doc.steps.pack;
   // Origin settings affect the composed HTML, not the transcoded media.
   if (isOriginTemplate(doc.templateId) && ['hud', 'intro', 'cta', 'patternId'].some(key => key in (patch || {}))) delete doc.steps.pack;
-  if (['escape-arrow', 'grill-sort-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) delete doc.steps.pack;
+  if (['escape-arrow', 'grill-sort-origin', 'block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) delete doc.steps.pack;
   // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
   if ('opening' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
   if ('secondPlayable' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; if ('background' in (patch.secondPlayable || {}) || 'enabled' in (patch.secondPlayable || {})) delete doc.steps.background2; }

@@ -28,10 +28,11 @@ export function blockOutHtml({ root, overlaysRoot, template, config, media = {},
   addOriginCtaCard(injection, template.game.ctaCard, read);
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
   const policy = ctaPolicy(config.playableCta);
-  const settings = { intro: injection.introEnabled, title: injection.hudEnabled, totalBlocks: template.blockCounts.reduce((a, b) => a + b, 0), policy };
+  const settings = { intro: injection.introEnabled, title: injection.hudEnabled, totalBlocks: template.blockCounts.reduce((a, b) => a + b, 0), policy,
+    gameplay: { allowReplay: false, ...config.gameplay } };
   const readEngine = name => fs.readFileSync(path.join(pluginDir, template.overlays.engine, name), 'utf8');
   const boot = [
-    ...injection.bodyDom, injection.uiScript,
+    ...injection.bodyDom, readEngine('result.html'), injection.uiScript,
     script('block-out-config', `window.__novvyStageChain__=${inline(stageChain)};window.__BLOCK_OUT_CONFIG__=${inline(settings)};`),
     script('playable-bridge', readEngine('events.js')),
     originCtaBridge(config),
@@ -43,6 +44,7 @@ export function blockOutHtml({ root, overlaysRoot, template, config, media = {},
   if (html.split('<!--BLOCK_OUT_BOOT-->').length !== 2) throw new Error('Block Out boot anchor missing');
   html = html.replace(/<!--BLOCK_OUT_BOOT-->[\s\S]*?<!--BLOCK_OUT_BOOT_END-->/, () => boot);
   html = html.replace('</head>', () => [...injection.headStyles,
+    `<style data-novvy-block-out-result>${readEngine('result.css')}</style>`,
     `<style data-novvy-block-out-shell>
       #preloader{z-index:5}canvas{touch-action:none}
       #novvy-cta .novvy-cta-name{white-space:normal}

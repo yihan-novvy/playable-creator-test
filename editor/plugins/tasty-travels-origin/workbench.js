@@ -72,6 +72,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
       textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
     ]));
+    wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
+      checkbox('允许重玩', 'gameplay', 'allowReplay'),
+    ]), el('p', { class: 'hint' }, ['默认关闭。开启后，通关或越界失败时显示重玩按钮；点击先触发 CTA 跳转，再重置游戏，片头不重复播放。修改后只需重新打包。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());
     root.append(wrap);
   }

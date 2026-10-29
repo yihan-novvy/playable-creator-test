@@ -8,49 +8,63 @@ import { blockOutHtml, ctaPolicy } from '../plugins/block-out-origin/lib.mjs';
 import { run, prerequisites } from '../plugins/block-out-origin/steps/pack.mjs';
 import { configWhitelistFor } from '../lib/store.mjs';
 
-export function runtime(entry, intro = false) {
+export function runtime(entry, intro = false, allowReplay) {
   const listeners = new Map(), calls = [];
-  const element = () => ({ hidden: false, muted: true, addEventListener() {}, setAttribute() {} });
-  const elements = { 'novvy-cta': element(), 'block-out-sound': element(), ...(intro ? { 'novvy-intro-video': element() } : {}) };
+  const element = () => ({ hidden: false, muted: true, addEventListener(name, fn) { this[name] = fn; }, setAttribute() {} });
+  const elements = Object.fromEntries(['novvy-cta', 'block-out-result', 'block-out-result-title', 'block-out-result-copy', 'block-out-replay'].map(id => [id, element()]));
+  elements['block-out-result'].hidden = true;
+  if (intro) elements['novvy-intro-video'] = element();
   const window = {
     __novvyStageChain__: intro ? ['video', 'playable'] : ['playable'],
-    __BLOCK_OUT_CONFIG__: { intro, totalBlocks: 39, policy: { mode: 'steps', afterSteps: 2, intervals: [2, 1] } },
+    __BLOCK_OUT_CONFIG__: { intro, totalBlocks: 39, policy: { mode: 'steps', afterSteps: 2, intervals: [2, 1] }, ...(allowReplay === undefined ? {} : { gameplay: { allowReplay } }) },
     editorParameters: {},
     addEventListener(name, fn) { if (!listeners.has(name)) listeners.set(name, []); listeners.get(name).push(fn); },
     dispatchEvent(e) { for (const fn of listeners.get(e.type) || []) fn(e); },
-    NovvyPlayable: Object.fromEntries(['setStageList','setStage','onStep','onComplete','endStage','click'].map(name => [name, (...args) => calls.push([name, ...args])])),
+    NovvyPlayable: Object.fromEntries(['setStageList','setStage','onStep','onComplete','onReplay','endStage','click'].map(name => [name, (...args) => calls.push([name, ...args])])),
     NovvyAnalytics: { registerMedia: (_, meta) => calls.push(['media', meta]) },
   };
   const document = { hidden: false, getElementById: id => elements[id] || null, addEventListener: window.addEventListener };
-  const context = vm.createContext({ window, document, console: { log() {} }, CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } } });
+  const context = vm.createContext({ window, document, console: { log() {}, error() {} }, getComputedStyle: () => ({ getPropertyValue: () => '64' }), CustomEvent: class { constructor(type, options) { this.type = type; this.detail = options?.detail; } } });
   vm.runInContext(fs.readFileSync(path.join(entry.dir, 'overlays/engine/events.js'), 'utf8'), context);
   const cta = installOriginCta(context);
   vm.runInContext(fs.readFileSync(path.join(entry.dir, 'overlays/engine/engine.js'), 'utf8'), context);
   class Manager {
-    constructor() { this.blocks = []; }
+    constructor() {
+      Manager.instance = this; this.blocks = []; this.blockInputLockOwners = new Set();
+      this.gameScene = { startLevel: async () => { calls.push(['startLevel', this.currentLevel]); block(); block(); }, stopTutorialForLevelCompletion() {}, addTutorial() {} };
+      this.uiScene = { stopTimer() {}, reInstantiateTimer() {} };
+    }
+    resetBlocks() { this.blocks = []; this.blockInputLocked = false; this.levelCompletionPending = false; }
+    resetDoors() { this.doors = []; }
+    initializeChallengeProgress() { this.challengeClearedBlockCount = 0; }
+    setBlockInputLocked(value) { this.blockInputLocked = value; }
+    hideInstructionalTutorial() {}
     setSelectedBlock(block) { this.selectedBlock = block; }
     onBlockPassedExit(block) { this.blocks = this.blocks.filter(b => b !== block); }
-    showEndcard() {}
-    startEndcardScene() {}
+    showEndcard() { calls.push(['native-endcard']); }
+    startEndcardScene() { calls.push(['native-endcard-scene']); }
   }
   class Drag { async pointerUpHandler() { this.action?.(); } }
   class App { pauseGame() {} resumeGame() {} }
   App.instance = new App();
   class Boot { async start() { calls.push(['boot']); } }
-  const engine = { Manager, Drag, App, Boot, Sound: { muteAll() {}, unmuteAll() {} } };
+  const engine = { Manager, Drag, App, Boot, Parameters: { levelAssets: [{}] }, Layout: { resize() {} }, Sound: { muteAll() {}, unmuteAll() {} } };
+  elements['novvy-cta'].getBoundingClientRect = () => ({ height: 100 });
   window.__BLOCK_OUT_ADAPTER__.install(engine);
   const manager = new Manager(), drag = new Drag();
   function block() { const b = { cellsData: [{ x: 0, y: 0 }], state: 'idle' }; manager.blocks.push(b); return b; }
   function select(b, id) { manager.setSelectedBlock(b, id); drag.selectedBlock = b; }
   function emit(type, detail) { window.dispatchEvent(type === 'pagehide' ? { type, ...detail } : { type, detail }); }
-  return { cta, window, calls, manager, drag, block, select, emit, Boot };
+  return { cta, window, calls, manager, drag, block, select, emit, Boot, elements };
 }
 
 export default async function test(assert) {
   const entry = getEntry('block-out-origin');
   assert.check(configWhitelistFor(entry.id).has('playableCta'), 'CTA settings persist through task PATCH');
+  assert.check(configWhitelistFor(entry.id).has('gameplay'), 'replay settings persist through task PATCH');
   const base = { root: entry.templateDir, overlaysRoot: entry.dir, template: entry.template, config: entry.template.defaults };
   const plain = blockOutHtml(base);
+  assert.check(plain.html.includes('"gameplay":{"allowReplay":false}'), 'replay defaults off');
   const withIntro = blockOutHtml({ ...base, config: { ...base.config, intro: { enabled: true } }, media: { introVideo: 'intro-video.mp4', introPoster: 'poster.webp' } });
   assert.equal(plain.stageChain, ['playable'], 'two native levels share one playable stage');
   assert.equal(withIntro.stageChain, ['video', 'playable'], 'optional video precedes playable');
@@ -85,6 +99,10 @@ export default async function test(assert) {
   r.manager.showEndcard(); r.manager.startEndcardScene(true); r.emit('pagehide', {});
   assert.equal(r.calls.filter(c => c[0] === 'onComplete'), [['onComplete', { result: 'win' }]], 'final success settles once before native endcard');
   assert.equal(r.calls.filter(c => c[0] === 'endStage').length, 0, 'page departure cannot resettle final result');
+  assert.check(r.elements['block-out-result'].hidden, 'old tasks without gameplay retain native ending');
+  assert.equal(await r.window.__BLOCK_OUT_ADAPTER__.replay(), false, 'old tasks cannot replay');
+  const disabled = runtime(entry, false, false); await new disabled.Boot().start(); disabled.manager.showEndcard();
+  assert.equal(await disabled.window.__BLOCK_OUT_ADAPTER__.replay(), false, 'explicitly disabled replay cannot reset the board');
   const fail = runtime(entry); fail.manager.startEndcardScene(false);
   assert.equal(fail.calls.filter(c => c[0] === 'onComplete'), [['onComplete', { result: 'fail' }]], 'native failure uses explicit fail result');
   const pending = runtime(entry, true);
@@ -100,6 +118,54 @@ export default async function test(assert) {
   assert.equal(pending.calls.filter(c => c[0] === 'endStage').length, 0, 'bfcache navigation is resumable');
   pending.emit('pagehide', { persisted: false });
   assert.equal(pending.calls.filter(c => c[0] === 'endStage').length, 1, 'unfinished departure closes stage');
+
+  const replay = runtime(entry, true, true), count = name => replay.calls.filter(c => c[0] === name).length;
+  const boot = new replay.Boot().start(); replay.emit('novvy:intro-finished'); await boot;
+  for (const won of [true, false, true]) {
+    // Tutorial and challenge belong to one round; replay alone resets progress.
+    for (let n = 0; n < 2; n++) {
+      const block = replay.block(); replay.select(block, n); replay.drag.action = () => replay.manager.onBlockPassedExit(block); await replay.drag.pointerUpHandler();
+    }
+    replay.manager.currentLevel = 1;
+    const oldBlock = replay.block(); replay.select(oldBlock, 3);
+    let release;
+    replay.drag.action = () => { oldBlock.cellsData[0].x++; };
+    const lateUp = replay.drag.pointerUpHandler();
+    // A duplicate native end callback cannot settle a round twice.
+    const beforeComplete = count('onComplete');
+    replay.manager.startEndcardScene(won); replay.manager.showEndcard();
+    assert.equal(count('onComplete'), beforeComplete + 1, 'one completion per replayable round');
+    assert.equal(replay.calls.filter(c => c[0] === 'onComplete').at(-1)[1], { result: won ? 'win' : 'fail', continue_playing: true }, 'replayable result leaves SDK stage open');
+    assert.check(!replay.elements['block-out-result'].hidden, 'enabled result shows replay control');
+    replay.manager.gameScene.startLevel = async () => { await new Promise(resolve => { release = resolve; }); replay.block(); replay.block(); };
+    const clicks = count('click'), repeats = count('onReplay');
+    const reset = replay.elements['block-out-replay'].click();
+    assert.check(replay.elements['block-out-replay'].disabled, 'reset disables repeated clicks');
+    assert.equal(count('click'), clicks + 1, 'replay requests exactly one CTA before rebuilding');
+    assert.equal(replay.calls.filter(c => c[0] === 'click').at(-1)[1].scene, 'playable-replay', 'replay uses shared CTA-card scene');
+    assert.equal(await replay.window.__BLOCK_OUT_ADAPTER__.replay(), false, 'concurrent replay rejected');
+    await lateUp; release(); await reset;
+    assert.equal(count('onReplay'), repeats + 1, 'successful reset reports SDK replay once');
+    assert.check(replay.elements['block-out-result'].hidden && !replay.elements['block-out-replay'].disabled, 'ready round dismisses result');
+    assert.equal([replay.manager.currentLevel, replay.manager.blocks.length], [0, 2], 'replay returns to two-block tutorial');
+    const beforeStale = count('onStep'); replay.manager.onBlockPassedExit(oldBlock);
+    assert.equal(count('onStep'), beforeStale, 'stale exits from previous grid are ignored');
+    const fresh = replay.manager.blocks[0]; replay.select(fresh, 1);
+    replay.drag.action = () => replay.manager.onBlockPassedExit(fresh); await replay.drag.pointerUpHandler();
+    const firstStep = replay.calls.filter(c => c[0] === 'onStep').at(-1);
+    assert.check(firstStep[1] === 1 && Math.abs(firstStep[2].progress - 100 / 39) < 1e-10, 'replay resets steps and 39-block progress');
+    assert.equal(count('click'), clicks + 1, 'first replay step does not prematurely trigger old threshold');
+    const second = replay.manager.blocks[0]; replay.select(second, 2);
+    replay.drag.action = () => replay.manager.onBlockPassedExit(second); await replay.drag.pointerUpHandler();
+    assert.equal(count('click'), clicks + 2, 'configured first-step CTA repeats in new round');
+  }
+  assert.equal(count('boot'), 1, 'replay never reboots app or background music');
+  assert.equal(count('setStage'), 2, 'replay never repeats intro or stage entry');
+  assert.equal(count('native-endcard') + count('native-endcard-scene'), 0, 'replay uses own result without native ending timers');
+  replay.manager.showEndcard();
+  replay.manager.gameScene.startLevel = async () => { throw new Error('test reset failure'); };
+  assert.equal(await replay.window.__BLOCK_OUT_ADAPTER__.replay(), false, 'failed reset remains retryable');
+  assert.check(!replay.elements['block-out-result'].hidden && !replay.elements['block-out-replay'].disabled, 'failed reset restores result button');
 
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'block-out-pack-'));
   try {

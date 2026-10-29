@@ -57,7 +57,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     return wrap;
   }
   function renderConfig() {
-    document.getElementById('config-hint').textContent = '原版纸牌：52 张纸牌与原版引导。合法移牌记步，收牌区卡片数计算进度；无解时可重玩。默认第 20 次有效操作首跳，之后间隔 10/8/6/4，末间隔循环。';
+    document.getElementById('config-hint').textContent = '原版纸牌：52 张纸牌与原版引导。合法移牌记步，收牌区卡片数计算进度。默认第 20 次有效操作首跳，之后间隔 10/8/6/4，末间隔循环。';
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
@@ -72,6 +72,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
       textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
     ]));
+    wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
+      checkbox('允许重玩', 'gameplay', 'allowReplay'),
+    ]), el('p', { class: 'hint' }, ['默认关闭。开启后，通关或无可用移牌时显示重玩按钮；点击先触发 CTA 跳转，再重新发牌，片头不重复播放。修改后只需重新打包。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());
     root.append(wrap);
   }
