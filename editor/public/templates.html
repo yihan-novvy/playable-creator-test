@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14131a">
+  <meta name="description" content="探索八套可玩广告模板，了解玩法特色、在线试玩并访问图案与关卡工具。">
+  <title>模板探索 · Playable Creator</title>
+  <link rel="stylesheet" href="/templates.css">
+  <script type="module" src="/templates.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#catalog">跳到模板列表</a>
+  <header class="site-header">
+    <a class="brand" href="/templates.html" aria-label="Playable Creator 模板探索"><span class="brand-mark" aria-hidden="true">p<span>.</span></span><span>PLAYABLE<span class="brand-sub">CREATOR</span></span></a>
+    <nav aria-label="主导航"><a href="#catalog" class="current">模板探索</a><a href="#tools">辅助工具</a><a href="/" class="workspace-link">任务工作台 <span aria-hidden="true">↗</span></a></nav>
+  </header>
+  <main class="page">
+    <section class="hero" aria-labelledby="page-title">
+      <div><p class="eyebrow"><span class="live-dot"></span> PLAYABLE TEMPLATE LIBRARY</p><h1 id="page-title">先体验玩法，<br>再开始<span>创作。</span></h1></div>
+      <div class="hero-note"><span class="hero-count">08<span>种玩法，更多创意</span></span><p>从珠子拼画到碰撞合成，找到适合素材的玩法。<br>了解模板特色，直接试玩，带着想法进入工作台。</p><a class="text-link" href="#catalog">探索全部模板 <span aria-hidden="true">↓</span></a></div>
+    </section>
+    <section id="catalog" aria-labelledby="catalog-title">
+      <div class="section-heading"><div><span class="section-index">01 / EXPLORE</span><h2 id="catalog-title">模板库</h2></div><span class="section-note">真实玩法 · 点击即玩</span></div>
+      <div class="catalog-controls"><div class="filters" role="group" aria-label="按模板类型筛选"><button type="button" class="filter active" data-filter="all" aria-pressed="true">全部模板 <span>8</span></button><button type="button" class="filter" data-filter="custom" aria-pressed="false">可配置关卡 <span>3</span></button><button type="button" class="filter" data-filter="origin" aria-pressed="false">原版玩法 <span>5</span></button></div><label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4 4"/></svg><input id="search" type="search" placeholder="搜索名称、玩法或特色" aria-label="搜索模板"><kbd aria-hidden="true">/</kbd></label></div>
+      <p id="result-count" class="sr-only" aria-live="polite"></p>
+      <div id="template-grid" class="template-grid"></div>
+      <div id="empty-state" class="empty-state" hidden><h3>没有找到匹配的模板</h3><p>换一个关键词，或查看全部八套模板。</p><button id="reset-filters" type="button" class="button">清除筛选</button></div>
+      <noscript><p>请启用 JavaScript 查看模板、打开演示和创建任务。</p></noscript>
+    </section>
+    <section id="tools" class="tools-section" aria-labelledby="tools-title">
+      <div class="section-heading"><div><span class="section-index">02 / TOOLKIT</span><h2 id="tools-title">从灵感，到可玩</h2></div><span class="section-note">图案与关卡的辅助入口</span></div>
+      <div class="tool-grid">
+        <article class="tool-card"><span class="tool-icon" aria-hidden="true">▦</span><span class="tool-kicker">COLOREVER NEW</span><h3>图案画室</h3><p>制作珠子图案，调整开局难度，并回放搬运过程。</p><a id="studio-link" href="http://127.0.0.1:5175/editor/" target="_blank" rel="noopener">打开图案画室 <span aria-hidden="true">↗</span></a><details><summary>需要单独启动画室</summary><code>npm run editor -w template-core/colorever-new</code><p>在运行本项目的电脑上执行，画室使用 5175 端口。</p></details></article>
+        <article class="tool-card"><span class="tool-icon" aria-hidden="true">✿</span><span class="tool-kicker">COLOREVER ORIGIN</span><h3>原版图案库</h3><p>查看五瓣花、蓝色四瓣花、变色花与苹果的真实开局。</p><a href="/patterns.html" target="_blank" rel="noopener">浏览图案与试玩 <span aria-hidden="true">↗</span></a><span class="tool-footnote">已集成 · 无需启动其他服务</span></article>
+        <article class="tool-card"><span class="tool-icon" aria-hidden="true">↱</span><span class="tool-kicker">ESCAPE ARROW</span><h3>百关试玩总览</h3><p>按缩略图、棋盘尺寸和箭头数选关，连续试玩前 100 关。</p><a href="/templates/escape-arrow/gallery.html" target="_blank" rel="noopener">打开关卡总览 <span aria-hidden="true">↗</span></a><span class="tool-footnote">已集成 · 支持独立关卡窗口</span></article>
+      </div>
+    </section>
+    <section class="workflow" aria-labelledby="workflow-title"><div><span class="section-index">03 / CREATE</span><h2 id="workflow-title">把喜欢的玩法，变成你的广告。</h2></div><ol><li><span>01</span>选择模板</li><li><span>02</span>上传素材与配置文案</li><li><span>03</span>预览、打包与导出</li></ol><a href="/" class="button">前往任务工作台 <span aria-hidden="true">↗</span></a></section>
+  </main>
+  <footer class="site-footer"><span>PLAYABLE CREATOR <span class="footer-dot">/</span> 模板探索</span><span>8 套精选模板 · 与项目玩法同步</span><a href="#page-title">回到顶部 ↑</a></footer>
+
+  <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-title">
+    <div class="dialog-top"><span class="eyebrow">TEMPLATE PREVIEW</span><button id="close-detail" class="icon-button" type="button" aria-label="关闭模板详情">×</button></div>
+    <div class="detail-layout">
+      <section class="demo-panel" aria-label="游戏演示"><div class="demo-toolbar"><span><i class="live-dot"></i> 在线试玩</span><button id="restart-demo" type="button" aria-label="重新开始演示">↻ 重玩</button></div><div class="phone"><div id="demo-status" class="demo-status" role="status">正在加载玩法…</div><iframe id="demo-frame" title="模板演示" sandbox="allow-scripts allow-same-origin" allow="autoplay" hidden></iframe></div><div class="demo-settings"><label id="level-control" hidden>选择关卡 <select id="demo-level" aria-label="演示关卡"></select></label><a id="standalone-demo" href="#" target="_blank" rel="noopener">独立窗口 ↗</a></div><p class="demo-caption">直接点击或拖动体验玩法。演示使用默认素材。</p></section>
+      <section class="detail-copy"><div id="detail-badges" class="badges"></div><h2 id="detail-title"></h2><p id="detail-id" class="template-id"></p><p id="detail-description" class="detail-description"></p><h3>怎么玩</h3><p id="detail-how"></p><h3>模板特色</h3><ul id="detail-features" class="feature-list"></ul><div class="detail-config"><h3>可配置内容</h3><p id="detail-config"></p></div><h3>辅助工具</h3><div id="detail-tools" class="detail-tools"></div><p id="detail-note" class="detail-note"></p><button id="use-template" type="button" class="button primary">使用此模板 <span aria-hidden="true">↗</span></button></section>
+    </div>
+  </dialog>
+  <dialog id="create-dialog" class="create-dialog" aria-labelledby="create-title"><form id="create-template-form"><div class="dialog-top"><h2 id="create-title">创建任务</h2><button id="close-create" type="button" class="icon-button" aria-label="关闭创建任务">×</button></div><p id="create-template-name"></p><label for="new-task-name">任务名称</label><input id="new-task-name" name="name" required maxlength="120" placeholder="为这个创意起个名字" autocomplete="off"><p id="create-error" class="error-message" role="alert"></p><button id="confirm-create" class="button primary" type="submit">创建并进入工作台 ↗</button></form></dialog>
+</body>
+</html>

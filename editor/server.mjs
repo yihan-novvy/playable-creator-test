@@ -44,6 +44,7 @@ import { getEntry, listEntries, importStepModule, getLib } from './core/registry
 import { validateRegistry } from './core/validate.mjs';
 import { environment, run } from './core/lib/exec.mjs';
 import { fixedViewportHtml } from './core/lib/fixed-viewport.mjs';
+import { showcasePreview } from './lib/template-showcase.mjs';
 
 const UPLOAD_CAP_BYTES = 100 * 1024 * 1024;
 const UPLOAD_MIME = {
@@ -128,6 +129,12 @@ async function handleApi(req, res, url) {
   }
   if (req.method === 'GET' && pathname === '/api/templates') {
     return sendJson(res, 200, listTemplates());
+  }
+
+  if (req.method === 'GET' && segments.length === 4 && segments[1] === 'templates' && segments[3] === 'demo') {
+    const html = await showcasePreview(segments[2], url.searchParams);
+    res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
+    return res.end(html);
   }
 
   if(pathname==='/api/colorever-options'&&req.method==='GET'){

@@ -39,6 +39,7 @@ export function createAssert() {
 }
 
 export const TESTS = [
+  { name: 'template-showcase', file: path.join(TEST_DIR, 'template-showcase.test.mjs') },
   { name: 'origin-consistency', file: path.join(TEST_DIR, 'origin-consistency.test.mjs') },
   { name: 'origin-editor', file: path.join(TEST_DIR, 'origin-editor.test.mjs') },
   { name: 'tasty-travels-origin', file: path.join(TEST_DIR, 'tasty-travels-origin.test.mjs') },

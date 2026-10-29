@@ -8,6 +8,19 @@ node editor/server.mjs [--port 8088]
 
 打开 <http://127.0.0.1:8088>。
 
+## 模板探索
+
+打开 <http://127.0.0.1:8088/templates.html>，或点击任务列表 / 工作台顶部的「模板探索」。
+页面仅展示 Colorever New、Colorever Origin、Escape Arrow、DragonCube，以及
+Block Out、FreeCell、Grill Sort、Tasty Travels 的四套 Origin 模板。
+支持搜索、分类、模板特色说明、真实游戏演示和直接创建任务；箭头与 DragonCube 可在详情中切换关卡。
+
+演示通过 `GET /api/templates/:id/demo` 复用插件构建，按需加载，不创建任务或读取任务素材。
+退出详情即卸载游戏。卡片使用 `public/showcase/` 中的实际游戏截图；玩法更新后可替换对应截图。
+展示文案与工具入口维护在 `public/template-catalog.mjs`，此清单有意与完整模板注册表分开。
+辅助工具包含 Origin 图案库、箭头百关总览，以及需要单独启动的 Colorever New 图案画室
+（`npm run editor -w template-core/colorever-new`，5175 端口）。
+
 ## 工作流(六步流水线)
 
 | # | 步骤 | 输入 | 产物(project/<id>/generated/) | 预览 |
