@@ -52,6 +52,7 @@
     var card = document.getElementById('novvy-cta');
     if (card && !card.hidden) bottom = Math.max(bottom, card.getBoundingClientRect().height + 8);
     var height = document.getElementById('origin-game').clientHeight;
+    var portrait = cc.view.getCanvasSize().height >= cc.view.getCanvasSize().width;
     var camera = game.camera.getComponent(cc.Camera);
     var ratio = Math.max(0.25, (height - top - bottom) / height);
     camera.zoomRatio *= ratio;
@@ -73,7 +74,11 @@
       widget.left = node.__tastyWidget.left + margin;
       widget.right = node.__tastyWidget.right + margin;
       var units = cc.winSize.height / height / camera.zoomRatio;
-      widget.top = cc.winSize.height / 2 - game.camera.y - (height / 2 - top) * units + node.__tastyWidget.top;
+      // In portrait the native counters flank the island; the custom title sits
+      // below it. Their position is independent of the gameplay camera inset.
+      widget.top = portrait && node !== game.logo
+        ? cc.winSize.height / 2 - game.camera.y - (height / 2 - 16) * units
+        : cc.winSize.height / 2 - game.camera.y - (height / 2 - top) * units + node.__tastyWidget.top;
       widget.bottom = cc.winSize.height / 2 + game.camera.y + (bottom - height / 2) * units + node.__tastyWidget.bottom;
       widget.updateAlignment();
     });
@@ -85,7 +90,22 @@
       installed = true;
       var p = requireModule('GameScript').default.prototype;
       var sound = requireModule('SoundManager').SoundManager;
-      requireModule('GameManager').GameManager.canPlayAudio = true;
+      var manager = requireModule('GameManager').GameManager;
+      manager.canPlayAudio = true;
+      // SetLabel uses these settings for the original order1-en/order2-en art.
+      // GameScript has its own locale lookup, so pin its labels separately too.
+      manager.isMultilingual = false;
+      manager.curLanguage = 'en';
+      var english = requireModule('LanguageCfg').LanguageCfg.language.en;
+      p.setLanguage = function () {
+        this.languageName = 'en';
+        for (var i = 1; i <= 4; i++) {
+          this['tipLab' + i + '_1'].string = english['tip' + i + 'Lab'];
+          this['tipLab' + i + '_2'].string = english['tip' + i + 'Lab'];
+        }
+        this.NextLab.string = english.NextLab;
+        this.NextLab2.string = english.NextLab;
+      };
       var originalBgm = p.playBgm;
       p.playBgm = function () {
         if (sound.effectList.has('bgm') && sound.effectList.has('bgm2')) {

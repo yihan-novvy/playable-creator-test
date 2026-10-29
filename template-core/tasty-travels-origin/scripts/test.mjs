@@ -36,7 +36,8 @@ class LayoutGame {
 }
 const layoutContext=vm.createContext({window:layoutWindow,cc:{Camera:class{},Node:{EventType:{TOUCH_START:'touchstart'}}}});
 vm.runInContext(a.files['game/layout.js'],layoutContext);
-const requireModule=k=>k==='GameScript'?{default:LayoutGame}:k==='SoundManager'?{SoundManager:{effectList:effects}}:{GameManager:manager};
+const english=vm.runInNewContext('('+core.match(/en:(\{language:"英语",.*?\}),ja:/)[1]+')');
+const requireModule=k=>k==='GameScript'?{default:LayoutGame}:k==='SoundManager'?{SoundManager:{effectList:effects}}:k==='LanguageCfg'?{LanguageCfg:{language:{en:english}}}:{GameManager:manager};
 layoutWindow.__TASTY_LAYOUT__.install(requireModule);layoutWindow.__TASTY_LAYOUT__.install(requireModule);
 const layoutGame=new LayoutGame(),getLocation=()=>({x:30,y:40}),event={touch:{getLocation}};
 assert.deepEqual(layoutGame.game1_Start(event),{x:60,y:50});
@@ -45,6 +46,14 @@ assert.equal(event.touch.getLocation,getLocation);
 assert.throws(()=>layoutGame.game1_End(event),/native release error/);
 assert.equal(event.touch.getLocation,getLocation);
 assert.equal(manager.canPlayAudio,true);
+assert.equal(manager.isMultilingual,false);
+assert.equal(manager.curLanguage,'en');
+for(let i=1;i<=4;i++)for(let side=1;side<=2;side++)layoutGame[`tipLab${i}_${side}`]={string:'旧文案'};
+layoutGame.NextLab={string:'下一個'};layoutGame.NextLab2={string:'下一個'};layoutGame.setLanguage();
+assert.equal(layoutGame.NextLab.string,'NEXT');assert.equal(layoutGame.NextLab2.string,'NEXT');
+assert.equal(layoutGame.tipLab1_1.string,'DROP THE ITEMS');
+const resources=Object.values(JSON.parse(a.assets['assets/resources/config.json']).paths);
+for(const name of ['images/order1-en','images/order2-en'])assert.ok(resources.some(entry=>entry[0]===name));
 layoutGame.playBgm();assert.equal(bgmStarts,0);assert.equal(removedListeners,1);
 effects.clear();layoutGame.playBgm();assert.equal(bgmStarts,1);
 assert.throws(()=>readArchive(Buffer.alloc(100)),/central directory/);

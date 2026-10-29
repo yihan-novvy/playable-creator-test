@@ -19,8 +19,8 @@ export function originCtaPolicy(raw) {
     intervals: (Array.isArray(raw?.intervals) ? raw.intervals : []).filter(n => Number.isInteger(n) && n >= 1 && n <= 99).slice(0, 24) };
 }
 export function originHtml({ root, pluginDir, template, config, media = {}, preview = false }) {
-  const read = file => {
-    const content = fs.readFileSync(path.join(root, file), 'utf8');
+  const read = (file, encoding = 'utf8') => {
+    const content = fs.readFileSync(path.join(root, file), encoding);
     if (createHash('sha256').update(content).digest('hex') !== template.fileHashes?.[file]) throw new Error(`模板产物校验失败，请重新 build: ${file}`);
     return content;
   };
@@ -31,7 +31,9 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
     const card = template.game.ctaCard;
     const readCard = name => fs.readFileSync(new URL(`../overlays/cta-card/cta-card.${name}`, import.meta.url), 'utf8');
     const name = String(card.name).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
-    const values = { __CTA_NAME__: name, __CTA_ICON__: `data:image/svg+xml;base64,${Buffer.from(read(card.icon)).toString('base64')}`,
+    const iconMime = { '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' }[path.extname(card.icon).toLowerCase()];
+    if (!iconMime) throw new Error(`Unsupported CTA icon format: ${card.icon}`);
+    const values = { __CTA_NAME__: name, __CTA_ICON__: `data:${iconMime};base64,${read(card.icon, null).toString('base64')}`,
       __CTA_TAKEOVER_TEXT__: '', __CTA_TAKEOVER_ACTION_TEXT__: '' };
     injection.headStyles.push(`<style data-novvy-cta-card>${readCard('css')}</style>`);
     injection.bodyDom.push(readCard('html').replace(/__CTA_(?:ICON|NAME|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]));

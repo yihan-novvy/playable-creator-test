@@ -75,7 +75,7 @@ export const catalog = [
     tools: [], note: '使用原版固定关卡与补货规则；广告素材在任务工作台配置。',
   },
   {
-    id: 'tasty-travels-origin', name: 'Tasty Travels', subtitle: 'Origin · 饮品合成', group: 'origin', kind: '碰撞合成', color: '#60533e', isNew: true,
+    id: 'tasty-travels-origin', name: 'Tasty Travels: Merge Game', subtitle: 'Origin · 饮品合成', group: 'origin', kind: '碰撞合成', color: '#60533e', isNew: true,
     summary: '选择落点投放饮品，让相同饮品碰撞合成更高等级。',
     tags: ['物理碰撞', '9 级合成'],
     description: '保留原版饮品投放与碰撞合成规则，通过落点选择、堆叠和连锁合成推进挑战。',

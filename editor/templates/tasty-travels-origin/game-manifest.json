@@ -1,6 +1,6 @@
 {
   "id": "tasty-travels-origin",
-  "name": "Tasty Travels Origin",
+  "name": "Tasty Travels: Merge Game",
   "version": "1.0.0",
   "entry": "game/index.html",
   "constants": {
@@ -15,8 +15,8 @@
       "boot": "game/boot.js",
       "hudInsideCanvas": true,
       "ctaCard": {
-        "name": "Tasty Travels",
-        "icon": "game/cta-icon.svg"
+        "name": "Tasty Travels: Merge Game",
+        "icon": "game/cta-icon.webp"
       }
     },
     "targetTier": 9,
@@ -28,10 +28,10 @@
       "game/settings.js": "8a4099d671db0428dbd61ac90a7a79d13094dbb6a0f8b4726b304df0e47f09f8",
       "game/main.js": "ee4240aa3020af2ce80d0dd8df4c6ec9eb0b0b03a158f9b583f95f3a770b9745",
       "game/loader.js": "9833ec556a797200b13f00af878cf61a3f379768d010fd3569484606174c4166",
-      "game/layout.js": "32a25858fc630bd1ec9ebd463b9caf5ae534d303adc0529b4744eb57352175ad",
-      "game/cta-icon.svg": "a9e222d8a3192745a5831abb8cae285ed6d8b77bb286f1411f04652992695620",
+      "game/layout.js": "8be4144ee3d486a2870ed8c4b43c5bed956654066394ffc8f16ca42d94a3dcda",
+      "game/cta-icon.webp": "a053e3e26b4b42b9cc00f0b4e028cc330ae9276a1417a334b0fdb0abce366c7a",
       "game/boot.js": "d998387daaa31be91463169c3f70e37377af77f86a0ed31465f139215233c7f7",
-      "game/index.html": "b033e5082c9eb440faa08c1e3d95fceafc04b0425d46ffdb192a53674b4af357"
+      "game/index.html": "1b42b9b42f6c483b50167ced95c8767773431f8cccf75e6b37522b81eab477ab"
     }
   }
 }
