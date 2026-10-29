@@ -175,7 +175,18 @@
         return out;
       });
     } else if (name === 'AudioManager') {
-      wrap(p, '_playAudioByRes', function (original, args) { args[3] = window.__ORIGIN_MUTED__ ? 0 : 1; return original.apply(this, args); });
+      wrap(p, '_playAudioByRes', function (original, args) {
+        args[3] = window.__ORIGIN_MUTED__ ? 0 : 1;
+        // The audio manager survives scene reloads. Main.start requests BGM
+        // again on replay; reuse its source after the async resource load.
+        var source = args[2] && this.getAudio(args[1]);
+        if (source) {
+          source.volume = args[3];
+          if (!window.__ORIGIN_MUTED__ && !source.playing) source.play();
+          return;
+        }
+        return original.apply(this, args);
+      });
     }
     return value;
   }

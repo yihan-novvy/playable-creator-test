@@ -33,7 +33,7 @@ export function runtime(intro = false, nativeRelease = null, gameplay = { allowR
     checkSuccess() {} checkFail() { this.isFail = true; }
   }
   class Box { constructor() { this._index = 0; } addItem() {} }
-  class AudioManager { _playAudioByRes(...args) { return args; } }
+  class AudioManager { getAudio() {} _playAudioByRes(...args) { return args; } }
   class Clock { onLoad() {} stop() {} schedule(fn, interval, repeats, delay) { this.tick = fn; this.timing = [interval, repeats, delay]; } setTimeStr(value) { this.value = value; } }
   class ResMgr { loadAll() { calls.push(['resources']); return Promise.resolve(); } }
   for (const [name, value] of Object.entries({ Game, Box, AudioManager, Clock, ResMgr })) {
@@ -46,9 +46,40 @@ export function runtime(intro = false, nativeRelease = null, gameplay = { allowR
   freshRound();
   const box = new Box();
   return { cta, get game() { return game; }, clock, box, calls, window, AudioManager, ResMgr, elements, exports,
+    adaptAudio(Type) { system.register('chunks:///_virtual/AudioManager.ts', ['cc'], publish => { publish('AudioManager', Type); return { setters: [() => {}] }; }); },
     get loadCount() { return loadCount; }, finishReplay: freshRound,
     emit: (type, detail) => window.dispatchEvent({ type, detail }),
     move: () => box.addItem({ _type: 1, _boxIndex: 1, _index: 0 }, 0, false) };
+}
+
+function nativeAudioManager(entry) {
+  // Exercise the original duplicate-loop guard and source pool, not a copy.
+  const assets = JSON.parse(fs.readFileSync(`${entry.templateDir}/game/assets.js`, 'utf8').replace(/^window\.playableres=/, '').trim().replace(/;$/, ''));
+  const core = assets['assets/main/index.js'];
+  const start = core.indexOf('System.register("chunks:///_virtual/AudioManager.ts"');
+  const source = core.slice(start, core.indexOf('System.register(', start + 1));
+  const sources = [], logs = [];
+  class AudioSource {
+    playing = false; plays = 0; shots = 0;
+    play() { this.playing = true; this.plays++; }
+    stop() { this.playing = false; }
+    playOneShot() { this.shots++; }
+  }
+  function Component() { this.node = { addComponent() { const source = new AudioSource(); sources.push(source); return source; } }; }
+  Component.prototype.scheduleOnce = function () {};
+  const helpers = {
+    inheritsLoose(Type, Base) { Type.prototype = Object.create(Base.prototype); Type.prototype.constructor = Type; Object.setPrototypeOf(Type, Base); },
+    createClass(Type, properties) { for (const descriptor of properties) Object.defineProperty(Type.prototype, descriptor.key, descriptor); },
+  };
+  const cc = { Component, AudioSource, cclegacy: { _RF: { push() {}, pop() {} } }, _decorator: { ccclass: () => Type => Type } };
+  let Type;
+  vm.runInNewContext(source, { console: { log: (...args) => logs.push(args) }, System: {
+    register(id, deps, declare) {
+      const declaration = declare((name, value) => { if (name === 'AudioManager') Type = value; return value; });
+      declaration.setters[0](helpers); declaration.setters[1](cc); declaration.execute();
+    },
+  } });
+  return { Type, sources, logs };
 }
 export default async function test(a) {
   const entry = getEntry('grill-sort-origin');
@@ -81,6 +112,25 @@ export default async function test(a) {
   a.equal(video.calls.filter(c => c[0] === 'setStage'), [['setStage', 1, 'video'], ['setStage', 2, 'playable']], 'video changes SDK stage once');
   a.equal(video.calls.filter(c => c[0] === 'touch').length, 1, 'game opens input after intro');
   r.window.__ORIGIN_MUTED__ = true; a.equal(new r.AudioManager()._playAudioByRes('clip', 'name', true, 1)[3], 0, 'new audio respects mute');
+  const audio = nativeAudioManager(entry); r.adaptAudio(audio.Type);
+  const manager = new audio.Type(), clip = { getDuration: () => 1 };
+  manager._playAudioByRes(clip, 'audio/bgm', true, 1);
+  const bgm = manager.getAudio('audio/bgm');
+  a.equal(bgm.volume, 0, 'native BGM preloads silently');
+  r.window.__ORIGIN_MUTED__ = false;
+  for (let replay = 0; replay < 3; replay++) manager._playAudioByRes(clip, 'audio/bgm', true, 1);
+  a.check(audio.sources.length === 1 && bgm.plays === 1 && bgm.volume === 1, 'repeated scene starts reuse the playing BGM without restarting it');
+  a.equal(audio.logs, [], 'replay no longer reaches the native duplicate-loop warning');
+  bgm.playing = false; r.window.__ORIGIN_MUTED__ = true;
+  manager._playAudioByRes(clip, 'audio/bgm', true, 1);
+  a.check(bgm.plays === 1 && bgm.volume === 0, 'hidden or preloading replay keeps paused BGM muted');
+  r.window.__ORIGIN_MUTED__ = false;
+  manager._playAudioByRes(clip, 'audio/bgm', true, 1);
+  a.check(bgm.plays === 2 && bgm.volume === 1, 'visible replay resumes a paused BGM on the same source');
+  manager._playAudioByRes(clip, 'audio/put', false, 1); manager._playAudioByRes(clip, 'audio/put', false, 1);
+  a.equal(audio.sources.reduce((sum, source) => sum + source.shots, 0), 2, 'repeated one-shot effects remain audible');
+  manager.stopAudio('audio/bgm'); manager._playAudioByRes(clip, 'audio/bgm', true, 1);
+  a.check(manager.getAudio('audio/bgm').playing && manager._audioResMap.size === 1, 'explicitly stopped BGM can start again');
   for (const won of [false, true]) {
     const repeat = runtime(false, null, { allowReplay: true, countdownSeconds: 45 });
     a.equal(repeat.exports.TIME, 45, 'native Clock export and Game timeout share configured duration');
