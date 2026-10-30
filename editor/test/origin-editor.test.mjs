@@ -35,6 +35,7 @@ export default async function test(a) {
           recordStepResult(task.id, { stepId: 'intro', ok: true });
           patches.push({ gameplay: { countdownSeconds: 45 } }, { gameplay: { allowReplay: false } });
         }
+        if (templateId === 'tasty-travels-origin') patches.push({ gameplay: { spawnTierOffset: 0 } }, { gameplay: { spawnTierOffset: 8 } }, { gameplay: { spawnTierOffset: 2 } });
         for (const patch of patches) {
           recordStepResult(task.id, { stepId: 'pack', ok: true });
           const saved = await fetch(`${base}/api/tasks/${task.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ config: patch }) });
@@ -46,13 +47,23 @@ export default async function test(a) {
         }
         const config = readTask(task.id).config;
         if (['block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(templateId)) {
-          a.equal(config.gameplay, { allowReplay: true }, `${templateId}: replay setting persists`);
+          a.equal(config.gameplay, { allowReplay: true, ...(templateId === 'tasty-travels-origin' ? { spawnTierOffset: 2 } : {}) }, `${templateId}: gameplay sibling settings persist`);
           a.check(readTask(task.id).steps.intro.ok, `${templateId}: replay edits retain the transcoded intro`);
           for (const gameplay of [{ allowReplay: 'true' }, { allowReplay: 1 }, { unknown: true }, null, []]) {
             const invalid = await fetch(`${base}/api/tasks/${task.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ config: { gameplay } }) });
             a.equal(invalid.status, 400, `${templateId}: invalid replay settings are rejected`); await invalid.json();
           }
           a.equal(readTask(task.id).config.gameplay, config.gameplay, `${templateId}: rejected settings do not mutate the task`);
+        }
+        if (templateId === 'tasty-travels-origin') {
+          for (const spawnTierOffset of [-1, 9, 1.5, '2', null, true]) {
+            const invalid = await fetch(`${base}/api/tasks/${task.id}`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ config: { gameplay: { spawnTierOffset, allowReplay: false } } }) });
+            a.equal(invalid.status, 400, 'Tasty: invalid tier boost rejected before saving sibling changes'); await invalid.json();
+          }
+          a.equal(readTask(task.id).config.gameplay, config.gameplay, 'Tasty: invalid boost does not mutate saved settings');
+          const preview = await request(task, 'preview');
+          a.equal(preview.status, 200, 'Tasty: boosted preview builds');
+          a.check((await preview.text()).includes('"gameplay":{"allowReplay":true,"spawnTierOffset":2}'), 'Tasty: preview uses saved boost and replay settings');
         }
         if (templateId === 'grill-sort-origin') {
           a.equal(config.gameplay, { countdownSeconds: 45, allowReplay: false }, 'Grill: gameplay sibling settings persist');
@@ -69,7 +80,8 @@ export default async function test(a) {
         const html = fs.readFileSync(path.join(taskResultDir(task.id), 'index.html'), 'utf8');
         a.check(html !== oldHtml && html.includes('Saved audit title') && html.includes('Saved subtitle'), `${templateId}: rebuilt HTML contains saved text`);
         if (templateId === 'grill-sort-origin') a.check(html.includes('"countdownSeconds":45,"allowReplay":false'), 'Grill: package uses saved timer and replay settings');
-        if (['block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(templateId)) a.check(html.includes('"gameplay":{"allowReplay":true}'), `${templateId}: package uses saved replay setting`);
+        if (['block-out-origin', 'freecell-origin'].includes(templateId)) a.check(html.includes('"gameplay":{"allowReplay":true}'), `${templateId}: package uses saved replay setting`);
+        if (templateId === 'tasty-travels-origin') a.check(html.includes('"gameplay":{"allowReplay":true,"spawnTierOffset":2}'), 'Tasty: package uses saved boost and replay settings');
         const fresh = await request(task, 'export'); a.equal(fresh.status, 200, `${templateId}: rebuilt ZIP exports`); await fresh.arrayBuffer();
 
         updateTaskConfig(task.id, { intro: { enabled: true } });

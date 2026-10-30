@@ -29,7 +29,8 @@
   },
   "defaults": {
     "gameplay": {
-      "allowReplay": false
+      "allowReplay": false,
+      "spawnTierOffset": 0
     },
     "hud": {
       "enabled": false,

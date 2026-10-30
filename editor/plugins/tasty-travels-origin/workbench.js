@@ -29,6 +29,14 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.value.trim() } }); await refresh(true); });
     return field(label, input);
   }
+  function spawnTierControl() {
+    const input = el('input', { type: 'number', min: 0, max: 8, step: 1, required: '', value: config().gameplay?.spawnTierOffset ?? 0 });
+    input.addEventListener('change', async () => {
+      if (!input.checkValidity()) { input.reportValidity(); return; }
+      await save({ gameplay: { spawnTierOffset: Number(input.value) } }); await refresh(true);
+    });
+    return field('投放等级加成（0–8）', input);
+  }
   // CTA 循环节奏(colorever-new 步数循环同款语义):steps 模式首跳第 N 步,
   // 之后按间隔表逐个间隔,表耗尽后按最后一个间隔循环;complete 模式完成后跳转。
   function ctaTimingControls() {
@@ -73,6 +81,8 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
     ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
+      spawnTierControl(),
+    ]), el('p', { class: 'hint' }, ['每件待投放物品在原等级上统一增加此值，0 保持原等级。最高投放到倒数第二档，最终档仍通过合成获得；加成越大，需要的合成次数越少。修改后可直接预览，导出需重新打包。']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
     ]), el('p', { class: 'hint' }, ['默认关闭。开启后，通关或越界失败时显示重玩按钮；点击先触发 CTA 跳转，再重置游戏，片头不重复播放。修改后只需重新打包。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());

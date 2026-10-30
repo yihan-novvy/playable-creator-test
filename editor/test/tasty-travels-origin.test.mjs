@@ -4,26 +4,46 @@ import vm from 'node:vm';
 import { getEntry } from '../core/registry.mjs';
 import { originHtml } from '../core/lib/origin-playable.mjs';
 import { configWhitelistFor } from '../lib/store.mjs';
-export function runtime(intro = false, allowReplay = false) {
+const sourceWindow = {};
+vm.runInNewContext(fs.readFileSync(new URL('../templates/tasty-travels-origin/game/assets.js', import.meta.url), 'utf8'), { window: sourceWindow });
+const nativeCore = sourceWindow.__res['assets/main/index.js'];
+const nativeSequence = JSON.parse(nativeCore.match(/\.spToolAll=(\[[^\]]+\])/)[1]);
+const nativeCreateTool = nativeCore.match(/\.prototype.createTool=function\(\)\{([\s\S]*?)\},v\.prototype.createTool2/)[1];
+const nativePreview = nativeCore.match(/n.nextIconScale=(\[[^\]]+\]),n.nextIconOffsetX=(\[[^\]]+\])/);
+const numbers = value => value.slice(1, -1).split(',').map(Number);
+export function runtime(intro = false, allowReplay = false, spawnTierOffset) {
   const entry = getEntry('tasty-travels-origin'), calls = [], listeners = new Map(), ready = [];
   const window = {
     __novvyStageChain__: intro ? ['video', 'playable'] : ['playable'],
-    __ORIGIN_CONFIG__: { intro, gameplay: { allowReplay }, policy: { mode: 'steps', afterSteps: 2, intervals: [2] } },
+    __ORIGIN_CONFIG__: { intro, gameplay: { allowReplay, spawnTierOffset }, policy: { mode: 'steps', afterSteps: 2, intervals: [2] } },
     addEventListener(k, fn, options) { if (!listeners.has(k)) listeners.set(k, []); listeners.get(k).push({ fn, once: options?.once }); },
     dispatchEvent(e) { for (const h of [...listeners.get(e.type) || []]) { h.fn(e); if (h.once) listeners.get(e.type).splice(listeners.get(e.type).indexOf(h), 1); } },
     NovvyPlayable: Object.fromEntries(['setStageList','setStage','onStep','onComplete','onReplay','endStage','click'].map(k=>[k,(...args)=>calls.push([k,...args])])),
     NovvyAnalytics: { registerMedia() { calls.push(['media']); } },
   };
   const elements = Object.fromEntries(['tasty-result','tasty-result-title','tasty-result-copy','tasty-replay'].map(id=>[id, { hidden: true, addEventListener(type, fn) { this[type] = fn; } }]));
-  const data = { ToolArray: [], orderIdx: 0, all_Coin_Num: 0, last_Coin_Num: 0, isCanDown: false };
+  const data = { ToolArray: [], orderIdx: 0, all_Coin_Num: 0, last_Coin_Num: 0, isCanDown: false,
+    nextIconScale: numbers(nativePreview[1]), nextIconOffsetX: numbers(nativePreview[2]) };
   const subscriptions = new Set(), audio = new Map();
   const sound = { effectList: new Map(), playEffect(clip, loop) {
     const id = audio.size, name = typeof clip === 'string' ? clip : clip.name;
     audio.set(id, 1); this.effectList.set(name, id); calls.push(['audio', name, loop]);
   } };
+  const ToolScript = class {};
+  function item(tier) {
+    const sprite = { spriteFrame: `tier-${tier}` };
+    const children = { sp: { getComponent: () => sprite }, baixian: {} };
+    const parts = new Map([[cc.RigidBody, {}], [cc.PhysicsPolygonCollider, {}], [ToolScript, {}], [cc.Sprite, sprite]]);
+    return { tier, getChildByName: name => children[name], getComponent: type => parts.get(type) };
+  }
   class Game {
-    constructor() { this.tool = {}; this.isEnd = false; }
-    onLoad() { Game.instance = this; data.ToolArray.push(this.tool); subscriptions.add(this); sound.playEffect('bgm', true); sound.playEffect('bgm2', true); }
+    constructor() {
+      this.tool = null; this.isEnd = false; this.toolNum = 0; this.spToolAll = nativeSequence.slice();
+      this.spTool = Array.from({ length: 10 }, (_, tier) => item(tier));
+      this.nextToolSp = item(); this.nextToolSp2 = item();
+      this.bronPoint = { x: 0, y: 100 }; this.itemParent = {};
+    }
+    onLoad() { Game.instance = this; this.createTool(); subscriptions.add(this); sound.playEffect('bgm', true); sound.playEffect('bgm2', true); }
     updateOrder() {}
     unscheduleAllCallbacks() { calls.push(['clearCallbacks']); }
     downLoadApp() {}
@@ -34,6 +54,9 @@ export function runtime(intro = false, allowReplay = false) {
   }
   let game, loaded;
   const cc = {
+    RigidBody: class {}, PhysicsPolygonCollider: class {}, Sprite: class {},
+    instantiate: prefab => item(prefab.tier),
+    tween(target) { const chain = { to(time, values) { Object.assign(target, values); return chain; }, start() {} }; return chain; },
     audioEngine: { getState: id=>audio.get(id) ?? -1 },
     Tween: { stopAll() { calls.push(['clearTweens']); } },
     Director: { EVENT_AFTER_DRAW: 'draw' },
@@ -43,7 +66,8 @@ export function runtime(intro = false, allowReplay = false) {
       runSceneImmediate() { game.onDestroy(); game = new Game(); game.onLoad(); calls.push(['sceneReady']); for (const fn of ready.splice(0)) fn(); },
     },
   };
-  const ctx = vm.createContext({ window, cc, console: { log() {}, error() {} }, document: { getElementById: id=>elements[id] || (id === 'novvy-intro-video' && intro ? {} : null) }, CustomEvent: class { constructor(type, o) { this.type = type; this.detail = o?.detail; } } });
+  const ctx = vm.createContext({ window, cc, l: { default: data }, m: { default: ToolScript }, console: { log() {}, error() {} }, document: { getElementById: id=>elements[id] || (id === 'novvy-intro-video' && intro ? {} : null) }, CustomEvent: class { constructor(type, o) { this.type = type; this.detail = o?.detail; } } });
+  Game.prototype.createTool = vm.runInContext('(function(){' + nativeCreateTool + '})', ctx);
   vm.runInContext(fs.readFileSync(`${entry.dir}/overlays/engine/events.js`, 'utf8'), ctx);
   const cta = installOriginCta(ctx);
   vm.runInContext(fs.readFileSync(`${entry.dir}/overlays/engine/engine.js`, 'utf8'), ctx);
@@ -53,16 +77,35 @@ export function runtime(intro = false, allowReplay = false) {
   window.__ORIGIN_ADAPTER__.start(()=>calls.push(['launch']));
   game = new Game(); game.onLoad();
   return { cta, window, calls, elements, data, sound, audio, subscriptions, get game() { return game; }, telemetry,
+    heldTier: () => game.tool.getComponent(ToolScript).fruitNumber,
+    nextTiers: () => [game.nextToolSp, game.nextToolSp2].map(node => node.getComponent(cc.Sprite).spriteFrame),
     finishLoad(error) { const callback = loaded; loaded = null; callback(error, {}); },
     drop() { game.tool = {}; game.game1_End(); }, emit: (type, detail)=>window.dispatchEvent({ type, detail }) };
 }
 export default async function test(a){
  const entry=getEntry('tasty-travels-origin');a.check(configWhitelistFor(entry.id).has('playableCta'),'settings persist');
  a.check(configWhitelistFor(entry.id).has('gameplay'),'replay settings persist');
- a.equal(entry.template.defaults.gameplay,{allowReplay:false},'replay defaults off');
+ a.equal(entry.template.defaults.gameplay,{allowReplay:false,spawnTierOffset:0},'replay and tier boost default off');
  const base={root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config:entry.template.defaults};
  const titled=originHtml({...base,config:{...base.config,hud:{...base.config.hud,titleEnabled:true}}}).html;
- a.check(originHtml({...base,config:{...base.config,gameplay:undefined}}).html.includes('"gameplay":{"allowReplay":false}'),'old tasks default to replay off');
+ a.check(originHtml({...base,config:{...base.config,gameplay:undefined}}).html.includes('"gameplay":{"allowReplay":false,"spawnTierOffset":0}'),'old tasks default to replay and tier boost off');
+ for (const preview of [false, true]) a.check(originHtml({...base,preview,config:{...base.config,gameplay:{spawnTierOffset:2}}}).html.includes('"gameplay":{"allowReplay":false,"spawnTierOffset":2}'),'saved boost reaches preview and export');
+ for (const offset of [undefined, 0, 2, 4, 8]) {
+   const boosted = runtime(false, true, offset), expected = nativeSequence.map(tier => Math.min(8, tier + (offset ?? 0)));
+   a.equal(boosted.game.spToolAll, expected, `offset ${offset}: native sequence shifts once and caps below winning tier`);
+   a.equal(boosted.heldTier(), expected[0], `offset ${offset}: first held item uses shifted tier`);
+   const mismatches = [];
+   for (let index = 0; index < nativeSequence.length + 1; index++) {
+     if (index) boosted.game.createTool();
+     if (boosted.heldTier() !== expected[index % expected.length] || boosted.nextTiers().some(frame => frame !== `tier-${expected[(index + 1) % expected.length]}`)) mismatches.push(index);
+   }
+   a.equal(mismatches, [], `offset ${offset}: native spawn and both NEXT previews match through a full cycle`);
+   a.equal(boosted.calls.filter(c => c[0] === 'onStep' || c[0] === 'onComplete').length, 0, 'spawning boosted items does not count as a drop, merge or win');
+   for (let round = 0; round < 2; round++) {
+     boosted.game.EndStep(); boosted.window.__ORIGIN_ADAPTER__.replay(); boosted.finishLoad();
+     a.equal([boosted.heldTier(), boosted.game.spToolAll, boosted.nextTiers()], [expected[0], expected, [`tier-${expected[1]}`, `tier-${expected[1]}`]], 'replay restarts the shifted sequence without compounding');
+   }
+ }
  a.check(!titled.includes('id="origin-sound"'),'game has no sound toggle');
  a.check(titled.includes('id="novvy-training-hud"')&&!titled.includes('data-novvy-origin-shell'),'HUD overlays the full canvas');
  const icon=fs.readFileSync(`${entry.templateDir}/${entry.template.game.ctaCard.icon}`);

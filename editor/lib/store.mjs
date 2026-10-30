@@ -188,10 +188,23 @@ export function updateTaskConfig(id, patch) {
   // Validate both selections before mutating or writing a task.
   if ('levelId' in (patch || {})) validateFixedLevel(doc.templateId, patch.levelId);
   if ('levelId' in (patch?.secondPlayable || {})) validateFixedLevel(doc.templateId, patch.secondPlayable.levelId);
-  if (['block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) {
+  if (['block-out-origin', 'freecell-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) {
     const settings = patch.gameplay;
     if (!settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => key !== 'allowReplay' || typeof value !== 'boolean')) {
       const error = new Error('允许重玩须为布尔值。');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
+  if (doc.templateId === 'tasty-travels-origin' && 'gameplay' in (patch || {})) {
+    const settings = patch.gameplay;
+    const invalid = !settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => {
+      if (key === 'allowReplay') return typeof value !== 'boolean';
+      if (key === 'spawnTierOffset') return !Number.isInteger(value) || value < 0 || value > 8;
+      return true;
+    });
+    if (invalid) {
+      const error = new Error('投放等级加成须为 0–8 的整数，重玩开关须为布尔值。');
       error.statusCode = 400;
       throw error;
     }

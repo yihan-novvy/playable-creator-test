@@ -2,6 +2,8 @@
   'use strict';
   var config = window.__ORIGIN_CONFIG__, active = !config.intro, settled = false, installed = false, restarting = false;
   var allowReplay = !!(config.gameplay && config.gameplay.allowReplay === true);
+  var spawnTierOffset = config.gameplay && config.gameplay.spawnTierOffset;
+  if (!Number.isInteger(spawnTierOffset) || spawnTierOffset < 0 || spawnTierOffset > 8) spawnTierOffset = 0;
   var game = null, Game = null, data = null;
   var steps = 0, peakTier = 0, nextCta = config.policy.afterSteps, intervalIndex = 0;
   var lastProgress = 0;
@@ -85,7 +87,30 @@
       data = requireModule('DataScript').default;
       var p = Game.prototype, tool = requireModule('Tool').default;
       var updateOrder = requireModule('EventString').EventName.updateOrder;
-      wrap(p, 'onLoad', function (original, args) { game = this; return original.apply(this, args); });
+      wrap(p, 'onLoad', function (original, args) {
+        game = this;
+        // The native onLoad creates the first item. Keep an unmodified copy
+        // per scene so initialization/replay never compounds the offset.
+        if (!this.__originSpawnTiers) this.__originSpawnTiers = this.spToolAll.slice();
+        this.spToolAll = this.__originSpawnTiers.map(function (tier) { return Math.min(8, tier + spawnTierOffset); });
+        return original.apply(this, args);
+      });
+      wrap(p, 'createTool', function (original, args) {
+        var out = original.apply(this, args);
+        // Native NEXT reads past the sequence on its final item. Preview the
+        // first tier here, matching the native wrap on the next spawn.
+        if (this.toolNum >= this.spToolAll.length) {
+          var tier = this.spToolAll[0];
+          var frame = this.spTool[tier].getChildByName('sp').getComponent(cc.Sprite).spriteFrame;
+          [this.nextToolSp, this.nextToolSp2].forEach(function (next) {
+            next.getComponent(cc.Sprite).spriteFrame = frame;
+            next.x = data.nextIconOffsetX[tier];
+            next.scale = 0;
+            cc.tween(next).to(.1, { scale: 0 }).to(.2, { scale: data.nextIconScale[tier] }, { easing: 'bounceOut' }).start();
+          });
+        }
+        return out;
+      });
       var destroy = p.onDestroy;
       p.onDestroy = function () {
         tool.off(updateOrder, this.updateOrder, this);
