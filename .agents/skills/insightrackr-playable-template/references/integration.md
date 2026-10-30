@@ -11,8 +11,10 @@
 | manifest 与 plugin 合并视图 | `editor/core/registry.mjs` |
 | 配置、前置条件、任务路径 | `editor/core/runner.mjs`、`editor/lib/store.mjs`、`editor/lib/paths.mjs` |
 | 视频和覆盖层 | `editor/core/steps/intro.mjs`、`editor/core/lib/ws-overlays.mjs` |
+| Origin 组装、标题和统一下载卡 | `editor/core/lib/origin-playable.mjs`、`editor/core/overlays/cta-card/` |
 | 共享事件桥的真实语义 | `editor/core/overlays/playable-bridge/`、`editor/core/overlays/cta-bridge/` |
 | 已接入原版 playable 的案例 | `editor/plugins/colorever-origin/`、`editor/plugins/block-out-origin/` |
+| 同段重玩、HUD 与原生布局案例 | `editor/plugins/{tasty-travels,grill-sort,freecell,block-out}-origin/`、对应 `template-core/<id>/src/`（若有） |
 
 注意文档中的示例接口可能比运行实现旧。例如 workbench 当前可能使用 `render/saveAll`，不能直接复制文档的 `panels/preview` 示例；manifest `constants` 在注册表合并时可能展开到根，按真实合并视图取值。
 
@@ -35,6 +37,8 @@
 - 实际测试工作台 PATCH 保存。仅在 UI 显示控件不够；当前 store 白名单可能静默丢弃新字段。必要时作最小注册调整并覆盖保存/读取验证。
 - 片头负责输入、声音和可见性时，明确交接给游戏的时机。不要让后台棋盘在视频期间先玩完教程或启动倒计时。标题、原生 logo、关卡提示、CTA 和视频的层级须按手机与横屏检查。
 
+Origin 模板的重玩开关、HUD TITLE、原生场景布局和配置失效规则见 [重玩与 HUD 标题](replay-and-hud.md)。先比对当前实现，旧 README 对原始素材的描述不能代替已接入适配器的实际行为。
+
 ## 事件先写语义映射，再接代码
 
 | 语义 | 接入规则 |
@@ -46,7 +50,7 @@
 | 进度 | 从游戏目标和当前状态推导 0–100；移动可记一步而进度不变。无法获得进度时按 SDK 契约省略，不用时间或操作数伪造 |
 | 真实胜负 | 最终目标完成/真实失败 → `NovvyPlayable.onComplete({result})`；无 CTA 也要结算，动画结束与结果页回调共享一次结算闩锁 |
 | 未完成离开 | 真实段结束调用 `endStage()`；后台、失焦、跳商店不能冒充结束。可恢复页面/重玩需保留阶段语义 |
-| 重玩 | 支持时按文档使用 `continue_playing` 与 `onReplay`；原生换关不自动等于 SDK 新段 |
+| 重玩 | 允许继续时以 `continue_playing:true` 保留阶段；明确重玩操作触发共享 CTA 后重置本局，场景就绪再报一次 `onReplay()`，不重复片头或 `setStage`；详见 [重玩与 HUD 标题](replay-and-hud.md) |
 | 主动 CTA | 实际下载区域或明确点击入口 → `click_source:'cta_click'` |
 | 策略 CTA | 用户要求的步数/完成/回访等策略 → `click_source:'forced_click_to_appstore'`；普通操作只在明确策略命中时触发 |
 | 广告关闭 | 由真实宿主关闭信号提供 `close()`；不拿 blur、visibilitychange 或打开商店冒充 |
