@@ -30,7 +30,8 @@
     audio();
     var originalBoot = window.boot;
     window.boot = function () {
-      // Keep the canvas full screen; the scene camera reserves HUD/CTA space.
+      // Fill the embedded viewport; the scene camera reserves HUD/CTA space.
+      // The build also disables the native onStart's later fullscreen request.
       cc.view._frame = document.getElementById('origin-game');
       cc.view.enableAutoFullScreen(false);
       cc.director.once(cc.Director.EVENT_AFTER_SCENE_LAUNCH, lifecycle);

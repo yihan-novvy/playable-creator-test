@@ -22,6 +22,56 @@ function trial({other='beike0',tier=0,y=5,ended=false,repeated=false}={}){
 trial({other:'beike1'});trial({tier:9});trial({y:-1});trial({ended:true});assert.equal(merges,0,'native merge rejects different types, max tier, lower partner and ended game');
 trial({repeated:true});assert.equal(merges,1,'native collision latch merges same pair only once');
 for(const [file,s]of Object.entries(a.files))if(file.endsWith('.js'))new vm.Script(s);
+// Run the actual mobile/desktop boot and its deferred asset callbacks. Disabling
+// fullscreen before boot is insufficient if the native onStart enables it again.
+for (const mobile of [false, true]) for (const intro of [false, true]) {
+ const queue=[], sceneCallbacks=[], fullscreen=[], orientations=[];
+ let launch, scenes=0, engineStarts=0, resizeEnabled=false;
+ const elements={
+  'origin-game':{}, GameCanvas:{style:{}}, GameDiv:{style:{}},
+  splash:{style:{},querySelector:()=>({style:{}})},
+ };
+ const cc={
+  debug:{DebugMode:{INFO:1,ERROR:0}},
+  sys:{isMobile:mobile,isBrowser:true,browserType:'chrome',os:'Android',OS_ANDROID:'Android'},
+  macro:{ORIENTATION_PORTRAIT:'portrait',ORIENTATION_LANDSCAPE:'landscape'},
+  view:{
+   enableAutoFullScreen(value){fullscreen.push(value);}, enableRetina(){},
+   resizeWithBrowserSize(value){resizeEnabled=value;}, setOrientation(value){orientations.push(value);},
+  },
+  AssetManager:{BuiltinBundleName:{RESOURCES:'resources',INTERNAL:'internal',MAIN:'main'}},
+  assetManager:{
+   init(){}, downloader:{},
+   loadScript(list,done){queue.push(()=>done());},
+   loadBundle(name,done){queue.push(()=>done());},
+   bundles:[{getSceneInfo:()=>true,loadScene(name,options,progress,done){queue.push(()=>done(null,{}));}}],
+  },
+  Director:{EVENT_AFTER_SCENE_LAUNCH:'scene'},
+  director:{once(name,callback){sceneCallbacks.push(callback);},runSceneImmediate(){scenes++;for(const fn of sceneCallbacks.splice(0))fn();}},
+  game:{run(options,onStart){queue.push(onStart);},resume(){},pause(){}},
+ };
+ const bootWindow={cc,addEventListener(){},
+  __ORIGIN_ADAPTER__:{start(callback){launch=callback;if(!intro)callback();}},
+  super_boot_engine(){engineStarts++;queue.push(()=>bootWindow.boot());},
+ };
+ const bootContext=vm.createContext({window:bootWindow,cc,console:{log(){}},
+  document:{hidden:false,addEventListener(){},getElementById:id=>elements[id]},
+ });
+ vm.runInContext(a.files['game/settings.js'],bootContext);
+ bootWindow._CCSettings.orientation='portrait';
+ vm.runInContext(a.files['game/main.js'],bootContext);
+ vm.runInContext(a.files['game/boot.js'],bootContext);
+ assert.equal(engineStarts,intro?0:1,'intro still gates engine startup');
+ if(intro)launch();
+ while(queue.length)queue.shift()();
+ assert.equal(fullscreen.includes(true),false,'native async boot must not re-enable browser fullscreen');
+ assert.equal(scenes,1,'native scene still launches');
+ assert.equal(resizeEnabled,true,'canvas still follows its embedded viewport');
+ assert.deepEqual(orientations,mobile?['portrait']:[],'native orientation setup is preserved');
+ assert.equal(cc.view._frame,elements['origin-game']);
+ launch();
+ assert.equal(engineStarts,1,'repeated launch does not reboot the engine');
+}
 // Camera framing must translate touch coordinates once without leaving the
 // shared Cocos Touch mutated (including a native handler that throws).
 const layoutWindow={}, manager={}, effects=new Map([['bgm',1],['bgm2',2]]);

@@ -37,12 +37,16 @@ export function compileSource(html) {
   for (const key of Object.keys(assets)) if (key.startsWith('@')) delete assets[key];
   if (!assets['assets/main/index.js'].includes('/id6471045672')) throw new Error('Unexpected advertised app');
   assets['assets/main/index.js'] += '\nif(window.__TASTY_LAYOUT__)window.__TASTY_LAYOUT__.install(window.__require);\nif(window.__ORIGIN_ADAPTER__)window.__ORIGIN_ADAPTER__.install(window.__require);\n';
+  // Native onStart runs after async bundle loading and would override boot.js's
+  // earlier opt-out on mobile. Keep the game inside the host's existing viewport.
+  const autoFullscreen = 'cc.view.enableAutoFullScreen([cc.sys.BROWSER_TYPE_BAIDU,cc.sys.BROWSER_TYPE_BAIDU_APP,cc.sys.BROWSER_TYPE_WECHAT,cc.sys.BROWSER_TYPE_MOBILE_QQ,cc.sys.BROWSER_TYPE_MIUI,cc.sys.BROWSER_TYPE_HUAWEI,cc.sys.BROWSER_TYPE_UC].indexOf(cc.sys.browserType)<0)';
+  if (archive['@main.js'].split(autoFullscreen).length !== 2) throw new Error('Expected one native auto-fullscreen startup call');
   const icon = fs.readFileSync(path.join(root, 'source', appStore.icon.file));
   if (hash(icon) !== appStore.icon.sha256) throw new Error('App Store icon hash mismatch');
   const files = {
     'game/assets.js': `window.__res=${JSON.stringify(assets).replaceAll('<', '\\u003c')};\n`,
     'game/settings.js': archive['@src/settings.js'],
-    'game/main.js': archive['@main.js'],
+    'game/main.js': archive['@main.js'].replace(autoFullscreen, 'cc.view.enableAutoFullScreen(false)'),
     'game/loader.js': archive['@src/cc.adapter.js'],
     'game/layout.js': fs.readFileSync(path.join(root, 'src/layout.js'), 'utf8'),
     'game/cta-icon.webp': icon,

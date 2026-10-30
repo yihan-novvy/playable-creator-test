@@ -26,11 +26,11 @@
     "fileHashes": {
       "game/assets.js": "108e23c8e1ab1b592a8b32931877b089fada2bb92a7c79645d6b9eee6b660fc3",
       "game/settings.js": "8a4099d671db0428dbd61ac90a7a79d13094dbb6a0f8b4726b304df0e47f09f8",
-      "game/main.js": "ee4240aa3020af2ce80d0dd8df4c6ec9eb0b0b03a158f9b583f95f3a770b9745",
+      "game/main.js": "3e7a8992b3bb4772e4635240f0e007f477747e70e9975c214f26731544b52492",
       "game/loader.js": "9833ec556a797200b13f00af878cf61a3f379768d010fd3569484606174c4166",
       "game/layout.js": "8be4144ee3d486a2870ed8c4b43c5bed956654066394ffc8f16ca42d94a3dcda",
       "game/cta-icon.webp": "a053e3e26b4b42b9cc00f0b4e028cc330ae9276a1417a334b0fdb0abce366c7a",
-      "game/boot.js": "d998387daaa31be91463169c3f70e37377af77f86a0ed31465f139215233c7f7",
+      "game/boot.js": "29c808dee00b54827afc76038f7acceae0c472d753f611acf92b1dfb48e2c9b6",
       "game/index.html": "3bb872d717ae62520aa1d4a8926af1ad31c67f461badeb0df25751e855894e3f"
     }
   }
