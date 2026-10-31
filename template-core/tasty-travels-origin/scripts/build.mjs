@@ -41,17 +41,24 @@ export function compileSource(html) {
   // earlier opt-out on mobile. Keep the game inside the host's existing viewport.
   const autoFullscreen = 'cc.view.enableAutoFullScreen([cc.sys.BROWSER_TYPE_BAIDU,cc.sys.BROWSER_TYPE_BAIDU_APP,cc.sys.BROWSER_TYPE_WECHAT,cc.sys.BROWSER_TYPE_MOBILE_QQ,cc.sys.BROWSER_TYPE_MIUI,cc.sys.BROWSER_TYPE_HUAWEI,cc.sys.BROWSER_TYPE_UC].indexOf(cc.sys.browserType)<0)';
   if (archive['@main.js'].split(autoFullscreen).length !== 2) throw new Error('Expected one native auto-fullscreen startup call');
+  const hideSplash = 'cc.director.once(cc.Director.EVENT_AFTER_SCENE_LAUNCH,function(){e.style.display="none"})';
+  if (archive['@main.js'].split(hideSplash).length !== 2) throw new Error('Expected one native splash dismissal');
   const icon = fs.readFileSync(path.join(root, 'source', appStore.icon.file));
   if (hash(icon) !== appStore.icon.sha256) throw new Error('App Store icon hash mismatch');
+  // The branded splash lives in the outer HTML, not the ZIP's generic splash.png.
+  const splash = html.match(/#splash\{[^}]*url\((data:image\/png;base64,[A-Za-z0-9+/=]+)\)/)?.[1];
+  const shell = fs.readFileSync(path.join(root, 'src/index.html'), 'utf8');
+  if (!splash || shell.split('__TASTY_SPLASH_IMAGE__').length !== 2) throw new Error('Expected original Tasty Travels splash and one shell anchor');
   const files = {
     'game/assets.js': `window.__res=${JSON.stringify(assets).replaceAll('<', '\\u003c')};\n`,
     'game/settings.js': archive['@src/settings.js'],
-    'game/main.js': archive['@main.js'].replace(autoFullscreen, 'cc.view.enableAutoFullScreen(false)'),
+    'game/main.js': archive['@main.js'].replace(autoFullscreen, 'cc.view.enableAutoFullScreen(false)')
+      .replace(hideSplash, 'cc.director.once(cc.Director.EVENT_AFTER_SCENE_LAUNCH,function(){cc.director.once(cc.Director.EVENT_AFTER_DRAW,function(){e.style.display="none"})})'),
     'game/loader.js': archive['@src/cc.adapter.js'],
     'game/layout.js': fs.readFileSync(path.join(root, 'src/layout.js'), 'utf8'),
     'game/cta-icon.webp': icon,
     'game/boot.js': fs.readFileSync(path.join(root, 'src/boot.js'), 'utf8'),
-    'game/index.html': fs.readFileSync(path.join(root, 'src/index.html'), 'utf8'),
+    'game/index.html': shell.replace('__TASTY_SPLASH_IMAGE__', splash),
   };
   return { files, assets, archive };
 }
@@ -64,7 +71,7 @@ export function build() {
   fs.mkdirSync(path.join(out, 'game'), { recursive: true });
   for (const [file, content] of Object.entries(files)) fs.writeFileSync(path.join(out, file), content);
   fs.writeFileSync(path.join(out, 'game-manifest.json'), JSON.stringify({ id: 'tasty-travels-origin', name: appStore.name, version: '1.0.0', entry: 'game/index.html',
-    constants: { game: { scripts: ['game/assets.js','game/settings.js','game/main.js','game/layout.js','game/loader.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } }, targetTier: 9,
+    constants: { game: { scripts: ['game/assets.js','game/settings.js','game/main.js','game/layout.js','game/loader.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: 'Tasty Travels', icon: 'game/cta-icon.webp' } }, targetTier: 9,
       sourceSha256: hash(raw), sourceUrl: provenance.sourceUrl, appStoreUrl: provenance.appStoreUrl,
       fileHashes: Object.fromEntries(Object.entries(files).map(([file, value]) => [file, hash(value)])) } }, null, 2) + '\n');
   console.log('tasty-travels-origin: built original physics merge game and local resources');

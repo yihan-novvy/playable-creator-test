@@ -1,6 +1,6 @@
 (function () {
   'use strict';
-  var config = window.__ORIGIN_CONFIG__, active = !config.intro, settled = false, installed = false, restarting = false;
+  var config = window.__ORIGIN_CONFIG__, active = !config.intro || !!window.__novvyIntroFinished, settled = false, installed = false, restarting = false;
   var allowReplay = !!(config.gameplay && config.gameplay.allowReplay === true);
   var spawnTierOffset = config.gameplay && config.gameplay.spawnTierOffset;
   if (!Number.isInteger(spawnTierOffset) || spawnTierOffset < 0 || spawnTierOffset > 8) spawnTierOffset = 0;
@@ -140,6 +140,9 @@
         this.__originCtaGesture = false;
         if (playable() && !this.isEnd) return original.apply(this, args);
       });
+      wrap(p, 'game1_Move', function (original, args) {
+        if (playable() && !this.isEnd) return original.apply(this, args);
+      });
       wrap(p, 'game1_End', function (original, args) {
         if (this.__originCtaGesture) { this.__originCtaGesture = false; return; }
         if (!playable() || this.isEnd) return;
@@ -161,6 +164,10 @@
         return out;
       });
     },
-    start: function (launch) { if (active) launch(); else window.addEventListener('novvy:intro-finished', function () { active = true; launch(); }, { once: true }); }
+    start: function (launch) {
+      if (!active) window.addEventListener('novvy:intro-finished', function () { active = true; }, { once: true });
+      // Load behind the intro; input and reporting remain gated until entry.
+      launch();
+    }
   };
 })();

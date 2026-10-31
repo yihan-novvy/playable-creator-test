@@ -11,9 +11,10 @@ const nativeSequence = JSON.parse(nativeCore.match(/\.spToolAll=(\[[^\]]+\])/)[1
 const nativeCreateTool = nativeCore.match(/\.prototype.createTool=function\(\)\{([\s\S]*?)\},v\.prototype.createTool2/)[1];
 const nativePreview = nativeCore.match(/n.nextIconScale=(\[[^\]]+\]),n.nextIconOffsetX=(\[[^\]]+\])/);
 const numbers = value => value.slice(1, -1).split(',').map(Number);
-export function runtime(intro = false, allowReplay = false, spawnTierOffset) {
+export function runtime(intro = false, allowReplay = false, spawnTierOffset, introFinished = false) {
   const entry = getEntry('tasty-travels-origin'), calls = [], listeners = new Map(), ready = [];
   const window = {
+    __novvyIntroFinished: introFinished,
     __novvyStageChain__: intro ? ['video', 'playable'] : ['playable'],
     __ORIGIN_CONFIG__: { intro, gameplay: { allowReplay, spawnTierOffset }, policy: { mode: 'steps', afterSteps: 2, intervals: [2] } },
     addEventListener(k, fn, options) { if (!listeners.has(k)) listeners.set(k, []); listeners.get(k).push({ fn, once: options?.once }); },
@@ -48,6 +49,7 @@ export function runtime(intro = false, allowReplay = false, spawnTierOffset) {
     unscheduleAllCallbacks() { calls.push(['clearCallbacks']); }
     downLoadApp() {}
     game1_Start() { calls.push(['native-start']); }
+    game1_Move() { calls.push(['native-move']); }
     game1_End() { this.tool = null; }
     createTool2(tier) { if (tier >= 9) this.EndStep(); }
     EndStep() { this.isEnd = true; }
@@ -88,6 +90,10 @@ export default async function test(a){
  a.equal(entry.template.defaults.gameplay,{allowReplay:false,spawnTierOffset:0},'replay and tier boost default off');
  const base={root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config:entry.template.defaults};
  const titled=originHtml({...base,config:{...base.config,hud:{...base.config.hud,titleEnabled:true}}}).html;
+ for (const preview of [false, true]) for (const intro of [false, true]) {
+   const built=originHtml({...base,preview,config:{...base.config,intro:{enabled:intro}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'}}).html;
+   a.check(/class="loading-logo" src="data:image\/png;base64,/.test(built) && built.includes('@keyframes tasty-loading-stripes'), 'original logo and animated loader survive preview/export with and without intro');
+ }
  a.check(originHtml({...base,config:{...base.config,gameplay:undefined}}).html.includes('"gameplay":{"allowReplay":false,"spawnTierOffset":0}'),'old tasks default to replay and tier boost off');
  for (const preview of [false, true]) a.check(originHtml({...base,preview,config:{...base.config,gameplay:{spawnTierOffset:2}}}).html.includes('"gameplay":{"allowReplay":false,"spawnTierOffset":2}'),'saved boost reaches preview and export');
  for (const offset of [undefined, 0, 2, 4, 8]) {
@@ -110,7 +116,7 @@ export default async function test(a){
  a.check(titled.includes('id="novvy-training-hud"')&&!titled.includes('data-novvy-origin-shell'),'HUD overlays the full canvas');
  const icon=fs.readFileSync(`${entry.templateDir}/${entry.template.game.ctaCard.icon}`);
  a.check(titled.includes('id="novvy-cta"')&&titled.includes(`data:image/webp;base64,${icon.toString('base64')}`),'shared CTA card embeds the original App Store icon bytes');
- a.check(titled.includes('<div class="novvy-cta-name">Tasty Travels: Merge Game</div>'),'CTA displays the official App Store name');
+ a.check(titled.includes('<div class="novvy-cta-name">Tasty Travels</div>'),'CTA displays the shortened Tasty Travels name');
  a.equal(originHtml(base).stageChain,['playable'],'pure playable');a.equal(originHtml({...base,config:{...base.config,intro:{enabled:true}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'}}).stageChain,['video','playable'],'combined playable');
  const cta=runtime();cta.game.downLoadApp({stopPropagation(){}});cta.game.game1_End();a.equal(cta.calls.filter(c=>c[0]==='onStep').length,0,'CTA release does not launch food');cta.game.game1_Start();cta.game.game1_End();a.equal(cta.calls.filter(c=>c[0]==='onStep').length,1,'next gameplay gesture works after CTA');
  const r=runtime();r.telemetry.report('CHALLENGE_SOLVED');r.game.game1_Start();a.equal(r.calls.filter(c=>c[0]==='onComplete').length,0,'native touch telemetry is not success');
@@ -158,5 +164,18 @@ export default async function test(a){
  a.equal(replay.calls.filter(c=>c[0]==='onReplay').length,3,'failed restart is not reported as replay');
  replay.elements['tasty-replay'].click();replay.finishLoad();
  a.equal(replay.calls.filter(c=>c[0]==='onReplay').length,4,'retry after load failure succeeds');
- const video=runtime(true);a.equal(video.calls.filter(c=>c[0]==='launch').length,0,'video gates engine');video.emit('novvy:intro-finished');a.equal(video.calls.filter(c=>c[0]==='setStage'),[['setStage',1,'video'],['setStage',2,'playable']],'video transition');a.equal(video.calls.filter(c=>c[0]==='launch').length,1,'engine launches after video');
+ const video=runtime(true);
+ a.equal(video.calls.filter(c=>c[0]==='launch').length,1,'engine preloads during the video');
+ const held=video.game.tool;
+ video.game.game1_Start();video.game.game1_Move();video.drop();video.game.createTool2(9);video.game.EndStep();video.window.__ORIGIN_ADAPTER__.cta(true,'native-cta');
+ a.equal(video.calls.filter(c=>['native-start','native-move','onStep','onComplete','click'].includes(c[0])).length,0,'intro and GO gate block input, results and CTA during preload');
+ a.check(!video.game.isEnd && video.game.tool!==null,'preloading cannot consume an item or end the round');
+ video.game.tool=held;
+ video.emit('novvy:intro-finished');
+ a.equal(video.calls.filter(c=>c[0]==='setStage'),[['setStage',1,'video'],['setStage',2,'playable']],'video transition');
+ a.equal(video.calls.filter(c=>c[0]==='launch').length,1,'intro exit reuses the preloaded engine');
+ video.game.game1_Start();video.game.game1_Move();video.drop();
+ a.equal(video.calls.filter(c=>['native-start','native-move','onStep'].includes(c[0])).length,3,'input becomes playable after intro exit');
+ const finished=runtime(true,false,0,true);finished.game.game1_Start();
+ a.equal(finished.calls.filter(c=>c[0]==='native-start').length,1,'intro that finished before adapter loading does not leave input gated');
 }
