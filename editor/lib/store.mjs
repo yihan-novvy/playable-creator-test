@@ -120,7 +120,7 @@ const CONFIG_WHITELISTS = new Map([
   ['block-out-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
   ['freecell-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
   ['grill-sort-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
-  ['tasty-travels-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay'])],
+  ['tasty-travels-origin', new Set(['hud', 'intro', 'cta', 'playableCta', 'gameplay', 'story'])],
   ['colorever-origin', new Set(['patternId', 'hud', 'intro', 'cta', 'playableCta'])],
 ]);
 
@@ -185,6 +185,14 @@ function mergeConfigValue(base, patch) {
 export function updateTaskConfig(id, patch) {
   const doc = readTask(id);
   if (!doc) return null;
+  if (doc.templateId === 'tasty-travels-origin' && 'story' in (patch || {})) {
+    const story = patch.story;
+    if (!story || typeof story !== 'object' || Array.isArray(story) || Object.entries(story).some(([key, value]) => key !== 'enabled' || typeof value !== 'boolean')) {
+      const error = new Error('剧情开场开关须为布尔值。');
+      error.statusCode = 400;
+      throw error;
+    }
+  }
   // Validate both selections before mutating or writing a task.
   if ('levelId' in (patch || {})) validateFixedLevel(doc.templateId, patch.levelId);
   if ('levelId' in (patch?.secondPlayable || {})) validateFixedLevel(doc.templateId, patch.secondPlayable.levelId);
@@ -262,6 +270,7 @@ export function updateTaskConfig(id, patch) {
   if ('playableCta' in (patch || {})) delete doc.steps.pack;
   // Origin settings affect the composed HTML, not the transcoded media.
   if (isOriginTemplate(doc.templateId) && ['hud', 'intro', 'cta', 'patternId'].some(key => key in (patch || {}))) delete doc.steps.pack;
+  if (doc.templateId === 'tasty-travels-origin' && 'story' in (patch || {})) delete doc.steps.pack;
   if (['escape-arrow', 'grill-sort-origin', 'block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) delete doc.steps.pack;
   // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
   if ('opening' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }

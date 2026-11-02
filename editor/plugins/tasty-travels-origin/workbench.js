@@ -70,8 +70,10 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const wrap = el('div', { class: 'dragon-config' });
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
       checkbox('使用开场视频', 'intro', 'enabled'),
+      checkbox('启用剧情开场（火焰里的怪物）', 'story', 'enabled'),
       checkbox('显示顶部 HUD 标题', 'hud', 'titleEnabled', config().hud?.titleEnabled === true),
     ]));
+    wrap.append(el('p', { class: 'hint' }, ['剧情试作版：固定章节、人物和对白，点击推进，可跳过。开启视频时先播放视频，再进入剧情；剧情的 Continue 代替视频 GO 按钮。游戏在后台预加载，剧情结束后开始试玩。']));
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'Tasty Travels'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2, 'Drop and merge tasty treats'),

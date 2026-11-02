@@ -38,14 +38,27 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
   };
   let html = read(template.game.indexHtml);
   const files = Object.fromEntries([...template.game.scripts, template.game.boot].map(file => [path.basename(file), read(file)]));
-  const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config, media, optionalHudPortraits: true, analytics: false });
+  const storyEnabled = template.id === 'tasty-travels-origin' && config.story?.enabled === true;
+  const overlayConfig = storyEnabled ? { ...config, intro: { ...config.intro, goEnabled: false } } : config;
+  const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config: overlayConfig, media, optionalHudPortraits: true, analytics: false });
+  if (storyEnabled) {
+    const story = name => fs.readFileSync(path.join(pluginDir, 'overlays/story', `story.${name}`), 'utf8');
+    const images = template.game.storyImages.map(file => `data:image/jpeg;base64,${read(file, null).toString('base64')}`);
+    const css = story('css').replace(/__STORY_IMAGE_([123])__/g, (_, n) => images[Number(n) - 1]);
+    injection.headStyles.push(`<style data-novvy-story>${css}</style>`);
+    injection.bodyDom.push(story('html').replace('__STORY_HIDDEN__', injection.introEnabled ? 'hidden' : ''));
+    injection.bodyScripts.push(script('story', story('js')));
+  }
   addOriginCtaCard(injection, template.game.ctaCard, read);
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
   const policy = originCtaPolicy(config.playableCta);
   const settings = { intro: injection.introEnabled, title: injection.hudEnabled, policy };
   if (template.id === 'grill-sort-origin') settings.gameplay = { countdownSeconds: 180, allowReplay: true, ...config.gameplay };
   if (template.id === 'freecell-origin') settings.gameplay = { allowReplay: false, ...config.gameplay };
-  if (template.id === 'tasty-travels-origin') settings.gameplay = { allowReplay: false, spawnTierOffset: 0, ...config.gameplay };
+  if (template.id === 'tasty-travels-origin') {
+    settings.gameplay = { allowReplay: false, spawnTierOffset: 0, ...config.gameplay };
+    settings.story = storyEnabled;
+  }
   const readEngine = name => fs.readFileSync(path.join(pluginDir, template.overlays.engine, name), 'utf8');
   const sourceScript = file => preview ? script('origin-source', files[path.basename(file)]) : `<script src="${path.basename(file)}"></script>`;
   const boot = [

@@ -1,4 +1,5 @@
 import { installOriginCta } from './lib/origin-cta-runtime.mjs';
+import { testStory } from './lib/tasty-story-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import { getEntry } from '../core/registry.mjs';
@@ -11,12 +12,13 @@ const nativeSequence = JSON.parse(nativeCore.match(/\.spToolAll=(\[[^\]]+\])/)[1
 const nativeCreateTool = nativeCore.match(/\.prototype.createTool=function\(\)\{([\s\S]*?)\},v\.prototype.createTool2/)[1];
 const nativePreview = nativeCore.match(/n.nextIconScale=(\[[^\]]+\]),n.nextIconOffsetX=(\[[^\]]+\])/);
 const numbers = value => value.slice(1, -1).split(',').map(Number);
-export function runtime(intro = false, allowReplay = false, spawnTierOffset, introFinished = false) {
+export function runtime(intro = false, allowReplay = false, spawnTierOffset, introFinished = false, story = false, storyFinished = false) {
   const entry = getEntry('tasty-travels-origin'), calls = [], listeners = new Map(), ready = [];
   const window = {
     __novvyIntroFinished: introFinished,
+    __novvyStoryFinished: storyFinished,
     __novvyStageChain__: intro ? ['video', 'playable'] : ['playable'],
-    __ORIGIN_CONFIG__: { intro, gameplay: { allowReplay, spawnTierOffset }, policy: { mode: 'steps', afterSteps: 2, intervals: [2] } },
+    __ORIGIN_CONFIG__: { intro, story, gameplay: { allowReplay, spawnTierOffset }, policy: { mode: 'steps', afterSteps: 2, intervals: [2] } },
     addEventListener(k, fn, options) { if (!listeners.has(k)) listeners.set(k, []); listeners.get(k).push({ fn, once: options?.once }); },
     dispatchEvent(e) { for (const h of [...listeners.get(e.type) || []]) { h.fn(e); if (h.once) listeners.get(e.type).splice(listeners.get(e.type).indexOf(h), 1); } },
     NovvyPlayable: Object.fromEntries(['setStageList','setStage','onStep','onComplete','onReplay','endStage','click'].map(k=>[k,(...args)=>calls.push([k,...args])])),
@@ -68,7 +70,7 @@ export function runtime(intro = false, allowReplay = false, spawnTierOffset, int
       runSceneImmediate() { game.onDestroy(); game = new Game(); game.onLoad(); calls.push(['sceneReady']); for (const fn of ready.splice(0)) fn(); },
     },
   };
-  const ctx = vm.createContext({ window, cc, l: { default: data }, m: { default: ToolScript }, console: { log() {}, error() {} }, document: { getElementById: id=>elements[id] || (id === 'novvy-intro-video' && intro ? {} : null) }, CustomEvent: class { constructor(type, o) { this.type = type; this.detail = o?.detail; } } });
+  const ctx = vm.createContext({ window, cc, l: { default: data }, m: { default: ToolScript }, console: { log() {}, error() {} }, document: { getElementById: id=>elements[id] || (id === 'novvy-story' && story || id === 'novvy-intro-video' && intro ? {} : null) }, CustomEvent: class { constructor(type, o) { this.type = type; this.detail = o?.detail; } } });
   Game.prototype.createTool = vm.runInContext('(function(){' + nativeCreateTool + '})', ctx);
   vm.runInContext(fs.readFileSync(`${entry.dir}/overlays/engine/events.js`, 'utf8'), ctx);
   const cta = installOriginCta(ctx);
@@ -85,6 +87,7 @@ export function runtime(intro = false, allowReplay = false, spawnTierOffset, int
     drop() { game.tool = {}; game.game1_End(); }, emit: (type, detail)=>window.dispatchEvent({ type, detail }) };
 }
 export default async function test(a){
+ testStory(a);
  const entry=getEntry('tasty-travels-origin');a.check(configWhitelistFor(entry.id).has('playableCta'),'settings persist');
  a.check(configWhitelistFor(entry.id).has('gameplay'),'replay settings persist');
  a.equal(entry.template.defaults.gameplay,{allowReplay:false,spawnTierOffset:0},'replay and tier boost default off');
@@ -178,4 +181,27 @@ export default async function test(a){
  a.equal(video.calls.filter(c=>['native-start','native-move','onStep'].includes(c[0])).length,3,'input becomes playable after intro exit');
  const finished=runtime(true,false,0,true);finished.game.game1_Start();
  a.equal(finished.calls.filter(c=>c[0]==='native-start').length,1,'intro that finished before adapter loading does not leave input gated');
+ for(const intro of [false,true]) {
+   const story=runtime(intro,true,0,false,true);
+   a.equal(story.calls.filter(c=>c[0]==='setStage'),intro?[['setStage',1,'video']]:[],'story does not enter the playable stage early');
+   a.check(!story.window.__novvyCtaCardPhase,'CTA card stays hidden during story');
+   if(intro)story.emit('novvy:intro-finished');
+   story.game.game1_Start();story.drop();story.game.createTool2(9);
+   story.cta.pointer('pointerdown','#novvy-story');story.cta.pointer('pointerup','#novvy-story');story.cta.flush();
+   a.equal(story.calls.filter(c=>['onStep','onComplete','click','native-start'].includes(c[0])).length,0,'story gestures do not play or convert, including after video completion');
+   story.window.__novvyStoryFinished=true;story.emit('novvy:story-finished');story.emit('novvy:story-finished');
+   a.equal(story.calls.filter(c=>c[0]==='setStage').at(-1),['setStage',intro?2:1,'playable'],'story completion enters the correct playable stage');
+   a.equal(story.window.__novvyCtaCardPhase,'bar','story completion reveals CTA card');
+   story.game.game1_Start();story.drop();story.game.EndStep();story.window.__ORIGIN_ADAPTER__.replay();story.finishLoad();
+   a.equal(story.calls.filter(c=>c[0]==='onStep').length,1,'game counts real drops after story');
+   a.equal(story.calls.filter(c=>c[0]==='onReplay').length,1,'replay stays within playable without repeating story');
+   a.equal(story.calls.filter(c=>c[0]==='setStage').length,intro?2:1,'story entry and replay do not duplicate stage events');
+ }
+ for(const preview of [false,true])for(const intro of [false,true]) {
+   const html=originHtml({...base,preview,config:{...base.config,story:{enabled:true},intro:{enabled:intro,goEnabled:true}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'}}).html;
+   a.check(html.includes('id="novvy-story"')&&html.includes('Chapter 1: Monster in Flames I'),'story survives preview and export with or without video');
+   a.check(html.includes('data:image/jpeg;base64,'),'story artwork is embedded offline');
+   a.check(!intro||html.includes('"goEnabled":false'),'story replaces the redundant video GO gate');
+ }
+ a.check(!originHtml(base).html.includes('id="novvy-story"'),'story defaults off and excludes its markup and art');
 }

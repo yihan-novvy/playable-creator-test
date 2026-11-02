@@ -1,6 +1,8 @@
 (function () {
   'use strict';
-  var config = window.__ORIGIN_CONFIG__, active = !config.intro || !!window.__novvyIntroFinished, settled = false, installed = false, restarting = false;
+  var config = window.__ORIGIN_CONFIG__;
+  var active = config.story ? !!window.__novvyStoryFinished : !config.intro || !!window.__novvyIntroFinished;
+  var settled = false, installed = false, restarting = false;
   var allowReplay = !!(config.gameplay && config.gameplay.allowReplay === true);
   var spawnTierOffset = config.gameplay && config.gameplay.spawnTierOffset;
   if (!Number.isInteger(spawnTierOffset) || spawnTierOffset < 0 || spawnTierOffset > 8) spawnTierOffset = 0;
@@ -165,7 +167,7 @@
       });
     },
     start: function (launch) {
-      if (!active) window.addEventListener('novvy:intro-finished', function () { active = true; }, { once: true });
+      if (!active) window.addEventListener(config.story ? 'novvy:story-finished' : 'novvy:intro-finished', function () { active = true; }, { once: true });
       // Load behind the intro; input and reporting remain gated until entry.
       launch();
     }

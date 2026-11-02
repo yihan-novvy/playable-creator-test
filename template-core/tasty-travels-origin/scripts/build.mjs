@@ -50,6 +50,7 @@ export function compileSource(html) {
   const shell = fs.readFileSync(path.join(root, 'src/index.html'), 'utf8');
   if (!splash || shell.split('__TASTY_SPLASH_IMAGE__').length !== 2) throw new Error('Expected original Tasty Travels splash and one shell anchor');
   const files = {
+    ...Object.fromEntries([1, 2, 3].map(n => [`game/story-reference-${n}.jpg`, fs.readFileSync(path.join(root, `source/story/reference-${n}.jpg`))])),
     'game/assets.js': `window.__res=${JSON.stringify(assets).replaceAll('<', '\\u003c')};\n`,
     'game/settings.js': archive['@src/settings.js'],
     'game/main.js': archive['@main.js'].replace(autoFullscreen, 'cc.view.enableAutoFullScreen(false)')
@@ -71,7 +72,7 @@ export function build() {
   fs.mkdirSync(path.join(out, 'game'), { recursive: true });
   for (const [file, content] of Object.entries(files)) fs.writeFileSync(path.join(out, file), content);
   fs.writeFileSync(path.join(out, 'game-manifest.json'), JSON.stringify({ id: 'tasty-travels-origin', name: appStore.name, version: '1.0.0', entry: 'game/index.html',
-    constants: { game: { scripts: ['game/assets.js','game/settings.js','game/main.js','game/layout.js','game/loader.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: 'Tasty Travels', icon: 'game/cta-icon.webp' } }, targetTier: 9,
+    constants: { game: { scripts: ['game/assets.js','game/settings.js','game/main.js','game/layout.js','game/loader.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: 'Tasty Travels', icon: 'game/cta-icon.webp' }, storyImages: [1, 2, 3].map(n => `game/story-reference-${n}.jpg`) }, targetTier: 9,
       sourceSha256: hash(raw), sourceUrl: provenance.sourceUrl, appStoreUrl: provenance.appStoreUrl,
       fileHashes: Object.fromEntries(Object.entries(files).map(([file, value]) => [file, hash(value)])) } }, null, 2) + '\n');
   console.log('tasty-travels-origin: built original physics merge game and local resources');

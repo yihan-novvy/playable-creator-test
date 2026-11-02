@@ -28,8 +28,9 @@ trial({repeated:true});assert.equal(merges,1,'native collision latch merges same
 for(const [file,s]of Object.entries(a.files))if(file.endsWith('.js'))new vm.Script(s);
 // Exercise native async boot across both intro/load completion orders, including
 // a cached intro finishing before boot.js arrives in an exported package.
-for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', 'intro-loading', 'intro-finished']) {
- const intro=mode!=='pure', queue=[], frames=[], fullscreen=[], orientations=[];
+for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', 'intro-loading', 'intro-finished', 'story-ready', 'story-loading', 'story-finished', 'video-story']) {
+ const intro=mode.startsWith('intro')||mode==='video-story', story=mode.startsWith('story')||mode==='video-story';
+ const entryEvent=story?'novvy:story-finished':'novvy:intro-finished', queue=[], frames=[], fullscreen=[], orientations=[];
  const listeners=new Map(), sceneListeners=new Map(), nativeListeners=new Map();
  const on=(map,name,fn)=>{if(!map.has(name))map.set(name,[]);map.get(name).push(fn);};
  const emit=name=>{for(const fn of listeners.get(name)||[])fn();};
@@ -74,7 +75,7 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
   }},
   game:{EVENT_SHOW:'show',on(name,callback){on(nativeListeners,name,callback);},run(options,onStart){queue.push(onStart);},resume(){paused=false;},pause(){paused=true;}},
  };
- const bootWindow={cc,__ORIGIN_CONFIG__:{intro},__novvyIntroFinished:mode==='intro-finished',__novvyBridgeVersion:1,__novvyViewable:true,
+ const bootWindow={cc,__ORIGIN_CONFIG__:{intro,story},__novvyIntroFinished:mode==='intro-finished',__novvyStoryFinished:mode==='story-finished',__novvyBridgeVersion:1,__novvyViewable:true,
   addEventListener(name,fn){on(listeners,name,fn);},requestAnimationFrame(callback){frames.push(callback);},
   __ORIGIN_ADAPTER__:{start(callback){launch=callback;callback();}},
   super_boot_engine(){engineStarts++;queue.push(()=>bootWindow.boot());},
@@ -92,7 +93,7 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
  launch();assert.equal(frames.length,1,'repeated launch does not queue another engine startup');
  frames.shift()();assert.equal(engineStarts,0,'first animation frame leaves a paint opportunity');
  frames.shift()();assert.equal(engineStarts,1,'engine starts on the following animation frame');
- if(mode==='intro-loading')emit('novvy:intro-finished');
+ if(mode.endsWith('-loading'))emit(entryEvent);
  assert.equal(bootWindow.isMute,1,'audio stays muted until the scene is ready, even if intro ended early');
  while(queue.length)queue.shift()();
  assert.equal(elements.splash.style.display,'block','scene launch alone must not reveal an unpainted canvas');
@@ -100,7 +101,7 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
  assert.equal(musicStarts,0,'native onLoad cannot start music before the first frame');
  sceneEvent('draw');
  assert.equal(elements.splash.style.display,'none','first rendered scene dismisses the splash');
- if(mode==='intro-ready') {
+ if(mode.endsWith('-ready')||mode==='video-story') {
   assert.equal(paused,true,'prepared scene is paused behind the intro and GO gate');
   assert.deepEqual([bootWindow.isMute,manager.isMute,effectsVolume,musicVolume,musicStarts],[1,true,0,0,0]);
   emit('pointerdown');
@@ -108,12 +109,17 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
   cc.game.resume();for(const fn of nativeListeners.get('show')||[])fn();
   assert.equal(paused,true,'native foreground resume cannot bypass the intro gate');
   assert.equal(musicStarts,0,'video gestures and visibility changes cannot start game music');
-  emit('novvy:intro-finished');
+  if(story) {
+   emit('novvy:intro-finished');
+   assert.equal(paused,true,'video completion cannot bypass a pending story');
+   assert.equal(musicStarts,0,'game music waits for the story to finish');
+  }
+  emit(entryEvent);
   assert.equal(elements.splash.style.display,'none','ready intro transition never restores Loading');
  }
  assert.equal(paused,false,'ready playable runs after entry');
  assert.deepEqual([bootWindow.isMute,manager.isMute,effectsVolume,musicVolume,musicStarts],[0,false,1,1,1],'entry restores audio skipped by native muted onLoad');
- emit('novvy:intro-finished');assert.equal(musicStarts,1,'duplicate entry does not restart music');
+ emit(entryEvent);assert.equal(musicStarts,1,'duplicate entry does not restart music');
  document.hidden=true;emit('visibilitychange');
  assert.equal(paused,true);assert.equal(bootWindow.isMute,1);
  document.hidden=false;bootWindow.__novvyViewable=false;emit('visibilitychange');

@@ -1,6 +1,7 @@
 (function () {
   var started = false, ready = false;
-  var entered = !(window.__ORIGIN_CONFIG__ || {}).intro || !!window.__novvyIntroFinished;
+  var config = window.__ORIGIN_CONFIG__ || {};
+  var entered = config.story ? !!window.__novvyStoryFinished : !config.intro || !!window.__novvyIntroFinished;
   window.super_html_channel = 'web';
   window.SW_qudao = 'web';
   window.isMute = 0;
@@ -38,7 +39,7 @@
   document.addEventListener('pointerdown', function () { if (started) audio(); }, true);
   document.addEventListener('visibilitychange', lifecycle);
   window.addEventListener('novvy:viewablechange', lifecycle);
-  window.addEventListener('novvy:intro-finished', function () { entered = true; lifecycle(); });
+  window.addEventListener(config.story ? 'novvy:story-finished' : 'novvy:intro-finished', function () { entered = true; lifecycle(); });
   function launch() {
     if (started) return;
     started = true;

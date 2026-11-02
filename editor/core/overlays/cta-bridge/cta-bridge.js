@@ -121,7 +121,7 @@
       /* .novvy-intro-go = 片头/片尾 GO 闸门按钮:点 GO 是继续漏斗(进下一段
          playable),不是再跳一次商店——真机上 pointerdown 先转化跳店会把
          click 打断,震动与换关全都跑不到。 */
-      if (target && target.closest && target.closest('#novvy-cta,[data-novvy-click-source="cta_click"],[data-novvy-replay],.novvy-intro-go,#origin-sound,#block-out-sound')) return;
+      if (target && target.closest && target.closest('#novvy-cta,[data-novvy-click-source="cta_click"],[data-novvy-replay],.novvy-intro-go,#novvy-story,#origin-sound,#block-out-sound')) return;
       // Canvas engines identify their download button on release. Let that
       // native handler report cta_click before considering a background tap.
       if (window.__novvyDeferCanvasCta && target && target.closest && target.closest('canvas')) {
@@ -262,7 +262,9 @@
   /* 试玩开始的判定:有片头覆盖层时等 intro 派发 novvy:intro-finished
      (播完/跳过/出错收场);未启用片头 = 加载即试玩。 */
   function boot() {
-    if (document.getElementById('novvy-video-intro') && !window.__novvyIntroFinished) {
+    if (document.getElementById('novvy-story') && !window.__novvyStoryFinished) {
+      window.addEventListener('novvy:story-finished', playableStarted, { once: true });
+    } else if (document.getElementById('novvy-video-intro') && !window.__novvyIntroFinished) {
       window.addEventListener('novvy:intro-finished', playableStarted);
     } else {
       playableStarted();

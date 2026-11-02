@@ -28,6 +28,9 @@
     "engine": "overlays/engine"
   },
   "defaults": {
+    "story": {
+      "enabled": false
+    },
     "gameplay": {
       "allowReplay": false,
       "spawnTierOffset": 0

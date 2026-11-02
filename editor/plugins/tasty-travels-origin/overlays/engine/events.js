@@ -1,13 +1,25 @@
 (function () {
-  var chain = window.__novvyStageChain__, entered = chain[0] === 'playable', settled = false, ended = false;
-  try { window.NovvyPlayable.setStageList(chain.slice()); window.NovvyPlayable.setStage(1, chain[0]); } catch (_) {}
+  var chain = window.__novvyStageChain__, story = window.__ORIGIN_CONFIG__.story;
+  var entered = chain[0] === 'playable' && (!story || !!window.__novvyStoryFinished), settled = false, ended = false;
+  try {
+    window.NovvyPlayable.setStageList(chain.slice());
+    if (entered || chain[0] === 'video') window.NovvyPlayable.setStage(1, chain[0]);
+  } catch (_) {}
   var video = document.getElementById('novvy-intro-video');
   try { if (video) window.NovvyAnalytics.registerMedia(video, { name: 'intro_video' }); } catch (_) {}
   window.addEventListener('novvy:intro-finished', function () {
+    if (story && !window.__novvyStoryFinished) {
+      try { window.NovvyPlayable.endStage(); } catch (_) {}
+      return;
+    }
+    enter();
+  });
+  function enter() {
     if (entered) return;
     entered = true;
     try { window.NovvyPlayable.setStage(chain.length, 'playable'); } catch (_) {}
-  });
+  }
+  if (story) window.addEventListener('novvy:story-finished', enter, { once: true });
   window.addEventListener('novvy:origin-step', function (event) {
     if (!entered || settled || ended) return;
     try { window.NovvyPlayable.onStep(event.detail.step, { progress: event.detail.progress }); } catch (_) {}
