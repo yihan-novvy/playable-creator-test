@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="从创建 Tasty Travels 任务到上传视频、配置文案、试玩和下载 ZIP，快速制作 playable-ad。">
+  <meta name="theme-color" content="#14131a">
+  <title>使用指南 · Playable Creator</title>
+  <style>
+    :root { color-scheme: dark; --bg:#14131a; --panel:#1d1c26; --line:#35344a; --text:#eae9f2; --muted:#b5b2c5; --accent:#ffd44d; }
+    * { box-sizing:border-box; }
+    html { scroll-behavior:smooth; scroll-padding-top:24px; }
+    body { margin:0; background:var(--bg); color:var(--text); font:16px/1.8 "PingFang SC","Microsoft YaHei",system-ui,sans-serif; }
+    a { color:var(--accent); text-underline-offset:4px; }
+    a:focus-visible { outline:2px solid var(--accent); outline-offset:5px; }
+    .page { width:min(100% - 40px,880px); margin:auto; }
+    .topbar { border-bottom:1px solid var(--line); }
+    .topbar .page { display:flex; gap:16px; align-items:center; justify-content:space-between; padding-block:18px; }
+    .brand { font-size:13px; font-weight:700; letter-spacing:2px; color:var(--muted); }
+    .back { font-size:14px; white-space:nowrap; }
+    main { padding-block:42px 32px; }
+    .eyebrow { color:var(--accent); margin:0 0 10px; font-size:13px; letter-spacing:1px; }
+    h1 { margin:0 0 14px; font-size:clamp(28px,5vw,40px); line-height:1.35; letter-spacing:-.5px; }
+    .intro { color:var(--muted); max-width:720px; margin:0 0 22px; }
+    .button { display:inline-block; padding:9px 18px; border-radius:8px; background:var(--accent); color:#241d00; font-weight:650; text-decoration:none; }
+    .button:hover { background:#ffe18a; }
+    .flow { display:flex; flex-wrap:wrap; gap:8px; padding:0; margin:28px 0; list-style:none; counter-reset:flow; }
+    .flow li + li { margin-top:0; }
+    .flow a { display:block; padding:6px 12px; border:1px solid var(--line); border-radius:7px; font-size:14px; color:var(--text); text-decoration:none; }
+    .flow a::before { counter-increment:flow; content:counter(flow) " "; color:var(--accent); margin-right:4px; }
+    .flow a:hover { border-color:var(--accent); }
+    section { margin-top:20px; padding:26px 28px; background:var(--panel); border:1px solid var(--line); border-radius:12px; }
+    h2 { display:flex; align-items:center; gap:12px; margin:0 0 18px; font-size:21px; line-height:1.5; }
+    .number { display:inline-grid; place-items:center; flex-shrink:0; width:30px; height:30px; border-radius:50%; color:#241d00; background:var(--accent); font-size:15px; }
+    .optional { color:var(--muted); font-size:14px; font-weight:400; }
+    p { margin:12px 0; }
+    ol,ul { padding-left:24px; margin:12px 0; }
+    li + li { margin-top:8px; }
+    code { padding:2px 5px; border:1px solid var(--line); border-radius:4px; font-family:inherit; overflow-wrap:anywhere; }
+    .note { padding:12px 16px; border-left:3px solid var(--accent); background:#ffd44d0a; color:var(--muted); margin-top:18px; }
+    .note strong { color:var(--text); }
+    table { border-collapse:collapse; width:100%; font-size:15px; }
+    th,td { padding:13px 12px; border-bottom:1px solid var(--line); text-align:left; vertical-align:top; overflow-wrap:anywhere; }
+    thead th { color:var(--muted); font-size:13px; }
+    tbody th { width:30%; font-weight:500; }
+    .warning { color:var(--accent); }
+    .check { color:var(--muted); }
+    .finish { display:flex; align-items:center; flex-wrap:wrap; gap:14px; padding-top:24px; }
+    .finish p { color:var(--muted); font-size:14px; }
+    footer { color:var(--muted); font-size:13px; padding:18px 0 36px; border-top:1px solid var(--line); }
+    footer .page { display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; }
+    @media (max-width:560px) {
+      .page { width:calc(100% - 32px); }
+      main { padding-top:28px; }
+      section { padding:20px 16px; }
+      h2 { font-size:19px; gap:8px; flex-wrap:wrap; }
+      th,td { padding:11px 7px; }
+      tbody th { width:33%; }
+      .brand { letter-spacing:1px; font-size:11px; }
+    }
+    @media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto; } }
+    @media print {
+      :root { color-scheme:light; --bg:#fff; --panel:#fff; --line:#ccc; --text:#111; --muted:#444; --accent:#745600; }
+      body { font-size:11pt; }
+      .page { width:100%; }
+      .topbar,.flow,.finish,.back { display:none; }
+      main { padding:0; }
+      section { break-inside:avoid; padding:15px; }
+      .number { background:#eee; color:#111; }
+      .note { background:#fafafa; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="page"><span class="brand">PLAYABLE CREATOR</span><a class="back" href="./">← 返回制作网站</a></div>
+  </header>
+  <main class="page">
+    <p class="eyebrow">TASTY TRAVELS · 使用指南</p>
+    <h1>制作你的第一条试玩广告</h1>
+    <p class="intro">创建任务、上传素材并打包，即可生成 playable-ad 成品 ZIP。当前支持 Tasty Travels 饮品合成玩法，游戏素材已内置，无需编写代码。</p>
+    <a class="button" href="./">开始制作 →</a>
+    <nav aria-label="制作流程">
+      <ol class="flow">
+        <li><a href="#create">创建任务</a></li>
+        <li><a href="#video">添加视频</a></li>
+        <li><a href="#settings">设置文案</a></li>
+        <li><a href="#build">生成与试玩</a></li>
+        <li><a href="#download">下载成品</a></li>
+      </ol>
+    </nav>
+
+    <section id="create" aria-labelledby="create-title">
+      <h2 id="create-title"><span class="number" aria-hidden="true">1</span>创建任务</h2>
+      <ol>
+        <li>在首页「新建任务」输入名称，建议使用「姓名-日期-素材名」，例如 <code>小王-1104-饮品视频01</code>。</li>
+        <li>点击「创建」，选择 <strong>Tasty Travels: Merge Game（片头+原版合成）</strong>。</li>
+        <li>点击弹窗中的创建按钮，进入任务工作台。</li>
+      </ol>
+      <p class="note">每条广告素材建议单独创建一个任务。网站任务列表共用，请只修改或删除自己的任务。</p>
+    </section>
+
+    <section id="video" aria-labelledby="video-title">
+      <h2 id="video-title"><span class="number" aria-hidden="true">2</span>添加开场视频 <span class="optional">可选</span></h2>
+      <p>需要“先播放视频，再进入游戏”时：</p>
+      <ol>
+        <li>在「任务配置」勾选<strong>「使用开场视频」</strong>。</li>
+        <li>在下方「1 开场视频」找到「片头视频 MP4」，点击对应的「上传文件」。</li>
+        <li>选择 MP4 视频，等待页面显示文件大小，表示上传完成。</li>
+        <li>如需自定义视频封面，在「可选海报 JPG」上传 JPG 图片；不上传时使用视频第一帧。</li>
+      </ol>
+      <p class="note">单个上传文件不超过 <strong>100 MB</strong>。如果只制作纯玩法广告，保持「使用开场视频」不勾选，无需上传视频和海报。</p>
+    </section>
+
+    <section id="settings" aria-labelledby="settings-title">
+      <h2 id="settings-title"><span class="number" aria-hidden="true">3</span>设置文案和玩法</h2>
+      <table aria-label="任务配置说明">
+        <thead><tr><th scope="col">配置项</th><th scope="col">如何填写</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">显示顶部 HUD 标题</th><td>需要顶部标题时勾选，再填写「HUD 主标题」和「HUD 副标题」。</td></tr>
+          <tr><th scope="row">投放等级加成（0–8）</th><td>保持 <strong>0</strong>。<br><strong class="warning">除非测试，禁止修改此项内容。</strong></td></tr>
+          <tr><th scope="row">允许重玩</th><td>默认关闭；开启后，结束界面可重玩，点击重玩会触发转化跳转。</td></tr>
+          <tr><th scope="row">转化时机</th><td>默认「第 N 次有效操作跳转」，一般保持默认。</td></tr>
+          <tr><th scope="row">首跳步数 N（1–99）</th><td>默认 <strong>20</strong>，即第 20 次有效投放触发首次转化跳转。</td></tr>
+          <tr><th scope="row">循环间隔</th><td>默认 <strong>10,8,6,4</strong>，首次触发后，依次再操作 10、8、6、4 次触发，之后每 4 次触发。</td></tr>
+        </tbody>
+      </table>
+      <p>填写完毕后点击输入框外，再点击<strong>「保存配置」</strong>，确认显示「已保存」。没有特殊要求时，玩法和转化设置保持默认即可。</p>
+    </section>
+
+    <section id="build" aria-labelledby="build-title">
+      <h2 id="build-title"><span class="number" aria-hidden="true">4</span>生成并试玩</h2>
+      <ol>
+        <li>点击页面顶部的<strong>「全部运行」</strong>。系统会依次处理开场视频和打包；未启用的视频步骤会自动跳过。</li>
+        <li>等待「打包」显示<strong>「成功」</strong>。运行期间请等待结果，避免重复点击。</li>
+        <li>点击<strong>「试玩打包结果」</strong>，检查视频是否正常播放、标题是否正确，以及饮品能否正常投放和合成。</li>
+      </ol>
+      <p class="check">网页内试玩用于检查画面和玩法；下载跳转请在投放平台的预览环境中确认。</p>
+    </section>
+
+    <section id="download" aria-labelledby="download-title">
+      <h2 id="download-title"><span class="number" aria-hidden="true">5</span>下载成品</h2>
+      <p>点击<strong>「下载 ZIP 包」</strong>，保存生成的 ZIP 文件，作为 playable-ad 成品交付。</p>
+      <p>后续可从首页任务列表点击任务名称继续编辑。</p>
+      <p class="note"><strong>修改文案、设置或重新上传素材后，需要再次点击「全部运行」，试玩确认后重新下载 ZIP。</strong></p>
+    </section>
+
+    <section aria-labelledby="help-title">
+      <h2 id="help-title">遇到问题时</h2>
+      <ul>
+        <li><strong>提示缺少视频：</strong>检查是否勾选了「使用开场视频」，并确认 MP4 已上传；不需要视频时取消勾选。</li>
+        <li><strong>显示「需重跑」或试玩还是旧内容：</strong>点击「全部运行」，完成后重新点击「试玩打包结果」。</li>
+        <li><strong>上传或运行失败：</strong>检查文件格式和大小，查看页面错误提示；仍失败时，将任务名称及错误截图发给维护人员。</li>
+      </ul>
+    </section>
+    <div class="finish"><a class="button" href="./">前往制作网站 →</a><p>从一个新任务开始。</p></div>
+  </main>
+  <footer><div class="page"><span>适用版本：2026-11-04 · Tasty Travels</span><a href="#">回到顶部 ↑</a></div></footer>
+</body>
+</html>
