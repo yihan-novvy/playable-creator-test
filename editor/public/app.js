@@ -55,7 +55,7 @@ const WORKBENCH_LABELS = {
   'dragon-cube': 'DragonCube 选关',
 };
 async function renderTemplates() {
-  templatesCache = await fetchJson('/api/templates');
+  templatesCache = (await fetchJson('/api/templates')).filter(template => template.creatable === true);
 }
 
 function stepChips(steps) {
@@ -169,7 +169,7 @@ function renderFilteredRows() {
   }
 }
 
-// 创建弹窗:点「创建」后先选模板(水色排序 / 彩豆拼图案),确认才真正建任务。
+// 创建弹窗只展示服务端允许新建的模板，确认后创建任务。
 // 复用与工作台弹窗同一套 .modal-backdrop 样式;Esc / 点背景 / × 关闭。
 function openCreateModal(name) {
   document.querySelectorAll('.modal-backdrop').forEach((node) => node.remove());

@@ -23,13 +23,13 @@ let id;
 try {
   assert.equal((await request('/')).status, 200);
   assert.equal((await json('/api/env')).ok, true);
-  assert.ok((await json('/api/templates')).some(template => template.id === 'dragon-cube'));
+  assert.deepEqual((await json('/api/templates')).filter(template => template.creatable).map(template => template.id), ['tasty-travels-origin']);
   const video = path.join(temporary, 'intro.mp4');
   await promisify(execFile)('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i',
     'color=c=blue:s=64x96:r=5:d=1', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video]);
-  const task = await json('/api/tasks', 'POST', { name: `deployment-check-${Date.now()}`, templateId: 'dragon-cube' });
+  const task = await json('/api/tasks', 'POST', { name: `deployment-check-${Date.now()}`, templateId: 'tasty-travels-origin' });
   id = task.id;
-  await json(`/api/tasks/${id}`, 'PATCH', { config: { intro: { enabled: true }, background: { enabled: true } } });
+  await json(`/api/tasks/${id}`, 'PATCH', { config: { intro: { enabled: true } } });
   const upload = await request(`/api/tasks/${id}/uploads/intro-video`, {
     method: 'PUT', headers: { 'Content-Type': 'video/mp4' }, body: await fs.readFile(video),
   });
@@ -38,6 +38,7 @@ try {
   assert.equal(range.status, 206);
   assert.equal((await range.arrayBuffer()).byteLength, 32);
   const steps = await json(`/api/tasks/${id}/run`, 'POST', { step: 'all' });
+  assert.deepEqual(steps.map(step => step.stepId), ['intro', 'pack']);
   assert.ok(steps.every(step => step.ok), JSON.stringify(steps));
   assert.equal((await request(`/api/tasks/${id}/preview`)).status, 200);
   assert.equal((await request(`/result/${id}/index.html`)).status, 200);

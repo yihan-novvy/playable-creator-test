@@ -5,7 +5,7 @@ import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {createServer} from '../server.mjs';
 import {getEntry} from '../core/registry.mjs';
-import {deleteTask,readTask,configWhitelistFor,stepInputFilesFor} from '../lib/store.mjs';
+import {createTask,deleteTask,readTask,configWhitelistFor,stepInputFilesFor} from '../lib/store.mjs';
 import {taskGeneratedDir,taskResultDir,taskUploadsDir} from '../lib/paths.mjs';
 import {execFile} from '../core/lib/exec.mjs';
 import {coloreverLevel as newLevel} from '../plugins/colorever-new/lib.mjs';
@@ -51,9 +51,9 @@ export default async function run(assert){
     assert.equal(options.map(x=>x.id),catalog.patterns.map(x=>x.id),'新工作台列出相同的全部图案');
     const legacyOptions=await(await fetch(base+'/api/colorever-options')).json();
     assert.equal(options,legacyOptions,'遗留无参图案接口默认指向在线模板');
-    const created=await api('/api/tasks',{name:'colorever-new-test-'+Date.now(),templateId:next.id});
-    assert.equal(created.status,201,'创建独立的新版本任务');
-    const id=created.body.id;ids.push(id);const url=`/api/tasks/${id}`;
+    // Seed an existing task to retain coverage of legacy editing.
+    const created=createTask({name:'colorever-new-test-'+Date.now(),templateId:next.id});
+    const id=created.id;ids.push(id);const url=`/api/tasks/${id}`;
     const patch=config=>api(url,{config},'PATCH');
     let result=await api(url+'/run',{step:'all'});
     assert.check(result.status===200&&result.body.length===7&&result.body.every(x=>x.ok),'默认七步制作流程通过');
@@ -163,8 +163,8 @@ export default async function run(assert){
     assert.equal((await api(url+'/template',{templateId:'water-sort'},'PATCH')).status,400,'禁止切换到不兼容的其他游戏');
     assert.equal((await api(url+'/template',{templateId:'unknown'},'PATCH')).status,400,'禁止未知版本');
     assert.equal(readTask(id),stable,'失败切换不修改项目');
-    const other=await api('/api/tasks',{name:'colorever-switch-other-'+Date.now(),templateId:'water-sort'});ids.push(other.body.id);
-    assert.equal((await api(`/api/tasks/${other.body.id}/template`,{templateId:'colorever-abandoned'},'PATCH')).status,400,'其他游戏不支持跨模板切换');
+    const other=createTask({name:'colorever-switch-other-'+Date.now(),templateId:'water-sort'});ids.push(other.id);
+    assert.equal((await api(`/api/tasks/${other.id}/template`,{templateId:'colorever-abandoned'},'PATCH')).status,400,'其他游戏不支持跨模板切换');
     await patch({secondPlayable:{patternId:'unknown'}});
     const invalid=readTask(id);
     assert.equal((await api(url+'/run',{step:'level'})).status,422,'第二关图案不存在时关卡步骤拒绝');

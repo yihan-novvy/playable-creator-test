@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createServer } from '../server.mjs';
+import { createTask as seedTask } from '../lib/store.mjs';
 
 // water-sort 模板的端到端管线:intro/hud/background/level 四步 + pack 的
 // overlay 注入(HUD/开场视频/DOM 背景),模板感知分发,按模板的 config 白名单。
@@ -28,9 +29,8 @@ async function api(base, method, pathname, body) {
 }
 
 async function createTask(base, templateId, name) {
-  const { status, json } = await api(base, 'POST', '/api/tasks', { name, templateId });
-  if (status !== 201) throw new Error(`create ${templateId} task failed: ${status}`);
-  return json.id;
+  // Seed an existing task; HTTP creation is reserved for Tasty Travels.
+  return seedTask({ name, templateId }).id;
 }
 
 async function uploadFile(base, taskId, slot, file) {

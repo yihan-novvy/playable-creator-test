@@ -6,7 +6,7 @@ import { dragonLevel, dragonHtml } from '../plugins/dragon-cube/lib.mjs';
 import { runStep, loadTemplate, effectiveConfig } from '../core/runner.mjs';
 import { createServer } from '../server.mjs';
 import { execFile } from '../core/lib/exec.mjs';
-import { deleteTask } from '../lib/store.mjs';
+import { createTask, deleteTask } from '../lib/store.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');
 const templateRoot = path.join(root, 'editor', 'templates', 'dragon-cube');
@@ -113,9 +113,10 @@ export default async function run(assert) {
       const res = await fetch(base + url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       return { status: res.status, body: await res.json() };
     };
-    const created = await api('/api/tasks', { name: 'dragon-phase2-' + Date.now(), templateId: 'dragon-cube' });
-    id = created.body.id;
-    const defaults = effectiveConfig(template, created.body.config);
+    // Seed a legacy task; only Tasty Travels may be newly created via HTTP.
+    const created = createTask({ name: 'dragon-phase2-' + Date.now(), templateId: 'dragon-cube' });
+    id = created.id;
+    const defaults = effectiveConfig(template, created.config);
     assert.check(defaults.cta.enabled && defaults.cta.endMask === false, '新任务默认显示下载卡并关闭全屏遮罩');
     assert.check(defaults.replay?.enabled === false, '新任务默认关闭结算重玩弹窗');
     const patched = await api(`/api/tasks/${id}`, { config: { outro: { enabled: true }, secondPlayable: { enabled: true, levelId: 2, cta: { mode: 'steps', afterSteps: 5 } }, replay: { enabled: true } } }, 'PATCH');

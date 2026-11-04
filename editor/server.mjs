@@ -90,9 +90,13 @@ function decodePngDataUrl(dataUrl) {
   return bytes;
 }
 
+// Retain metadata for existing tasks while limiting all new task creation.
+const CREATABLE_TEMPLATE_ID = 'tasty-travels-origin';
+
 function listTemplates() {
   return listEntries().map((entry) => ({
     id: entry.id,
+    creatable: entry.id === CREATABLE_TEMPLATE_ID,
     name: entry.template.name,
     steps: entry.template.steps,
     workbench: entry.plugin.workbench || entry.id,
@@ -197,6 +201,7 @@ async function handleApi(req, res, url) {
     const name = String(body.name || '').trim();
     if (!name) return sendError(res, 400, '任务名不能为空');
     if (!templateById(String(body.templateId || ''))) return sendError(res, 400, '未知模板');
+    if (body.templateId !== CREATABLE_TEMPLATE_ID) return sendError(res, 400, '当前仅支持创建 Tasty Travels 任务');
     const doc = createTask({ name, templateId: String(body.templateId) });
     return sendJson(res, 201, doc);
   }

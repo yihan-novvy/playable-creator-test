@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { readBundle, locateZipPayload, locateResourceObject } from '../plugins/colorever-gemsort/lib/res-bundle.mjs';
 import { computeWinTargetPercent, pickGuideColors, routeStoreJumpThroughNovvyBridge } from '../plugins/colorever-gemsort/lib/meta-patch.mjs';
 import { createServer } from '../server.mjs';
+import { createTask } from '../lib/store.mjs';
 
 // Full-stack equivalence check: drive the real HTTP API to build a reference
 // task from the EXAMPLE's own five assets, then compare dist/<id>/ against the
@@ -94,14 +95,8 @@ export default async function run(assert) {
   const { server, base } = await startServer();
   const workDir = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-ref-'));
   try {
-    // --- build the reference task through the real API ---
-    const createRes = await fetch(`${base}/api/tasks`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: `e2e-ref-${Date.now()}`, templateId: 'colorever-gemsort' }),
-    });
-    const task = await createRes.json();
-    assert.check(createRes.status === 201 && task.id, `task created (${task.id})`);
+    // Seed a legacy reference task, then build it through the real API.
+    const task = createTask({ name: `e2e-ref-${Date.now()}`, templateId: 'colorever-gemsort' });
     const taskId = task.id;
 
     for (const [slot, file] of UPLOADS) {

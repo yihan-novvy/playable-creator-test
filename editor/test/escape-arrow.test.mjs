@@ -6,7 +6,7 @@ import { escapeLevel, escapeHtmlPage } from '../plugins/escape-arrow/lib.mjs';
 import { getEntry } from '../core/registry.mjs';
 import { runStep } from '../core/runner.mjs';
 import { createServer } from '../server.mjs';
-import { deleteTask, recordStepResult, readTask, recordUpload, clearUpload } from '../lib/store.mjs';
+import { createTask, deleteTask, recordStepResult, readTask, recordUpload, clearUpload } from '../lib/store.mjs';
 import { execFile } from '../core/lib/exec.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -70,7 +70,8 @@ export default async function run(assert) {
       return { status: res.status, body: await res.json() };
     };
     assert.check((await (await fetch(base + '/api/templates')).json()).some(item => item.id === entry.id), '模版自动注册到 editor');
-    taskId = (await api('/api/tasks', { name: 'escape-arrow-test-' + Date.now(), templateId: entry.id })).body.id;
+    // Seed an existing task to verify legacy editing and export.
+    taskId = createTask({ name: 'escape-arrow-test-' + Date.now(), templateId: entry.id }).id;
     recordStepResult(taskId, { stepId: 'level', ok: true });
     recordStepResult(taskId, { stepId: 'pack', ok: true });
     const gameplay = await api(`/api/tasks/${taskId}`, { config: { gameplay: { lives: 'unlimited', hints: 2, allowReplay: false } } }, 'PATCH');

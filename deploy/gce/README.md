@@ -3,6 +3,7 @@
 部署现有 `editor/server.mjs`，不启动 Vite 或图案画室，不修改 playable 模板。
 使用单个 Debian 12 x86_64 实例；Node 仅监听 `127.0.0.1:8088`，Caddy 提供公开 HTTPS 和 IP 加 8088 端口的 HTTP 入口，无网页密码。
 这是用户选择的公开编辑器：当前应用没有访客角色，访问者都可新建、修改、删除任务。网页访问不授予服务器部署权限。
+当前仅允许新建 Tasty Travels 任务，任务列表和模板探索遵循同一限制；已有其他模板任务仍可打开和编辑。
 实例应使用持久化磁盘、禁止自动删除磁盘，并开启实例删除保护。
 
 本次部署使用 Google Cloud 项目 `novvy-dev`，实例 `playable-creator-vm`，可用区 `us-central1-a`（美国爱荷华州）。
@@ -56,7 +57,7 @@ node deploy/gce/smoke.mjs https://<HTTPS域名>
 node deploy/gce/smoke.mjs http://34.172.35.160:8088/
 ```
 
-验收覆盖公开访问、环境自检、建任务、视频上传与 Range、FFmpeg 处理、背景图处理、预览和 ZIP 下载。
+验收覆盖公开访问、环境自检、仅 Tasty Travels 可创建、视频上传与 Range、片头与打包两个步骤、预览和 ZIP 下载。
 检查只创建独立的 `deployment-check-*` 临时任务，并在完成后删除。
 关机重启后还应验证已有任务保留。后续更新复用实例和数据盘，并先备份数据目录。
 

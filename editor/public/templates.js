@@ -1,4 +1,6 @@
-import { catalog } from './template-catalog.mjs';
+import { catalog as allTemplates } from './template-catalog.mjs';
+
+let catalog = [];
 
 const $ = (id) => document.getElementById(id);
 const detail = $('detail-dialog');
@@ -188,4 +190,21 @@ $('create-template-form').addEventListener('submit', async event => {
   }
 });
 window.addEventListener('hashchange', syncHash);
-renderCards(); syncHash();
+async function initCatalog() {
+  try {
+    const response = await fetch('/api/templates');
+    if (!response.ok) throw new Error('模板列表加载失败，请刷新重试。');
+    const available = new Set((await response.json()).filter(item => item.creatable === true).map(item => item.id));
+    catalog = allTemplates.filter(item => available.has(item.id));
+    $('template-total').textContent = String(catalog.length).padStart(2, '0');
+    document.querySelectorAll('[data-filter]').forEach(button => {
+      const count = catalog.filter(item => button.dataset.filter === 'all' || item.group === button.dataset.filter).length;
+      button.querySelector('span').textContent = count;
+      button.hidden = count === 0;
+    });
+    renderCards(); syncHash();
+  } catch (error) {
+    $('template-grid').replaceChildren(node('p', 'error-message', error.message));
+  }
+}
+initCatalog();
