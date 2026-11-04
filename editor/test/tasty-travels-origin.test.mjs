@@ -87,7 +87,7 @@ export function runtime(intro = false, allowReplay = false, spawnTierOffset, int
     drop() { game.tool = {}; game.game1_End(); }, emit: (type, detail)=>window.dispatchEvent({ type, detail }) };
 }
 export default async function test(a){
- testStory(a);
+ await testStory(a);
  const entry=getEntry('tasty-travels-origin');a.check(configWhitelistFor(entry.id).has('playableCta'),'settings persist');
  a.check(configWhitelistFor(entry.id).has('gameplay'),'replay settings persist');
  a.equal(entry.template.defaults.gameplay,{allowReplay:false,spawnTierOffset:0},'replay and tier boost default off');
@@ -201,7 +201,9 @@ export default async function test(a){
    const html=originHtml({...base,preview,config:{...base.config,story:{enabled:true},intro:{enabled:intro,goEnabled:true}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'}}).html;
    a.check(html.includes('id="novvy-story"')&&html.includes('Chapter 1: Monster in Flames I'),'story survives preview and export with or without video');
    a.check(html.includes('data:image/jpeg;base64,'),'story artwork is embedded offline');
+   a.check(html.includes('data-novvy-story-audio') && html.indexOf('data-novvy-story-audio') < html.indexOf('<script data-novvy-story>'),'preview and export load offline story audio before dialogue');
    a.check(!intro||html.includes('"goEnabled":false'),'story replaces the redundant video GO gate');
  }
  a.check(!originHtml(base).html.includes('id="novvy-story"'),'story defaults off and excludes its markup and art');
+ a.check(!originHtml(base).html.includes('data-novvy-story-audio'),'disabled story does not include or start story audio');
 }

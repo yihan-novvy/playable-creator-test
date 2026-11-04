@@ -47,7 +47,7 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
     const css = story('css').replace(/__STORY_IMAGE_([123])__/g, (_, n) => images[Number(n) - 1]);
     injection.headStyles.push(`<style data-novvy-story>${css}</style>`);
     injection.bodyDom.push(story('html').replace('__STORY_HIDDEN__', injection.introEnabled ? 'hidden' : ''));
-    injection.bodyScripts.push(script('story', story('js')));
+    injection.bodyScripts.push(script('story-audio', fs.readFileSync(path.join(pluginDir, 'overlays/story/story-audio.js'), 'utf8')), script('story', story('js')));
   }
   addOriginCtaCard(injection, template.game.ctaCard, read);
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];

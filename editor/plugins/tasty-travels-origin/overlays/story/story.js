@@ -5,6 +5,7 @@
   var feed = document.getElementById('tasty-story-feed');
   var next = document.getElementById('tasty-story-next');
   var skip = document.getElementById('tasty-story-skip');
+  var sound = window.__novvyCreateStoryAudio && window.__novvyCreateStoryAudio(document.getElementById('tasty-story-sound'));
   var reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var started = false, finished = false, cursor = 0, typing = null, timer = null, touch = null;
   // Fixed pilot story, transcribed from the three user-provided screenshots.
@@ -58,6 +59,7 @@
   function finish(reason) {
     if (!started || finished) return;
     finished = true;
+    if (sound) sound.stop();
     clearInterval(timer); timer = null;
     next.disabled = true; skip.disabled = true;
     root.classList.add('story-leaving');
@@ -87,6 +89,7 @@
       var line = document.createElement('p'); line.className = 'tasty-story-line';
       line.setAttribute('aria-label', item.text);
       bubble.appendChild(name); bubble.appendChild(line); row.appendChild(portrait); row.appendChild(bubble); feed.appendChild(row);
+      if (sound) sound.dialogue(item.who);
       if (reduced) line.textContent = item.text;
       else {
         typing = { node: line, text: item.text, count: 0 }; line.dataset.typing = 'true';
@@ -103,20 +106,24 @@
   function start() {
     if (started || finished) return;
     started = true; root.hidden = false;
+    if (sound) sound.start();
     track('story_start', { chapter: 'monster-in-flames-1' });
     advance();
   }
-  next.addEventListener('click', function (event) { event.stopPropagation(); advance(); });
+  root.addEventListener('pointerdown', function (event) {
+    if (sound && !event.target.closest('#tasty-story-sound,#tasty-story-skip')) sound.unlock();
+  });
+  next.addEventListener('click', function (event) { event.stopPropagation(); if (sound) sound.unlock(); advance(); });
   skip.addEventListener('click', function (event) { event.stopPropagation(); finish('skip'); });
   feed.addEventListener('pointerdown', function (event) { touch = { x: event.clientX, y: event.clientY, top: feed.scrollTop }; });
   feed.addEventListener('click', function (event) {
     event.stopPropagation();
     var moved = touch && (Math.abs(event.clientX - touch.x) > 10 || Math.abs(event.clientY - touch.y) > 10 || Math.abs(feed.scrollTop - touch.top) > 10);
     touch = null;
-    if (!moved) advance();
+    if (!moved) { if (sound) sound.unlock(); advance(); }
   });
   feed.addEventListener('keydown', function (event) {
-    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); advance(); }
+    if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); if (sound) sound.unlock(); advance(); }
   });
   window.addEventListener('resize', function () { if (started && !finished) scroll(); });
   if (window.__ORIGIN_CONFIG__.intro && !window.__novvyIntroFinished) window.addEventListener('novvy:intro-finished', start, { once: true });

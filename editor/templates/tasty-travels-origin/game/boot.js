@@ -12,13 +12,25 @@
   };
   function viewable() { return !document.hidden && (window.__novvyBridgeVersion >= 1 ? !!window.__novvyViewable : true); }
   function audio() {
-    var wasMuted = window.isMute === 1, off = !entered || !ready || !viewable();
+    var storySound = config.story && window.__novvyStorySound;
+    var storyMusic = storySound && storySound.active && !storySound.muted;
+    var wasMuted = window.isMute === 1, off = (!entered && !storyMusic) || !ready || !viewable();
     window.isMute = off ? 1 : 0;
-    if (window.cc && cc.audioEngine) { cc.audioEngine.setEffectsVolume(off ? 0 : 1); cc.audioEngine.setMusicVolume(off ? 0 : 1); }
+    if (window.cc && cc.audioEngine) {
+      cc.audioEngine.setEffectsVolume(off ? 0 : 1); cc.audioEngine.setMusicVolume(off ? 0 : 1);
+      if (off) cc.audioEngine.pauseAll();
+      else {
+        // This frozen engine pauses audio together with cc.game.pause(). Restore
+        // its audio cache without resuming physics behind the story overlay.
+        cc.audioEngine._restore(); cc.audioEngine.resumeAll();
+        var context = cc.sys.__audioSupport && cc.sys.__audioSupport.context;
+        if (context && context.state !== 'running' && context.state !== 'closed') context.resume().catch(function () {});
+      }
+    }
     if (window.__require) { try {
       window.__require('GameManager').GameManager.isMute = off;
-      // Native onLoad skips BGM while muted. Start it when the prepared scene
-      // becomes playable; the layout/adapter retain native first-touch unlock.
+      // Start the original bgm/bgm2 loops once the scene is ready. Existing
+      // SoundManager deduplication keeps the same tracks through story → game.
       if (wasMuted && !off) {
         var game = window.__require('GameScript').default.instance;
         if (game) game.playBgm();
@@ -28,8 +40,8 @@
   function lifecycle() {
     // Finish initialization and one real draw under the video before pausing.
     // Pausing at scene launch would leave an unpainted canvas at the transition.
-    audio();
     if (window.cc && ready) { if (entered && viewable()) cc.game.resume(); else cc.game.pause(); }
+    audio();
   }
   window.super_html = {
     is_hide_download: function () { return true; }, is_audio: function () { return !window.isMute; },
@@ -39,6 +51,7 @@
   document.addEventListener('pointerdown', function () { if (started) audio(); }, true);
   document.addEventListener('visibilitychange', lifecycle);
   window.addEventListener('novvy:viewablechange', lifecycle);
+  window.addEventListener('novvy:story-sound', lifecycle);
   window.addEventListener(config.story ? 'novvy:story-finished' : 'novvy:intro-finished', function () { entered = true; lifecycle(); });
   function launch() {
     if (started) return;

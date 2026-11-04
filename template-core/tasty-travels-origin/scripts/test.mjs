@@ -36,7 +36,9 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
  const emit=name=>{for(const fn of listeners.get(name)||[])fn();};
  const sceneEvent=name=>{const callbacks=sceneListeners.get(name)||[];sceneListeners.delete(name);for(const fn of callbacks)fn();};
  let launch, scenes=0, engineStarts=0, resizeEnabled=false, paused=false, musicStarts=0, effectsVolume=1, musicVolume=1;
- const manager={isMute:false}, game={playBgm(){assert.equal(manager.isMute,false);musicStarts++;}};
+ let musicPlaying=false, breakCache=false, pauseCache=false;
+ // Native layout deduplicates the two existing loops; starting again is a no-op.
+ const manager={isMute:false}, game={playBgm(){assert.equal(manager.isMute,false);if(!musicStarts){musicStarts++;musicPlaying=true;}}};
  const progressFill={style:{}};
  const elements={
   'origin-game':{}, GameCanvas:{style:{}}, GameDiv:{style:{}},
@@ -64,7 +66,10 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
     done(null,{});
    });}}],
   },
-  audioEngine:{setEffectsVolume(value){effectsVolume=value;},setMusicVolume(value){musicVolume=value;}},
+  audioEngine:{setEffectsVolume(value){effectsVolume=value;},setMusicVolume(value){musicVolume=value;},
+   pauseAll(){pauseCache=pauseCache||musicPlaying;musicPlaying=false;},resumeAll(){musicPlaying=musicPlaying||pauseCache;pauseCache=false;},
+   _break(){breakCache=musicPlaying;musicPlaying=false;},_restore(){musicPlaying=musicPlaying||breakCache;breakCache=false;},
+  },
   Director:{EVENT_AFTER_SCENE_LAUNCH:'scene',EVENT_AFTER_DRAW:'draw'},
   director:{once(name,callback){on(sceneListeners,name,callback);},runSceneImmediate(){
    scenes++;
@@ -73,9 +78,10 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
    if(!manager.isMute)game.playBgm();
    sceneEvent('scene');
   }},
-  game:{EVENT_SHOW:'show',on(name,callback){on(nativeListeners,name,callback);},run(options,onStart){queue.push(onStart);},resume(){paused=false;},pause(){paused=true;}},
+  game:{EVENT_SHOW:'show',on(name,callback){on(nativeListeners,name,callback);},run(options,onStart){queue.push(onStart);},resume(){if(paused){paused=false;cc.audioEngine._restore();}},pause(){if(!paused){paused=true;cc.audioEngine._break();}}},
  };
  const bootWindow={cc,__ORIGIN_CONFIG__:{intro,story},__novvyIntroFinished:mode==='intro-finished',__novvyStoryFinished:mode==='story-finished',__novvyBridgeVersion:1,__novvyViewable:true,
+  __novvyStorySound:{active:mode.startsWith('story')&&!mode.endsWith('-finished'),muted:false},
   addEventListener(name,fn){on(listeners,name,fn);},requestAnimationFrame(callback){frames.push(callback);},
   __ORIGIN_ADAPTER__:{start(callback){launch=callback;callback();}},
   super_boot_engine(){engineStarts++;queue.push(()=>bootWindow.boot());},
@@ -93,7 +99,7 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
  launch();assert.equal(frames.length,1,'repeated launch does not queue another engine startup');
  frames.shift()();assert.equal(engineStarts,0,'first animation frame leaves a paint opportunity');
  frames.shift()();assert.equal(engineStarts,1,'engine starts on the following animation frame');
- if(mode.endsWith('-loading'))emit(entryEvent);
+ if(mode.endsWith('-loading')){bootWindow.__novvyStorySound.active=false;emit(entryEvent);}
  assert.equal(bootWindow.isMute,1,'audio stays muted until the scene is ready, even if intro ended early');
  while(queue.length)queue.shift()();
  assert.equal(elements.splash.style.display,'block','scene launch alone must not reveal an unpainted canvas');
@@ -103,21 +109,34 @@ for (const mobile of [false, true]) for (const mode of ['pure', 'intro-ready', '
  assert.equal(elements.splash.style.display,'none','first rendered scene dismisses the splash');
  if(mode.endsWith('-ready')||mode==='video-story') {
   assert.equal(paused,true,'prepared scene is paused behind the intro and GO gate');
-  assert.deepEqual([bootWindow.isMute,manager.isMute,effectsVolume,musicVolume,musicStarts],[1,true,0,0,0]);
+  const audible=mode==='story-ready';
+  assert.deepEqual([bootWindow.isMute,manager.isMute,effectsVolume,musicVolume,musicStarts],[audible?0:1,!audible,audible?1:0,audible?1:0,audible?1:0]);
+  assert.equal(musicPlaying,audible,'native music can play while gameplay stays paused for the story');
   emit('pointerdown');
-  document.hidden=true;emit('visibilitychange');document.hidden=false;emit('visibilitychange');
+  document.hidden=true;emit('visibilitychange');assert.equal(musicPlaying,false,'backgrounding pauses native music');document.hidden=false;emit('visibilitychange');
   cc.game.resume();for(const fn of nativeListeners.get('show')||[])fn();
   assert.equal(paused,true,'native foreground resume cannot bypass the intro gate');
-  assert.equal(musicStarts,0,'video gestures and visibility changes cannot start game music');
+  assert.equal(musicStarts,audible?1:0,'video gestures cannot start music; story foreground restores existing music');
+  assert.equal(musicPlaying,audible,'game pause must not silence story music after a native resume');
   if(story) {
    emit('novvy:intro-finished');
    assert.equal(paused,true,'video completion cannot bypass a pending story');
-   assert.equal(musicStarts,0,'game music waits for the story to finish');
+   bootWindow.__novvyStorySound.active=true;emit('novvy:story-sound');
+   assert.equal(musicPlaying,true,'native music starts when the story becomes active');
+   bootWindow.__novvyStorySound.muted=true;emit('novvy:story-sound');
+   assert.equal(musicPlaying,false,'story mute stops native music');
+   bootWindow.__novvyViewable=false;emit('novvy:viewablechange');bootWindow.__novvyViewable=true;emit('novvy:viewablechange');
+   assert.equal(musicPlaying,false,'manual mute survives viewability changes');
+   bootWindow.__novvyStorySound.muted=false;emit('novvy:story-sound');
+   assert.equal(musicPlaying,true,'story unmute resumes native music while cc.game remains paused');
+   assert.equal(paused,true);
+   bootWindow.__novvyStorySound.active=false;
   }
   emit(entryEvent);
   assert.equal(elements.splash.style.display,'none','ready intro transition never restores Loading');
  }
  assert.equal(paused,false,'ready playable runs after entry');
+ assert.equal(musicPlaying,true,'entry preserves the same native music loops');
  assert.deepEqual([bootWindow.isMute,manager.isMute,effectsVolume,musicVolume,musicStarts],[0,false,1,1,1],'entry restores audio skipped by native muted onLoad');
  emit(entryEvent);assert.equal(musicStarts,1,'duplicate entry does not restart music');
  document.hidden=true;emit('visibilitychange');
