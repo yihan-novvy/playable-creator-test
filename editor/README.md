@@ -42,6 +42,9 @@ node editor/server.mjs [--port 8088]
 本地 `/api/publish-auth` 查询状态，`/api/publish-auth/login` 登录，`/api/publish-auth/logout` 退出；
 只有登录会请求远程 `/api/auth/login`。会话存于进程内存，通过 HttpOnly / SameSite=Strict Cookie
 关联浏览器，八小时过期，编辑器重启后需重新登录。密码不写入任务文件、日志或浏览器存储。
+Cookie 在直连 HTTPS 或本机 Caddy 转发的 HTTPS 请求中附带 Secure；仅信任回环地址代理
+提供的单值 `X-Forwarded-Proto: https`，普通 HTTP 访问不设置 Secure。
+预览监听标识使用 HTTP 也可用的随机值生成方式，本地、公开 HTTP 和 HTTPS 入口共用同一预览流程。
 失效 Cookie 会阻止直传，需重新登录或明确退出；账号切换后旧页面不能误用新账号上传。
 默认远程地址为 HTTP，登录弹窗会提示密码传输未加密；可将 `INTERACTIVE_ZIP_SERVICE_URL`
 配置为该服务实际提供的 HTTPS 地址。不要将共享口令视为独立用户的身份认证。

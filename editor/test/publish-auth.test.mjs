@@ -1,6 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { Readable } from 'node:stream';
 import { createServer } from '../server.mjs';
+import { createPublishAuth } from '../lib/publish-auth.mjs';
 import { createTask, deleteTask, recordStepResult } from '../lib/store.mjs';
 import { taskResultDir, taskProjectDir } from '../lib/paths.mjs';
 import { mockPublishService } from './publish-service-fixture.mjs';
@@ -42,6 +44,7 @@ export default async function test(a) {
     a.equal(signedIn.status, 200, 'real service success contract creates a local session');
     a.equal(signedIn.data.user.email, credentials.email, 'enterprise email is normalized');
     a.check(signedIn.cookie.includes('HttpOnly') && signedIn.cookie.includes('SameSite=Strict') && signedIn.cookie.includes('Path=/api/'), 'session cookie is restricted to backend requests');
+    a.check(!signedIn.cookie.includes('; Secure'), 'direct local HTTP login remains usable without a Secure cookie');
     a.check(!signedIn.cookie.includes(credentials.email) && !signedIn.cookie.includes(credentials.password), 'cookie contains only a random session identifier');
     a.equal((await call('/api/publish-auth', undefined, cookie)).data.user.email, credentials.email, 'browser refresh restores verified user');
     a.equal((await call('/api/publish-auth')).data.user, null, 'another browser does not inherit the account');
@@ -84,6 +87,50 @@ export default async function test(a) {
     a.equal((await call(prefix + '/launch', { packageId, launchEmail: 'yihan@novvy.ai' })).status, 200, 'explicit anonymous state continues to support default account');
     a.equal(mock.calls.filter(item => item.path === '/api/v1/auto-launch').at(-1).body.admin_email, 'yihan@novvy.ai', 'default account is used only without a login session');
     a.check(mock.calls.every(item => !['/api/auth/verify', '/api/auth/logout', '/api/auth/me'].includes(item.path)), 'no unrequested upstream auth endpoints are called');
+
+    const proxyHeaders = { Origin: base.replace('http:', 'https:'), 'X-Forwarded-Proto': 'https' };
+    const proxyLogin = await call('/api/publish-auth/login', credentials, '', 'POST', proxyHeaders);
+    a.check(proxyLogin.status === 200 && proxyLogin.cookie.includes('; Secure'), 'HTTPS via the local proxy sets a Secure login cookie');
+    a.equal((await call('/api/publish-auth', undefined, cookieValue(proxyLogin))).data.user.email, credentials.email, 'proxied login restores the verified account');
+    const proxyLogout = await call('/api/publish-auth/logout', {}, cookieValue(proxyLogin), 'POST', proxyHeaders);
+    a.check(proxyLogout.cookie.includes('; Secure') && proxyLogout.cookie.includes('Max-Age=0'), 'HTTPS via the local proxy clears the same Secure cookie');
+
+    // Exercise the handler with different socket peers; a forwarded header alone
+    // must not turn a request from an arbitrary client into trusted HTTPS.
+    const transports = [
+      { name: 'public HTTP', remoteAddress: '203.0.113.8', secure: false },
+      { name: 'spoofed public proxy header', remoteAddress: '203.0.113.8', proto: 'https', secure: false },
+      { name: 'untrusted private proxy', remoteAddress: '10.43.0.2', proto: 'https', secure: false },
+      { name: 'local HTTP proxy', remoteAddress: '127.0.0.1', proto: 'http', secure: false },
+      { name: 'local HTTPS proxy', remoteAddress: '127.0.0.1', proto: 'https', secure: true },
+      { name: 'IPv6 loopback proxy', remoteAddress: '::1', proto: 'https', secure: true },
+      { name: 'IPv4-mapped loopback proxy', remoteAddress: '::ffff:127.0.0.1', proto: 'https', secure: true },
+      { name: 'ambiguous forwarded protocols', remoteAddress: '127.0.0.1', proto: 'https, http', secure: false },
+      { name: 'direct TLS', remoteAddress: '203.0.113.8', encrypted: true, proto: 'http', secure: true },
+    ];
+    for (const transport of transports) {
+      const auth = createPublishAuth({ publishBaseUrl: 'http://publish-fixture.test', publishFetch: mock.fetch });
+      let sessionCookie = '';
+      for (const action of ['login', 'logout']) {
+        const req = Readable.from([Buffer.from(JSON.stringify(action === 'login' ? credentials : {}))]);
+        req.method = 'POST';
+        req.headers = { host: 'editor.example', cookie: sessionCookie,
+          ...(transport.proto ? { 'x-forwarded-proto': transport.proto } : {}) };
+        req.socket = { remoteAddress: transport.remoteAddress, encrypted: transport.encrypted };
+        const headers = {};
+        let status, body;
+        await auth.handle(req, {
+          setHeader(name, value) { headers[name] = value; },
+          writeHead(code) { status = code; },
+          end(value) { body = JSON.parse(value); },
+        }, new URL('/api/publish-auth/' + action, 'http://editor.example'));
+        const setCookie = headers['Set-Cookie'];
+        a.equal({ status, secure: setCookie.includes('; Secure'), email: body.user?.email || null },
+          { status: 200, secure: transport.secure, email: action === 'login' ? credentials.email : null },
+          transport.name + ' preserves ' + action + ' with the correct cookie transport');
+        sessionCookie = setCookie.split(';')[0];
+      }
+    }
   } finally {
     deleteTask(task.id);
     await new Promise(resolve => server.close(resolve));

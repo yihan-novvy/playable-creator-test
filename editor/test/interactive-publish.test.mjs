@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import http from 'node:http';
+import { webcrypto } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { run } from '../core/lib/exec.mjs';
 import { createServer } from '../server.mjs';
@@ -82,9 +83,27 @@ export default async function test(a) {
     const file = path.join(taskProjectDir(task.id), 'publish', packaged.data.package.id, 'final.zip');
     const downloaded = await fetch(prefix + '/download');
     a.check(Buffer.from(await downloaded.arrayBuffer()).equals(fs.readFileSync(file)), 'download returns the untouched final ZIP');
-    const preview = await fetch(prefix + '/preview/' + packaged.data.package.id + '/index.html?monitor=00000000-0000-0000-0000-000000000000');
+    // Run the actual preview loader with only the Crypto API exposed on public
+    // HTTP, then request its URL to catch both browser and server incompatibility.
+    const panelSource = fs.readFileSync(new URL('../public/publish.js', import.meta.url), 'utf8');
+    const previewLoader = panelSource.slice(panelSource.indexOf('  function loadPreview() {'), panelSource.indexOf('  async function parseStore('));
+    const previewNodes = { preview: { hidden: true }, 'preview-empty': { hidden: false } };
+    const previewContext = vm.createContext({
+      state: packaged.data, previewId: '', channel: '',
+      crypto: { getRandomValues: values => webcrypto.getRandomValues(values) },
+      $: id => previewNodes[id], endpoint: action => prefix + '/' + action, addLog() {},
+    });
+    vm.runInContext(previewLoader + '\nloadPreview();', previewContext);
+    const firstChannel = new URL(previewNodes.preview.src).searchParams.get('monitor');
+    a.check(/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/.test(firstChannel), 'public HTTP preview generates a valid monitor ID without randomUUID');
+    a.check(!previewNodes.preview.hidden && previewNodes['preview-empty'].hidden, 'public HTTP preview opens the iframe and hides its placeholder');
+    const preview = await fetch(previewNodes.preview.src);
     a.equal(preview.status, 200, 'processed package can be previewed');
-    a.check((await preview.text()).includes('data-publish-monitor'), 'preview observes logs before creative scripts start');
+    const previewHtml = await preview.text();
+    a.check(previewHtml.includes('data-publish-monitor'), 'preview observes logs before creative scripts start');
+    a.check(previewHtml.includes('var channel = ' + JSON.stringify(firstChannel)), 'server accepts the HTTP preview ID and passes it to the live monitor');
+    vm.runInContext('loadPreview();', previewContext);
+    a.check(new URL(previewNodes.preview.src).searchParams.get('monitor') !== firstChannel, 'reloading preview creates a fresh monitor ID');
     a.check(preview.headers.get('content-security-policy').includes('sandbox allow-scripts'), 'preview is separated from editor credentials');
     const asset = await fetch(prefix + '/preview/' + packaged.data.package.id + '/asset.txt');
     a.equal(await asset.text(), 'archive-content', 'preview resolves relative assets');

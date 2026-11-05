@@ -22,7 +22,11 @@ export function createPublishAuth(options = {}) {
     return { user: session?.user || null, expired: !!token && !session, insecureTransport: base.protocol === 'http:' };
   }
   function cookie(req, token, maxAge) {
-    return `${COOKIE}=${token}; Path=/api/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${req.socket.encrypted ? '; Secure' : ''}`;
+    // Deployment's Caddy connects over loopback and overwrites X-Forwarded-Proto.
+    // Never trust that header from a directly connected remote client.
+    const localProxy = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(req.socket.remoteAddress);
+    const secure = req.socket.encrypted || (localProxy && req.headers['x-forwarded-proto'] === 'https');
+    return `${COOKIE}=${token}; Path=/api/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}${secure ? '; Secure' : ''}`;
   }
   return {
     account,
