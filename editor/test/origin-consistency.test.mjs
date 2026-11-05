@@ -40,6 +40,7 @@ export default async function test(a) {
     a.check(html.includes('id="novvy-training-hud"') && !html.includes('data-novvy-origin-shell'), `${id}: HUD shares the full game canvas`);
     a.check(!/id="(?:origin|block-out)-sound"/.test(html), `${id}: no separate sound toggle`);
     a.check(html.includes(`data:image/webp;base64,${icon.toString('base64')}`), `${id}: official icon is embedded for offline packages`);
+    a.check(html.includes('<span>Play Now</span>') && html.includes('>Enjoy for free</div>') && !html.includes('data-novvy-cta-card-color'), `${id}: default CTA card copy without color override`);
     const r = game(id);
     await r.move(); await r.move();
     a.equal(r.clicks().map(c => c[1]), [{ click_source: 'forced_click_to_appstore', scene: 'cta-moment' }], `${id}: shared step CTA source and scene`);
@@ -78,6 +79,16 @@ export default async function test(a) {
     preview.manual(); preview.win();
     a.equal(preview.clicks().length, 0, `${id}: SDK-free preview stays inert`);
   }
+
+  const tastyEntry = getEntry('tasty-travels-origin');
+  const custom = originHtml({ root: tastyEntry.templateDir, pluginDir: tastyEntry.dir, overlaysRoot: tastyEntry.dir, template: tastyEntry.template,
+    config: { ...structuredClone(tastyEntry.template.defaults), cta: { buttonText: 'Play & Win', guideText: 'Free Fun', buttonColor: '#ff8800' } } }).html;
+  a.check(custom.includes('<span>Play &amp; Win</span>') && custom.includes('>Free Fun</div>'), 'Tasty: task CTA copy is escaped and configurable');
+  a.check(custom.includes('#novvy-cta .novvy-cta-btn{background:#ff8800}'), 'Tasty: task CTA button color overrides the bar card');
+  a.check(custom.includes('box-shadow:0 4px 12px rgba(255, 136, 0, 0.3)'), 'Tasty: task CTA button color recolors the shadow');
+  const invalid = originHtml({ root: tastyEntry.templateDir, pluginDir: tastyEntry.dir, overlaysRoot: tastyEntry.dir, template: tastyEntry.template,
+    config: { ...structuredClone(tastyEntry.template.defaults), cta: { buttonColor: 'url(javascript:alert(1))' } } }).html;
+  a.check(!invalid.includes('data-novvy-cta-card-color'), 'Tasty: non-hex CTA colors fall back to the default gradient');
 
   const freecell = game('freecell-origin');
   const core = fs.readFileSync(new URL('../templates/freecell-origin/game/core.js', import.meta.url), 'utf8');

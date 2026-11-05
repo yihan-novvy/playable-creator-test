@@ -18,16 +18,29 @@ export function originCtaPolicy(raw) {
   return { mode: policy.mode, afterSteps: policy.afterSteps,
     intervals: (Array.isArray(raw?.intervals) ? raw.intervals : []).filter(n => Number.isInteger(n) && n >= 1 && n <= 99).slice(0, 24) };
 }
-export function addOriginCtaCard(injection, card, read) {
+export function addOriginCtaCard(injection, card, read, cta = {}) {
   if (!card) return;
   const readCard = name => fs.readFileSync(new URL(`../overlays/cta-card/cta-card.${name}`, import.meta.url), 'utf8');
-  const name = String(card.name).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
+  /* 卡片文案走任务级 config.cta（工作台可编辑），留空/非法回退模板默认；
+     颜色只接受 6 位 hex,经 #novvy-cta 单层选择器覆盖底卡按钮,并按同色
+     0.3 透明度重写按钮阴影(基线阴影 rgba(16,185,129,.3) 与默认绿同源,
+     换色后不同步会发绿光);结算全屏 takeover 的金色按钮特异性更高,保持
+     不变。 */
+  const escapeText = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('"', '&quot;');
+  const text = (value, fallback) => escapeText(typeof value === 'string' && value.trim() ? value.trim() : fallback);
+  const name = escapeText(card.name);
   const iconMime = { '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.webp': 'image/webp' }[path.extname(card.icon).toLowerCase()];
   if (!iconMime) throw new Error(`Unsupported CTA icon format: ${card.icon}`);
   const values = { __CTA_NAME__: name, __CTA_ICON__: `data:${iconMime};base64,${read(card.icon, null).toString('base64')}`,
-    __CTA_TAKEOVER_TEXT__: '', __CTA_TAKEOVER_ACTION_TEXT__: '' };
+    __CTA_TAKEOVER_TEXT__: '', __CTA_TAKEOVER_ACTION_TEXT__: '',
+    __CTA_BUTTON_TEXT__: text(cta.buttonText, 'Play Now'), __CTA_GUIDE_TEXT__: text(cta.guideText, 'Enjoy for free') };
   injection.headStyles.push(`<style data-novvy-cta-card>${readCard('css')}</style>`);
-  injection.bodyDom.push(readCard('html').replace(/__CTA_(?:ICON|NAME|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]));
+  const buttonColor = typeof cta.buttonColor === 'string' ? cta.buttonColor.trim() : '';
+  if (/^#[0-9a-f]{6}$/i.test(buttonColor)) {
+    const [r, g, b] = [1, 3, 5].map(i => parseInt(buttonColor.slice(i, i + 2), 16));
+    injection.headStyles.push(`<style data-novvy-cta-card-color>#novvy-cta .novvy-cta-btn{background:${buttonColor};box-shadow:0 4px 12px rgba(${r}, ${g}, ${b}, 0.3)}</style>`);
+  }
+  injection.bodyDom.push(readCard('html').replace(/__CTA_(?:ICON|NAME|BUTTON_TEXT|GUIDE_TEXT|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]));
   injection.bodyScripts.push(script('cta-card', readCard('js')));
 }
 export function originHtml({ root, pluginDir, template, config, media = {}, preview = false }) {
@@ -49,7 +62,7 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
     injection.bodyDom.push(story('html').replace('__STORY_HIDDEN__', injection.introEnabled ? 'hidden' : ''));
     injection.bodyScripts.push(script('story-audio', fs.readFileSync(path.join(pluginDir, 'overlays/story/story-audio.js'), 'utf8')), script('story', story('js')));
   }
-  addOriginCtaCard(injection, template.game.ctaCard, read);
+  addOriginCtaCard(injection, template.game.ctaCard, read, config.cta);
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
   const policy = originCtaPolicy(config.playableCta);
   const settings = { intro: injection.introEnabled, title: injection.hudEnabled, policy };

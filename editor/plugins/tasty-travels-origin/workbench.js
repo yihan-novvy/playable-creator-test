@@ -64,6 +64,20 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     }
     return wrap;
   }
+  // CTA 卡片外观(config.cta):按钮文案/引导文案留空用默认,颜色为 6 位 hex,
+  // 只覆盖底部常驻卡的按钮(全屏结算 takeover 保持金色按钮)。
+  function ctaCardControls() {
+    const cta = config().cta || {};
+    const wrap = el('div', { class: 'dragon-config-grid' });
+    wrap.append(
+      textField('CTA 按钮文案（默认 Play Now）', 'cta', 'buttonText', cta.buttonText, 'Play Now'),
+      textField('CTA 引导文案（默认 Enjoy for free）', 'cta', 'guideText', cta.guideText, 'Enjoy for free'),
+    );
+    const color = el('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(cta.buttonColor || '') ? cta.buttonColor : '#10b981' });
+    color.addEventListener('change', async () => { await save({ cta: { buttonColor: color.value } }); await refresh(true); });
+    wrap.append(field('CTA 按钮颜色（默认绿色）', color));
+    return wrap;
+  }
   function renderConfig() {
     document.getElementById('config-hint').textContent = '原版合成：原版投放与碰撞合成。有效投放记步，已合成最高等级计算进度；最高级成功与越界失败分别结算。默认第 20 次有效操作首跳，之后间隔 10/8/6/4，末间隔循环。';
     const root = document.getElementById('config-grid'); root.textContent = '';
@@ -82,6 +96,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
     ]), el('p', { class: 'hint' }, ['默认关闭。开启后，通关或越界失败时显示重玩按钮；点击先触发 CTA 跳转，再重置游戏，片头不重复播放。修改后只需重新打包。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());
+    wrap.append(el('h3', {}, ['CTA 卡片']), ctaCardControls(), el('p', { class: 'hint' }, ['按钮文案与引导文案留空时使用默认值；颜色即时生效于底部常驻卡按钮，全屏结算卡保持金色。修改后可直接预览，导出需重新打包。']));
     root.append(wrap);
   }
   function stateChip(id) {
