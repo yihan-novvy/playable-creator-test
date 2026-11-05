@@ -1,6 +1,6 @@
 /* Shared ZIP processing panel: mounted after every template's existing pack/preview area. */
 window.InteractivePublish = (() => {
-  let root, task, state, busy = false, dirty = false, poll, saveTimer, parseTimer;
+  let root, task, state, busy = false, authBusy = false, dirty = false, poll, saveTimer, parseTimer;
   let channel = '', previewId = '', sequence = 0, records = [], paused = false, saving = Promise.resolve(), logFrame = 0;
   let autoAppName = '', resolvedStoreUrl = '', resolvedApps = [], storeRequest;
   const fields = ['store_url', 'drama_name', 'episode', 'sequence', 'tag', 'min_view_duration'];
@@ -107,6 +107,69 @@ window.InteractivePublish = (() => {
     if (content != null) node.textContent = content;
     return node;
   }
+  function renderAccount(running) {
+    const account = state.account || {};
+    const label = account.user ? '已登录企业账号：' + account.user.email : account.expired ? '登录已失效，请重新登录或使用默认账号' : '未登录，默认投放账号：' + state.launchEmail;
+    text('auth-summary', label);
+    text('launch-account', label);
+    text('login-open', account.user ? '切换账号' : '登录企业账号');
+    $('login-open').disabled = running;
+    $('logout').hidden = !account.user && !account.expired;
+    $('logout').disabled = running;
+    text('logout', account.expired ? '使用默认账号' : '退出登录');
+    $('auth-transport').hidden = !account.insecureTransport;
+  }
+  async function authRequest(action, body = {}) {
+    const response = await fetch('/api/publish-auth/' + action, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+    });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.error?.message || '登录操作失败，请稍后重试');
+    return result;
+  }
+  function openLogin() {
+    $('login-email').value = state.account?.user?.email || '';
+    $('login-password').value = '';
+    text('login-error', '');
+    $('login-dialog').showModal();
+    $('login-email').focus();
+  }
+  async function submitLogin(event) {
+    event.preventDefault();
+    if (authBusy) return;
+    authBusy = true;
+    $('login-submit').disabled = true;
+    $('login-close').disabled = true;
+    $('login-email').disabled = true;
+    $('login-password').disabled = true;
+    text('login-submit', '登录中…');
+    text('login-error', '');
+    render();
+    try {
+      await authRequest('login', { email: $('login-email').value, password: $('login-password').value });
+      $('login-dialog').close();
+      await reload();
+      note('登录成功，后续直传将使用当前已登录账号。');
+    } catch (error) {
+      text('login-error', error.message || '登录服务连接失败，请稍后重试');
+    } finally {
+      $('login-password').value = '';
+      $('login-submit').disabled = false;
+      $('login-close').disabled = false;
+      $('login-email').disabled = false;
+      $('login-password').disabled = false;
+      text('login-submit', '登录');
+      authBusy = false;
+      render();
+    }
+  }
+  async function logout() {
+    if (authBusy || busy || state.running) return;
+    authBusy = true; render();
+    try { await authRequest('logout'); await reload(); note('已退出登录，直传将使用默认账号 yihan@novvy.ai。'); }
+    catch (error) { note(error.message, true); }
+    finally { authBusy = false; render(); }
+  }
   function previewQr(url) {
     const qr = qrcodegen.QrCode.encodeText(url, qrcodegen.QrCode.Ecc.MEDIUM);
     const canvas = launchNode('canvas', 'publish-launch-qr');
@@ -122,9 +185,8 @@ window.InteractivePublish = (() => {
   function renderLaunch(running) {
     const launch = state.launch;
     const launching = running && state.operation === 'launch';
-    $('launch').disabled = running || dirty || !state.package || state.packageStale;
+    $('launch').disabled = running || dirty || !state.package || state.packageStale || state.account?.expired;
     text('launch', launching ? '⏳ 正在直传云端媒体库…' : launch?.status === 'success' ? '🚀 再次直传投放平台' : launch ? '🚀 重新直传投放平台' : '🚀 一键直传投放平台');
-    text('launch-account', '未登录，默认投放账号：' + state.launchEmail);
     text('launch-stale', state.packageStale ? '配置或素材已更新，请重新生成素材包后再直传。' : '');
     const feedback = $('launch-feedback');
     feedback.hidden = !launch;
@@ -225,7 +287,8 @@ window.InteractivePublish = (() => {
       showApps(resolvedApps);
     }
     updateFilenamePreview();
-    const running = busy || state.running;
+    const running = busy || authBusy || state.running;
+    renderAccount(running);
     $('fields').disabled = running;
     $('inspect').disabled = running || !state.ready;
     $('package').disabled = running || !state.ready;
@@ -271,7 +334,7 @@ window.InteractivePublish = (() => {
     return saving;
   }
   async function perform(action) {
-    if (busy || state?.running) return;
+    if (busy || authBusy || state?.running) return;
     busy = true;
     note('');
     try {
@@ -316,7 +379,7 @@ window.InteractivePublish = (() => {
     state.launch = { packageId, status: 'running', email: state.launchEmail };
     render();
     addLog('workflow', 'launch', '开始直传投放平台，账号：' + state.launchEmail);
-    state = await api('launch', { packageId });
+    state = await api('launch', { packageId, launchEmail: state.launchEmail });
     addLog('workflow', 'launch-success', state.launch.data);
   }
   function loadPreview() {
@@ -360,6 +423,7 @@ window.InteractivePublish = (() => {
   function setup() {
     root.innerHTML = '<section class="publish-panel">' +
       '<div class="row publish-heading"><h2>互动广告包 (ZIP) 注入与下载</h2><span id="pub-status" class="chip">等待处理</span></div>' +
+      '<div class="publish-auth-account"><span id="pub-auth-summary">正在读取投放账号…</span><div class="row"><button type="button" id="pub-login-open" disabled>登录企业账号</button><button type="button" id="pub-logout" hidden>退出登录</button></div></div>' +
       '<div class="publish-layout"><div class="publish-editor">' +
       '<form id="pub-form"><fieldset id="pub-fields" aria-label="互动广告包参数">' +
       '<label class="publish-field">最短观看时长（秒，可选）<input name="min_view_duration" type="number" min="3" max="2147483647" step="1" placeholder="留空使用平台默认规则" aria-describedby="pub-duration-hint"></label>' +
@@ -394,7 +458,21 @@ window.InteractivePublish = (() => {
       '<div class="publish-console-tools"><input id="pub-filter" type="text" placeholder="筛选事件名称或内容" aria-label="筛选事件"><button id="pub-pause" type="button">暂停显示</button><button id="pub-clear" type="button">清空</button><button id="pub-export" type="button">导出日志</button></div>' +
       '<div id="pub-logs" class="publish-logs" role="log" aria-label="SDK 事件日志"></div><div class="publish-console-footer"><span id="pub-log-count" class="hint">0 条 · 实时监听</span><span class="hint">最多显示最近 1000 条</span></div></section>' +
       '<p class="hint publish-preview-hint">预览运行在隔离窗口中。仅监听当前预览窗口；SDK 调用记录表示调用已发生，不代表真实设备已跳转或服务端已入库。</p></aside></div></section>' +
-      '<dialog id="pub-confirm"><form method="dialog"><h2>原 ZIP 事件接入需要确认</h2><pre id="pub-confirm-report"></pre><div class="row"><button value="cancel" autofocus>取消</button><button value="continue" class="primary">继续打包</button></div></form></dialog>';
+      '<dialog id="pub-confirm"><form method="dialog"><h2>原 ZIP 事件接入需要确认</h2><pre id="pub-confirm-report"></pre><div class="row"><button value="cancel" autofocus>取消</button><button value="continue" class="primary">继续打包</button></div></form></dialog>' +
+      '<dialog id="pub-login-dialog" class="publish-login-dialog" aria-labelledby="pub-login-title"><form id="pub-login-form">' +
+      '<div class="publish-login-heading"><h2 id="pub-login-title">企业账号登录</h2><button id="pub-login-close" type="button" aria-label="关闭登录">×</button></div>' +
+      '<p class="hint">使用参考服务的企业邮箱与登录口令。登录成功后，直传将使用返回的账号邮箱。</p>' +
+      '<p id="pub-auth-transport" class="publish-auth-transport" hidden>当前登录服务使用 HTTP，密码传输未加密。</p>' +
+      '<label class="publish-field" for="pub-login-email">企业邮箱<input id="pub-login-email" name="email" type="email" autocomplete="username" placeholder="name@novvy.ai" maxlength="254" required></label>' +
+      '<label class="publish-field" for="pub-login-password">密码<input id="pub-login-password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码" maxlength="4096" required></label>' +
+      '<p id="pub-login-error" class="error-text" role="alert"></p><button id="pub-login-submit" class="primary" type="submit">登录</button></form></dialog>';
+    $('login-open').onclick = openLogin;
+    $('login-close').onclick = () => $('login-dialog').close();
+    $('login-dialog').addEventListener('close', () => { $('login-password').value = ''; });
+    $('login-dialog').addEventListener('cancel', event => { if (authBusy) event.preventDefault(); });
+    $('login-form').addEventListener('submit', submitLogin);
+    $('logout').onclick = logout;
+    window.addEventListener('focus', () => { if (!busy && !authBusy) reload().catch(() => {}); });
     $('form').addEventListener('submit', event => {
       event.preventDefault();
       const data = values();

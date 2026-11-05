@@ -32,14 +32,23 @@ node editor/server.mjs [--port 8088]
 改为本地运行的同一服务。启动编辑器不会发起远程加工。
 
 保留的远程接口为 `/api/parse-store-url`、`/api/interactive-zip/inspect`、
-`/api/v1/interactive-zip/package`、`/api/v1/auto-launch` 以及返回的素材下载地址。
-其中原 ZIP 检查及确认令牌尚未列入公开 API 文档，按当前需求保留，联调时仍需核实服务兼容性。
-本阶段不提供登录功能。未登录时按当前约定使用 `yihan@novvy.ai` 作为直传请求的
-`admin_email`，页面明示默认账号，不显示“企业认证”或虚构登录状态。
+`/api/v1/interactive-zip/package`、`/api/v1/auto-launch`、`/api/auth/login` 以及返回的素材下载地址。
+其中原 ZIP 检查、确认令牌和登录接口尚未列入公开 OpenAPI；按明确需求接入，
+登录契约依据参考项目：POST JSON `{email, password}`，成功为 `{status: "ok", user: {email, name}}`。
+参考实现校验企业邮箱和服务统一口令，不查询投放平台每个用户的账号密码，也不签发访问令牌；
+本项目不复制该口令校验，必须等待远程服务确认成功且邮箱匹配，才建立本地会话。
+账号区域支持登录、切换账号和退出。已登录时使用服务确认的邮箱作为 `admin_email`，
+未登录时仍按约定使用 `yihan@novvy.ai`，页面明确显示当前身份来源。
+本地 `/api/publish-auth` 查询状态，`/api/publish-auth/login` 登录，`/api/publish-auth/logout` 退出；
+只有登录会请求远程 `/api/auth/login`。会话存于进程内存，通过 HttpOnly / SameSite=Strict Cookie
+关联浏览器，八小时过期，编辑器重启后需重新登录。密码不写入任务文件、日志或浏览器存储。
+失效 Cookie 会阻止直传，需重新登录或明确退出；账号切换后旧页面不能误用新账号上传。
+默认远程地址为 HTTP，登录弹窗会提示密码传输未加密；可将 `INTERACTIVE_ZIP_SERVICE_URL`
+配置为该服务实际提供的 HTTPS 地址。不要将共享口令视为独立用户的身份认证。
 打包请求仍显式传 `auto_launch=false`；只有点击生成结果中的「一键直传投放平台」才会上传。
 直传使用文档中的 multipart 请求，将本地缓存的最终 ZIP 作为 `file` 提交，并携带
 `store_urls`、`category`、可选 `drama_id` / `episode` / `min_view_duration`。
-不使用参考项目中的未文档化 `api_host` 或 `theme_type` 参数，也不调用登录接口。
+直传不使用参考项目中的未文档化 `api_host` 或 `theme_type` 参数。
 旧素材、变更的表单、被修改的 ZIP 或重复的进行中请求会被阻止。
 成功、失败和结果未确认均保存到当前素材版本；页面刷新不会自动重传。
 结果信息卡沿用参考页布局，展示实际返回的创意、Campaign、投放状态、多产品明细、
@@ -51,9 +60,9 @@ Tag 按填写内容提交，不追加随机字符；文件命名预览沿用参�
 下载和预览均使用本地缓存的最终素材包。
 游戏配置、素材或打包版本变化后需重新检查/生成。任务删除时同时清理发布缓存。
 
-本地接口回归：node editor/test/run-all.mjs interactive-publish。测试通过内存模拟服务覆盖
-预检确认、持久化、ZIP 下载与预览、登录接口不可调用、手动直传、默认邮箱、禁止自动投放、
-过期包拦截和服务失败恢复，不请求真实注入/投放服务。
+本地接口回归：node editor/test/run-all.mjs publish-auth interactive-publish。测试通过内存模拟服务覆盖
+预检确认、持久化、ZIP 下载与预览、账号密码登录、会话隔离与失效、手动直传、默认邮箱、
+禁止自动投放、过期包拦截和服务失败恢复，不请求真实登录/注入/投放服务。
 本功能的本地开发不需要执行 deploy/gce/ 中的发布脚本。
 
 ## 模板探索

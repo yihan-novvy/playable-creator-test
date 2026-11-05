@@ -134,8 +134,9 @@ export function createPublisher(options = {}) {
       }
     } finally { fs.closeSync(fd); }
   }
-  function view(id) {
+  function view(id, req) {
     const state = readState(id);
+    const account = options.publishAccount?.(req) || { user: null, expired: false };
     const version = sourceVersion(id);
     const packageStale = !!state.package && (state.package.version !== version || JSON.stringify(state.package.settings) !== JSON.stringify(state.settings) || !ready(id));
     const operation = ['inspect', 'package', 'launch'].includes(state.operation) ? state.operation : null;
@@ -145,7 +146,7 @@ export function createPublisher(options = {}) {
     }
     return {
       settings: state.settings, inspection: state.inspection, package: state.package,
-      launch, launchEmail: DEFAULT_LAUNCH_EMAIL,
+      launch, launchEmail: account.expired ? null : account.user?.email || DEFAULT_LAUNCH_EMAIL, account,
       error: state.error,
       running: active.has(id), operation,
       interrupted: !!operation && !active.has(id),
@@ -156,7 +157,7 @@ export function createPublisher(options = {}) {
 
   return async function handle(req, res, url, id, parts) {
     const action = parts[0] || '';
-    if (req.method === 'GET' && action === '') return sendJson(res, 200, view(id));
+    if (req.method === 'GET' && action === '') return sendJson(res, 200, view(id, req));
     if (req.method === 'GET' && action === 'download') {
       const item = readState(id).package;
       if (!item) throw fail('请先生成投放素材包', 404);
@@ -197,7 +198,7 @@ export function createPublisher(options = {}) {
     if (action === 'settings') {
       state.settings = settingsFrom(body);
       writeState(id, state);
-      return sendJson(res, 200, view(id));
+      return sendJson(res, 200, view(id, req));
     }
     if (action === 'parse-store') {
       // Product recognition does not depend on the other, possibly incomplete fields.
@@ -206,8 +207,12 @@ export function createPublisher(options = {}) {
       return sendJson(res, 200, result);
     }
     requireReady(id);
-    let launchFile;
+    let launchFile, launchEmail;
     if (action === 'launch') {
+      const account = options.publishAccount?.(req);
+      if (account?.expired) throw fail('登录已失效，请重新登录或明确退出后使用默认账号', 401);
+      launchEmail = account?.user?.email || DEFAULT_LAUNCH_EMAIL;
+      if (body.launchEmail != null && body.launchEmail !== launchEmail) throw fail('投放账号已变化，请确认当前账号后重新直传', 409);
       const item = state.package;
       if (!item) throw fail('请先生成投放素材包', 409);
       if (body.packageId !== item.id) throw fail('素材包版本已变化，请刷新后重新操作', 409);
@@ -280,13 +285,13 @@ export function createPublisher(options = {}) {
         // Use the documented multipart API and the exact processed ZIP being previewed/downloaded.
         const form = new FormData();
         form.set('file', new Blob([launchFile], { type: 'application/zip' }), item.filename);
-        form.set('admin_email', DEFAULT_LAUNCH_EMAIL);
+        form.set('admin_email', launchEmail);
         form.set('store_urls', urls(settings).join('\n'));
         form.set('category', settings.category);
         if (settings.drama_name) form.set('drama_id', settings.drama_name);
         if (settings.episode) form.set('episode', settings.episode);
         if (settings.min_view_duration) form.set('min_view_duration', settings.min_view_duration);
-        state.launch = { packageId: item.id, status: 'running', email: DEFAULT_LAUNCH_EMAIL, startedAt: new Date().toISOString() };
+        state.launch = { packageId: item.id, status: 'running', email: launchEmail, startedAt: new Date().toISOString() };
         writeState(id, state);
         const result = await request('/api/v1/auto-launch', { method: 'POST', body: form });
         if ((result.status !== 'ok' && result.success !== true) || !result.data || typeof result.data !== 'object' ||
@@ -314,6 +319,6 @@ export function createPublisher(options = {}) {
         pruneArtifacts(id, state);
       }
     }
-    return sendJson(res, 200, view(id));
+    return sendJson(res, 200, view(id, req));
   };
 }

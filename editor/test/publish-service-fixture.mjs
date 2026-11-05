@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 // Contract fixture only. No connection to a real injector, SDK or ad platform.
 export function mockPublishService() {
   const calls = [];
-  let packaged, packageError = false, gate = null, launchGate = null, launchResponse = null;
+  let packaged, packageError = false, gate = null, launchGate = null, launchResponse = null, authResponse = null;
   const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
   const report = token => ({
     entry: 'index.html', status: 'needs_confirmation', mode: 'direct',
@@ -19,11 +19,20 @@ export function mockPublishService() {
     holdInspect(promise) { gate = promise; },
     holdLaunch(promise) { launchGate = promise; },
     setLaunchResponse(body, status = 200) { launchResponse = body == null ? null : { body, status }; },
+    setAuthResponse(body, status = 200) { authResponse = body == null ? null : { body, status }; },
     async fetch(url, options = {}) {
       url = new URL(url);
       if (url.origin !== 'http://publish-fixture.test') throw new Error('Unexpected external network: ' + url.origin);
       const form = options.body instanceof FormData ? options.body : null;
       const body = form ? Object.fromEntries(form) : options.body ? JSON.parse(options.body) : {};
+      if (url.pathname === '/api/auth/login') {
+        const passwordMatches = body.password === 'fixture-only-password';
+        calls.push({ path: url.pathname, body: { email: body.email, passwordMatches } });
+        if (authResponse?.body instanceof Error) throw authResponse.body;
+        if (authResponse) return json(authResponse.body, authResponse.status);
+        if (!passwordMatches) return json({ status: 'failed', error: '模拟密码错误' }, 400);
+        return json({ status: 'ok', user: { email: body.email, name: '本地模拟账号', role: '投放管理员', domain: 'novvy.ai' } });
+      }
       calls.push({ path: url.pathname, body });
       if (url.pathname === '/api/parse-store-url') return json({ status: 'ok', apps: [{ app_name: '本地联调产品', platform: 'ios', store_url: body.store_url }] });
       if (url.pathname === '/api/interactive-zip/inspect') {

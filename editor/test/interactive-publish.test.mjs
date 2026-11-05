@@ -150,8 +150,8 @@ export default async function test(a) {
     a.equal((await call('launch', launchBody)).status, 200, 'an explicit retry works after failure');
     a.equal((await call()).data.running, false, 'launch success and failures release the operation lock');
     const beforeRemovedRoutes = mock.calls.length;
-    a.equal((await call('auth', {})).status, 404, 'login endpoint is removed');
-    a.equal((await call('auth', {}, 'DELETE')).status, 404, 'logout endpoint is removed');
+    a.equal((await call('auth', {})).status, 404, 'legacy per-task login endpoint stays removed');
+    a.equal((await call('auth', {}, 'DELETE')).status, 404, 'legacy per-task logout endpoint stays removed');
     a.equal(mock.calls.length, beforeRemovedRoutes, 'removed routes cannot reach any upstream service');
     await call('settings', { ...settings, tag: 'changed', category: 'Tier 2:短剧情钩子' }, 'PATCH');
     a.equal((await call()).data.packageStale, true, 'changing packaging fields invalidates final package');

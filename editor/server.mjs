@@ -47,6 +47,7 @@ import { fixedViewportHtml } from './core/lib/fixed-viewport.mjs';
 import { showcasePreview } from './lib/template-showcase.mjs';
 import { archiveTask } from './lib/task-archive.mjs';
 import { createPublisher } from './lib/interactive-publish.mjs';
+import { createPublishAuth } from './lib/publish-auth.mjs';
 
 const UPLOAD_CAP_BYTES = 100 * 1024 * 1024;
 const UPLOAD_MIME = {
@@ -681,11 +682,14 @@ async function handleStatic(req, res, url) {
 }
 
 export function createServer(options = {}) {
-  const publisher = createPublisher(options);
+  const auth = createPublishAuth(options);
+  const publisher = createPublisher({ ...options, publishAccount: auth.account });
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     try {
-      if (url.pathname.startsWith('/api/')) {
+      if (url.pathname === '/api/publish-auth' || url.pathname.startsWith('/api/publish-auth/')) {
+        await auth.handle(req, res, url);
+      } else if (url.pathname.startsWith('/api/')) {
         await handleApi(req, res, url, publisher);
       } else {
         await handleStatic(req, res, url);
