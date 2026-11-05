@@ -2,6 +2,145 @@
   'use strict';
   var installed = false;
 
+  function guideNode(name, parent, group) {
+    var node = new cc.Node(name);
+    node.parent = parent;
+    node.groupIndex = group;
+    return node;
+  }
+
+  function positionGuide(game) {
+    var guide = game.__tastyGuide;
+    if (!guide || !guide.active || !game.tool) return;
+    var sprite = game.tool.getChildByName('sp');
+    var center = sprite.convertToWorldSpaceAR(cc.v2(0, 0));
+    guide.setPosition(guide.parent.convertToNodeSpaceAR(center));
+    // The native sprite is offset for transparent padding. The visible glass
+    // and aiming line share the tool's x axis, which must bisect the arrow.
+    var axis = game.tool.convertToWorldSpaceAR(cc.v2(0, sprite.y));
+    guide.getChildByName('drag-arrows').setPosition(guide.convertToNodeSpaceAR(axis));
+    // Anchor at the fingertip, so the tap pulse never slides off the glass.
+    var touch = sprite.convertToWorldSpaceAR(cc.v2(0, -sprite.height * 0.2));
+    game.hand.setPosition(game.hand.parent.convertToNodeSpaceAR(touch));
+  }
+
+  function arrowArtwork(length) {
+    // One continuous white arrow sits behind the glass, as in the reference.
+    // Fine amber edges and a soft halo stay crisp at phone size.
+    var canvas = document.createElement('canvas');
+    canvas.width = Math.ceil(length * 2 + 64) * 3;
+    canvas.height = 96 * 3;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(3, 3);
+    ctx.translate(canvas.width / 6, 48);
+    ctx.beginPath();
+    ctx.moveTo(-length + 22, -5);
+    ctx.lineTo(length - 22, -5);
+    ctx.lineTo(length - 22, -15);
+    ctx.quadraticCurveTo(length - 22, -18, length - 19, -16);
+    ctx.lineTo(length - 1, -2);
+    ctx.quadraticCurveTo(length + 2, 0, length - 1, 2);
+    ctx.lineTo(length - 19, 16);
+    ctx.quadraticCurveTo(length - 22, 18, length - 22, 15);
+    ctx.lineTo(length - 22, 5);
+    ctx.lineTo(-length + 22, 5);
+    ctx.lineTo(-length + 22, 15);
+    ctx.quadraticCurveTo(-length + 22, 18, -length + 19, 16);
+    ctx.lineTo(-length + 1, 2);
+    ctx.quadraticCurveTo(-length - 2, 0, -length + 1, -2);
+    ctx.lineTo(-length + 19, -16);
+    ctx.quadraticCurveTo(-length + 22, -18, -length + 22, -15);
+    ctx.closePath();
+    ctx.lineJoin = 'round';
+    ctx.shadowColor = 'rgba(255, 194, 39, .65)';
+    ctx.shadowBlur = 24;
+    ctx.strokeStyle = '#fffdf0';
+    ctx.lineWidth = 9;
+    ctx.stroke();
+    ctx.shadowColor = 'transparent';
+    ctx.strokeStyle = '#efa719';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    ctx.fillStyle = '#fffef7';
+    ctx.fill();
+    var texture = new cc.Texture2D();
+    texture.initWithElement(canvas);
+    texture.handleLoadedTexture();
+    return { texture: texture, frame: new cc.SpriteFrame(texture), width: canvas.width / 3, height: canvas.height / 3 };
+  }
+
+  function showGuide(game) {
+    var tool = game.tool, sprite = tool.getChildByName('sp');
+    var width = sprite.width * tool.scaleX, height = sprite.height * tool.scaleY;
+    var guide = guideNode('tasty-drag-guide', game.itemParent.parent, tool.groupIndex);
+    game.__tastyGuide = guide;
+    // Keep decorations out of itemParent: its children are counted by physics.
+    guide.zIndex = game.itemParent.zIndex;
+    guide.setSiblingIndex(game.itemParent.getSiblingIndex());
+    var glow = guideNode('glass-glow', guide, tool.groupIndex);
+    var light = glow.addComponent(cc.Graphics), radius = Math.max(width, height) * 0.42;
+    for (var i = 12; i > 0; i--) {
+      light.fillColor = cc.color(255, 211, 65, 9);
+      light.circle(0, 0, radius + i * 2.3);
+      light.fill();
+    }
+    light.lineWidth = 3;
+    light.strokeColor = cc.color(255, 248, 190, 230);
+    light.circle(0, 0, radius);
+    light.stroke();
+    light.lineWidth = 2;
+    light.strokeColor = cc.color(255, 213, 75, 190);
+    light.circle(0, 0, radius + 6);
+    light.stroke();
+    cc.tween(glow).to(.8, { opacity: 165, scale: 1.06 }).to(.8, { opacity: 255, scale: 1 }).union().repeatForever().start();
+
+    var arrows = guideNode('drag-arrows', guide, tool.groupIndex);
+    // Match the visible glass rather than its transparent sprite margins.
+    var reach = Math.min(124, Math.max(104, width * 1.45));
+    var art = arrowArtwork(reach);
+    game.__tastyArrowArt = art;
+    var arrowSprite = arrows.addComponent(cc.Sprite);
+    arrowSprite.spriteFrame = art.frame;
+    arrowSprite.sizeMode = cc.Sprite.SizeMode.CUSTOM;
+    arrows.width = art.width;
+    arrows.height = art.height;
+    cc.tween(arrows).to(.9, { scaleX: 1.025, opacity: 235 }, { easing: 'sineInOut' })
+      .to(.9, { scaleX: 1, opacity: 255 }, { easing: 'sineInOut' }).union().repeatForever().start();
+    var ghostScale = Math.min(1, 80 / Math.max(width, height));
+    [-1, 1].forEach(function (side) {
+      var ghost = guideNode('glass-preview-' + side, guide, tool.groupIndex);
+      var image = ghost.addComponent(cc.Sprite);
+      image.spriteFrame = sprite.getComponent(cc.Sprite).spriteFrame;
+      image.sizeMode = cc.Sprite.SizeMode.CUSTOM;
+      ghost.width = width * ghostScale;
+      ghost.height = height * ghostScale;
+      ghost.x = side * (reach + ghost.width * .5);
+      ghost.opacity = 75;
+    });
+
+    cc.Tween.stopAllByTarget(game.hand);
+    var finger = game.hand.getChildByName('hand');
+    finger.anchorX = .08;
+    finger.anchorY = .96;
+    finger.setPosition(0, 0);
+    game.hand.scale = .84;
+    game.hand.zIndex = 1000;
+    positionGuide(game);
+    cc.tween(game.hand).to(.35, { scale: .8 }).to(.35, { scale: .84 }).delay(.5).union().repeatForever().start();
+  }
+
+  function hideGuide(game) {
+    if (!game.__tastyGuide) return;
+    game.__tastyGuide.active = false;
+    game.hand.active = false;
+    cc.Tween.stopAllByTarget(game.hand);
+    cc.Tween.stopAllByTarget(game.__tastyGuide.getChildByName('glass-glow'));
+    cc.Tween.stopAllByTarget(game.__tastyGuide.getChildByName('drag-arrows'));
+    // The native post-drop ghost competes with the new, explicit drag hint.
+    cc.Tween.stopAllByTarget(game.beikeTeach);
+    game.beikeTeach.active = false;
+  }
+
   // Extend the existing scenery at its edges. The original table image and all
   // physics nodes keep their coordinates; only the camera changes the framing.
   function extendBackground(game, background, camera) {
@@ -82,6 +221,7 @@
       widget.bottom = cc.winSize.height / 2 + game.camera.y + (bottom - height / 2) * units + node.__tastyWidget.bottom;
       widget.updateAlignment();
     });
+    positionGuide(game);
   }
 
   window.__TASTY_LAYOUT__ = {
@@ -116,6 +256,17 @@
       };
       var originalLayout = p.changeLV;
       p.changeLV = function () { var result = originalLayout.apply(this, arguments); layout(this); return result; };
+      var originalStart = p.gameStart;
+      p.gameStart = function () { var result = originalStart.apply(this, arguments); showGuide(this); return result; };
+      var originalDestroy = p.onDestroy;
+      p.onDestroy = function () {
+        if (this.__tastyArrowArt) {
+          this.__tastyArrowArt.frame.destroy();
+          this.__tastyArrowArt.texture.destroy();
+          this.__tastyArrowArt = null;
+        }
+        if (originalDestroy) return originalDestroy.apply(this, arguments);
+      };
       ['game1_Start', 'game1_Move', 'game1_End'].forEach(function (name) {
         var original = p[name];
         p[name] = function (event) {
@@ -123,7 +274,11 @@
           var touch = event.touch, getLocation = touch.getLocation;
           var camera = this.camera.getComponent(cc.Camera);
           touch.getLocation = function () { return camera.getScreenToWorldPoint(getLocation.call(touch)); };
-          try { return original.apply(this, arguments); }
+          try {
+            var result = original.apply(this, arguments);
+            if (name === 'game1_End' || !this.hand || !this.hand.active) hideGuide(this);
+            return result;
+          }
           finally { touch.getLocation = getLocation; }
         };
       });
