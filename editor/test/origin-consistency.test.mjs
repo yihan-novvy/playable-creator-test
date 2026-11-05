@@ -84,7 +84,7 @@ export default async function test(a) {
   const custom = originHtml({ root: tastyEntry.templateDir, pluginDir: tastyEntry.dir, overlaysRoot: tastyEntry.dir, template: tastyEntry.template,
     config: { ...structuredClone(tastyEntry.template.defaults), cta: { buttonText: 'Play & Win', guideText: 'Free Fun', buttonColor: '#ff8800' } } }).html;
   a.check(custom.includes('<span>Play &amp; Win</span>') && custom.includes('>Free Fun</div>'), 'Tasty: task CTA copy is escaped and configurable');
-  a.check(custom.includes('#novvy-cta .novvy-cta-btn{background:#ff8800}'), 'Tasty: task CTA button color overrides the bar card');
+  a.check(/#novvy-cta \.novvy-cta-btn\{background:#ff8800[;}]/.test(custom), 'Tasty: task CTA button color overrides the bar card');
   a.check(custom.includes('box-shadow:0 4px 12px rgba(255, 136, 0, 0.3)'), 'Tasty: task CTA button color recolors the shadow');
   const invalid = originHtml({ root: tastyEntry.templateDir, pluginDir: tastyEntry.dir, overlaysRoot: tastyEntry.dir, template: tastyEntry.template,
     config: { ...structuredClone(tastyEntry.template.defaults), cta: { buttonColor: 'url(javascript:alert(1))' } } }).html;
