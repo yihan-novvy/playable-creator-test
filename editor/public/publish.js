@@ -101,6 +101,96 @@ window.InteractivePublish = (() => {
     try { const parsed = new URL(url); return ['http:', 'https:'].includes(parsed.protocol) ? parsed.href : null; }
     catch { return null; }
   }
+  function launchNode(tag, className = '', content) {
+    const node = document.createElement(tag);
+    node.className = className;
+    if (content != null) node.textContent = content;
+    return node;
+  }
+  function previewQr(url) {
+    const qr = qrcodegen.QrCode.encodeText(url, qrcodegen.QrCode.Ecc.MEDIUM);
+    const canvas = launchNode('canvas', 'publish-launch-qr');
+    canvas.width = canvas.height = (qr.size + 8) * 4;
+    canvas.setAttribute('role', 'img');
+    canvas.setAttribute('aria-label', '手机扫码预览');
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = '#000';
+    for (let y = 0; y < qr.size; y++) for (let x = 0; x < qr.size; x++) if (qr.getModule(x, y)) ctx.fillRect((x + 4) * 4, (y + 4) * 4, 4, 4);
+    return canvas;
+  }
+  function renderLaunch(running) {
+    const launch = state.launch;
+    const launching = running && state.operation === 'launch';
+    $('launch').disabled = running || dirty || !state.package || state.packageStale;
+    text('launch', launching ? '⏳ 正在直传云端媒体库…' : launch?.status === 'success' ? '🚀 再次直传投放平台' : launch ? '🚀 重新直传投放平台' : '🚀 一键直传投放平台');
+    text('launch-account', '未登录，默认投放账号：' + state.launchEmail);
+    text('launch-stale', state.packageStale ? '配置或素材已更新，请重新生成素材包后再直传。' : '');
+    const feedback = $('launch-feedback');
+    feedback.hidden = !launch;
+    feedback.replaceChildren();
+    if (!launch) return;
+    feedback.className = 'publish-launch-feedback ' + launch.status;
+    if (launch.status === 'running') {
+      feedback.append(launchNode('div', 'publish-launch-progress', '⏳ 正在将互动广告 ZIP 包直传至媒体库、云端解压并自动挂载投放排期…'));
+      return;
+    }
+    if (launch.status !== 'success') {
+      feedback.append(launchNode('h4', '', launch.status === 'unknown' ? '⚠️ 直传结果待确认' : '⚠️ 直传投放平台失败' + (launch.code ? ` (错误码: ${launch.code})` : '')), launchNode('p', '', launch.message || '请稍后重试'));
+      return;
+    }
+    const data = launch.data || {};
+    const top = launchNode('div', 'publish-launch-summary');
+    const info = launchNode('div', 'publish-launch-info');
+    const title = data.serving === true ? '已成功入库并进入投放排期 (Serving: Active)' : data.serving === false ? '已成功入库（当前未投放）' : '已成功直传投放平台';
+    info.append(launchNode('h4', '', '● ' + title));
+    const detail = (label, value) => {
+      const row = launchNode('div', 'publish-launch-detail', label);
+      row.append(launchNode('span', '', value ?? '未返回'));
+      info.append(row);
+    };
+    detail('🆔 主创意 ID：', data.creativeId);
+    detail('🏷️ 创意名称：', data.creativeName);
+    detail('题材：', data.themeType || state.package.settings.category);
+    detail('🎯 关联计划：', data.campaignName || data.campaignId);
+    detail('计划状态：', data.campaignStatus);
+    detail('👤 投放账号：', data.operator || launch.email);
+    top.append(info);
+    const url = safeLink(data.previewUrl);
+    if (url) {
+      try {
+        const qr = launchNode('div', 'publish-launch-qr-box');
+        qr.append(previewQr(url), launchNode('span', '', '扫码手机预览'));
+        top.append(qr);
+      } catch { /* The preview link remains usable if the URL cannot be encoded. */ }
+    }
+    feedback.append(top);
+    if (Array.isArray(data.creatives) && data.creatives.length > 1) {
+      const multi = launchNode('div', 'publish-launch-products');
+      multi.append(launchNode('h4', '', `🚀 已为 ${data.creatives.length} 个产品创建创意：`));
+      for (const creative of data.creatives) {
+        const row = launchNode('div', 'publish-launch-product');
+        const product = launchNode('div');
+        product.append(launchNode('strong', '', '📱 ' + (creative.productName || creative.productId || '未返回产品名称')), launchNode('span', 'publish-launch-platform', creative.platform || 'App'), launchNode('div', 'hint', '创意：' + (creative.creativeName || creative.creativeId || '未返回')));
+        row.append(product, launchNode('div', 'publish-launch-campaign', '🎯 ' + (creative.campaignName || creative.campaignId || '未返回关联计划') + (creative.campaignStatus ? ` (${creative.campaignStatus})` : '')));
+        multi.append(row);
+      }
+      feedback.append(multi);
+    }
+    if (url) {
+      const links = launchNode('div', 'publish-launch-links');
+      const address = launchNode('span', 'publish-launch-url', '🔗 ' + url);
+      address.title = url;
+      const copy = launchNode('button', '', '复制链接'); copy.type = 'button';
+      copy.onclick = async () => {
+        try { await navigator.clipboard.writeText(url); copy.textContent = '已复制 ✔'; }
+        catch { note('复制失败，请手动复制预览链接：' + url, true); }
+      };
+      const open = launchNode('a', '', '新标签打开');
+      open.href = url; open.target = '_blank'; open.rel = 'noopener noreferrer';
+      links.append(address, copy, open); feedback.append(links);
+    }
+  }
   function showApps(apps = []) {
     const first = apps[0];
     text('app-name', first?.app_name || first?.app_id || 'App 应用信息');
@@ -140,7 +230,7 @@ window.InteractivePublish = (() => {
     $('inspect').disabled = running || !state.ready;
     $('package').disabled = running || !state.ready;
     text('source', state.ready ? '自动使用当前任务已打包的 ZIP，无需下载后再上传。' : '请先在上方完成打包，再进行原 ZIP 事件检查。');
-    const operations = { inspect: '正在生成原 ZIP 并检查事件…', package: '正在注入事件、生成并下载素材包…' };
+    const operations = { inspect: '正在生成原 ZIP 并检查事件…', package: '正在注入事件、生成并下载素材包…', launch: '正在直传投放平台…' };
     text('status', running ? operations[state.operation] || '处理中…' : state.packageStale ? '配置或素材已更新，需重新生成投放包' : state.package ? '投放包已生成' : '等待处理');
     $('status').className = 'chip ' + (state.packageStale ? 'bad' : state.package ? 'ok' : '');
     $('progress').hidden = !running;
@@ -151,10 +241,11 @@ window.InteractivePublish = (() => {
       text('filename', state.package.filename);
       text('package-meta', (state.package.bytes / 1024 / 1024).toFixed(2) + ' MB · ' + new Date(state.package.createdAt).toLocaleString('zh-CN'));
       $('download').href = endpoint('download');
-      text('injected', state.package.injectedEvents.join('\n'));
+      $('injected').replaceChildren(...state.package.injectedEvents.map(event => launchNode('div', '', '✔ ' + event)));
       if (previewId !== state.package.id) loadPreview();
     }
-    if (state.interrupted) note('上次操作被中断，请重新检查或生成素材包。', true);
+    renderLaunch(running);
+    if (state.interrupted) note(state.operation === 'launch' ? '上次直传被中断，请先到投放平台核实结果，避免重复创建创意。' : '上次操作被中断，请重新检查或生成素材包。', true);
     else if (state.error && !running) note(state.error, true);
     if (state.running && !poll) poll = setInterval(() => reload().catch(error => note(error.message, true)), 2000);
     if (!state.running && poll) { clearInterval(poll); poll = null; }
@@ -217,6 +308,16 @@ window.InteractivePublish = (() => {
     addLog('workflow', 'package', '开始注入并生成投放包');
     state = await api('package', { confirmation: report.requires_confirmation ? report.confirmation_token : undefined });
     addLog('workflow', 'package', '投放素材包已生成');
+  }
+  async function launch() {
+    if (!state.package || state.packageStale || dirty) throw new Error('请先生成与当前配置一致的投放素材包');
+    const packageId = state.package.id;
+    state.operation = 'launch';
+    state.launch = { packageId, status: 'running', email: state.launchEmail };
+    render();
+    addLog('workflow', 'launch', '开始直传投放平台，账号：' + state.launchEmail);
+    state = await api('launch', { packageId });
+    addLog('workflow', 'launch-success', state.launch.data);
   }
   function loadPreview() {
     if (!state?.package) return;
@@ -283,8 +384,9 @@ window.InteractivePublish = (() => {
       '<div class="publish-filename-preview"><span>🏷️ 文件命名预览：</span><output id="pub-filename-preview" aria-live="polite"></output></div>' +
       '</fieldset><div class="row publish-actions"><button type="submit" id="pub-package" class="primary">⚡ 注入 4kubtiqn2s 事件并生成 ZIP</button></div></form>' +
       '<div id="pub-progress" class="publish-progress" hidden><span></span>处理中，请保留当前任务。刷新页面可恢复状态。</div><p id="pub-notice" role="status" aria-live="polite"></p>' +
-      '<section id="pub-result" class="publish-result" hidden><h3>素材包已生成</h3><strong id="pub-filename"></strong><p id="pub-package-meta" class="hint"></p><pre id="pub-injected"></pre>' +
-      '<div class="row"><a id="pub-download" class="primary">下载素材包 (.zip)</a></div></section>' +
+      '<section id="pub-result" class="publish-result" hidden><h3>素材包已生成</h3><strong id="pub-filename"></strong><p id="pub-package-meta" class="hint"></p>' +
+      '<div class="publish-export-actions"><a id="pub-download" class="primary">📥 下载素材包 (.zip)</a><button type="button" id="pub-launch">🚀 一键直传投放平台</button></div>' +
+      '<p id="pub-launch-account" class="publish-launch-account"></p><p id="pub-launch-stale" class="publish-launch-stale"></p><div id="pub-launch-feedback" class="publish-launch-feedback" role="status" aria-live="polite" hidden></div><div id="pub-injected" class="publish-injected-checklist"></div></section>' +
       '</div><aside class="publish-preview-panel" aria-label="投放素材预览与事件监听">' +
       '<div class="publish-preview-actions"><button id="pub-reload" type="button" title="重新加载互动广告">🔄 重新体验</button><span class="publish-preview-mode">📦 互动广告模式</span></div>' +
       '<div class="publish-phone-wrapper"><div class="publish-phone"><div class="publish-phone-island" aria-hidden="true"></div><div class="publish-phone-screen"><p id="pub-preview-empty">生成素材包后<br>在这里试玩注入后的结果</p><iframe id="pub-preview" title="注入后的投放素材预览" sandbox="allow-scripts" allow="autoplay" hidden></iframe></div></div></div>' +
@@ -304,8 +406,10 @@ window.InteractivePublish = (() => {
       perform(generate);
     });
     $('inspect').onclick = () => perform(inspect);
+    $('launch').onclick = () => perform(launch);
     $('fields').addEventListener('input', event => {
       dirty = true;
+      $('launch').disabled = true;
       clearTimeout(saveTimer);
       saveTimer = setTimeout(() => { if (!busy && !state?.running) save().catch(error => note(error.message, true)); }, 800);
       if (event.target.name === 'store_url') {

@@ -10,6 +10,7 @@ import { run } from '../core/lib/exec.mjs';
 import { readJsonBody, sendJson, serveFile, isInsideRoot } from './http-utils.mjs';
 
 const MAX_ZIP = 150 * 1024 * 1024;
+const DEFAULT_LAUNCH_EMAIL = 'yihan@novvy.ai';
 const defaults = { store_url: '', app_name: '', drama_name: '', episode: '', category: 'Tier1:剧情融合', sequence: '1', tag: '', video_link_mode: 'auto', min_view_duration: '' };
 const categories = ['Tier1:剧情融合', 'Tier 2:短剧情钩子', 'Tier3:原爆款素材'];
 const sha = value => crypto.createHash('sha256').update(value).digest('hex');
@@ -100,13 +101,13 @@ export function createPublisher(options = {}) {
     try {
       response = await upstreamFetch(new URL(endpoint, base), { ...init, redirect: 'error', signal: AbortSignal.timeout(options.publishTimeoutMs || 240000) });
     } catch (error) {
-      throw fail('注入服务连接中断或超时：' + error.message, 502);
+      throw fail('注入服务连接中断或超时：' + error.message, 502, { outcomeUnknown: true });
     }
     const body = await response.json().catch(() => null);
-    if (!body) throw fail('注入服务未返回有效 JSON', 502);
-    if (!response.ok || body.status === 'failed' || body.success === false) {
+    if (!body) throw fail('注入服务未返回有效 JSON', 502, { outcomeUnknown: true });
+    if (!response.ok || ['failed', 'error'].includes(body.status) || body.success === false || Number(body.code) >= 400) {
       const message = typeof body.error === 'string' ? body.error : body.error?.message;
-      throw fail(message || body.message || '注入服务请求失败', response.status === 409 ? 409 : 502, { eventCheck: body.event_check });
+      throw fail(message || body.message || '注入服务请求失败', response.status === 409 ? 409 : 502, { eventCheck: body.event_check, upstreamCode: body.code || response.status, outcomeUnknown: response.status >= 500 });
     }
     return body;
   }
@@ -137,9 +138,14 @@ export function createPublisher(options = {}) {
     const state = readState(id);
     const version = sourceVersion(id);
     const packageStale = !!state.package && (state.package.version !== version || JSON.stringify(state.package.settings) !== JSON.stringify(state.settings) || !ready(id));
-    const operation = ['inspect', 'package'].includes(state.operation) ? state.operation : null;
+    const operation = ['inspect', 'package', 'launch'].includes(state.operation) ? state.operation : null;
+    let launch = state.launch?.packageId === state.package?.id ? state.launch : null;
+    if (launch?.status === 'running' && !active.has(id)) {
+      launch = { ...launch, status: 'unknown', message: '直传连接已中断，结果尚未确认。请先到投放平台核实，避免重复创建创意。' };
+    }
     return {
       settings: state.settings, inspection: state.inspection, package: state.package,
+      launch, launchEmail: DEFAULT_LAUNCH_EMAIL,
       error: state.error,
       running: active.has(id), operation,
       interrupted: !!operation && !active.has(id),
@@ -180,12 +186,13 @@ export function createPublisher(options = {}) {
       return serveFile(req, res, file);
     }
     if (!(req.method === 'PATCH' && action === 'settings') &&
-        !(req.method === 'POST' && ['parse-store', 'inspect', 'package'].includes(action))) {
+        !(req.method === 'POST' && ['parse-store', 'inspect', 'package', 'launch'].includes(action))) {
       throw fail('未知素材处理接口', 404);
     }
     checkOrigin(req);
-    if (active.has(id)) throw fail('该任务正在处理，请等待当前操作完成', 409);
     const body = await readJsonBody(req);
+    // A second request can finish receiving its body after another operation starts.
+    if (active.has(id)) throw fail('该任务正在处理，请等待当前操作完成', 409);
     const state = readState(id);
     if (action === 'settings') {
       state.settings = settingsFrom(body);
@@ -199,6 +206,19 @@ export function createPublisher(options = {}) {
       return sendJson(res, 200, result);
     }
     requireReady(id);
+    let launchFile;
+    if (action === 'launch') {
+      const item = state.package;
+      if (!item) throw fail('请先生成投放素材包', 409);
+      if (body.packageId !== item.id) throw fail('素材包版本已变化，请刷新后重新操作', 409);
+      if (item.version !== sourceVersion(id) || JSON.stringify(item.settings) !== JSON.stringify(state.settings)) {
+        throw fail('配置或素材已更新，请重新生成投放素材包后直传', 409);
+      }
+      const file = path.join(folder(id), item.id, 'final.zip');
+      if (!fs.existsSync(file)) throw fail('投放素材包不存在，请重新生成', 409);
+      launchFile = fs.readFileSync(file);
+      if (launchFile.length > MAX_ZIP || sha(launchFile) !== item.sha256) throw fail('投放素材包已变化，请重新生成', 409);
+    }
     active.add(id);
     state.operation = action;
     state.error = null;
@@ -252,10 +272,34 @@ export function createPublisher(options = {}) {
           createdAt: new Date().toISOString(), injectedEvents: data.injected_events || [],
           eventWarningsAccepted: data.event_warnings_accepted === true,
         };
+        state.launch = null;
         if (data.event_check) state.inspection.event_check = data.event_check;
+      } else if (action === 'launch') {
+        const item = state.package;
+        const settings = item.settings;
+        // Use the documented multipart API and the exact processed ZIP being previewed/downloaded.
+        const form = new FormData();
+        form.set('file', new Blob([launchFile], { type: 'application/zip' }), item.filename);
+        form.set('admin_email', DEFAULT_LAUNCH_EMAIL);
+        form.set('store_urls', urls(settings).join('\n'));
+        form.set('category', settings.category);
+        if (settings.drama_name) form.set('drama_id', settings.drama_name);
+        if (settings.episode) form.set('episode', settings.episode);
+        if (settings.min_view_duration) form.set('min_view_duration', settings.min_view_duration);
+        state.launch = { packageId: item.id, status: 'running', email: DEFAULT_LAUNCH_EMAIL, startedAt: new Date().toISOString() };
+        writeState(id, state);
+        const result = await request('/api/v1/auto-launch', { method: 'POST', body: form });
+        if ((result.status !== 'ok' && result.success !== true) || !result.data || typeof result.data !== 'object' ||
+            (!result.data.creativeId && !result.data.creatives?.some?.(creative => creative?.creativeId))) {
+          throw fail('投放服务未返回可确认的直传结果', 502, { outcomeUnknown: true });
+        }
+        state.launch = { ...state.launch, status: 'success', completedAt: new Date().toISOString(), data: result.data };
       }
     } catch (error) {
       state.error = error.message;
+      if (action === 'launch' && state.launch?.packageId === state.package?.id) {
+        state.launch = { ...state.launch, status: error.outcomeUnknown ? 'unknown' : 'failed', message: error.outcomeUnknown ? error.message + '。请先到投放平台核实结果，避免重复创建创意。' : error.message, code: error.upstreamCode || error.statusCode || 502 };
+      }
       if (error.eventCheck) {
         state.inspection = { ...state.inspection, event_check: error.eventCheck };
         sendJson(res, error.statusCode, { error: { message: error.message }, event_check: error.eventCheck });

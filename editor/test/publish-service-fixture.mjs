@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 // Contract fixture only. No connection to a real injector, SDK or ad platform.
 export function mockPublishService() {
   const calls = [];
-  let packaged, packageError = false, gate = null;
+  let packaged, packageError = false, gate = null, launchGate = null, launchResponse = null;
   const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
   const report = token => ({
     entry: 'index.html', status: 'needs_confirmation', mode: 'direct',
@@ -17,6 +17,8 @@ export function mockPublishService() {
     calls,
     setPackageError(value) { packageError = value; },
     holdInspect(promise) { gate = promise; },
+    holdLaunch(promise) { launchGate = promise; },
+    setLaunchResponse(body, status = 200) { launchResponse = body == null ? null : { body, status }; },
     async fetch(url, options = {}) {
       url = new URL(url);
       if (url.origin !== 'http://publish-fixture.test') throw new Error('Unexpected external network: ' + url.origin);
@@ -38,6 +40,21 @@ export function mockPublishService() {
         return json({ status: 'ok', job_id: 'interactive_fixture', package_file: '本地联调_' + body.tag + '.zip', download_url: '/api/download?file=fixture.zip', injected_events: ['本地接口模拟：未执行真实注入'], event_check: report(token), event_warnings_accepted: true });
       }
       if (url.pathname === '/api/download') return new Response(packaged, { headers: { 'Content-Type': 'application/zip' } });
+      if (url.pathname === '/api/v1/auto-launch') {
+        if (launchGate) { await launchGate; launchGate = null; }
+        if (launchResponse?.body instanceof Error) throw launchResponse.body;
+        if (launchResponse) return json(launchResponse.body, launchResponse.status);
+        return json({ status: 'ok', code: 200, success: true, data: {
+          creativeId: 'cr_local_fixture', creativeName: '本地模拟素材（未实际投放）',
+          campaignName: '本地模拟 Campaign', campaignStatus: 'PAUSED', serving: false,
+          operator: body.admin_email, themeType: 'story_playable',
+          previewUrl: 'https://preview.example/creative_fixture/index.html',
+          creatives: [
+            { creativeId: 'cr_local_fixture', creativeName: '本地模拟 iOS 创意', productName: '本地测试产品', platform: 'iOS', campaignName: '本地 iOS Campaign', campaignStatus: 'PAUSED' },
+            { creativeId: 'cr_local_android', creativeName: '本地模拟 Android 创意', productName: '本地测试产品', platform: 'Android', campaignName: '本地 Android Campaign', campaignStatus: 'PAUSED' },
+          ],
+        } });
+      }
       throw new Error('Unexpected fixture route: ' + url.pathname);
     },
   };

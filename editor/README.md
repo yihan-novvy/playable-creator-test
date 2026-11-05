@@ -32,9 +32,18 @@ node editor/server.mjs [--port 8088]
 改为本地运行的同一服务。启动编辑器不会发起远程加工。
 
 保留的远程接口为 `/api/parse-store-url`、`/api/interactive-zip/inspect`、
-`/api/v1/interactive-zip/package` 以及返回的素材下载地址。
+`/api/v1/interactive-zip/package`、`/api/v1/auto-launch` 以及返回的素材下载地址。
 其中原 ZIP 检查及确认令牌尚未列入公开 API 文档，按当前需求保留，联调时仍需核实服务兼容性。
-本阶段不提供登录和直传投放平台功能；打包请求显式传 `auto_launch=false`。
+本阶段不提供登录功能。未登录时按当前约定使用 `yihan@novvy.ai` 作为直传请求的
+`admin_email`，页面明示默认账号，不显示“企业认证”或虚构登录状态。
+打包请求仍显式传 `auto_launch=false`；只有点击生成结果中的「一键直传投放平台」才会上传。
+直传使用文档中的 multipart 请求，将本地缓存的最终 ZIP 作为 `file` 提交，并携带
+`store_urls`、`category`、可选 `drama_id` / `episode` / `min_view_duration`。
+不使用参考项目中的未文档化 `api_host` 或 `theme_type` 参数，也不调用登录接口。
+旧素材、变更的表单、被修改的 ZIP 或重复的进行中请求会被阻止。
+成功、失败和结果未确认均保存到当前素材版本；页面刷新不会自动重传。
+结果信息卡沿用参考页布局，展示实际返回的创意、Campaign、投放状态、多产品明细、
+预览链接和二维码。未返回状态时不会默认显示 ACTIVE。二维码由本地 MIT 开源脚本生成。
 
 处理配置、源 ZIP 快照、检查报告、最终 ZIP 和解包预览保存在
 project/<id>/publish/，与玩法配置分开，修改表单不会让原始打包失效。
@@ -43,7 +52,8 @@ Tag 按填写内容提交，不追加随机字符；文件命名预览沿用参�
 游戏配置、素材或打包版本变化后需重新检查/生成。任务删除时同时清理发布缓存。
 
 本地接口回归：node editor/test/run-all.mjs interactive-publish。测试通过内存模拟服务覆盖
-预检确认、持久化、ZIP 下载与预览、旧接口不可调用、禁用自动投放和服务失败恢复，不请求真实注入/投放服务。
+预检确认、持久化、ZIP 下载与预览、登录接口不可调用、手动直传、默认邮箱、禁止自动投放、
+过期包拦截和服务失败恢复，不请求真实注入/投放服务。
 本功能的本地开发不需要执行 deploy/gce/ 中的发布脚本。
 
 ## 模板探索
