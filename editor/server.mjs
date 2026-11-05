@@ -45,6 +45,8 @@ import { validateRegistry } from './core/validate.mjs';
 import { environment, run } from './core/lib/exec.mjs';
 import { fixedViewportHtml } from './core/lib/fixed-viewport.mjs';
 import { showcasePreview } from './lib/template-showcase.mjs';
+import { archiveTask } from './lib/task-archive.mjs';
+import { createPublisher } from './lib/interactive-publish.mjs';
 
 const UPLOAD_CAP_BYTES = 100 * 1024 * 1024;
 const UPLOAD_MIME = {
@@ -124,7 +126,7 @@ function taskSteps(task) {
   }
 }
 
-async function handleApi(req, res, url) {
+async function handleApi(req, res, url, publisher) {
   const { pathname } = url;
   const segments = pathname.split('/').filter(Boolean); // ["api", ...]
 
@@ -211,6 +213,7 @@ async function handleApi(req, res, url) {
   const task = readTask(taskId);
   if (!task) return sendError(res, 404, `任务不存在: ${taskId}`);
   const rest = segments.slice(3);
+  if (rest[0] === 'publish') return publisher(req, res, url, taskId, rest.slice(1));
 
   if (rest.length === 0) {
     if (req.method === 'GET') {
@@ -429,7 +432,7 @@ async function handleApi(req, res, url) {
     }
     const temporaryZip = path.join(os.tmpdir(), `novvy-export-${taskId}-${Date.now()}.zip`);
     try {
-      await run('zip', ['-q', '-r', '-X', temporaryZip, '.', '-x', '*.zip'], { cwd: resultDir });
+      await archiveTask(taskId, temporaryZip);
       const bytes = fs.readFileSync(temporaryZip);
       const safeName = String(patched.name || taskId).replace(/[^\w.-]+/g, '_').slice(0, 80) || taskId;
       res.writeHead(200, {
@@ -678,11 +681,12 @@ async function handleStatic(req, res, url) {
 }
 
 export function createServer(options = {}) {
+  const publisher = createPublisher(options);
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
     try {
       if (url.pathname.startsWith('/api/')) {
-        await handleApi(req, res, url);
+        await handleApi(req, res, url, publisher);
       } else {
         await handleStatic(req, res, url);
       }

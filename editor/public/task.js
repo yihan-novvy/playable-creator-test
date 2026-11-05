@@ -38,6 +38,19 @@ function el(tag, attrs = {}, children = []) {
   return node;
 }
 
+function appendPackPreviewControls(container, mountPreview, label = '试玩打包结果') {
+  const cancel = el('button', { type: 'button', disabled: '', onclick: () => {
+    // 移除 iframe 所在的手机框，销毁试玩上下文并停止音视频播放。
+    container.querySelectorAll('.phone-scale').forEach((node) => node.remove());
+    cancel.disabled = true;
+  } }, ['取消试玩']);
+  const play = el('button', { type: 'button', onclick: () => {
+    mountPreview();
+    cancel.disabled = false;
+  } }, [label]);
+  container.append(el('div', { class: 'row' }, [play, cancel]));
+}
+
 function escapeHtml(value) {
   return String(value ?? '')
     .replaceAll('&', '&amp;')
@@ -306,6 +319,7 @@ function renderSteps() {
 // 有专用工作台的模板由 plugins/<id>/workbench.js 接管(PlayablePlugins 注册);
 // 其余模板维持通用的配置卡 + 步骤卡分工。
 async function renderWorkbench(rerender) {
+  window.InteractivePublish?.mount(taskDoc);
   const ui = pluginUi();
   if (ui?.render) { await ui.render(); return; }
   if (rerender) {
@@ -1353,8 +1367,7 @@ function renderStepPreview(stepId, container) {
       container.append(el('a', { href: versioned(`/result/${taskId}/${name}`, stepVersion('pack')), download: name }, [`下载 ${name}`]));
     }
     container.append(el('span', { class: 'hint' }, [`${(statusInfo?.distBytes / 1024 / 1024).toFixed(1)} MB · 点击下方按钮在手机框里试玩`]));
-    const mountButton = el('button', { onclick: () => mountPhoneFrame(container) }, ['试玩预览']);
-    container.append(mountButton);
+    appendPackPreviewControls(container, () => mountPhoneFrame(container), '试玩预览');
   }
 }
 

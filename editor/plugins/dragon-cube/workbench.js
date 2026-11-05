@@ -281,7 +281,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const pack = card('pack', 7, '打包', '组合游戏、所选关卡与已启用素材，生成可导出的 H5 ZIP。', [], (right) => {
       if (stepState('pack').ok) {
         right.append(el('a', { class: 'primary', href: `/api/tasks/${taskId}/export`, download: `${taskId}.zip` }, ['下载 ZIP 包']));
-        right.append(el('button', { onclick: () => mountPlayPreview(right, `/result/${taskId}/index.html?v=${Date.now()}`) }, ['试玩打包结果']));
+        appendPackPreviewControls(right, () => mountPlayPreview(right, `/result/${taskId}/index.html?v=${Date.now()}`));
       } else {
         right.append(el('span', { class: 'hint' }, ['打包成功后，这里可下载 ZIP 并试玩产物。']));
       }

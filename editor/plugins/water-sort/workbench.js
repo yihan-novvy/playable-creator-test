@@ -716,7 +716,7 @@ function wsRenderPackPreview(container) {
     container.append(el('a', { href: versioned(`/result/${taskId}/${name}`, stepVersion('pack')), download: name }, [`下载 ${name}`]));
   }
   container.append(el('span', { class: 'hint' }, [`${((statusInfo?.distBytes || 0) / 1024 / 1024).toFixed(1)} MB`]));
-  container.append(el('button', { onclick: () => wsMountPreview(container, `/result/${taskId}/index.html`) }, ['试玩预览']));
+  appendPackPreviewControls(container, () => wsMountPreview(container, `/result/${taskId}/index.html`), '试玩预览');
 }
 
 // 通用上传行:点击/拖入同一处理,已上传显示大小与原名并可移除。

@@ -39,6 +39,7 @@ export function createAssert() {
 }
 
 export const TESTS = [
+  { name: 'interactive-publish', file: path.join(TEST_DIR, 'interactive-publish.test.mjs') },
   { name: 'task-creation', file: path.join(TEST_DIR, 'task-creation.test.mjs') },
   { name: 'template-showcase', file: path.join(TEST_DIR, 'template-showcase.test.mjs') },
   { name: 'origin-consistency', file: path.join(TEST_DIR, 'origin-consistency.test.mjs') },
