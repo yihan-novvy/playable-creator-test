@@ -1,4 +1,4 @@
-# Origin 模板：重玩与 HUD 标题
+# Origin 模板：重玩、HUD 与全屏布局
 
 用于本项目原版 playable 的 editor 集成。先读目标模板的 `plugin.json`、`workbench.js`、组装函数和引擎适配器，再选相似案例。下面是 2026-10-30 核对过的实现基线；后续代码或用户要求优先，不把游戏特有的数字、节点名和默认值复制到新模板。
 
@@ -17,9 +17,11 @@
 
 ## 同段重玩契约
 
+下述 `NovvyPlayable`、共享桥和重玩 CTA 描述的是上表四个模板的既有项目组装方案。先核对目标模板的协议和已确认的 CTA 位置；采用 `NovvyGame(entry)` 注册、由壳调用 `entry(root, shell, options)` 的独立游戏按当前协议处理，不能为了复用此方案引入宿主 SDK，也不能把重玩自动变成新增商店入口。
+
 1. 区分可操作、已结算、正在重建、阶段已结束。只在游戏已结算、重玩已启用且没有重建中的请求时接受重玩；不要让按钮连点、原生结算动画与异步回调启动多次重建。
 2. 真实胜负每局只报一次 `NovvyPlayable.onComplete({ result, continue_playing: true })`，让当前阶段仍可继续；关闭重玩时按最终结果结束阶段，隐藏或拦截原生重玩入口。成功/失败来自游戏状态，不能把原版触摸统计、CTA 或第一关完成当成最终成功。
-3. 重玩按钮标记 `data-novvy-replay`；模板用 `window.__novvyReplayable` 声明开关，相关结果和 CTA 事件携带适配桥需要的 `replayable` 信息。点击先派发一次 `novvy:replay-cta`，通过共享 CTA bridge/下载卡链路请求跳转，再重置本局。不要另调 `window.open`、原版商店函数或第二次 SDK click。
+3. 目标模板采用共享重玩转化桥且该位置已有用户确认时，重玩按钮标记 `data-novvy-replay`；模板用 `window.__novvyReplayable` 声明开关，相关结果和 CTA 事件携带适配桥需要的 `replayable` 信息。点击先派发一次 `novvy:replay-cta`，通过共享 CTA bridge/下载卡链路请求跳转，再重置本局。没有这项策略的模板只重开，不补 CTA。不要另调 `window.open`、原版商店函数或第二次 SDK click。
 4. 重建期间禁用按钮并阻止旧局输入。恢复原生棋盘/场景及引导，等新场景可用（必要时等首次绘制）后才清除结算状态、隐藏结果面板并调用一次 `NovvyPlayable.onReplay()`。同时派发 `novvy:playable-replay`，重置共享桥的本轮状态。
 5. 场景加载或重建失败时保留可见结果和重试入口、恢复按钮，不发送成功的 `onReplay`，不让用户卡在 Preparing 状态。
 
@@ -34,7 +36,7 @@
 
 ### CTA 去重与预览
 
-沿用 `originCtaBridge()` 和 `editor/core/overlays/cta-bridge/cta-bridge.js` 的语义：重玩转换为 `click_source:'forced_click_to_appstore'`、`scene:'playable-replay'`；下载按钮维持 `cta_click`。同一个重玩手势只能转化一次，`pointerdown`、`pointerup`、`click` 与原生 Canvas 命中不可各报一次。
+适用已确认的共享重玩转化方案时，沿用 `originCtaBridge()` 和 `editor/core/overlays/cta-bridge/cta-bridge.js` 的语义：重玩转换为 `click_source:'forced_click_to_appstore'`、`scene:'playable-replay'`；下载按钮维持已确认的 `cta_click`。同一个重玩手势只能转化一次，`pointerdown`、`pointerup`、`click` 与原生 Canvas 命中不可各报一次。
 
 当前共享桥中，步数策略已触发转化后，通关不会重复自动跳转；允许重玩的回合不武装回访后的逐次触压跳转，明确点击重玩仍可触发新的 CTA。关闭重玩时保留项目既有的完成后交互策略。Canvas 下载按钮需要延后判定命中时，复用现有桥的延迟与去重机制，避免把手动下载先算成普通触压转化。
 
@@ -50,17 +52,37 @@
 
 标题覆盖在完整游戏画布上，背景延伸到屏幕边缘。使用 Origin 通用组装器时，按现有实现声明 `game.hudInsideCanvas: true`，避免旧的 `data-novvy-origin-shell` 通过下移 `#origin-game` 留出顶部色带。此标记只是跳过外壳裁切；仍需原生布局适配，不能认为加一个字段便完成视觉工作。Block Out 使用自身组装和 viewport 参数，参考其实际路径。
 
+同时检查根容器、shadow DOM 的挂载节点、引擎根与 canvas 的实际边界。根容器全屏而内层 mount 仍设置 `top/bottom` 安全区，同样会缩小背景。安全区约束棋盘、按钮等内容；画布与背景保持完整尺寸。不要用裁剪画布掩盖留白。
+
 - HUD 层通常 `pointer-events: none`，避免阻断拖拽/投放。标题位于安全区和刘海/灵动岛下方，居中；字体、最大宽度、长文案省略和横屏样式按画面调整。保留现有主副标题的层次，不能只在桌面宽屏看着合适。
 - 根据标题占位 CSS 变量和可见 CTA 卡的实际高度计算玩法区域，在原生相机、棋盘容器或 viewport 中缩放和居中；标题开/关、横竖屏、resize 和重玩后都要重新计算，避免累计缩放或漂移。沿用原生 resize 的基准或先恢复基准再适配。
 - 原生 logo、教程文字、关卡标题、金币/计时和下一物件提示不能与自定义标题叠字。只替换或移动发生冲突的展示，保留必要的游戏状态。Block Out 开启标题时关闭重复 logo/关卡文字；Grill 把计时器避开中央安全区；Tasty 把计数与下一物件提示安排在两侧。
 - 坐标变换要覆盖输入和教程。Tasty 保留物理节点坐标，用相机调整取景，并把屏幕触摸转到世界坐标；FreeCell 缩放牌局后重算教程位置。用真实拖拽/投放确认视觉位置和命中一致。
 - 为完整画布补背景时沿用原有素材并检查接缝；不因缩小游戏区域露出不相关底色。Tasty 的镜像边缘延展是该素材的实现选择，不是所有模板必须采用的方式。
 
-布局参考：`template-core/{tasty-travels,freecell,grill-sort}-origin/src/layout.js`、各插件 `overlays/hud/`，以及 `editor/plugins/block-out-origin/overlays/engine/engine.js` 中的布局适配。修改源文件后构建生成模板，不能只修 `editor/templates/`。
+#### 安全区与宿主占位
+
+- `env(safe-area-inset-top)` 在桌面、iframe 或灵动岛模拟器里可能为 0。结合目标设备设置合理的标题保底位置；Zen Word 的竖屏示例为 `top: max(64px, calc(env(safe-area-inset-top) + 8px))`，数值不是所有素材的固定要求。检查最终 computed style，尤其避免宿主的 `hud.style.top = safeTop + 12px` 覆盖 CSS 的安全区规则。
+- 有独立游戏/宿主边界时，由宿主计算实际占位，再按当前协议传入 `env.insets`；游戏只消费参数，不查询宿主标题或卡片 DOM。对于从容器边缘计的 inset，顶部取可见 HUD 底边加间距，底部取容器底边到可见卡片顶边的距离加间距；与 safeArea 取较大值，避免把同一安全区累计两次。传统 Origin 适配器可使用对应 CSS 占位变量。
+- 标题填充、卡片显示、片头切入、尺寸/方向变化和重玩后刷新占位。DOM 尺寸变化可由宿主 `ResizeObserver` 监听，销毁时解绑；不要只在初始化读一次。标题和卡片的层级也要与片头统一，避免标题露在视频上方。
+
+#### 原生节点调整
+
+- 根据实际棋盘子节点/精灵边界拟合可用区域，而不是按历史截图估算整体缩放。竖屏可上下排列棋盘与操作盘，横屏可左右排列；留出输入中的字词、进度、生命值及 CTA 的空间。只处理本次冲突，不改谜题、规则或胜负数值。
+- 原版 `Update`、resize 或补间可能每帧覆盖位置。核对真正的位置拥有者，修改其布局字段或在原布局之后适配；每次从原始尺寸/节点边界计算，避免累计缩放。相机改变时确认背景仍铺满。
+- Unity/Luna 等世界坐标引擎需同步视觉节点与输入碰撞体，Canvas UI 需正确转换到父级 RectTransform 坐标。保留原生提示与状态，只在自定义 HUD 启用时隐藏重复标题；关闭 HUD 时恢复可读的原生标题。
+
+布局参考：`template-core/{tasty-travels,freecell,grill-sort}-origin/src/layout.js`、各插件 `overlays/hud/`，以及 `editor/plugins/block-out-origin/overlays/engine/engine.js` 中的布局适配。`template-core/zen-word-100m-origin/src/{layout,host,game}.js` 可参考完整画布、宿主占位和原生节点变换；节点名与比例只适用于该素材。修改源文件后构建生成模板，不能只修 `editor/templates/`。
 
 ### 下载卡、品牌与声音
 
 配套使用共享 CTA card，为其预留底部空间并关闭重复的原生下载控件；游戏名和图标来自核实过的目标商店信息与本地资产，记录来源。沿用 manifest 的 `game.ctaCard` 和 `addOriginCtaCard()`，按真实图片类型内嵌，避免重绘图标、近似名称或导出时继续远程取图。
+
+- 原始载荷中已确认归属的加载图标可确定性抽取为本地品牌资产，记录来源并纳入 manifest 哈希。传给 `addOriginCtaCard()` 的读取函数要支持二进制读取（如 `read(path, null)`），避免把 PNG 当 UTF-8 损坏。
+- 替换 Play Free 等原生按钮时，隐藏/禁用原生节点及命中，并停用其跳转回调。共享卡片只在约定阶段显示；片头期间不提前展示。保留真实点击到既有 click 路径的去重，不能叠加 SDK 自动绑定与自定义监听，也不因加入卡片启用原版自动跳店。
+- 延续同一底部主动下载位置且对话已有明确分类时，保留原用户决定并记录卡片替换关系，不重复索要相同确认；位置、触发时机或分类实质变化时按当前事件协议处理。Zen Word 的 Play Free → 共享卡片沿用 `cta_click`，不意味着其他游戏的重玩/空白区域也获授权。
+- 卡片开关和必要文案贯通默认值、工作台、保存、预览、打包；显式关闭时不注入卡片，并释放底部占位。显示卡片时保留必要底部安全区，重玩按钮也要避开下载卡。
+- 同时导出独立 `game.js` 与项目组装 ZIP 时，明确卡片归组装壳所有。原生下载入口全部移除后，独立游戏的 `requirements.cta_placements` 记为 `[]`，组装壳另记共享卡片的映射和原决定；不要将卡片或宿主 SDK 塞回独立游戏包。平台组装页自带 banner 时遵循其当前契约。
 
 这四个 Origin 模板当前没有独立声音开关；声音由宿主可见性、页面状态和首次用户手势管理。HUD 对齐不应顺带引入新的声音按钮。保留题目/订单等必要原生文字，并检查其语言与当前广告文案一致。
 
@@ -68,6 +90,7 @@
 
 - 配置贯通 `plugin.json` 默认值 → 工作台 PATCH → `editor/lib/store.mjs` 白名单与校验 → 有效配置合并 → preview/pack 注入。`allowReplay` 必须是布尔值，部分更新不能覆盖同级标题、倒计时等设置；非法值应拒绝且不改原任务。
 - 调整重玩、标题或 CTA 后使 `pack` 失效，阻止下载旧 ZIP，重新打包后使用新配置。仅改这些设置应保留已转码视频；上传/删除视频或海报则走媒体自己的失效流程。
-- 工作台提示明确「默认是否开启、什么时候出现重玩、点击先 CTA 再重开、片头不重复、修改后重新打包」。查看当前任务是否启用时读任务配置，不能把模板默认值当成所有现有任务的实际值。
+- 工作台提示明确「默认是否开启、什么时候出现重玩、是否包含已确认的 CTA、片头不重复、修改后重新打包」。查看当前任务是否启用时读任务配置，不能把模板默认值当成所有现有任务的实际值。
+- 重新构建后核对服务读取的 manifest/文件哈希。开发服务缓存旧注册表时，先确认端口进程属于当前项目，再重载或重启；确保预览请求成功返回新产物。浏览器 reload 遇到错误可能保留旧页面，不能把旧画面当成修复验证。
 
 按 [验收与交付](verification.md) 的重玩/HUD 检查项验证；现有针对性案例在 `editor/test/{tasty-travels,grill-sort,freecell,block-out}-origin.test.mjs`、`origin-editor.test.mjs`、`origin-consistency.test.mjs` 和 `cta-continuation.test.mjs`。
