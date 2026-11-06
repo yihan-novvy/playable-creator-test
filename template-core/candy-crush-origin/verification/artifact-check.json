@@ -1,33 +1,33 @@
 {
   "schemaVersion": 1,
-  "configuredHits": 10,
+  "fixedHits": 71,
   "maxHits": 71,
-  "checkedAt": "2026-11-06T15:25:39.386Z",
+  "checkedAt": "2026-11-06T16:05:27.474Z",
   "staticPass": true,
   "platformEventsVerified": false,
   "nativeFileRuntimeVerified": false,
   "game": {
     "file": "game-only.zip",
-    "sha256": "aea3a1634362d1fe49912ab3be7319d8dd9ee6aa1d9674e86699734125440d67",
-    "bytes": 2390452,
+    "sha256": "bed8351aa8a46550c4a01c19ab4e0c239b512f4ca952880405a9b09fa762b0da",
+    "bytes": 2390435,
     "entries": [
       "game.js"
     ]
   },
   "assembly": {
     "file": "assembly.zip",
-    "sha256": "63c586ba8249693434fbf88fe5984d5dc4bc5e0b0e0ad1e5284dd97b5d3176e4",
-    "bytes": 2465172,
+    "sha256": "82cbabcd621a27bb87a5645b168d4269c789bbaa28864f445656935c2d47135b",
+    "bytes": 2465870,
     "entries": [
       "game.js",
       "index.html"
     ],
-    "uncompressedBytes": 4382756
+    "uncompressedBytes": 4385071
   },
-  "gameJsSha256": "2081a1bc786a11b09c862d27b57531cf18f6e0699ce9b3359182be03cd5e7467",
+  "gameJsSha256": "17a996cef8b41668185fb5716a53ab53a892ec879003111033ca750250994fcd",
   "checks": [
     "Root classic game.js, one synchronous registration and parseable syntax",
-    "Exact final configured build bytes in both archives",
+    "Exact fixed-71 build bytes in both archives; footer text removed",
     "No legacy bridge, native channel, SDK, direct store opening or window messages in game",
     "Standard host card has one event owner",
     "Standalone and total assembly package limits"

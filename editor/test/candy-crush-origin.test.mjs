@@ -4,26 +4,30 @@ import os from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {createServer} from '../server.mjs';
 import {deleteTask} from '../lib/store.mjs';
+import {taskProjectDir} from '../lib/paths.mjs';
 export default async function test(a){
  const server=createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const base=`http://127.0.0.1:${server.address().port}`,tmp=fs.mkdtempSync(path.join(os.tmpdir(),'candy-crush-test-'));let id;
  const request=(route,body,method='POST')=>fetch(base+route,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  try{
   const template=(await(await fetch(base+'/api/templates')).json()).find(t=>t.id==='candy-crush-origin');
-  a.equal(template.gameplayLimits.tapsToBreak,{min:1,max:71},'workbench receives actual model count limit');
+  a.equal(template.defaults.gameplay,{allowReplay:false},'count is no longer configurable');
   const created=await request('/api/tasks',{name:`candy-crush-test-${Date.now()}`,templateId:'candy-crush-origin'});a.equal(created.status,201,'template can create tasks');id=(await created.json()).id;const route='/api/tasks/'+id;
   let preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('"allowReplay":false')&&preview.includes('id="novvy-cta"'),'replay off and CTA visible by default');
   const settings=html=>JSON.parse(html.match(/window\.CCS_CONFIG=(.*?);<\/script>/)[1]);
   a.equal(settings(preview).policy,{mode:'steps',afterSteps:3,intervals:[2],enabled:true},'default auto-jump policy');
   a.check(preview.includes('data:image/jpeg;base64,')&&preview.includes('Download Candy Crush Saga'),'local official icon and correct brand');
   a.check(!preview.includes('data-action="download"')&&!preview.includes('data-novvy-cta data-'),'manual CTA has no SDK duplicate auto-hook');
-  const patch=await request(route,{config:{gameplay:{allowReplay:true,tapsToBreak:10},hud:{titleEnabled:true,titleLine1:'Test',titleLine2:'Second line'}}},'PATCH');a.equal(patch.status,200,'settings save');
+  const patch=await request(route,{config:{gameplay:{allowReplay:true},hud:{titleEnabled:true,titleLine1:'Test',titleLine2:'Second line'}}},'PATCH');a.equal(patch.status,200,'settings save');
   const saved=await(await fetch(base+route)).json();a.check(saved.config.gameplay.allowReplay&&saved.config.hud.titleLine2==='Second line','settings read back');
   a.equal((await request(route,{config:{levelId:2}},'PATCH')).status,400,'reject unsupported level');
   a.equal((await request(route,{config:{gameplay:{allowReplay:'yes'}}},'PATCH')).status,400,'reject invalid replay flag');
-  for(const tapsToBreak of [0,72,1.5,'10',null])a.equal((await request(route,{config:{gameplay:{tapsToBreak}}},'PATCH')).status,400,'reject invalid candy count');
-  for(const tapsToBreak of [1,71,10])a.equal((await request(route,{config:{gameplay:{tapsToBreak}}},'PATCH')).status,200,'accept count at both bounds and above five');
-  a.equal((await(await fetch(base+route)).json()).config.gameplay,{allowReplay:true,tapsToBreak:10},'count-only save preserves replay');
+  for(const tapsToBreak of [0,1,10,71,72,'10',null])a.equal((await request(route,{config:{gameplay:{tapsToBreak}}},'PATCH')).status,400,'reject all click-count configuration');
+  // Reproduce an existing v1.1 task without using the now-removed API field.
+  const taskFile=path.join(taskProjectDir(id),'project.json'),legacy=JSON.parse(fs.readFileSync(taskFile));
+  legacy.config.gameplay.tapsToBreak=10;fs.writeFileSync(taskFile,JSON.stringify(legacy));
+  const legacyPreview=await(await fetch(base+route+'/preview')).text();
+  a.check(legacyPreview.includes('const CANDY_TARGET_HITS=71;'),'old 10-click task previews fixed 71');
   for(const policy of [{enabled:'yes'},{mode:'timer'},{afterSteps:0},{afterSteps:100},{intervals:[2,0]},{intervals:Array(25).fill(1)}])a.equal((await request(route,{config:{playableCta:policy}},'PATCH')).status,400,'reject invalid auto-jump policy');
   a.equal((await request(route,{config:{playableCta:{enabled:true,mode:'steps',afterSteps:3,intervals:[2,1]},cta:{buttonText:'Install <now>',guideText:'Try & enjoy'}}},'PATCH')).status,200,'CTA and auto-jump settings save');
   await request(route,{config:{playableCta:{afterSteps:4}}},'PATCH');
@@ -38,7 +42,7 @@ export default async function test(a){
    a.equal(names.sort(),format?['game.js']:['game.js','index.html'],'archive contains only intended root entries');exports[format]=file;
   }
   const firstGame=execFileSync('unzip',['-p',exports['?format=game'],'game.js'],{maxBuffer:16000000});await pack();
-  a.check(preview.includes('const CANDY_TARGET_HITS=10;')&&firstGame.includes(Buffer.from('const CANDY_TARGET_HITS=10;')),'preview and standalone ZIP bake the same count');
+  a.check(preview.includes('const CANDY_TARGET_HITS=71;')&&firstGame.includes(Buffer.from('const CANDY_TARGET_HITS=71;')),'preview and standalone ZIP both use fixed 71');
   a.check(firstGame.equals(execFileSync('unzip',['-p',exports[''],'game.js'],{maxBuffer:16000000})),'assembly and standalone share configured game bytes');
   const assembly=execFileSync('unzip',['-p',exports[''],'index.html'],{encoding:'utf8',maxBuffer:1000000});
   a.equal(settings(assembly).policy,settings(preview).policy,'preview and export share auto-jump settings');
@@ -46,14 +50,15 @@ export default async function test(a){
   a.check(!firstGame.includes(Buffer.from('playable-steps'))&&!firstGame.includes(Buffer.from('novvy-cta')),'standalone game excludes CTA policy and card');
   const second=await fetch(base+route+'/export?format=game');const repeat=path.join(tmp,'repeat.zip');fs.writeFileSync(repeat,Buffer.from(await second.arrayBuffer()));a.check(firstGame.equals(execFileSync('unzip',['-p',repeat,'game.js'],{maxBuffer:16000000})),'repack payload deterministic');
   await request(route,{config:{hud:{titleLine1:'changed'}}},'PATCH');a.equal((await fetch(base+route+'/export')).status,409,'HUD edit invalidates old export');
-  await pack();await request(route,{config:{gameplay:{tapsToBreak:71}}},'PATCH');a.equal((await fetch(base+route+'/export?format=game')).status,409,'count edit invalidates old export');
+  a.equal((await(await fetch(base+route)).json()).config.gameplay,{allowReplay:true},'saving clears obsolete stored count');
+  a.check(!preview.includes('2024 king.com Ltd.')&&!firstGame.includes(Buffer.from('2024 king.com Ltd.')),'preview and exports remove footer text');
   a.equal((await(await fetch(base+route)).json()).config.hud.titleLine2,'Second line','partial title edit preserves second line');
   await request(route,{config:{intro:{enabled:true,goEnabled:true,goText:'Legacy GO'}}},'PATCH');a.equal((await request(route+'/run',{step:'pack'})).status,422,'video requires transcoded assets');
   const video=path.join(tmp,'intro.mp4');execFileSync('ffmpeg',['-y','-f','lavfi','-i','color=c=blue:s=160x284:r=15:d=6','-c:v','libx264','-pix_fmt','yuv420p',video],{stdio:'ignore'});
   a.equal((await fetch(base+route+'/uploads/intro-video',{method:'PUT',headers:{'Content-Type':'application/octet-stream'},body:fs.readFileSync(video)})).status,200,'intro upload succeeds');
   a.equal((await request(route+'/run',{step:'intro'})).status,200,'core video processing succeeds');
   const introBefore=(await(await fetch(base+route)).json()).steps.intro.lastRunAt;
-  await request(route,{config:{playableCta:{mode:'complete'},cta:{enabled:false},gameplay:{tapsToBreak:20}}},'PATCH');
+  await request(route,{config:{playableCta:{mode:'complete'},cta:{enabled:false}}},'PATCH');
   a.equal((await(await fetch(base+route)).json()).steps.intro.lastRunAt,introBefore,'CTA edits preserve transcoded intro');
   preview=await(await fetch(base+route+'/preview')).text();const ui=JSON.parse(preview.match(/window\.__NOVVY_UI__=(.*?);<\/script>/)[1]);a.check(ui.intro.goEnabled===false&&!preview.includes('Legacy GO'),'legacy GO does not block automatic entry');
   a.check(!preview.includes('id="novvy-cta"')&&settings(preview).policy.mode==='complete','CTA off and complete mode reach preview');

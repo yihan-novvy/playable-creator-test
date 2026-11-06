@@ -26,7 +26,7 @@ function method(type,name,next){
  assert(start>at&&end>start,'native callback exists: '+name);
  return native.slice(native.indexOf('function',start),end+1);
 }
-function fixture(){
+function fixture(pixelCount=4){
  const calls=[];let active=false,accept=true,reserve=true,count=1,ended=false;
  class List{items=[];get Count(){return this.items.length;}add(v){this.items.push(v);}ForEach(fn){this.items.forEach(fn);}}
  class MapEvents{TriggerShootersWillBePlacedToConveyor(){}TriggerSlotReleasedAfterFull(){}}
@@ -39,7 +39,7 @@ function fixture(){
  for(const [name,next] of [['OnTapShooter','OnCannotTapShooter'],['TryPlaceShootersToConveyor','GetStartPointOffset']])MapController.prototype[name]=vm.runInNewContext('('+method('Loom.Game.Map.MapController',name,next)+')',globals);
  Damage.prototype.OnPixelDamaged=vm.runInNewContext('('+method('Loom.Game.PixelImages.PixelGridDamageController','OnPixelDamaged','OnEnable')+')',globals);
  const adapter=vm.runInNewContext(read('src/adapter.js')+';installPixelFlow');
- adapter(w,{}, {step:p=>calls.push(['step',p])},()=>({}),()=>active&&!ended,kind=>{if(active&&!ended){ended=true;calls.push([kind]);}},4);
+ adapter(w,{}, {step:p=>calls.push(['step',p])},()=>({}),()=>active&&!ended,kind=>{if(active&&!ended){ended=true;calls.push([kind]);}},pixelCount);
  const map=Object.assign(new MapController(),{shooterProvider:{GetShootersToPlaceToConveyor:()=>({Count:count})},Conveyor:{CanReceiveItemCount:()=>accept,ActivationQueueCount:0},SlotGroup:{SlotsFull:false},mapEvents:new MapEvents(),GetStartPointOffset(){return 0;},ReserveSlots:()=>reserve,RemoveFromQueuesAndSlots:()=>false,TryActivateAutoFinisher(){},BuildPlaceTweens(){}});
  return{calls,map,damage:new Damage(),integration:new Integration(),events:map.mapEvents,setActive:v=>active=v,setAccept:v=>accept=v,setReserve:v=>reserve=v,setCount:v=>count=v};
 }
@@ -55,4 +55,22 @@ f.events.TriggerShootersWillBePlacedToConveyor({Count:1});assert.equal(f.calls.l
 f.setActive(false);f.map.OnTapShooter({});assert.equal(f.calls.length,3,'paused input blocked');
 f.setActive(true);f.integration.OnGameWin();f.integration.OnGameWin();f.integration.OnGameOver();assert.deepEqual(f.calls.slice(3),[['win']],'one terminal outcome');
 const fail=fixture();fail.setActive(true);fail.integration.OnGameOver();fail.integration.OnGameOver();assert.deepEqual(fail.calls,[['fail']]);
-console.log('Pixel Flow integrity, deterministic build, native placement/damage callbacks and terminal deduplication passed.');
+// Exercise the frozen level's real denominator at and immediately below every
+// progress checkpoint. These check game calls, not platform Tracking delivery.
+const progress=fixture(source.pixelCount);progress.setActive(true);let cleared=0;
+for(const total of [269,270,539,540,809,810,1080]){
+ const priorCalls=progress.calls.length;
+ while(cleared<total){
+  const pixel={IsDead:true,X:cleared++,Y:0,Area:{$clone:()=>({})}};
+  progress.damage.OnPixelDamaged(pixel);progress.damage.OnPixelDamaged(pixel);
+ }
+ assert.equal(progress.calls.length,priorCalls,'automatic pixel removal never manufactures a gameplay step');
+ progress.setAccept(false);progress.map.OnTapShooter({});
+ assert.equal(progress.calls.length,priorCalls,'rejected placement does not flush progress');
+ progress.setAccept(true);progress.map.OnTapShooter({});
+ assert.deepEqual(progress.calls.at(-1),['step',total/source.pixelCount*100],'next accepted placement carries actual progress at '+total+' cleared pixels');
+}
+assert.deepEqual(progress.calls.filter((_,i)=>[1,3,5].includes(i)).map(c=>c[1]),[25,50,75]);
+assert(progress.calls.every(c=>c[0]==='step'),'100 percent alone does not fabricate a win');
+progress.integration.OnGameWin();assert.deepEqual(progress.calls.at(-1),['win']);
+console.log('Pixel Flow integrity, deterministic build, native placement/damage callbacks, 25/50/75 progress boundaries and terminal deduplication passed.');

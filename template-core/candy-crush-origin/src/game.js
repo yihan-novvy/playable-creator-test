@@ -28,7 +28,7 @@ NovvyGame(function(container,shell,options){
     camera.projectionMatrixInverse.copy(camera.projectionMatrix).invert();
   }
   function nativeUi(){if(!app)return;
-    for(const name of ['ButtonMini','ButtonCTA','FullscreenCTA']){const node=app.components[name];if(node){node.visible=false;node.renderable=false;node.eventMode='none';node.removeAllListeners?.();}}
+    for(const name of ['ButtonMini','ButtonCTA','FullscreenCTA','Legal']){const node=app.components[name];if(node){node.visible=false;node.renderable=false;node.eventMode='none';node.removeAllListeners?.();}}
     for(const name of ['LogoMini','Logo']){const node=app.components[name];if(node){node.eventMode='none';node.removeAllListeners?.();}}
   }
   function layout(){if(!app)return;app.resizeManager.call();nativeUi();sound();}
@@ -39,7 +39,7 @@ NovvyGame(function(container,shell,options){
       if(!started||paused||disposed||finished||count!==last+1||total!==CANDY_TARGET_HITS||count>total)return;
       last=count;shell.step(count/total*100);
       scope.window.clearTimeout(targetTimer);if(turnState)tween.killTweensOf(turnState);
-      if(total>5&&count<total&&ball)targetTimer=scope.window.setTimeout(()=>{
+      if(count<total&&ball)targetTimer=scope.window.setTimeout(()=>{
         if(disposed||finished)return;
         const turn=remainingCandyTurn(ball,app.view3d.camera,raycaster);
         if(!turn)return;

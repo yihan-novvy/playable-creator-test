@@ -5,34 +5,34 @@
   "sourceSha256": "0d3f94db22c6e226ac8c47142006eb78616798c6eb7a24ae8618922bfa45e118",
   "artifact": {
     "schemaVersion": 1,
-    "configuredHits": 10,
+    "fixedHits": 71,
     "maxHits": 71,
-    "checkedAt": "2026-11-06T15:25:39.386Z",
+    "checkedAt": "2026-11-06T16:05:27.474Z",
     "staticPass": true,
     "platformEventsVerified": false,
     "nativeFileRuntimeVerified": false,
     "game": {
       "file": "game-only.zip",
-      "sha256": "aea3a1634362d1fe49912ab3be7319d8dd9ee6aa1d9674e86699734125440d67",
-      "bytes": 2390452,
+      "sha256": "bed8351aa8a46550c4a01c19ab4e0c239b512f4ca952880405a9b09fa762b0da",
+      "bytes": 2390435,
       "entries": [
         "game.js"
       ]
     },
     "assembly": {
       "file": "assembly.zip",
-      "sha256": "63c586ba8249693434fbf88fe5984d5dc4bc5e0b0e0ad1e5284dd97b5d3176e4",
-      "bytes": 2465172,
+      "sha256": "82cbabcd621a27bb87a5645b168d4269c789bbaa28864f445656935c2d47135b",
+      "bytes": 2465870,
       "entries": [
         "game.js",
         "index.html"
       ],
-      "uncompressedBytes": 4382756
+      "uncompressedBytes": 4385071
     },
-    "gameJsSha256": "2081a1bc786a11b09c862d27b57531cf18f6e0699ce9b3359182be03cd5e7467",
+    "gameJsSha256": "17a996cef8b41668185fb5716a53ab53a892ec879003111033ca750250994fcd",
     "checks": [
       "Root classic game.js, one synchronous registration and parseable syntax",
-      "Exact final configured build bytes in both archives",
+      "Exact fixed-71 build bytes in both archives; footer text removed",
       "No legacy bridge, native channel, SDK, direct store opening or window messages in game",
       "Standard host card has one event owner",
       "Standalone and total assembly package limits"
@@ -45,8 +45,8 @@
   "requirements": {
     "playableType": "level",
     "levelCount": 1,
-    "goal": "Configurable 1–71 successful distinct candy hits; default 5, current example 10",
-    "progress": "successfulHits / configuredTarget * 100",
+    "goal": "Fixed 71 successful distinct candy hits; no configuration",
+    "progress": "successfulHits / 71 * 100",
     "normalResult": "win after original explosion callback",
     "failure": "No naturally reachable failure in this fixed creative; defensive native fail handler is connected",
     "ctaPlacements": [],
@@ -67,36 +67,45 @@
     "build": "pass; frozen source hash and unique patch anchors",
     "deterministicRebuild": "pass",
     "registration": "pass; zero warnings",
-    "gameAdapterTests": "pass",
+    "gameAdapterTests": "pass; fixed 71, legacy config ignored, native footer removed, lifecycle/progress/result",
     "hostPolicyTests": "pass; disabled/steps/complete, replay, debounce, visibility, result-before-store",
-    "editorHttp": "60 checks passed",
+    "editorHttp": "59 checks passed; rejects hit-count edits and ignores legacy saved counts",
     "taskCreation": "15 checks passed",
     "browser": {
-      "fullProgression": "v1.1: 10 real pointer clicks on visible candies; still playable after hit 5 and 9; original explosion/result after hit 10.",
-      "invalidInput": "Observed misses did not consume successful-hit thresholds",
-      "replay": "Adapter tests retain replay isolation; earlier v1.0 browser evidence is historical.",
-      "intro": "HTTP test processed and packed video with configured count; prior video handover browser evidence is historical.",
+      "configuration": "Workbench shows fixed 71 explanation with no count input; saved task drops legacy count and pack succeeds.",
       "layout": [
-        "1280x720 game",
-        "464px workbench; count and max visible"
+        "1280x720 game: original footer absent; title, candy ball and shared download card visible"
       ],
-      "cta": "Local step CTA preview requests at 3/5/7/9; not official SDK evidence.",
-      "errors": "No error-level logs in 10-hit final game browser run.",
-      "previousVersionEvidence": {
-        "fullProgression": "Final game: five actual candy hits, step-3 and step-5 CTA preview requests, native explosion/result screen",
+      "gameplaySmoke": "One actual pointer hit; candy ball continues rendering after rotation.",
+      "errors": "No error-level logs captured in current final game tab.",
+      "fullProgression": "71-hit sequence covered by adapter and actual GLB geometry tests, not a full browser playthrough.",
+      "historicalV1_1Evidence": {
+        "fullProgression": "v1.1: 10 real pointer clicks on visible candies; still playable after hit 5 and 9; original explosion/result after hit 10.",
         "invalidInput": "Observed misses did not consume successful-hit thresholds",
-        "replay": "Observed fresh original candy ball after Play again; final adapter tests also cover fresh instance and cleanup",
-        "intro": "Actual core:intro processed video automatically hands over to gameplay despite legacy GO settings",
+        "replay": "Adapter tests retain replay isolation; earlier v1.0 browser evidence is historical.",
+        "intro": "HTTP test processed and packed video with configured count; prior video handover browser evidence is historical.",
         "layout": [
-          "390x844 portrait",
-          "844x390 landscape",
-          "1280x720 desktop",
-          "HUD on/off, full canvases and shared CTA card"
+          "1280x720 game",
+          "464px workbench; count and max visible"
         ],
-        "cta": "One observed cta_click console request after final card click",
-        "errors": "No captured error-level logs in final local browser run"
-      },
-      "configuration": "Workbench input 1–71, maximum label, saved 10, invalidated old pack, rebuilt successfully."
+        "cta": "Local step CTA preview requests at 3/5/7/9; not official SDK evidence.",
+        "errors": "No error-level logs in 10-hit final game browser run.",
+        "previousVersionEvidence": {
+          "fullProgression": "Final game: five actual candy hits, step-3 and step-5 CTA preview requests, native explosion/result screen",
+          "invalidInput": "Observed misses did not consume successful-hit thresholds",
+          "replay": "Observed fresh original candy ball after Play again; final adapter tests also cover fresh instance and cleanup",
+          "intro": "Actual core:intro processed video automatically hands over to gameplay despite legacy GO settings",
+          "layout": [
+            "390x844 portrait",
+            "844x390 landscape",
+            "1280x720 desktop",
+            "HUD on/off, full canvases and shared CTA card"
+          ],
+          "cta": "One observed cta_click console request after final card click",
+          "errors": "No captured error-level logs in final local browser run"
+        },
+        "configuration": "Workbench input 1–71, maximum label, saved 10, invalidated old pack, rebuilt successfully."
+      }
     },
     "broaderEditorRegression": "Not fully green: unrelated legacy image-to-pattern/reference snapshot and export-layout tests fail; creation allowlist updated and rechecked",
     "nativeFileRuntime": "Not tested: browser security policy prohibits file URLs",
@@ -113,16 +122,19 @@
     "count-settings.jpg",
     "count-10-win.jpg",
     "count-browser-log.json",
-    "count-editor-tests.log"
+    "count-editor-tests.log",
+    "fixed71-preview.jpg",
+    "fixed71-browser-log.json",
+    "fixed71-editor-tests.log"
   ],
   "limitations": [
     "Actual official received/dropped-message and Tracking-request correlation is missing; no platform event acceptance claimed",
     "Native advertising WebView/file execution remains to be verified",
-    "71-hit reachability is geometry-tested; actual browser end-to-end run used 10 hits."
+    "71-hit reachability is geometry-tested; the earlier complete browser run used 10 hits; current fixed-71 browser validation is a visual and click smoke check."
   ],
-  "templateVersion": "1.1.0",
+  "templateVersion": "1.2.0",
   "freshProtocol": {
-    "fetchedAt": "2026-11-06T15:11:59.205238Z",
+    "fetchedAt": "2026-11-06T15:58:50.326658Z",
     "sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39"
   }
 }

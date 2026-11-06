@@ -29,8 +29,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     return field(label, input);
   }
   function renderConfig() {
-    const maxHits=templateInfo.gameplayLimits.tapsToBreak.max,targetHits=config().gameplay.tapsToBreak;
-    document.getElementById('config-hint').textContent = `原版 3D 糖果球：本局成功点击 ${targetHits} 次触发爆炸；点击空白不计步。`;
+    document.getElementById('config-hint').textContent = '原版 3D 糖果球：固定点击全部 71 个糖果点后爆炸通关；点击空白不计步。';
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
@@ -41,12 +40,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'Candy Crush Saga'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2, 'Poke the Candy!'),
     ]));
-    const hits=el('input',{type:'number',min:1,max:maxHits,step:1,required:'',value:targetHits});
-    hits.addEventListener('change',async()=>{if(!hits.checkValidity()){hits.reportValidity();return;}await save({gameplay:{tapsToBreak:Number(hits.value)}});await refresh(true);});
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
-      field(`每局有效点击次数（1–${maxHits}）`,hits),
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
-    ]), el('p', { class: 'hint' }, [`最多 ${maxHits} 个糖果点，每个点只能计数一次。达到设定次数后爆炸通关，默认 5 次。剩余糖果全部在背面时会自动转到可点击的位置。修改后需重新打包。`]),el('p',{class:'hint'},['重玩默认关闭。开启后爆炸结束可重玩；重玩恢复糖果球与点击进度，不重复片头。']));
+    ]), el('p', { class: 'hint' }, ['每局固定 71 次有效点击，不可配置。每个糖果点只能计数一次；点完全部糖果后爆炸通关。剩余糖果全部在背面时会自动转到可点击的位置。']),el('p',{class:'hint'},['重玩默认关闭。开启后爆炸结束可重玩；重玩恢复糖果球与点击进度，不重复片头。']));
     const policy=config().playableCta||{};
     const first=el('input',{type:'number',min:1,max:99,step:1,value:policy.afterSteps??3});
     first.addEventListener('change',async()=>{if(!first.checkValidity()){first.reportValidity();return;}await save({playableCta:{afterSteps:Number(first.value)}});await refresh(true);});
@@ -59,7 +55,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const mode=el('select');for(const [value,label] of [['steps','按有效步数'],['complete','通关时']]){const option=el('option',{value},[label]);option.selected=(policy.mode||'steps')===value;mode.append(option);}mode.addEventListener('change',async()=>{await save({playableCta:{mode:mode.value}});await refresh(true);});
     wrap.append(el('h3',{},['自动跳转设置']),el('div',{class:'dragon-config-grid'},[
       checkbox('启用自动跳转','playableCta','enabled',policy.enabled!==false),field('触发模式',mode),field('首跳有效步数（1–99）',first),field('后续间隔（最后一项重复，留空仅首跳）',intervals)
-    ]),el('p',{class:'hint'},[`成功点中可见糖果计 1 步，本局共 ${targetHits} 步；空白点击不计步。默认第 3 步首跳，之后每 2 步重复。尚未触发步数跳转时，通关补跳一次；重玩重新计数。下载卡开关独立，修改后需重新打包。独立 game.js 包的跳转请在平台组装页设置。`]));
+    ]),el('p',{class:'hint'},['成功点中可见糖果计 1 步，整局固定 71 步；空白点击不计步。默认第 3 步首跳，之后每 2 步重复。尚未触发步数跳转时，通关补跳一次；重玩重新计数。下载卡开关独立，修改后需重新打包。独立 game.js 包的跳转请在平台组装页设置。']));
     wrap.append(el('h3', {}, ['底部下载卡']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('显示下载卡', 'cta', 'enabled', config().cta?.enabled !== false),
       textField('按钮文字', 'cta', 'buttonText', config().cta?.buttonText, 'Play Now'),

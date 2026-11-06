@@ -19,6 +19,10 @@ async function fixture({intro=false,ctaEnabled=true,allowReplay=true,clickImpl,p
 }
 const clicks=f=>f.calls.filter(c=>c[0]==='click');
 const actions=(f,n)=>{for(let i=0;i<n;i++){f.advance();f.instances.at(-1).shell.step(i);}};
+const progress=await fixture({policy:{enabled:false}});
+const percentages=[0,269/1080*100,25,539/1080*100,50,809/1080*100,75];
+for(const percent of percentages)progress.instances[0].shell.step(percent);
+assert.deepEqual(progress.calls.filter(c=>c[0]==='onStep').map(c=>[c[1],c[2].progress]),percentages.map((percent,i)=>[i+1,percent]),'assembly forwards each successful step and its real progress unchanged');
 const f=await fixture({intro:true});
 assert.equal(f.nodes['novvy-cta'].hidden,true,'card hidden throughout intro');
 f.emit('novvy:cta-interact');actions(f,10);assert.equal(clicks(f).length,0,'no click or auto-jump before playable');

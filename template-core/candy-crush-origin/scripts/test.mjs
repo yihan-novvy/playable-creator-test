@@ -22,7 +22,10 @@ for(const [file,hash] of Object.entries(manifest.constants.fileHashes)){
 assert.equal((game.match(/NovvyGame\(function/g)||[]).length,1);
 assert.ok(!/postMessage|messageHandlers|NovvyPlayable|NovvyAnalytics|NovvyShell|window\.open\(|mraid\./.test(game));
 const source=JSON.parse(game.match(/^const SOURCE=(.*);$/m)[1]);
-assert.equal(source.params.tapsToBreak.value,5);
+assert.equal(source.params.tapsToBreak.value,71);
+assert.ok(game.includes('const CANDY_TARGET_HITS=71;'));
+assert.ok(!game.includes('2024 king.com Ltd.'));
+assert.equal(source.texts.en.textLegal,'');
 const inventory=candyModel(read('source/original.html'));
 assert.equal(inventory.maxHits,71);assert.equal(manifest.constants.game.maxHits,inventory.maxHits);
 assert.equal(source.params.hideCTA.value,true);
@@ -31,29 +34,30 @@ assert.ok(source.engine.includes('e.length>0&&e[0].object.visible'));
 assert.ok(source.engine.includes('this.#At++,globalThis.CCS_CONTEXT.step(this.#At,this.#Y.params.tapsToBreak.value,this.components.World["сolorbomb"],this.#Et)'));
 assert.ok(source.engine.includes('onComplete:this.winGame'));
 // Adapter-only fixtures: no HTML mock, synthetic game input or official-platform claims.
-async function fixture(target=5){
+async function fixture(target=71){
   let entry,context,frame;const calls=[],events=new Map();let removed=false;
   const node={style:{},clientWidth:390,clientHeight:844,addEventListener:(type,fn)=>events.set(type,fn),removeEventListener:type=>events.delete(type)};
   const scope={window:{},audioContexts:new Set(),run(){context=scope.window.CCS_CONTEXT;},pause(){calls.push(['pause']);},resume(){calls.push(['resume']);},dispose(){calls.push(['dispose']);}};
   scope.window.setTimeout=()=>0;scope.window.clearTimeout=()=>{};scope.window.requestAnimationFrame=fn=>{frame=fn;};
   vm.runInNewContext(read('src/game.js'),{NovvyGame:fn=>{entry=fn;},engineRoot:()=>({root:node,mount:{remove(){removed=true;}}}),createEngineScope:()=>scope,SOURCE:source,CANDY_TARGET_HITS:target,window:{devicePixelRatio:3},console});
   const promise=entry({},Object.fromEntries(['step','win','fail'].map(name=>[name,(...args)=>calls.push([name,...args])])),{env:{muted:true,safeArea:{top:54},insets:{bottom:110}}});
-  const app={resizeManager:{call(){}},components:{},soundManager:{on(){},off(){}}};
+  const app={resizeManager:{call(){}},components:{Legal:{visible:true,renderable:true}},soundManager:{on(){},off(){}}};
   context.ready(app,{mute(value){calls.push(['mute',value]);},unload(){calls.push(['unload']);}},{globalTimeline:{clear(){}},ticker:{sleep(){}}});frame();const instance=await promise;
+  assert.equal(app.components.Legal.visible,false,'footer node hidden');
   assert.equal(scope.window.params.tapsToBreak.value,target,'native win target matches baked configuration');
   return {instance,context,calls,node,unlock:()=>events.get('pointerdown')?.(),removed:()=>removed};
 }
-const f=await fixture();f.context.step(1,5);assert.equal(f.calls.filter(c=>c[0]==='step').length,0);
-f.instance.start();f.context.step(1,5);f.context.step(1,5);assert.deepEqual(f.calls.filter(c=>c[0]==='step'),[['step',20]]);
+const f=await fixture();f.context.step(1,71);assert.equal(f.calls.filter(c=>c[0]==='step').length,0);
+f.instance.start();f.context.step(1,71);f.context.step(1,71);assert.deepEqual(f.calls.filter(c=>c[0]==='step'),[['step',1/71*100]]);
 f.unlock();assert.equal(f.context.audible(),false,'muted env wins over native first touch');f.instance.setEnv({muted:false});assert.equal(f.context.audible(),true);
-f.instance.pause();f.context.step(2,5);assert.equal(f.calls.filter(c=>c[0]==='step').length,1);assert.equal(f.context.audible(),false);
-f.instance.resume();for(let i=2;i<=5;i++)f.context.step(i,5);
-assert.deepEqual(f.calls.filter(c=>c[0]==='step').map(c=>c[1]),[20,40,60,80,100]);
+f.instance.pause();f.context.step(2,71);assert.equal(f.calls.filter(c=>c[0]==='step').length,1);assert.equal(f.context.audible(),false);
+f.instance.resume();for(let i=2;i<=71;i++)f.context.step(i,71);
+assert.deepEqual(f.calls.filter(c=>c[0]==='step').map(c=>c[1]),Array.from({length:71},(_,i)=>(i+1)/71*100));
 f.context.win();f.context.win();f.context.fail();assert.equal(f.calls.filter(c=>c[0]==='win').length,1);assert.equal(f.calls.filter(c=>c[0]==='fail').length,0);
 assert.equal(f.context.area().height,680,'layout respects top and bottom without shrinking canvas');
 f.instance.destroy();f.instance.destroy();assert.equal(f.removed(),true);assert.equal(f.context.alive(),false);assert.equal(f.calls.filter(c=>c[0]==='dispose').length,1);
-const retry=await fixture();retry.instance.start();retry.context.step(1,5);assert.equal(retry.calls.filter(c=>c[0]==='step').length,1);retry.instance.destroy();
-for(const target of [1,10,71]){
+const retry=await fixture();retry.instance.start();retry.context.step(1,71);assert.equal(retry.calls.filter(c=>c[0]==='step').length,1);retry.instance.destroy();
+for(const target of [71]){
   const f=await fixture(target);f.instance.start();
   f.context.step(1,target+1);f.context.step(2,target);f.context.step(0,target);
   assert.equal(f.calls.filter(c=>c[0]==='step').length,0,'mismatched totals, skipped and zero counts rejected');
@@ -64,15 +68,16 @@ for(const target of [1,10,71]){
   f.context.win();f.context.win();assert.equal(f.calls.filter(c=>c[0]==='win').length,1);f.instance.destroy();
 }
 const entry=getEntry('candy-crush-origin'),config=effectiveConfig(entry.template,{});
+assert.equal(config.gameplay.tapsToBreak,undefined);
 assert.equal(config.cta.enabled,true);assert.equal(config.playableCta.enabled,true);assert.equal(config.gameplay.allowReplay,false);assert.equal(config.intro.enabled,false);
 const build=config=>candyCrushHtml({root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config,preview:true});
 const html=build(config).html;assert.ok(html.includes('novvy-cta-btn'));assert.ok(html.includes('Candy Crush Saga'));
-for(const target of [1,10,71]){
-  const configured=build({...config,gameplay:{tapsToBreak:target}});
-  assert.ok(configured.game.includes(`const CANDY_TARGET_HITS=${target};`));assert.ok(configured.html.includes(configured.game.replace(/<\/script/gi,'<\\/script')));
-  assert.equal(configured.targetHits,target);
+for(const legacyCount of [1,5,10,71,72,'10',null]){
+  const configured=build({...config,gameplay:{tapsToBreak:legacyCount}});
+  assert.equal(configured.game,game,'legacy settings cannot override fixed 71');
+  assert.ok(configured.html.includes('const CANDY_TARGET_HITS=71;'));
+  assert.equal(configured.targetHits,71);
 }
-for(const target of [0,72,1.5,'10',null])assert.throws(()=>build({...config,gameplay:{tapsToBreak:target}}),/1–71/);
 assert.ok(!build({...config,cta:{enabled:false}}).html.includes('id="novvy-cta"'));
 assert.ok(build({...config,playableCta:{enabled:true,mode:'complete',afterSteps:3,intervals:[2]}}).html.includes('"mode":"complete"'));
 assert.deepEqual(prerequisites(config),{uploads:[],generated:[]});
@@ -107,4 +112,4 @@ for(let count=0;count<71;count++){
 }
 assert.ok(rescued>0,'sparse-round recovery actually exercised');
 assert.equal(turnContext.remainingCandyTurn(ball,camera,raycaster),null);
-console.log(`Candy Crush: count bounds/baked exports, progress/lifecycle, source/hash/determinism and all 71 model targets passed (${rescued} recovery turns).`);
+console.log(`Candy Crush: fixed 71/legacy config ignored/footer removed, progress/lifecycle, source/hash/determinism and all 71 model targets passed (${rescued} recovery turns).`);
