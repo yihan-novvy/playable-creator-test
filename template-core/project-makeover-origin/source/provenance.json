@@ -1,0 +1,50 @@
+{
+  "app": {
+    "name": "Project Makeover",
+    "developer": "Magic Tavern, Inc.",
+    "appStoreId": "1483058899",
+    "appStoreUrl": "https://apps.apple.com/us/app/project-makeover/id1483058899"
+  },
+  "observedAt": "2026-11-06",
+  "creativeFingerprint": "3df7449c58284d3620850de23804d055",
+  "detailUrl": "https://data.insightrackr.com/creative/preplay/detail/3df7449c58284d3620850de23804d055",
+  "search": {
+    "keyword": "Project Makeover",
+    "dateFrom": "2025-11-07",
+    "dateTo": "2026-11-06",
+    "sort": "relevance",
+    "os": "all",
+    "channel": "all"
+  },
+  "displayedSignals": {
+    "estimatedImpressions": "400 million",
+    "lifetimeDays": 785,
+    "firstSeen": "2024-09-13",
+    "lastSeen": "2026-09-16",
+    "channel": "AppLovin",
+    "note": "Insightrackr estimates, not conversion evidence"
+  },
+  "sourceAttribution": "Listing developer and embedded iOS/Android destinations match the requested app; publisher authorship is not independently verified.",
+  "engine": "Adobe Animate / CreateJS",
+  "gameplay": "One native makeup demonstration: select one of three foundation shades and apply to the face. Native demo then disables further gameplay and turns the screen into a store placement. No true win/fail branch exists.",
+  "files": {
+    "original.js": "946e1ca7879674f946d39d057f8af535c014b41c706ac7785988370787db0335",
+    "loader.html": "ee9fcd6c6b6f665fe7b298402f29563c25ee46d12ee902a9ad14a169a5afebd5"
+  },
+  "excludedCandidates": [
+    {
+      "fingerprint": "10969e87f23af54413899f1558ffcdcd",
+      "reason": "Looping MP4 with full-screen store handler, no gameplay"
+    },
+    {
+      "fingerprint": "16657e06bad528c53efc6d01c84053ef",
+      "reason": "Cocos narrative clicks; clothing selection is a store link"
+    },
+    {
+      "fingerprint": "0690e2525802722fdb9abd49498b41c2",
+      "reason": "One choice followed by video/slideshow; less direct native gameplay"
+    }
+  ],
+  "detailUrlStatus": "Derived from the observed site detail route and downloaded creative fingerprint; this specific detail page was not separately opened.",
+  "downloadedPayloadUrl": "https://res1.applovin.com/odf6209f/6ad9062ed3a6533994e76545e5ded109f1ad8a14_v1_js_load.js"
+}

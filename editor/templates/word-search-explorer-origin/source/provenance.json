@@ -1,0 +1,39 @@
+{
+  "app": {
+    "name": "Word Search Explorer",
+    "publisher": "PlaySimple Games Pte Ltd",
+    "storeId": "1602508478",
+    "storeUrl": "https://apps.apple.com/us/app/word-search-explorer/id1602508478"
+  },
+  "source": {
+    "provider": "Insightrackr",
+    "fingerprint": "a8e27465202d6b2e256e5e416385f713",
+    "searchUrl": "https://data.insightrackr.com/search/preplay?keyWord=Word+Search+Explorer&apt=1",
+    "assetUrl": "https://adinsights-1258892624.oss-accelerate.aliyuncs.com/htmls/zip/2025/12/24/a8e27465202d6b2e256e5e416385f713/m_en_WS_dPITcS8tq_ios_ty/m_en_WS_dPITcS8tq_ios_ty.html",
+    "observedAt": "2026-11-06",
+    "acquisition": "Exact preview asset fetched publicly without credentials after browser download controls were unavailable. HTTP original bytes retained.",
+    "filters": {
+      "query": "Word Search Explorer",
+      "sort": "relevance",
+      "period": "2025-11-07 to 2026-11-06"
+    },
+    "estimatedImpressions": 16060000,
+    "network": "Mintegral",
+    "identityEvidence": "Embedded iOS landing ID matches 1602508478; not proof of publisher authorship."
+  },
+  "original": {
+    "engine": "Phaser 3",
+    "grid": [
+      7,
+      11
+    ],
+    "targetCount": 17,
+    "duplicateTarget": "KIND is present twice with the same coordinates; preserved.",
+    "automaticStoreAfterWords": 4,
+    "inGameButton": "TRY NOW",
+    "endCardEnabled": false
+  },
+  "files": {
+    "original.html": "25f3c1abfe9b75575e1538ee7bab82d860d49fce02990ddf35a38dc68284d05d"
+  }
+}

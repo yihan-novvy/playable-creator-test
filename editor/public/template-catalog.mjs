@@ -1,6 +1,16 @@
 // Presentation copy only. Demo gameplay is assembled from the registered plugins.
 export const catalog = [
   {
+    id: 'word-search-explorer-origin', name: 'Word Search Explorer', subtitle: 'Origin · 网格找词', group: 'origin', kind: '单词搜索', color: '#63478c', isNew: true,
+    summary: '在 7×11 字母网格中划出隐藏单词，完成左侧全部目标。',
+    tags: ['原版网格', '17 项目标'],
+    description: '保留原版 Phaser 找词引擎、字母网格、彩色连线、勾选反馈与音效。',
+    how: '按住首字母沿直线划到末字母，松开提交。找到清单中的全部 17 项目标即可通关。',
+    features: ['固定原版题目，保留两项 KIND 目标', '正确找词计步，找齐全部目标通关', '支持片头视频、可选 HUD 标题与结算重玩', '可导出组装 ZIP 或独立 game.js ZIP'],
+    config: '片头视频与海报、主副标题、结算重玩。',
+    tools: [], note: '无倒计时与失败条件；背景填充字母沿用原版随机生成。',
+  },
+  {
     id: 'colorever-new', name: 'Colorever New', subtitle: '立体珠子 · 自由拼画', group: 'custom', kind: '珠子拼图', color: '#314252',
     summary: '用立体切面珠子还原图案，让素材里的主角成为可玩的拼画。',
     tags: ['自定义图案', '双段试玩'],
@@ -100,8 +110,28 @@ export const catalog = [
     tags: ['9200 万展示版', '6 字母拼词'],
     description: '独立的 Zen Word 9200 万展示版，保留原版字母轮、单词布局、海岸背景、提示和音效。',
     how: '按住并依次滑过字母，松开提交单词。填完全部单词后显示完成弹窗，可重玩。',
-    features: ['固定 6 字母海岸原版', '完整内嵌原版引擎与素材', '支持片头、GO、HUD 标题和结算重玩', '可导出项目组装 ZIP 或独立 game.js ZIP'],
-    config: '片头视频与海报、GO 按钮、两行 HUD 标题、重玩、首跳步数与循环间隔。',
+    features: ['固定 6 字母海岸原版', '完整内嵌原版引擎与素材', '支持片头、HUD 标题和结算重玩', '可导出项目组装 ZIP 或独立 game.js ZIP'],
+    config: '片头视频与海报、两行 HUD 标题、重玩、首跳步数与循环间隔。',
     tools: [], note: '展示量为 Insightrackr 估算。本模板为独立 playable，无素材版本切换。',
+  },
+  {
+    id: 'project-makeover-origin', name: 'Project Makeover', subtitle: 'Origin · 粉底上妆', group: 'origin', kind: '化妆装扮', color: '#b75b80', isNew: true,
+    summary: '选择粉底颜色，点击脸部完成原版上妆演示。',
+    tags: ['原版化妆', '短试玩'],
+    description: '保留 CreateJS 原版人物、三色粉底、刷子、上妆动画与音效。',
+    how: '点击一种粉底颜色，等待刷子蘸取后，点击脸部上妆。上妆动画结束即完成本段演示。',
+    features: ['三种粉底颜色和原版上妆动画', '资源随包，无外部游戏资源请求', '可选片头、两行标题和演示重玩', '组装 ZIP 与独立 game.js ZIP'],
+    config: '片头视频、两行 HUD 标题和重玩。跳店入口暂未启用。',
+    tools: [], note: '采用 Insightrackr 约 4 亿估算展示素材；仅含原版粉底演示，不包含完整改造流程。',
+  },
+  {
+    id: 'screwdom-origin', name: 'Screwdom', subtitle: 'Origin · 3D 螺丝分类', group: 'origin', kind: '螺丝解谜', color: '#b66d99', isNew: true,
+    summary: '旋转冬季粉色小屋，拆下螺丝并按颜色收集。',
+    tags: ['3D 小屋', '原版物理'],
+    description: '保留 Cocos 原版冬季小屋、螺丝分类、物理掉落、教学和音效。',
+    how: '点击可拆卸的螺丝，送入同色收集盒；暂存槽满会失败，可拖动观察模型。',
+    features: ['固定冬季粉色小屋场景', '346 个引擎与美术资源随包', '可选片头、两行标题和结算重玩', '组装 ZIP 与独立 game.js ZIP'],
+    config: '片头视频、两行 HUD 标题和重玩。下载入口待确认。',
+    tools: [], note: '采用 Insightrackr 估算展示约 204 亿的 AppLovin 素材，保留原版玩法。',
   },
 ];

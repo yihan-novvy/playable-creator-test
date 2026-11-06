@@ -1,0 +1,30 @@
+{
+  "id": "project-makeover-origin",
+  "name": "Project Makeover · 原版化妆试玩",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": 1,
+      "name": "选粉底并上妆（原版演示）",
+      "game": "game/game.js"
+    }
+  ],
+  "constants": {
+    "game": {
+      "host": "game/host.js",
+      "hudInsideCanvas": true,
+      "ctaCard": {
+        "name": "Project Makeover",
+        "icon": "game/cta-icon.png"
+      }
+    },
+    "fileHashes": {
+      "game/game.js": "d486f3fa4950165438ec8e94f07400c1c4037230e61fc737f8808d74065089f1",
+      "game/index.html": "259f3df3f74016e6adab8505b24aaf5211ac5afa388d5132497724724f42cc72",
+      "game/host.js": "4691106eb716c5bbe5c57c6c04ce82cf6dd269974694c02cc47f108b68f8d59d",
+      "game/cta-icon.png": "1e305231f0f18959c8650876064213c36b4e107868cceaf72bb7d1d87583d3cd",
+      "source/provenance.json": "4bce2831ede85bafdb0399a62eca2ab335de4a9212a1568d68ddb6ba49f5406a"
+    }
+  }
+}

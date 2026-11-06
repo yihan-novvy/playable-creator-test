@@ -1,0 +1,30 @@
+{
+  "id": "word-search-explorer-origin",
+  "name": "Word Search Explorer · 原版网格找词",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": 1,
+      "name": "7×11 网格 · 17 项找词目标",
+      "game": "game/game.js"
+    }
+  ],
+  "constants": {
+    "game": {
+      "host": "game/host.js",
+      "hudInsideCanvas": true,
+      "ctaCard": {
+        "name": "Word Search Explorer",
+        "icon": "game/cta-icon.png"
+      }
+    },
+    "fileHashes": {
+      "game/game.js": "667156e3601623bc8c0a64f2ef4175e7419b335ad63778a91e6a43943439309f",
+      "game/index.html": "835c92f29144cc3e368f191e9c842bebff0d9cd6f32e61247d06dd5acc0117c3",
+      "game/host.js": "e5b83be470a47a8c9f172ada7c3df882e9651656019c8aa150d8280abe3c1e24",
+      "game/cta-icon.png": "515e854abf321791c0a1d74f26cabfbfbb31107c673d7123c3fa6b31bf79917d",
+      "source/provenance.json": "f0f5d29268a38c7ca20bde5ddc16b2065a5dbee3b340efac349c1b257d07b9ea"
+    }
+  }
+}

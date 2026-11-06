@@ -5,7 +5,7 @@ import { PROJECTS_ROOT, RESULT_ROOT } from '../lib/paths.mjs';
 import { catalog } from '../public/template-catalog.mjs';
 
 export default async function test(a) {
-  const expected = ['colorever-new', 'colorever-origin', 'escape-arrow', 'dragon-cube', 'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin'];
+  const expected = ['word-search-explorer-origin', 'colorever-new', 'colorever-origin', 'escape-arrow', 'dragon-cube', 'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin', 'project-makeover-origin', 'screwdom-origin'];
   a.equal(catalog.map(item => item.id), expected, 'gallery contains the registered showcase templates');
   const snapshot = () => ({ tasks: listTasks(), project: fs.readdirSync(PROJECTS_ROOT).sort(), result: fs.readdirSync(RESULT_ROOT).sort() });
   const before = snapshot();

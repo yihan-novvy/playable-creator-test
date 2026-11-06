@@ -61,7 +61,7 @@ const route=`/api/tasks/${task.id}`;
       }
       await request(route,{config:{gameplay:{allowReplay:false}}},'PATCH');
       a.equal((await fetch(base+route+'/export?format=game')).status,409,'changing replay invalidates standalone export');
-      await request(route,{config:{intro:{enabled:true}}},'PATCH');
+      await request(route,{config:{intro:{enabled:true,...(key==='92m'?{goEnabled:true,goText:'Legacy GO text'}:{})}}},'PATCH');
       a.equal((await request(route+'/run',{step:'pack'})).status,422,'enabled intro requires processed video');
       {
         const video=path.join(tmp,'intro.mp4');
@@ -69,10 +69,20 @@ const route=`/api/tasks/${task.id}`;
         const uploaded=await fetch(base+route+'/uploads/intro-video',{method:'PUT',headers:{'Content-Type':'application/octet-stream'},body:fs.readFileSync(video)});
         a.equal(uploaded.status,200,'intro upload accepted');
         const transcode=await request(route+'/run',{step:'intro'});a.equal(transcode.status,200,'core intro creates transcoded video and poster');
+        if(key==='92m'){
+          const videoPreview=await(await fetch(base+route+'/preview')).text();
+          const ui=JSON.parse(videoPreview.match(/window\.__NOVVY_UI__=(.*?);<\/script>/)[1]);
+          a.check(ui.intro.goEnabled===false&&!videoPreview.includes('Legacy GO text'),'preview ignores legacy GO gate and text');
+        }
         const composed=await request(route+'/run',{step:'pack'});const composedResult=await composed.json();a.equal(composed.status,200,`video and game pack: ${composedResult.error||''}`);
         a.equal(composedResult.metrics.stageChain,['video','playable'],'video precedes selected playable');
         const zip=path.join(tmp,'with-intro.zip');fs.writeFileSync(zip,Buffer.from(await(await fetch(base+route+'/export')).arrayBuffer()));
         const entries=execFileSync('unzip',['-Z1',zip],{encoding:'utf8'});a.check(entries.includes('intro-video.mp4')&&entries.includes('poster.webp'),'assembly contains processed intro assets');
+        if(key==='92m'){
+          const html=execFileSync('unzip',['-p',zip,'index.html'],{encoding:'utf8',maxBuffer:16000000});
+          const ui=JSON.parse(html.match(/window\.__NOVVY_UI__=(.*?);<\/script>/)[1]);
+          a.check(ui.intro.goEnabled===false&&!html.includes('Legacy GO text'),'packed video enters gameplay without legacy GO confirmation');
+        }
         await request(route,{config:{hud:{titleLine2:'changed'}}},'PATCH');
         a.equal((await fetch(base+route+'/export')).status,409,'HUD edits invalidate assembly');
       }

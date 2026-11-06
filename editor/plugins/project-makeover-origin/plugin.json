@@ -1,0 +1,56 @@
+{
+  "id": "project-makeover-origin",
+  "name": "Project Makeover（片头+原版化妆试玩）",
+  "template": "project-makeover-origin",
+  "workbench": "project-makeover-origin",
+  "steps": [
+    {
+      "id": "intro",
+      "runner": "core:intro"
+    },
+    {
+      "id": "pack",
+      "runner": "./steps/pack.mjs"
+    }
+  ],
+  "uploads": {
+    "intro-video": {
+      "file": "intro-video.mp4",
+      "magic": "mp4"
+    },
+    "intro-poster": {
+      "file": "intro-poster.jpg",
+      "magic": "jpg"
+    }
+  },
+  "overlays": {
+    "hud": "overlays/hud"
+  },
+  "level": {
+    "min": 1,
+    "max": 1
+  },
+  "defaults": {
+    "levelId": 1,
+    "gameplay": {
+      "allowReplay": false
+    },
+    "hud": {
+      "enabled": false,
+      "titleEnabled": false,
+      "titleLine1": "Project Makeover",
+      "titleLine2": "Choose a shade and apply makeup",
+      "ariaLabel": ""
+    },
+    "intro": {
+      "enabled": false,
+      "ariaLabel": ""
+    },
+    "cta": {
+      "enabled": false,
+      "endMask": false,
+      "buttonText": "Play Now",
+      "guideText": "Enjoy for free"
+    }
+  }
+}

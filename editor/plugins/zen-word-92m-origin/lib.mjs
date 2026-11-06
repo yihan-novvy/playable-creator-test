@@ -13,6 +13,9 @@ import {addOriginCtaCard,originCtaPolicy} from '../../core/lib/origin-playable.m
 const run=promisify(execFile);
 const script=s=>`<script>${s.replace(/<\/script/gi,'<\\/script')}</script>`;
 export function zenHtml({root,pluginDir,template,config,media={},preview=false}){
+  // Enter gameplay automatically, even for tasks saved with legacy GO settings.
+  const intro={...config.intro,goEnabled:false};delete intro.goText;
+  config={...config,intro};
   const read=(file,encoding='utf8')=>{const bytes=fs.readFileSync(path.join(root,file));if(createHash('sha256').update(bytes).digest('hex')!==template.fileHashes[file])throw new Error(`模板校验失败，请重新 build: ${file}`);return encoding?bytes.toString(encoding):bytes;};
   const variant=template.levels[0];
   if(template.levels.length!==1||config.levelId!==1)throw Object.assign(new Error('该独立模板只有固定的一份 playable'),{statusCode:400});

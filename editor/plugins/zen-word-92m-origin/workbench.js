@@ -40,10 +40,6 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'Zen Word'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2, 'Find the hidden words'),
     ]));
-    wrap.append(el('div', { class: 'dragon-config-grid' }, [
-      checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
-      textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
-    ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
     ]), el('p', { class: 'hint' }, ['默认开启。全部填完后显示完成弹窗。Play again / Try again 点击先触发强制 CTA，再重置棋盘和跳转步数，片头不重复播放。独立 game.js 包的重玩和跳转由平台组装页配置。']));

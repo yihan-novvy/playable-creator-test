@@ -6,7 +6,7 @@ import { fixedViewportHtml } from '../core/lib/fixed-viewport.mjs';
 // Deliberately curated: retired templates and unrelated games stay out of this gallery.
 export const SHOWCASE_IDS = new Set([
   'colorever-new', 'colorever-origin', 'escape-arrow', 'dragon-cube',
-  'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin',
+  'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin', 'project-makeover-origin', 'word-search-explorer-origin', 'screwdom-origin',
 ]);
 
 export async function showcasePreview(templateId, searchParams) {
@@ -26,7 +26,13 @@ export async function showcasePreview(templateId, searchParams) {
     template: entry.template, config, media: {}, preview: true,
   };
   let built;
-  if (templateId === 'zen-word-100m-origin' || templateId === 'zen-word-92m-origin') {
+  if (templateId === 'screwdom-origin') {
+    built = lib.screwdomHtml(options);
+  } else if (templateId === 'word-search-explorer-origin') {
+    built = lib.wordSearchHtml(options);
+  } else if (templateId === 'project-makeover-origin') {
+    built = lib.makeoverHtml(options);
+  } else if (templateId === 'zen-word-100m-origin' || templateId === 'zen-word-92m-origin') {
     built = lib.zenHtml(options);
   } else if (templateId === 'colorever-new') {
     const requested = searchParams.get('pattern');

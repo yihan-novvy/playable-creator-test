@@ -39,6 +39,9 @@ export function createAssert() {
 }
 
 export const TESTS = [
+  { name: 'screwdom-origin', file: path.join(TEST_DIR, 'screwdom-origin.test.mjs') },
+  { name: 'project-makeover-origin', file: path.join(TEST_DIR, 'project-makeover-origin.test.mjs') },
+  { name: 'word-search-explorer-origin', file: path.join(TEST_DIR, 'word-search-explorer-origin.test.mjs') },
   { name: 'zen-word-templates', file: path.join(TEST_DIR, 'zen-word-templates.test.mjs') },
   { name: 'publish-auth', file: path.join(TEST_DIR, 'publish-auth.test.mjs') },
   { name: 'interactive-publish', file: path.join(TEST_DIR, 'interactive-publish.test.mjs') },
