@@ -1,0 +1,30 @@
+{
+  "status": "package_pass",
+  "runtime_status": "not_run",
+  "source": "result/screwdom-project.zip",
+  "protocol_url": "https://developer.novvy.ai/eventLogs",
+  "entry": "index.html",
+  "file_count": 2,
+  "uncompressed_bytes": 9019857,
+  "package_limits": {
+    "archive_checked": true,
+    "archive_bytes": 3456455,
+    "uncompressed_bytes": 9019857,
+    "entry_count": 2,
+    "max_archive_bytes": 10000000,
+    "max_uncompressed_bytes": 30000000,
+    "max_entries": 4000,
+    "scope": "input_only"
+  },
+  "artifact_sha256": "ea54ea98b895eabc389fa6a268d5846b9dd3e736f2bce2967169ce3bdf6008f5",
+  "artifact_hash_kind": "file_sha256",
+  "content_sha256": "474fd404272537f7c7569331a64a8b9b754a50f02af01b9b9c71f49ab67403a5",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "package_only",
+      "message": "Package budget/structure only; shell-owned code and gameplay/event behavior were not checked."
+    }
+  ],
+  "command": "package"
+}

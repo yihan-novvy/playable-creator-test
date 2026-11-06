@@ -36,3 +36,4 @@ assert.equal(context.bounds({componentId:'background1'}).height,1688,'background
 for(let count=3;count<=17;count++)context.step(count,17);context.step(17,17);assert.equal(calls.filter(c=>c[0]==='step').length,17);assert.equal(timers.length,1);timers.shift()();assert.equal(calls.filter(c=>c[0]==='win').length,1);assert.equal(scene.input.enabled,false);
 runtime.destroy();runtime.destroy();context.step(18,17);assert.equal(destroyed,1);assert.equal(disposals,1);assert.equal(removed,1);
 console.log('Word Search Explorer: source hashes, rebuild, native callback hook, lifecycle, progress, result and bounds passed.');
+await import('./test-host.mjs');

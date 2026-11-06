@@ -47,10 +47,16 @@
       "ariaLabel": ""
     },
     "cta": {
-      "enabled": false,
+      "enabled": true,
       "endMask": false,
       "buttonText": "Play Now",
       "guideText": "Enjoy for free"
+    },
+    "playableCta": {
+      "enabled": true,
+      "mode": "steps",
+      "afterSteps": 20,
+      "intervals": [10, 8, 6, 4]
     }
   }
 }

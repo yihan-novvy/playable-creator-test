@@ -40,7 +40,8 @@ export function addOriginCtaCard(injection, card, read, cta = {}) {
     const [r, g, b] = [1, 3, 5].map(i => parseInt(buttonColor.slice(i, i + 2), 16));
     injection.headStyles.push(`<style data-novvy-cta-card-color>#novvy-cta .novvy-cta-btn{background:${buttonColor};box-shadow:0 4px 12px rgba(${r}, ${g}, ${b}, 0.3)}</style>`);
   }
-  injection.bodyDom.push(readCard('html').replace(/__CTA_(?:ICON|NAME|BUTTON_TEXT|GUIDE_TEXT|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]));
+  const rating = typeof card.rating === 'number' && card.rating >= 0 && card.rating <= 5 ? card.rating.toFixed(1) : '4.8';
+  injection.bodyDom.push(readCard('html').replace(/__CTA_(?:ICON|NAME|BUTTON_TEXT|GUIDE_TEXT|TAKEOVER_TEXT|TAKEOVER_ACTION_TEXT)__/g, key => values[key]).replace('<small>4.8</small>', `<small>${rating}</small>`));
   injection.bodyScripts.push(script('cta-card', readCard('js')));
 }
 export function originHtml({ root, pluginDir, template, config, media = {}, preview = false }) {

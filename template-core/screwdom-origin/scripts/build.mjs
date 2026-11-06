@@ -73,9 +73,9 @@ const css=html.match(/<style>([\s\S]*?)<\/style>/)[1].replace(/\bhtml\b/g,'.engi
 const source={title,markup,css,resources};
 const game='(function(){\n'+read('src/engine-scope.js').replace(/^export /gm,'')+'\nconst SOURCE='+JSON.stringify(source)+';\n'+read('src/adapter.js')+'\n'+read('src/game.js')+'\n})();\n';
 for(const forbidden of [/postMessage/,/messageHandlers/,/NovvyPlayable/,/NovvyAnalytics/,/NovvyShell/,/tracking\.novvy\.ai/,/window\.open\(/])if(forbidden.test(game))throw new Error('Forbidden game dependency '+forbidden);
-const files={'game/game.js':game,'game/index.html':read('src/index.html'),'game/host.js':read('src/host.js')};
+const files={'game/game.js':game,'game/index.html':read('src/index.html'),'game/host.js':read('src/host.js'),'game/cta-icon.jpg':fs.readFileSync(path.join(root,'source/app-icon.jpg'))};
 const version=JSON.parse(read('package.json')).version;
-const manifest={id:'screwdom-origin',name:'Screwdom · 原版 3D 螺丝试玩',version,entry:'game/index.html',levels:[{id:1,name:'冬季粉色小屋',game:'game/game.js'}],constants:{game:{host:'game/host.js',hudInsideCanvas:true,engine:'Cocos Creator 3.8.7'},fileHashes:Object.fromEntries(Object.entries(files).map(([name,data])=>[name,sha(data)]))}};
+const manifest={id:'screwdom-origin',name:'Screwdom · 原版 3D 螺丝试玩',version,entry:'game/index.html',levels:[{id:1,name:'冬季粉色小屋',game:'game/game.js'}],constants:{game:{host:'game/host.js',hudInsideCanvas:true,engine:'Cocos Creator 3.8.7',ctaCard:{name:provenance.brand.name,icon:'game/cta-icon.jpg',rating:provenance.brand.rating}},fileHashes:Object.fromEntries(Object.entries(files).map(([name,data])=>[name,sha(data)]))}};
 fs.mkdirSync(out,{recursive:true});
 for(const [name,data] of Object.entries(files)){fs.mkdirSync(path.dirname(path.join(out,name)),{recursive:true});fs.writeFileSync(path.join(out,name),data);}
 fs.writeFileSync(path.join(out,'game-manifest.json'),JSON.stringify(manifest,null,2)+'\n');

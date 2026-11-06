@@ -8,6 +8,7 @@ import {effectiveConfig} from '../../core/runner.mjs';
 import {taskGeneratedDir,taskUploadsDir,taskResultDir} from '../../lib/paths.mjs';
 import {requireFiles} from '../../core/lib/helpers.mjs';
 import {fixedViewportHtml} from '../../core/lib/fixed-viewport.mjs';
+import {addOriginCtaCard,originCtaPolicy} from '../../core/lib/origin-playable.mjs';
 
 const run=promisify(execFile);
 const script=s=>`<script>${s.replace(/<\/script/gi,'<\\/script')}</script>`;
@@ -19,8 +20,10 @@ export function wordSearchHtml({root,pluginDir,template,config,media={},preview=
   const variant=template.levels[0];
   if(template.levels.length!==1||config.levelId!==1)throw Object.assign(new Error('该独立模板只有固定的一份 playable'),{statusCode:400});
   const injection=buildWsOverlayInjection({overlaysRoot:pluginDir,template,config,media,optionalHudPortraits:true,analytics:false});
-  if(config.cta?.enabled===true)throw Object.assign(new Error('下载入口尚未配置，请先确认跳店分类。'),{statusCode:400});
-  const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true};
+  const ctaEnabled=config.cta?.enabled!==false;
+  if(ctaEnabled)addOriginCtaCard(injection,template.game.ctaCard,read,config.cta);
+  const policy={...originCtaPolicy({afterSteps:4,intervals:[4,3,2],...config.playableCta,mode:'steps'}),enabled:config.playableCta?.enabled!==false};
+  const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
   const game=read(variant.game),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.WSE_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--WSE_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--WSE_SCRIPTS-->[\s\S]*?<!--WSE_SCRIPTS_END-->/,()=>tail);

@@ -1,0 +1,294 @@
+Window: "Screwdom · 原版 3D 螺丝试玩", App: Safari浏览器.
+0 标准窗口 Screwdom · 原版 3D 螺丝试玩, ID: SafariWindow?IsSecure=false&UUID=526B478A-CB20-403C-977E-9F02978A29EB, Secondary Actions: Raise
+	1 分离组
+		2 滚动区
+			3 外框 Description: 边栏, ID: Sidebar
+				4 row (selected, expanded) Value: 1个标签页, Secondary Actions: Collapse, Description: 默认，含1个标签页的标签页组
+默认，含1个标签页的标签页组
+向下移动
+					5 开关按钮 Description: 向下移动, Value: on
+				6 row (selectable) Value: Screwdom · 原版 3D 螺丝试玩, Description: Screwdom · 原版 3D 螺丝试玩
+Screwdom · 原版 3D 螺丝试玩
+				7 row (selectable, expanded) Value: 已保存, Secondary Actions: Collapse
+				8 row (selectable) Value: 书签, Description: 书签
+书签
+书签
+				9 row (selectable) Value: 阅读列表, Description: 阅读列表
+阅读列表
+阅读列表
+				10 row (selectable) Value: 与你共享, Description: 与你共享
+与你共享
+		11 分离器 (disabled, settable, float) 333
+		12 标签组
+			13 滚动区
+				14 HTML内容 inspector-resource:///Main.html
+					15 按钮 关闭
+					16 按钮 在窗口左侧显示
+					17 按钮 在窗口右侧显示
+					18 按钮 分离到单独的窗口
+					19 按钮 开始选择元素(⇧⌘C)
+					20 按钮 设备设置
+					21 按钮 点按以在控制台中显示2个错误
+					22 标签组 (selectable)
+						23 标签 (selectable) 元素
+						24 标签 (selected) 控制台
+						25 标签 (selectable) 来源
+						26 标签 (selectable) 网络
+						27 标签 (selectable) 时间线
+						28 标签 (selectable) 图形
+						29 标签 (selectable) 储存空间
+						30 标签 (selectable) 层
+						31 标签 (selectable) 审核
+						32 标签 (selectable) 搜索(⇧⌘F)
+						33 标签 (selectable) 设置(⌘,)
+					34 container 控制台
+						35 搜索文本栏 (settable)  
+						36 按钮 (disabled) 查找上一个(⇧⌘G)
+						37 按钮 (disabled) 查找下一个(⌘G)
+						38 文本 全部
+						39 文本 评估
+						40 文本 错误
+						41 文本 警告
+						42 文本 日志
+						43 文本 信息
+						44 文本 调试
+						45 按钮 其他过滤选项…
+						46 复选框 (settable, integer) 模拟用户手势, Help: 如同在用户手势中一样运行控制台命令, Value: 0
+						47 按钮 运行控制台片段…
+						48 按钮 收集垃圾
+						49 按钮 清空日志（⌘K或⌃L）
+						50 container
+							51 文本 控制台打开于：20:50:10
+							52 container
+								53 图像
+								54 图像
+								55 text loadJson  — 
+								56 link game.js:221, Help: http://localhost:8089/result/screwdom/game.js:221:49, Value: localhost:8089/result/screwdom/game.js
+								57 文本 Error 5302, please go to 
+								58 link https://github.com/cocos/cocos-engine/blob/3.8.7/EngineErrorMap.md#5302, Value: github.com/cocos/cocos-engine/blob/3.8.7/EngineErrorMap.md#5302
+								59 文本  to see details. Arguments: cc.LightProbesData
+							60 container
+								61 图像
+								62 文本 LoadScene db://assets/zScenes/scene-002.scene: 400.226ms
+							63 container
+								64 图像
+								65 link game.js:21:159, Help: http://localhost:8089/result/screwdom/game.js:21:159, Value: localhost:8089/result/screwdom/game.js
+								66 文本 iKame Playstore :
+								67 link https://play.google.com/store/apps/details?id=com.ig.screwdom, Value: play.google.com/store/apps/details?id=com.ig.screwdom
+							68 container
+								69 图像
+								70 link game.js:21:159, Help: http://localhost:8089/result/screwdom/game.js:21:159, Value: localhost:8089/result/screwdom/game.js
+								71 文本 iKame AppStore:
+								72 link https://apps.apple.com/app/id6740043080, Value: apps.apple.com/app/id6740043080
+							73 container
+								74 图像
+								75 link game.js:21:159, Help: http://localhost:8089/result/screwdom/game.js:21:159, Value: localhost:8089/result/screwdom/game.js
+								76 文本 1
+							77 container
+								78 图像
+								79 文本 === THỐNG KÊ MÀU SAU KHI GÁN ===
+							80 container
+								81 图像
+								82 文本 Tổng số screws: 225
+							83 container
+								84 图像
+								85 文本 Color 1: 36 screws (16.0%)
+							86 container
+								87 图像
+								88 文本 Color 2: 36 screws (16.0%)
+							89 container
+								90 图像
+								91 文本 Color 0: 36 screws (16.0%)
+							92 container
+								93 图像
+								94 文本 Color 4: 27 screws (12.0%)
+							95 container
+								96 图像
+								97 文本 Color 11: 27 screws (12.0%)
+							98 container
+								99 图像
+								100 文本 Color 3: 18 screws (8.0%)
+							101 container
+								102 图像
+								103 文本 Color 6: 15 screws (6.7%)
+							104 container
+								105 图像
+								106 文本 Color 5: 15 screws (6.7%)
+							107 container
+								108 图像
+								109 文本 Color 8: 15 screws (6.7%)
+							110 container
+								111 图像
+								112 文本 ✅ Tất cả màu đều chia hết cho 3
+							113 图像
+							114 container
+								115 图像
+								116 text click  — 
+								117 link index.html:383, Help: http://localhost:8089/result/screwdom/index.html:383:23, Value: localhost:8089/result/screwdom/index.html
+							118 文本 [Screwdom CTA preview]
+							119 内容列表
+								120 container • Object
+									121 text • Object
+									122 外框 (selectable)
+										123 row (selectable) Description: click_source: "cta_click"
+configurable enumerable writable, Value: click_source: "cta_click"
+click_source:
+"cta_click"
+										124 row (selectable) Description: scene: "cta-card"
+configurable enumerable writable, Value: scene: "cta-card"
+scene:
+"cta-card"
+										125 row (selectable) “Object”原型
+							126 文本 页面重新载入于20:51:28
+							127 container
+								128 图像
+								129 图像
+								130 text loadJson  — 
+								131 link game.js:221, Help: http://localhost:8089/result/screwdom/game.js:221:49, Value: localhost:8089/result/screwdom/game.js
+								132 文本 Error 5302, please go to 
+								133 link https://github.com/cocos/cocos-engine/blob/3.8.7/EngineErrorMap.md#5302, Value: github.com/cocos/cocos-engine/blob/3.8.7/EngineErrorMap.md#5302
+								134 文本  to see details. Arguments: cc.LightProbesData
+							135 container
+								136 图像
+								137 文本 LoadScene db://assets/zScenes/scene-002.scene: 560.027ms
+							138 container
+								139 图像
+								140 link game.js:21:159, Help: http://localhost:8089/result/screwdom/game.js:21:159, Value: localhost:8089/result/screwdom/game.js
+								141 文本 iKame Playstore :
+								142 link https://play.google.com/store/apps/details?id=com.ig.screwdom, Value: play.google.com/store/apps/details?id=com.ig.screwdom
+							143 container
+								144 图像
+								145 link game.js:21:159, Help: http://localhost:8089/result/screwdom/game.js:21:159, Value: localhost:8089/result/screwdom/game.js
+								146 文本 iKame AppStore:
+								147 link https://apps.apple.com/app/id6740043080, Value: apps.apple.com/app/id6740043080
+							148 container
+								149 图像
+								150 link game.js:21:159, Help: http://localhost:8089/result/screwdom/game.js:21:159, Value: localhost:8089/result/screwdom/game.js
+								151 文本 1
+							152 container
+								153 图像
+								154 文本 === THỐNG KÊ MÀU SAU KHI GÁN ===
+							155 container
+								156 图像
+								157 文本 Tổng số screws: 225
+							158 container
+								159 图像
+								160 文本 Color 2: 36 screws (16.0%)
+							161 container
+								162 图像
+								163 文本 Color 1: 36 screws (16.0%)
+							164 container
+								165 图像
+								166 文本 Color 0: 36 screws (16.0%)
+							167 container
+								168 图像
+								169 文本 Color 4: 27 screws (12.0%)
+							170 container
+								171 图像
+								172 文本 Color 11: 27 screws (12.0%)
+							173 container
+								174 图像
+								175 文本 Color 3: 18 screws (8.0%)
+							176 container
+								177 图像
+								178 文本 Color 6: 15 screws (6.7%)
+							179 container
+								180 图像
+								181 文本 Color 5: 15 screws (6.7%)
+							182 container
+								183 图像
+								184 文本 Color 8: 15 screws (6.7%)
+							185 container
+								186 图像
+								187 文本 ✅ Tất cả màu đều chia hết cho 3
+							188 container
+								189 图像
+								190 link game.js:135, Help: http://localhost:8089/result/screwdom/game.js:135:48, Value: localhost:8089/result/screwdom/game.js
+								191 text checkFree  –  0
+							192 图像
+							193 container
+								194 图像
+								195 text click  — 
+								196 link index.html:383, Help: http://localhost:8089/result/screwdom/index.html:383:23, Value: localhost:8089/result/screwdom/index.html
+							197 文本 [Screwdom CTA preview]
+							198 内容列表
+								199 container • Object
+									200 text • Object
+									201 外框 (selectable)
+										202 row (selectable) Description: auto_jump: "true"
+configurable enumerable writable, Value: auto_jump: "true"
+auto_jump:
+"true"
+										203 row (selectable) Description: auto_jump_mode: "steps"
+configurable enumerable writable, Value: auto_jump_mode: "steps"
+auto_jump_mode:
+"steps"
+										204 row (selectable) Description: click_source: "forced_click_to_appstore"
+configurable enumerable writable, Value: click_source: "forced_click_to_appstore"
+click_source:
+"forced_click_to_appstore"
+										205 row (selectable) Description: scene: "playable-steps"
+configurable enumerable writable, Value: scene: "playable-steps"
+scene:
+"playable-steps"
+										206 row (selectable) Description: step: 1
+configurable enumerable writable, Value: step: 1
+step:
+1
+										207 row (selectable) “Object”原型
+					208 文本输入区 (settable) 控制台提示, Value: [文本输入区: 控制台提示]
+					209 container
+					210 container $0的执行上下文
+						211 文本 自动 — 页面
+			212 弹出式按钮 Description: 视口大小, Value: 自定义大小, ID: ViewportPresetButton
+			213 开关按钮 Description: 向左旋转, Help: 旋转视口, Value: off
+			214 文本栏 (settable) Description: 宽度, Value: 320
+			215 文本 ×
+			216 文本栏 (settable) Description: 高度, Value: 568
+			217 文本 Description: 缩放比例, Value: ( 61% )
+			218 弹出式按钮 Description: 像素比, Value: 2倍
+			219 菜单按钮 通过模拟器打开, ID: OpenWithSimulatorButton
+			220 滚动区
+				221 HTML内容 Description: Screwdom · 原版 3D 螺丝试玩, URL: localhost:8089/result/screwdom/index.html
+					222 container
+						223 text Screwdom Unscrew and sort by color
+					224 container Download Screwdom
+						225 文本 Screwdom
+						226 text ★★★★★ 4.5
+						227 文本 Enjoy for free
+						228 按钮 Play Now
+	229 图像 WindowControlShadowView._shadowImageView
+	230 工具栏
+		231 container Secondary Actions: 移到下一项, 从工具栏移除
+			232 菜单按钮 Description: 新建标签页组, ID: NewTabGroupButton
+			233 按钮 Description: 隐藏边栏, ID: SidebarButton
+		234 container BackForwardSegmentedControl
+			235 按钮 Description: 返回, Help: 显示上一页, ID: BackButton
+			236 按钮 (disabled) Description: 前进, Help: 显示下一页, ID: ForwardButton
+		237 container Secondary Actions: 移到上一项, 移到下一项, 从工具栏移除
+			238 按钮 页面菜单, ID: AssistantButton
+			239 按钮 将页面添加到阅读列表, ID: OneStepBookmarkingButton
+			240 文本栏 (settable) Description: 智能搜索栏, Value: localhost:8089/result/screwdom/index.html, ID: WEB_BROWSER_ADDRESS_AND_SEARCH_FIELD
+			241 按钮 翻译可用, ID: TranslationButton
+			242 按钮 Description: 静音此标签页, ID: UnifiedField._audioIndicator
+			243 按钮 重新载入此页面, ID: ReloadButton
+		244 按钮 Description: 共享, ID: ShareButton, Secondary Actions: 移到上一项, 移到下一项, 从工具栏移除
+		245 按钮 Description: 新建标签页, ID: NewTabButton, Secondary Actions: 移到上一项, 移到下一项, 从工具栏移除
+			246 按钮 Description: 新建标签页, ID: NewTabButton
+				247 按钮 Description: 添加, Help: 新建标签页
+		248 按钮 Description: 标签页概览, ID: TabOverviewButton, Secondary Actions: 移到上一项, 从工具栏移除
+	249 关闭按钮
+	250 全屏幕按钮 Help: 此按钮也可以执行缩放窗口的操作, Secondary Actions: 缩放窗口
+	251 最小化按钮
+252 menu bar
+	253 Safari浏览器
+	254 文件
+	255 编辑
+	256 显示, ID: SafariViewMenu
+	257 历史记录
+	258 书签, ID: SafariBookmarksMenu
+	259 开发
+	260 窗口, ID: SafariWindowMenu
+	261 帮助, ID: SafariHelpMenu
+
+The focused UI element is 50 container

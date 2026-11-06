@@ -194,7 +194,18 @@ export function updateTaskConfig(id, patch) {
     }
   }
   // Validate both selections before mutating or writing a task.
-  if(['zen-word-100m-origin','zen-word-92m-origin'].includes(doc.templateId)&&'playableCta' in (patch||{})){
+  if(doc.templateId==='screwdom-origin'&&'playableCta' in (patch||{})){
+    const policy=patch.playableCta;
+    const invalid=!policy||typeof policy!=='object'||Array.isArray(policy)||Object.entries(policy).some(([key,value])=>{
+      if(key==='enabled')return typeof value!=='boolean';
+      if(key==='mode')return !['steps','complete'].includes(value);
+      if(key==='afterSteps')return !Number.isInteger(value)||value<1||value>99;
+      if(key==='intervals')return !Array.isArray(value)||value.length>24||value.some(n=>!Number.isInteger(n)||n<1||n>99);
+      return true;
+    });
+    if(invalid)throw Object.assign(new Error('自动跳转须选择 steps 或 complete，首跳和间隔须为 1–99 的整数（最多 24 个间隔）。'),{statusCode:400});
+  }
+  if(['zen-word-100m-origin','zen-word-92m-origin','word-search-explorer-origin'].includes(doc.templateId)&&'playableCta' in (patch||{})){
     const policy=patch.playableCta;
     const invalid=!policy||typeof policy!=='object'||Array.isArray(policy)||Object.entries(policy).some(([key,value])=>{
       if(key==='enabled')return typeof value!=='boolean';

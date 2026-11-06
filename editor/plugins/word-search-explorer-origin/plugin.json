@@ -35,6 +35,12 @@
     "gameplay": {
       "allowReplay": false
     },
+    "playableCta": {
+      "enabled": true,
+      "mode": "steps",
+      "afterSteps": 4,
+      "intervals": [4, 3, 2]
+    },
     "hud": {
       "enabled": false,
       "titleEnabled": false,
@@ -47,7 +53,7 @@
       "ariaLabel": ""
     },
     "cta": {
-      "enabled": false,
+      "enabled": true,
       "endMask": false,
       "buttonText": "Play Now",
       "guideText": "Enjoy for free"

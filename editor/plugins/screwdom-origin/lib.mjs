@@ -8,6 +8,7 @@ import {effectiveConfig} from '../../core/runner.mjs';
 import {taskGeneratedDir,taskUploadsDir,taskResultDir} from '../../lib/paths.mjs';
 import {requireFiles} from '../../core/lib/helpers.mjs';
 import {fixedViewportHtml} from '../../core/lib/fixed-viewport.mjs';
+import {addOriginCtaCard,originCtaPolicy} from '../../core/lib/origin-playable.mjs';
 
 const run=promisify(execFile);
 const script=s=>`<script>${s.replace(/<\/script/gi,'<\\/script')}</script>`;
@@ -19,12 +20,19 @@ export function screwdomHtml({root,pluginDir,template,config,media={},preview=fa
   const variant=template.levels[0];
   if(template.levels.length!==1||config.levelId!==1)throw Object.assign(new Error('该独立模板只有固定的一份 playable'),{statusCode:400});
   const injection=buildWsOverlayInjection({overlaysRoot:pluginDir,template,config,media,optionalHudPortraits:true,analytics:false});
-  if(config.cta?.enabled===true)throw Object.assign(new Error('下载入口尚未配置，请先确认跳店分类。'),{statusCode:400});
-  const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true};
+  const ctaEnabled=config.cta?.enabled!==false;
+  if(ctaEnabled){
+    addOriginCtaCard(injection,template.game.ctaCard,read,config.cta);
+    // The product host owns this button's click. Remove SDK auto-hook selectors
+    // so the shared card's single interact signal cannot also open a second time.
+    injection.bodyDom=injection.bodyDom.map(dom=>dom.replace('class="novvy-cta-btn cta download"','class="novvy-cta-btn"').replace(' data-novvy-cta data-action="download"',''));
+  }
+  const policy={...originCtaPolicy({mode:'steps',afterSteps:20,intervals:[10,8,6,4],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
+  const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
   const game=read(variant.game),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.SCREWDOM_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--SCREWDOM_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--SCREWDOM_SCRIPTS-->[\s\S]*?<!--SCREWDOM_SCRIPTS_END-->/,()=>tail);
-  return {html,game,variant,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};
+  return {html,game,variant,ctaEnabled,policy,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};
 }
 export function previewHtml({plugin:entry,task,taskId}){
   const config=effectiveConfig(entry.template,task.config),generated=taskGeneratedDir(taskId),upload=path.join(taskUploadsDir(taskId),'intro-video.mp4');
@@ -48,6 +56,6 @@ export async function pack(ctx){
   const budget=path.join(ctx.resultDir,'assembly-budget.zip');await run('zip',['-q','-X',budget,...files],{cwd:ctx.resultDir});
   const assemblyBytes=fs.statSync(budget).size;fs.rmSync(budget);
   if(assemblyBytes>10000000)throw new Error('组装 ZIP 超过 10 MB，请压缩片头视频');
-  return {metrics:{variant:built.variant.name,stageChain:built.stageChain,introEnabled:intro,outputBytes:rawBytes,assemblyBytes,gameZipBytes:fs.statSync(archive).size},warnings:[]};
+  return {metrics:{variant:built.variant.name,stageChain:built.stageChain,introEnabled:intro,ctaEnabled:built.ctaEnabled,ctaPolicy:built.policy,outputBytes:rawBytes,assemblyBytes,gameZipBytes:fs.statSync(archive).size},warnings:[]};
 }
 export function exportGameZip({taskId}){return fs.readFileSync(path.join(taskResultDir(taskId),'game-only.zip'));}

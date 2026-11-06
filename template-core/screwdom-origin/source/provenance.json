@@ -23,6 +23,16 @@
   "attribution": "Source payload store ID matches; ownership is not independently verified.",
   "files": {
     "loader.html": "c3168b95d6f3cc280eeea19f842b56343c47b88ed8520b2165e3a61181607b8e",
-    "original.js": "892c3de2ca1f600c73361d6b4a58c8f17fbbef2101027aea8bbab45ff7c52427"
+    "original.js": "892c3de2ca1f600c73361d6b4a58c8f17fbbef2101027aea8bbab45ff7c52427",
+    "app-icon.jpg": "0a11c41ddda690693207cc0a99325d8ff184e64f33a2a6a08b49a74793c09e0c"
+  },
+  "brand": {
+    "name": "Screwdom",
+    "rating": 4.5,
+    "publisher": "Zego Global Pte Ltd",
+    "metadataUrl": "https://itunes.apple.com/lookup?id=6740043080&country=us",
+    "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/6b/36/66/6b3666c9-0838-fd49-2fb6-7c270b456c0d/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+    "retrievedAt": "2026-11-06T12:45:28.400735+00:00",
+    "icon": "app-icon.jpg"
   }
 }

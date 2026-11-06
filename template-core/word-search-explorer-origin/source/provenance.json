@@ -34,6 +34,15 @@
     "endCardEnabled": false
   },
   "files": {
-    "original.html": "25f3c1abfe9b75575e1538ee7bab82d860d49fce02990ddf35a38dc68284d05d"
+    "original.html": "25f3c1abfe9b75575e1538ee7bab82d860d49fce02990ddf35a38dc68284d05d",
+    "app-icon.jpg": "7e83675929d4b7536953163ad83f69345b16b6e4fd3d4df349f525e99eb3e1f5"
+  },
+  "card": {
+    "source": "https://itunes.apple.com/lookup?id=1602508478&country=us",
+    "appStoreUrl": "https://apps.apple.com/us/app/word-search-explorer/id1602508478",
+    "assetUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/f5/d4/2b/f5d42b8e-a302-dcd9-ae7d-b70380f227a4/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+    "observedAt": "2026-11-06",
+    "rating": 4.9,
+    "note": "Official application icon; replaces the publisher logo extracted from the original loading screen."
   }
 }

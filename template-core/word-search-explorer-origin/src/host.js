@@ -2,6 +2,8 @@
 (function(){
   const config=window.WSE_CONFIG,root=document.getElementById('wse-game'),status=document.getElementById('wse-status'),replay=document.getElementById('wse-replay');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=config.intro===true,viewable=true;
+  const policy=config.policy||{enabled:true,mode:'steps',afterSteps:4,intervals:[4,3,2]};
+  let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;
   const call=(name,...args)=>{try{sdk()?.[name]?.(...args);}catch(error){console.warn('Word Search Explorer host SDK',error);}};
@@ -14,19 +16,44 @@
     if(root.clientHeight>root.clientWidth)safeArea.top=Math.max(54,safeArea.top);
     const hud=document.getElementById('novvy-training-hud'),card=document.getElementById('novvy-cta');
     const top=config.title&&hud?hud.getBoundingClientRect().bottom+10:0;
-    const bottom=card&&!card.hidden?root.clientHeight-card.getBoundingClientRect().top+8:0;
+    // Include the card's full height while its entrance transform is animating.
+    const bottom=card&&!card.hidden?Math.max(card.offsetHeight,root.getBoundingClientRect().bottom-card.getBoundingClientRect().top)+8:0;
     document.documentElement.style.setProperty('--wse-cta-inset',bottom+'px');
     return {api:1,platform:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/i.test(navigator.userAgent)?'ios':'web',language:navigator.language,mode:'preview',viewport:{width:root.clientWidth,height:root.clientHeight,dpr:devicePixelRatio},safeArea,orientation:innerWidth>innerHeight?'landscape':'portrait',muted,insets:{top,bottom}};
   };
   function finish(kind){if(!started||settled)return;settled=true;replay.hidden=!config.allowReplay;replay.textContent=kind==='fail'?'Try again':'Play again';
+    if(kind==='win'&&policy.enabled!==false&&!autoJumped)autoClick('win');
     if(kind==='end'){if(!config.allowReplay)call('endStage');else document.getElementById('wse-continue').hidden=false;}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
   }
-  function click(){} // Store placements are disabled until confirmed.
+  function requestClick(detail){
+    if(!started||document.hidden||!viewable||performance.now()-lastCta<1000)return false;
+    lastCta=performance.now();
+    if(typeof sdk()?.click==='function')call('click',detail);
+    else console.info('Word Search Explorer CTA preview '+JSON.stringify(detail));
+    return true;
+  }
+  // Step policies belong to this assembly host; game.js only reports successful words.
+  function autoClick(mode){
+    const detail={click_source:'forced_click_to_appstore',scene:'playable-'+mode,auto_jump:'true',auto_jump_mode:mode};
+    if(mode==='steps')detail.step=steps;
+    if(!requestClick(detail))return false;
+    autoJumped=true;return true;
+  }
+  // Shell-owned download card: the standard banner source is fixed by §2.1.
+  function click(){
+    const card=document.getElementById('novvy-cta');
+    if(config.ctaEnabled!==true||!card||card.hidden)return;
+    requestClick({click_source:'cta_click',scene:'cta-card'});
+  }
   function step(percent){
     if(!started||settled||document.hidden||!viewable)return;
     steps++;call('onStep',steps,{progress:percent});
+    if(policy.enabled!==false&&policy.mode==='steps'&&steps>=nextCta&&autoClick('steps')){
+      const gap=policy.intervals[Math.min(intervalIndex++,policy.intervals.length-1)];
+      nextCta=gap?steps+gap:Infinity;
+    }
   }
-  const shell={step,win(){finish('win');},fail(){finish('fail');},end(){finish('end');},retry(){call('onReplay');},level(){},sound(value){muted=value===true;instance?.setEnv({muted});},haptic(){},cta:click};
+  const shell={step,win(){finish('win');},fail(){finish('fail');},end(){finish('end');},retry(){call('onReplay');},level(){},sound(value){muted=value===true;instance?.setEnv({muted});},haptic(){},cta(){}};
   async function begin(){if(!instance||!entered||started)return;const token=generation;started=true;
     window.dispatchEvent(new CustomEvent('novvy:cta-card',{detail:{phase:'bar'}}));
     instance.setEnv(environment());await instance.start();if(token!==generation)return;
@@ -35,7 +62,7 @@
     if(document.hidden||!viewable)instance.pause();
   }
   function loadFailed(error){creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;replay.hidden=!config.allowReplay;replay.textContent='Try again';status.hidden=false;status.textContent='Unable to load Word Search Explorer: '+error.message;console.error(error);}
-  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;replayPending=restarting;replay.hidden=true;document.getElementById('wse-continue').hidden=true;replay.disabled=true;status.hidden=false;status.textContent='Loading…';
+  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;replay.hidden=true;document.getElementById('wse-continue').hidden=true;replay.disabled=true;status.hidden=false;status.textContent='Loading…';
     try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
@@ -49,6 +76,7 @@
   window.addEventListener('resize',resize);
   const observer=new ResizeObserver(resize);
   for(const element of [root,document.getElementById('novvy-training-hud'),document.getElementById('novvy-cta')])if(element)observer.observe(element);
+  window.addEventListener('novvy:cta-interact',click);
   
   const syncVisibility=()=>{if(document.hidden||!viewable)instance?.pause();else if(started)instance?.resume();};
   document.addEventListener('visibilitychange',syncVisibility);

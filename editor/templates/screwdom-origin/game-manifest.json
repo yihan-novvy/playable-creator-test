@@ -14,12 +14,18 @@
     "game": {
       "host": "game/host.js",
       "hudInsideCanvas": true,
-      "engine": "Cocos Creator 3.8.7"
+      "engine": "Cocos Creator 3.8.7",
+      "ctaCard": {
+        "name": "Screwdom",
+        "icon": "game/cta-icon.jpg",
+        "rating": 4.5
+      }
     },
     "fileHashes": {
       "game/game.js": "19785c7b0487bc96e1d7298aa3df390ee8dbe75c28d8c9f00dda636ad98b3b56",
       "game/index.html": "79c10710b6f9d6d9e84ab1f2ec9008218873dc8441b0bb8faa8d6b7474df74f6",
-      "game/host.js": "7c80d1c9f3ec21fe221cad5c85b753d40aedd2ec71895520301c621bbd39a816"
+      "game/host.js": "f88888d0aec75df6c6126b207d364fa77cbabf5ef187126e7c51b8a94306b97b",
+      "game/cta-icon.jpg": "0a11c41ddda690693207cc0a99325d8ff184e64f33a2a6a08b49a74793c09e0c"
     }
   }
 }

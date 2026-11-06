@@ -1,0 +1,120 @@
+{
+  "date": "2026-11-06",
+  "templateId": "screwdom-origin",
+  "document": {
+    "url": "https://developer.novvy.ai/eventLogs.md",
+    "retrievedAt": "2026-11-06T12:45:28.401703+00:00",
+    "sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39"
+  },
+  "implemented": {
+    "card": {
+      "enabled": true,
+      "name": "Screwdom",
+      "button": "Play Now",
+      "guide": "Enjoy for free",
+      "owner": "product assembly host"
+    },
+    "automatic": {
+      "enabled": true,
+      "mode": "steps",
+      "afterSteps": 20,
+      "intervals": [
+        10,
+        8,
+        6,
+        4
+      ],
+      "supportedModes": [
+        "steps",
+        "complete"
+      ],
+      "lastIntervalRepeats": true,
+      "resetOnReplay": true
+    },
+    "standaloneGame": "unchanged; no CTA card or automatic navigation policy"
+  },
+  "requirements": {
+    "playable_type": "level",
+    "level_count": 1,
+    "cta_placements": [],
+    "assembly_cta_placements": [
+      {
+        "id": "bottom-card",
+        "location": "bottom download card",
+        "availability": "playable stage, including result",
+        "click_source": "cta_click"
+      },
+      {
+        "id": "auto-policy",
+        "location": "assembly strategy",
+        "availability": "successful step threshold or win, configured by task",
+        "click_source": "forced_click_to_appstore"
+      }
+    ],
+    "cta_confirmation_path": "cta-decision.md"
+  },
+  "checks": {
+    "sourceAndNativeGameplayTests": "passed",
+    "hostPolicyUnitTests": "passed",
+    "editorIntegration": 46,
+    "configPatch": 10,
+    "registryWarnings": 0,
+    "packageBudget": "passed",
+    "scriptSyntax": "passed",
+    "finalArtifactStatic": "passed: manifest hashes, card, local JPEG, single handler, policy=20/[10,8,6,4], independent game byte-identical"
+  },
+  "actualBrowser": {
+    "browser": "Safari",
+    "layouts": [
+      "390x844 dynamic island",
+      "320x568",
+      "844x390"
+    ],
+    "manualCTA": "real click produced one cta_click, scene cta-card preview entry",
+    "autoCTA": "temporarily set afterSteps=1 through task config, repacked, real tutorial screw click produced one forced_click_to_appstore with auto_jump_mode=steps and step=1; restored afterSteps=20 and repacked final artifact",
+    "evidence": [
+      "cta-portrait.png",
+      "cta-narrow.png",
+      "cta-landscape.png",
+      "manual-click-ui.txt",
+      "auto-click-ui.txt"
+    ],
+    "observedEngineDiagnostic": "Cocos Error 5302 cc.LightProbesData at scene load. game.js is byte-identical to the earlier template; scene loads and real screw input works. Not classified as a new CTA error."
+  },
+  "eventAcceptance": {
+    "status": "验收未完成",
+    "officialPlatformSessions": 0,
+    "droppedMessageCount": null,
+    "correspondingTrackingReports": null,
+    "reason": [
+      "No actual official-platform SDK/reporting session",
+      "Bundled event checker expects index.html and parent.postMessage, incompatible with freshly fetched NovvyGame protocol; obsolete event checks were not used to certify this delivery",
+      "No full natural 225-screw win, device store-open/return, or iOS/Android ad WebView acceptance"
+    ]
+  },
+  "artifacts": {
+    "result/screwdom/index.html": {
+      "bytes": 92915,
+      "sha256": "e280f2753cf3b7907e41f1281323bacd00cf948e68a01b1f3d806d30c979f162"
+    },
+    "result/screwdom/game.js": {
+      "bytes": 8926942,
+      "sha256": "19785c7b0487bc96e1d7298aa3df390ee8dbe75c28d8c9f00dda636ad98b3b56"
+    },
+    "result/screwdom/game-only.zip": {
+      "bytes": 3394364,
+      "sha256": "6cab713f05b548aacf911308368b37a9d1081a2b37e5408d6ec4be681d8a91c5",
+      "entries": [
+        "game.js"
+      ]
+    },
+    "result/screwdom-project.zip": {
+      "bytes": 3456455,
+      "sha256": "ea54ea98b895eabc389fa6a268d5846b9dd3e736f2bce2967169ce3bdf6008f5",
+      "entries": [
+        "game.js",
+        "index.html"
+      ]
+    }
+  }
+}

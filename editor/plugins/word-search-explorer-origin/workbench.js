@@ -43,6 +43,23 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
     ]), el('p', { class: 'hint' }, ['默认关闭。开启后找齐目标可重玩；重玩恢复棋盘、目标与选中状态，不重复片头。']));
+    const policy=config().playableCta||{};
+    const first=el('input',{type:'number',min:1,max:99,step:1,value:policy.afterSteps??4});
+    first.addEventListener('change',async()=>{if(!first.checkValidity()){first.reportValidity();return;}await save({playableCta:{afterSteps:Number(first.value)}});await refresh(true);});
+    const intervals=el('input',{type:'text',placeholder:'4,3,2'});intervals.value=(policy.intervals??[4,3,2]).join(',');
+    intervals.addEventListener('change',async()=>{
+      const list=intervals.value.trim()?intervals.value.trim().split(/[,，\s]+/).map(Number):[];
+      if(list.length>24||list.some(n=>!Number.isInteger(n)||n<1||n>99)){intervals.setCustomValidity('请输入 1–99 的整数，最多 24 项');intervals.reportValidity();return;}
+      intervals.setCustomValidity('');await save({playableCta:{intervals:list}});await refresh(true);
+    });
+    wrap.append(el('h3',{},['步数自动跳转']),el('div',{class:'dragon-config-grid'},[
+      checkbox('启用步数自动跳转','playableCta','enabled',policy.enabled!==false),field('首跳有效步数（1–99）',first),field('后续间隔（最后一项重复，留空仅首跳）',intervals)
+    ]),el('p',{class:'hint'},['成功找到一个未完成目标计 1 步，整局共 17 步；无效拖选不计步。默认第 4 步首跳，之后间隔 4、3、2，最后每 2 步重复。尚未触发步数跳转时，通关补跳一次；重玩重新计数。下载卡开关独立，修改后需重新打包。独立 game.js 包的跳转请在平台组装页设置。']));
+    wrap.append(el('h3', {}, ['底部下载卡']), el('div', { class: 'dragon-config-grid' }, [
+      checkbox('显示下载卡', 'cta', 'enabled', config().cta?.enabled !== false),
+      textField('按钮文字', 'cta', 'buttonText', config().cta?.buttonText, 'Play Now'),
+      textField('引导文案', 'cta', 'guideText', config().cta?.guideText, 'Enjoy for free'),
+    ]));
 
     root.append(wrap);
   }
