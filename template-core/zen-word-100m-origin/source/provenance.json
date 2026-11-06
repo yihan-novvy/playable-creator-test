@@ -1,0 +1,20 @@
+{
+  "retrievedAt": "2026-11-06",
+  "game": "Zen Word",
+  "publisher": "Oakever Games",
+  "appStoreId": "1660171117",
+  "androidPackage": "kidultlovin.word.zen",
+  "variants": [
+    {
+      "id": 1,
+      "key": "100m",
+      "name": "1 亿展示 · 7 字母",
+      "source": "https://data.insightrackr.com/creative/preplay/detail/fe76dcc7d4fd5a1f8068be03541da845",
+      "sha256": "4700903880d0aeca167e248543bc4a1f6a1bd838061b8930dca84b8af14f66c1",
+      "inlineScripts": 17,
+      "sounds": 14,
+      "scene": "SampleScene"
+    }
+  ],
+  "notes": "展示量为 Insightrackr 页面估算，不是下载量。原版字节冻结，构建时提取原引擎与全部内嵌资源；广告网络包装不进入游戏包。"
+}

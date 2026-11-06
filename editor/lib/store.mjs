@@ -129,7 +129,7 @@ export function isColoreverTemplate(templateId) {
 }
 
 export function isOriginTemplate(templateId) {
-  return ['colorever-origin', 'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin'].includes(templateId);
+  return ['colorever-origin', 'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin'].includes(templateId);
 }
 
 // Fixed level libraries declare their range and defaults in the plugin/manifest.
@@ -194,9 +194,20 @@ export function updateTaskConfig(id, patch) {
     }
   }
   // Validate both selections before mutating or writing a task.
+  if(['zen-word-100m-origin','zen-word-92m-origin'].includes(doc.templateId)&&'playableCta' in (patch||{})){
+    const policy=patch.playableCta;
+    const invalid=!policy||typeof policy!=='object'||Array.isArray(policy)||Object.entries(policy).some(([key,value])=>{
+      if(key==='enabled')return typeof value!=='boolean';
+      if(key==='mode')return value!=='steps';
+      if(key==='afterSteps')return !Number.isInteger(value)||value<1||value>99;
+      if(key==='intervals')return !Array.isArray(value)||value.length>24||value.some(n=>!Number.isInteger(n)||n<1||n>99);
+      return true;
+    });
+    if(invalid)throw Object.assign(new Error('步数跳转须使用 steps，首跳和间隔须为 1–99 的整数（最多 24 个间隔）。'),{statusCode:400});
+  }
   if ('levelId' in (patch || {})) validateFixedLevel(doc.templateId, patch.levelId);
   if ('levelId' in (patch?.secondPlayable || {})) validateFixedLevel(doc.templateId, patch.secondPlayable.levelId);
-  if (['block-out-origin', 'freecell-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) {
+  if (['block-out-origin', 'freecell-origin', 'zen-word-100m-origin', 'zen-word-92m-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) {
     const settings = patch.gameplay;
     if (!settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => key !== 'allowReplay' || typeof value !== 'boolean')) {
       const error = new Error('允许重玩须为布尔值。');
@@ -271,7 +282,7 @@ export function updateTaskConfig(id, patch) {
   // Origin settings affect the composed HTML, not the transcoded media.
   if (isOriginTemplate(doc.templateId) && ['hud', 'intro', 'cta', 'patternId'].some(key => key in (patch || {}))) delete doc.steps.pack;
   if (doc.templateId === 'tasty-travels-origin' && 'story' in (patch || {})) delete doc.steps.pack;
-  if (['escape-arrow', 'grill-sort-origin', 'block-out-origin', 'freecell-origin', 'tasty-travels-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) delete doc.steps.pack;
+  if (['escape-arrow', 'grill-sort-origin', 'block-out-origin', 'freecell-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) delete doc.steps.pack;
   // 开局模式/打散/种子决定 level 生成的开局,同时让 pack 内联数据过期。
   if ('opening' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; }
   if ('secondPlayable' in (patch || {})) { delete doc.steps.level; delete doc.steps.pack; if ('background' in (patch.secondPlayable || {}) || 'enabled' in (patch.secondPlayable || {})) delete doc.steps.background2; }

@@ -1,0 +1,67 @@
+{
+  "id": "zen-word-100m-origin",
+  "name": "Zen Word · 1 亿展示版（片头+原版试玩）",
+  "template": "zen-word-100m-origin",
+  "workbench": "zen-word-100m-origin",
+  "steps": [
+    {
+      "id": "intro",
+      "runner": "core:intro"
+    },
+    {
+      "id": "pack",
+      "runner": "./steps/pack.mjs"
+    }
+  ],
+  "uploads": {
+    "intro-video": {
+      "file": "intro-video.mp4",
+      "magic": "mp4"
+    },
+    "intro-poster": {
+      "file": "intro-poster.jpg",
+      "magic": "jpg"
+    }
+  },
+  "overlays": {
+    "hud": "overlays/hud"
+  },
+  "level": {
+    "min": 1,
+    "max": 1
+  },
+  "defaults": {
+    "levelId": 1,
+    "gameplay": {
+      "allowReplay": true
+    },
+    "hud": {
+      "enabled": false,
+      "titleEnabled": false,
+      "titleLine1": "Zen Word",
+      "titleLine2": "Find the hidden words",
+      "ariaLabel": ""
+    },
+    "intro": {
+      "enabled": false,
+      "ariaLabel": ""
+    },
+    "cta": {
+      "enabled": true,
+      "endMask": false,
+      "buttonText": "Play Now",
+      "guideText": "Enjoy for free"
+    },
+    "playableCta": {
+      "enabled": true,
+      "mode": "steps",
+      "afterSteps": 20,
+      "intervals": [
+        10,
+        8,
+        6,
+        4
+      ]
+    }
+  }
+}

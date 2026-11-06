@@ -1,0 +1,29 @@
+{
+  "id": "zen-word-100m-origin",
+  "name": "Zen Word · 1 亿展示版",
+  "version": "1.2.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": 1,
+      "name": "1 亿展示 · 7 字母",
+      "game": "game/game.js"
+    }
+  ],
+  "constants": {
+    "game": {
+      "host": "game/host.js",
+      "ctaCard": {
+        "name": "Zen Word",
+        "icon": "game/cta-icon.png"
+      }
+    },
+    "fileHashes": {
+      "game/game.js": "ab0ee1448cde8d6014f48960c974dd306ffd0fc558c4efec331ff9c76772bbef",
+      "game/cta-icon.png": "2fcb997beeee23e8fa6b87b35fc7c5009f9619c2c430dbed83e400dd788a75aa",
+      "game/index.html": "287db045219d9cb11e31e99bce50e3af74006097b8821494a2b44c85d5f3462a",
+      "game/host.js": "2cb40c2973227ad921d9a1574e2c33e7fb2b23975d0f550b2458a5799807933a",
+      "source/provenance.json": "299f793f45d19562b9a874356a23a5fdc1bd3ee89fde7d6e349f87035afcc9b8"
+    }
+  }
+}

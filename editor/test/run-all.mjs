@@ -39,6 +39,7 @@ export function createAssert() {
 }
 
 export const TESTS = [
+  { name: 'zen-word-templates', file: path.join(TEST_DIR, 'zen-word-templates.test.mjs') },
   { name: 'publish-auth', file: path.join(TEST_DIR, 'publish-auth.test.mjs') },
   { name: 'interactive-publish', file: path.join(TEST_DIR, 'interactive-publish.test.mjs') },
   { name: 'task-creation', file: path.join(TEST_DIR, 'task-creation.test.mjs') },

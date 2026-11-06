@@ -94,12 +94,12 @@ function decodePngDataUrl(dataUrl) {
 }
 
 // Retain metadata for existing tasks while limiting all new task creation.
-const CREATABLE_TEMPLATE_ID = 'tasty-travels-origin';
+const CREATABLE_TEMPLATE_IDS = new Set(['tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin']);
 
 function listTemplates() {
   return listEntries().map((entry) => ({
     id: entry.id,
-    creatable: entry.id === CREATABLE_TEMPLATE_ID,
+    creatable: CREATABLE_TEMPLATE_IDS.has(entry.id),
     name: entry.template.name,
     steps: entry.template.steps,
     workbench: entry.plugin.workbench || entry.id,
@@ -204,7 +204,7 @@ async function handleApi(req, res, url, publisher) {
     const name = String(body.name || '').trim();
     if (!name) return sendError(res, 400, '任务名不能为空');
     if (!templateById(String(body.templateId || ''))) return sendError(res, 400, '未知模板');
-    if (body.templateId !== CREATABLE_TEMPLATE_ID) return sendError(res, 400, '当前仅支持创建 Tasty Travels 任务');
+    if (!CREATABLE_TEMPLATE_IDS.has(body.templateId)) return sendError(res, 400, '当前支持创建 Tasty Travels 和 Zen Word 任务');
     const doc = createTask({ name, templateId: String(body.templateId) });
     return sendJson(res, 201, doc);
   }
@@ -433,8 +433,16 @@ async function handleApi(req, res, url, publisher) {
     }
     const temporaryZip = path.join(os.tmpdir(), `novvy-export-${taskId}-${Date.now()}.zip`);
     try {
-      await archiveTask(taskId, temporaryZip);
-      const bytes = fs.readFileSync(temporaryZip);
+      let bytes;
+      if (url.searchParams.get('format') === 'game') {
+        const entry = getEntry(patched.templateId);
+        const lib = await getLib(entry);
+        if (!lib?.exportGameZip) return sendError(res, 400, '该模板不提供独立 game.js 导出');
+        bytes = await lib.exportGameZip({ taskId, task: patched, plugin: entry });
+      } else {
+        await archiveTask(taskId, temporaryZip);
+        bytes = fs.readFileSync(temporaryZip);
+      }
       const safeName = String(patched.name || taskId).replace(/[^\w.-]+/g, '_').slice(0, 80) || taskId;
       res.writeHead(200, {
         'Content-Type': 'application/zip',

@@ -1,0 +1,22 @@
+{
+  "variant": "100m",
+  "playable_type": "level",
+  "level_count": 1,
+  "required_types": [
+    "ready",
+    "step",
+    "result"
+  ],
+  "required_branches": [
+    "win",
+    "fail",
+    "pause_resume"
+  ],
+  "end_card_enabled": false,
+  "progress_meaning": "首次正确填入的新单词数 / 当前棋盘的全部单词数（当前英文棋盘33词）",
+  "cta_placements": [],
+  "cta_confirmation_path": "cta-decision.md",
+  "scope": "独立 game.js 包：仅玩法步骤与胜败，下载入口已移至组装壳；标题、重玩及步数跳转由组装壳配置。",
+  "acceptance": "验收未完成；尚无官方平台完整通关与真实 Tracking 日志",
+  "victory_condition": "当前棋盘所有单词填满；第3个单词不再提前结束"
+}

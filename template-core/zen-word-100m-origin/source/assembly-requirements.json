@@ -1,0 +1,34 @@
+{
+  "scope": "playable-creator 项目组装壳；不属于独立 game.js",
+  "cta_placements": [
+    {
+      "id": "100m-bottom-download-card",
+      "replaces": "100m-play-free",
+      "location": "底部共享 #novvy-cta 下载卡",
+      "when": "试玩阶段开始后，页面可见时真实点击；包含结束后的同一张卡",
+      "click_source": "cta_click",
+      "user_confirmed": true
+    },
+    {
+      "id": "100m-successful-word-steps",
+      "location": "项目组装壳的成功新单词 step 回调",
+      "when": "本局第20、30、38、44、48、52…步；33词棋盘可到20与30；重玩重新计数",
+      "click_source": "forced_click_to_appstore",
+      "user_confirmed": true
+    }
+  ],
+  "cta_confirmation_path": "cta-decision.md",
+  "acceptance": "验收未完成；官方壳真实商店与 Tracking 日志尚未验证",
+  "replay_enabled_by_default": true,
+  "step_policy": {
+    "afterSteps": 20,
+    "intervals": [
+      10,
+      8,
+      6,
+      4
+    ],
+    "repeatLast": true,
+    "resetOnReplay": true
+  }
+}

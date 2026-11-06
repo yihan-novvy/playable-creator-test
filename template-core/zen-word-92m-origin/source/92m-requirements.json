@@ -1,0 +1,31 @@
+{
+  "variant": "92m",
+  "playable_type": "level",
+  "level_count": 1,
+  "required_types": [
+    "ready",
+    "step",
+    "result",
+    "cta"
+  ],
+  "required_branches": [
+    "win",
+    "cta",
+    "pause_resume"
+  ],
+  "end_card_enabled": false,
+  "progress_meaning": "实际已完成单词数 / 初始单词总数 × 100；当前英文场景 21 词；错误、空提交、重复词不记步",
+  "terminal_semantics": "用户要求移除第五次提交截断。原版最后一词填入动画完成且 mBlocks.Count === 0 才 win；没有原生失败条件，不新增 fail。",
+  "cta_placements": [
+    {
+      "id": "92m-ended-tap",
+      "location": "LunaManager.Update，isGameOver 后点击任意位置",
+      "when": "原版结束后真实按下，实例已开始且未暂停、未销毁",
+      "click_source": "forced_click_to_appstore",
+      "user_confirmed": true
+    }
+  ],
+  "cta_confirmation_path": "cta-decision.md",
+  "scope": "独立 game.js 包；重玩及结束卡由组装壳配置。项目工作台重玩另外验证，不冒充独立包的 retry 分支。",
+  "acceptance": "验收未完成；尚无官方平台完整进程与 CTA 原始日志"
+}

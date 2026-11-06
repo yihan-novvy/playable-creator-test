@@ -6,7 +6,7 @@ import { fixedViewportHtml } from '../core/lib/fixed-viewport.mjs';
 // Deliberately curated: retired templates and unrelated games stay out of this gallery.
 export const SHOWCASE_IDS = new Set([
   'colorever-new', 'colorever-origin', 'escape-arrow', 'dragon-cube',
-  'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin',
+  'block-out-origin', 'freecell-origin', 'grill-sort-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin',
 ]);
 
 export async function showcasePreview(templateId, searchParams) {
@@ -26,7 +26,9 @@ export async function showcasePreview(templateId, searchParams) {
     template: entry.template, config, media: {}, preview: true,
   };
   let built;
-  if (templateId === 'colorever-new') {
+  if (templateId === 'zen-word-100m-origin' || templateId === 'zen-word-92m-origin') {
+    built = lib.zenHtml(options);
+  } else if (templateId === 'colorever-new') {
     const requested = searchParams.get('pattern');
     if (requested) {
       if (!lib.patterns(entry.templateDir, entry.template).some(p => p.id === requested)) {
