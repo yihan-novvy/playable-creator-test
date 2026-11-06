@@ -10,9 +10,9 @@ export default async function test(a){
  const request=(route,body,method='POST')=>fetch(base+route,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  try{
   const created=await request('/api/tasks',{name:`travel-town-test-${Date.now()}`,templateId:'travel-town-origin'});a.equal(created.status,201,'template can create tasks');id=(await created.json()).id;const route='/api/tasks/'+id;
-  let preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('"allowReplay":false')&&preview.includes('id="novvy-cta"'),'replay off and CTA visible by default');
+  let preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('"allowReplay":true')&&preview.includes('id="novvy-cta"'),'replay on and CTA visible by default');
   const settings=html=>JSON.parse(html.match(/window\.TRAVEL_TOWN_CONFIG=(.*?);<\/script>/)[1]);
-  a.equal(settings(preview).policy,{mode:'steps',afterSteps:20,intervals:[10,8,6,4],enabled:true},'default auto-jump policy');
+  a.equal(settings(preview).policy,{mode:'steps',afterSteps:20,intervals:[10,8,6,4],enabled:false},'default auto-jump policy');
   a.check(preview.includes('data:image/jpeg;base64,')&&preview.includes('Download Travel Town'),'local official icon and correct brand');
   a.check(!preview.includes('data-action="download"')&&!preview.includes('data-novvy-cta data-'),'manual CTA has no SDK duplicate auto-hook');
   const patch=await request(route,{config:{gameplay:{allowReplay:true},hud:{titleEnabled:true,titleLine1:'Test',titleLine2:'Second line'}}},'PATCH');a.equal(patch.status,200,'settings save');

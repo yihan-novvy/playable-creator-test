@@ -1,3 +1,20 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Pixel Flow! · 原版像素传送带试玩</title>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#122a42}#pixel-flow-game{position:fixed;inset:0;touch-action:none}#pixel-flow-replay{position:fixed;right:12px;bottom:calc(var(--pixel-flow-cta-inset,0px) + 12px);z-index:11;border:0;border-radius:20px;padding:10px 16px;background:#fff;color:#164344;font:600 15px Arial;cursor:pointer}#pixel-flow-continue{position:fixed;left:12px;bottom:calc(var(--pixel-flow-cta-inset,0px) + 12px);z-index:11;padding:10px 16px;border:0;border-radius:20px}#pixel-flow-continue[hidden],#pixel-flow-replay[hidden]{display:none}#pixel-flow-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}</style>
-<!--PIXEL_FLOW_HEAD--></head><body><div id="pixel-flow-game"></div><p id="pixel-flow-status" role="status">Loading…</p><button id="pixel-flow-replay" hidden>Play again</button><button id="pixel-flow-continue" hidden>Continue</button><!--PIXEL_FLOW_SCRIPTS--><script>window.PIXEL_FLOW_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--PIXEL_FLOW_SCRIPTS_END--></body></html>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#122a42}
+#pixel-flow-game{position:fixed;inset:0;touch-action:none}
+#pixel-flow-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}
+#pixel-flow-result{position:fixed;inset:0;z-index:20;display:grid;place-items:center;box-sizing:border-box;padding:max(20px,var(--pixel-flow-hud-inset,0px)) max(20px,env(safe-area-inset-right)) max(20px,var(--pixel-flow-cta-inset,0px)) max(20px,env(safe-area-inset-left));background:#122238bc;color:#fff;text-align:center;font:700 20px/1.4 Arial,sans-serif;overflow:auto}
+#pixel-flow-result[hidden],#pixel-flow-status[hidden]{display:none}
+.pixel-flow-result-card{width:min(100%,300px);box-sizing:border-box;padding:28px 20px;border:2px solid #bfe7ff;border-radius:22px;background:#245879;box-shadow:0 16px 48px #0006}
+#pixel-flow-result-title{margin:0;font-size:32px}
+#pixel-flow-result-copy{margin:14px 0 22px;font-size:16px;font-weight:400}
+#pixel-flow-replay{min-height:48px;min-width:156px;border:0;border-radius:12px;padding:14px 28px;background:#ffe39a;color:#23435b;font:inherit;cursor:pointer;touch-action:manipulation}
+#pixel-flow-replay:disabled{opacity:.65;cursor:wait}
+#pixel-flow-replay:focus-visible{outline:3px solid #fff;outline-offset:4px}
+@media(max-height:500px){.pixel-flow-result-card{padding:12px 20px}#pixel-flow-result-title{font-size:24px}#pixel-flow-result-copy{margin:8px 0 12px}#pixel-flow-replay{padding:8px 24px}}
+</style>
+<!--PIXEL_FLOW_HEAD--></head><body><div id="pixel-flow-game"></div><p id="pixel-flow-status" role="status">Loading…</p>
+<div id="pixel-flow-result" role="dialog" aria-modal="true" aria-labelledby="pixel-flow-result-title" aria-describedby="pixel-flow-result-copy" hidden>
+  <div class="pixel-flow-result-card"><h1 id="pixel-flow-result-title">You win!</h1><p id="pixel-flow-result-copy" aria-live="polite">Ready for another round?</p><button id="pixel-flow-replay" type="button">Retry</button></div>
+</div>
+<!--PIXEL_FLOW_SCRIPTS--><script>window.PIXEL_FLOW_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--PIXEL_FLOW_SCRIPTS_END--></body></html>

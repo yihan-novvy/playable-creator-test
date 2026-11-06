@@ -29,7 +29,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     return field(label, input);
   }
   function renderConfig() {
-    document.getElementById('config-hint').textContent = '寒冷房间：选择粉刷或清理，将相同道具拖动合并，完成所选修复目标。';
+    document.getElementById('config-hint').textContent = '寒冷房间：选择粉刷或清理，将相同道具拖动合并，完成后继续选择下一项修复。';
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
@@ -42,7 +42,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
-    ]), el('p', { class: 'hint' }, ['默认关闭。开启后结算可重玩，恢复房间、棋盘、修复选项与引导，不重复片头。']));
+    ]), el('p', { class: 'hint' }, ['默认开启。成功和失败均显示结算弹窗；点击 Retry / Try again 先触发 CTA，返回试玩后恢复房间、棋盘与引导，不重复片头。无 SDK 的本地预览直接重开。']));
     const policy=config().playableCta||{};
     const mode=el('select',{},[el('option',{value:'steps'},['按有效步数']),el('option',{value:'complete'},['通关时'])]);
     mode.value=policy.mode||'steps';
@@ -59,9 +59,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     mode.disabled=policy.enabled===false;
     first.disabled=intervals.disabled=policy.enabled===false||mode.value!=='steps';
     wrap.append(el('h3',{},['自动跳转']),el('div',{class:'dragon-config-grid'},[
-      checkbox('启用自动跳转','playableCta','enabled',policy.enabled!==false),field('跳转时机',mode),
+      checkbox('启用自动跳转','playableCta','enabled',policy.enabled===true),field('跳转时机',mode),
       field('首次跳转的有效步数',first),field('后续间隔（最后一项重复，留空仅首跳）',intervals)
-    ]),el('p',{class:'hint'},['默认第 20 次有效合并或移动后跳转，之后间隔 10、8、6、4 步，最后每 4 步重复。无效拖动、教程手势和修复动画不计步；首次跳转前通关会补跳一次，失败不跳。重玩重新计数，返回后可继续操作。']));
+    ]),el('p',{class:'hint'},['默认关闭自动跳转。开启按步数模式后，第 20 次有效合并或移动后跳转，之后间隔 10、8、6、4 步，最后每 4 步重复。无效拖动、教程手势和修复动画不计步；单项修复不结算、不跳转；按步数模式不会在通关时补跳。重玩重新计数，返回后可继续操作。']));
     wrap.append(el('h3',{},['底部下载卡']),el('div',{class:'dragon-config-grid'},[
       checkbox('显示底部 CTA','cta','enabled',config().cta?.enabled!==false),
       textField('按钮文字','cta','buttonText',config().cta?.buttonText,'Play Now'),

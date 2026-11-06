@@ -105,6 +105,7 @@ function listTemplates() {
     steps: entry.template.steps,
     workbench: entry.plugin.workbench || entry.id,
     defaults: entry.plugin.defaults,
+    gameplayLimits: entry.template.gameplayLimits || {},
     palette: entry.template.pattern?.palette || {},
   }));
 }

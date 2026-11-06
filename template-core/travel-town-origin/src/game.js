@@ -3,6 +3,7 @@ NovvyGame(function(container,shell,options){
   const view=engineRoot(container,'<canvas id="game-canvas"></canvas>','.engine-root{background:#182630;touch-action:none}canvas{display:block;touch-action:none}');
   const scope=createEngineScope(view.root);
   let app,requireModule,config,scene,env=options.env||{},started=false,paused=true,disposed=false,finished=false,progress=0,resolveStart,rejectStart,startPromise;
+  const repaired=new Set(),tiers=[0,0],targets=[3,2];
   function sound(){if(app?.audio)app.audio.available=started&&!paused&&env.muted!==true;}
   function input(){view.root.style.pointerEvents=started&&!paused&&!finished?'auto':'none';}
   function area(){
@@ -55,11 +56,19 @@ NovvyGame(function(container,shell,options){
       const a=area();return [a.left,a.top,a.width,a.height];
     },
     merge(item){if(!started||paused||disposed||finished)return;const model=requireModule(8646).dGet(requireModule(2528).GameModel);
-      const target=model.current===0?3:2;
-      if(item.type===model.current)progress=Math.max(progress,Math.min(100,item.level/target*100));
+      const index=model.current;
+      if(item.type===index)tiers[index]=Math.max(tiers[index],Math.min(1,item.level/targets[index]));
+      progress=tiers.reduce((sum,tier)=>sum+tier,0)/targets.length*100;
       step();
     },
-    move(){step();},complete(){complete('win');},fail(){complete('fail');},
+    repairComplete(){
+      if(!started||disposed||finished)return true;
+      const model=requireModule(8646).dGet(requireModule(2528).GameModel),index=model.current;
+      repaired.add(index);model['item_'+index+'_completed']=true;
+      if(repaired.size===targets.length){complete('win');return true;}
+      return false;
+    },
+    move(){step();},fail(){complete('fail');},
   };
   const runtime={
     start(){if(disposed)return Promise.resolve();if(started)return startPromise;started=true;paused=false;input();

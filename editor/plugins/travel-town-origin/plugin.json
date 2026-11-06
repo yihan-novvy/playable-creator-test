@@ -33,7 +33,7 @@
   "defaults": {
     "levelId": 1,
     "gameplay": {
-      "allowReplay": false
+      "allowReplay": true
     },
     "hud": {
       "enabled": false,
@@ -53,7 +53,7 @@
       "guideText": "Enjoy for free"
     },
     "playableCta": {
-      "enabled": true,
+      "enabled": false,
       "mode": "steps",
       "afterSteps": 20,
       "intervals": [10, 8, 6, 4]

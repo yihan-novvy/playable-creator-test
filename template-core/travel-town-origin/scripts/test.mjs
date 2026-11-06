@@ -31,14 +31,24 @@ f.scope.window.TT_CONTEXT.merge({type:0,level:1});assert.equal(f.events.length,0
 await f.game.start();await f.game.start();assert.equal(f.state.runs,1,'start is idempotent');
 assert.equal(f.app.audio.available,false,'mute reaches native audio');
 f.scope.window.TT_CONTEXT.move();f.scope.window.TT_CONTEXT.merge({type:0,level:1});f.scope.window.TT_CONTEXT.move();
-assert.deepEqual(f.events.map(e=>[e[0],Math.round(e[1])]),[['step',0],['step',33],['step',33]],'confirmed movement counts separately from highest-tier progress');
+assert.deepEqual(f.events.map(e=>[e[0],Math.round(e[1])]),[['step',0],['step',17],['step',17]],'confirmed movement counts separately from highest-tier progress');
 f.game.pause();f.scope.window.TT_CONTEXT.move();assert.equal(f.events.length,3,'paused input cannot report');
 f.game.setEnv({muted:false});assert.equal(f.app.audio.available,false);f.game.resume();assert.equal(f.app.audio.available,true);
 const bounds=f.scope.window.TT_CONTEXT.bounds({getElement:()=>({key:'gameContainer'})},[0,0,1000,2000]);
 assert.equal(bounds[1],100*2000/844);assert.equal(bounds[3],2000-220*2000/844);
 assert.deepEqual(f.scope.window.TT_CONTEXT.bounds({getElement:()=>({key:'main'})},[0,0,1000,2000]),[0,0,1000,2000],'background keeps full bounds');
-f.scope.window.TT_CONTEXT.merge({type:0,level:3});f.scope.window.TT_CONTEXT.complete();f.scope.window.TT_CONTEXT.complete();f.scope.window.TT_CONTEXT.fail();f.scope.window.TT_CONTEXT.move();
+f.scope.window.TT_CONTEXT.merge({type:0,level:3});
+assert.equal(f.scope.window.TT_CONTEXT.repairComplete(),false,'first repair returns to selection');
+assert.equal(f.scope.window.TT_CONTEXT.repairComplete(),false,'duplicate repair does not finish the room');
+assert.equal(f.model.item_0_completed,true);assert.equal(f.root.style.pointerEvents,'auto');
+assert.equal(f.events.filter(e=>e[0]==='win').length,0,'first repair is not an ad result');
+f.game.pause();f.game.resume();assert.equal(f.root.style.pointerEvents,'auto','return retains playable state');
+f.model.current=1;f.scope.window.TT_CONTEXT.merge({type:1,level:1});assert.equal(f.events.at(-1)[1],75);
+f.scope.window.TT_CONTEXT.merge({type:1,level:2});assert.equal(f.events.at(-1)[1],100);
+assert.equal(f.scope.window.TT_CONTEXT.repairComplete(),true);f.scope.window.TT_CONTEXT.repairComplete();f.scope.window.TT_CONTEXT.fail();f.scope.window.TT_CONTEXT.move();
 assert.equal(f.events.filter(e=>e[0]==='win').length,1);assert.equal(f.events.filter(e=>e[0]==='fail').length,0);
 f.game.destroy();f.game.destroy();assert.equal(f.state.disposed,1);assert.equal(f.state.destroyed,1);
-const second=fixture();second.model.current=1;await second.game.start();second.scope.window.TT_CONTEXT.merge({type:1,level:1});assert.equal(second.events[0][1],50,'cleaning board uses its own native target tier');second.scope.window.TT_CONTEXT.fail();second.scope.window.TT_CONTEXT.complete();assert.equal(second.events.at(-1)[0],'fail');second.game.destroy();
+const second=fixture();second.model.current=1;await second.game.start();second.scope.window.TT_CONTEXT.merge({type:1,level:1});assert.equal(second.events[0][1],25,'cleaning board uses its own native target tier');second.scope.window.TT_CONTEXT.fail();second.scope.window.TT_CONTEXT.repairComplete();assert.equal(second.events.at(-1)[0],'fail');second.game.destroy();
 console.log('Travel Town source, script boundary, native target progress, lifecycle, mute, insets and result latch passed.');
+
+const reverse=fixture();await reverse.game.start();reverse.model.current=1;reverse.scope.window.TT_CONTEXT.merge({type:1,level:2});assert.equal(reverse.scope.window.TT_CONTEXT.repairComplete(),false);reverse.model.current=0;reverse.scope.window.TT_CONTEXT.merge({type:0,level:3});assert.equal(reverse.events.at(-1)[1],100);assert.equal(reverse.scope.window.TT_CONTEXT.repairComplete(),true);reverse.game.destroy();

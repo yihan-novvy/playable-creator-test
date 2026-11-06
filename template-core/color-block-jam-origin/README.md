@@ -29,9 +29,9 @@ npm run validate
 
 自动跳转默认开启：第 12 次有效操作首跳，随后间隔 8、6、4，末项每 4 步重复；空列表只首跳。步数策略尚未触发时，最终通关兜底一次；已触发则不因通关再跳。也可改为仅最终通关模式。卡片和自动策略独立开关；设置修改后必须重新打包。
 
-有效操作是一次手势提交到不同格点或消除方块；挪动但没有消除仍计一步，进度只按本关已消除数量计算。中间关 `shell.win({continuePlaying:true})`，下一关 `shell.level(n)`，第三关 `shell.win()`。原版没有失败、原生重试或跳过控件。项目开启重玩时重建第一关，保持同一 playable stage，不重播片头。
+有效操作是一次手势提交到不同格点或消除方块；挪动但没有消除仍计一步，进度只按本关已消除数量计算。中间关 `shell.win({continuePlaying:true})`，下一关 `shell.level(n)`，第三关 `shell.win()`。原版没有失败、原生重试或跳过控件。项目开启重玩时显示居中遮罩结算弹窗：成功按钮为 `Retry`，失败分支为 `Try Again`。点击仅请求一次 `forced_click_to_appstore`，暂停旧局并禁用按钮；必须观察到页面或宿主不可见，再恢复可见，才重建第一关。保持同一 playable stage，不重播片头；弹窗内 Continue 可结束当前段。加载失败单独显示 Reload，不算玩法失败，也不重复跳店。当前示例任务已开启重玩，模板默认值仍关闭。
 
-`game.js` 同步注册 `NovvyGame(entry)`，仅使用 shell API；宿主 SDK、第一触摸、视频、HUD、卡片与自动策略在项目组装层。用户确认的两个主动下载位置为 `cta_click`，自动策略为 `forced_click_to_appstore`，原始答复见 `verification/cta-decision.md`。
+`game.js` 同步注册 `NovvyGame(entry)`，仅使用 shell API；宿主 SDK、第一触摸、视频、HUD、卡片与自动策略在项目组装层。用户确认的两个主动下载位置为 `cta_click`，自动策略和新增成功/失败重玩入口为 `forced_click_to_appstore`，原始答复见 `verification/cta-decision.md`。
 
 ## 验证状态
 
@@ -49,3 +49,12 @@ npm run validate
 [novvy-playable-events SKILL.md](/Users/code/.codex/plugins/cache/workspace-directory/novvy-playable-events/3.0.0/skills/novvy-playable-events/SKILL.md) 明确要求 “Upload the final creative to the official platform's **试玩日志调试** page”。该平台仍在登录页，缺少实际接收/丢弃消息、Tracking 上报、关联时间戳和最终汇总证据，因此 `event_verified=false`。浏览器工具禁止 `file://` 导航，未绕过；iOS/Android 广告 WebView 尚未测试。同段重玩、仅通关自动策略、声音和暂停恢复有代码/内存回归，尚未完整重复真实浏览器验证。
 
 完整限制、产物 SHA-256 与证据索引见 `verification/report.json`。`final-local-session.json` 是本地产品预览控制台原始记录，不是官方平台事件日志。没有提交、推送或发布。
+
+## 2026-11-06 结算弹窗调整
+
+本轮重新读取完整最新事件文档，未修改独立游戏载荷。生成模板与示例组装包已更新，当前示例启用允许重玩。
+
+- 使用最终组装预览真实拖拽通过全部三关，显示成功弹窗；390×844、320×568、844×390 下按钮和文案可见。实际点击 Retry 后保持 Waiting，不在后台提前重开。
+- 宿主内存回归覆盖成功/失败、单次 CTA、冷却/SDK 拒绝、两个可见性信号、回访才重建、缓存页面返回、失败重建恢复、旧实例回调屏蔽、阶段连续和自动策略重新计数。失败分支来自内存回归，原版没有自然失败条件。
+- 本地预览无真实广告 SDK，不会实际打开商店；IAB 切换标签未产生页面隐藏信号，没有将它冒充回店。生产 SDK 跳店/回店及对应 Tracking 上报仍未实测，官方调试页仍需登录。
+- 本轮截图、原始本地控制台、文档、包哈希和检查结果见 `verification/replay-modal/`；`verification/report.json` 等原报告保留为上一版历史证据。

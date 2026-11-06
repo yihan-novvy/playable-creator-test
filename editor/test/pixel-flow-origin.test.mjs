@@ -36,6 +36,8 @@ export default async function test(a){
   const assembly=execFileSync('unzip',['-p',exports[''],'index.html'],{encoding:'utf8',maxBuffer:1000000});
   a.equal(settings(assembly).policy,settings(preview).policy,'preview and export share auto-jump settings');
   a.check(assembly.includes('id="novvy-cta"')&&assembly.includes('Install &lt;now>'),'pack includes configured CTA');
+  a.check(/id="pixel-flow-result"[^>]*role="dialog"/.test(assembly)&&assembly.includes('id="pixel-flow-replay" type="button"'),'packed result uses the modal replay control');
+  a.check(!assembly.includes('pixel-flow-continue')&&!assembly.includes('#pixel-flow-replay{position:fixed'),'old bottom replay and continue controls removed');
   a.check(!firstGame.includes(Buffer.from('playable-steps'))&&!firstGame.includes(Buffer.from('novvy-cta')),'standalone game excludes CTA policy and card');
   const second=await fetch(base+route+'/export?format=game');const repeat=path.join(tmp,'repeat.zip');fs.writeFileSync(repeat,Buffer.from(await second.arrayBuffer()));a.check(firstGame.equals(execFileSync('unzip',['-p',repeat,'game.js'],{maxBuffer:16000000})),'repack payload deterministic');
   await request(route,{config:{hud:{titleLine1:'changed'}}},'PATCH');a.equal((await fetch(base+route+'/export')).status,409,'HUD edit invalidates old export');

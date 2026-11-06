@@ -2,6 +2,7 @@ import {fileURLToPath} from 'node:url';
 import fs from 'node:fs';
 import path from 'node:path';
 import { getEntry } from '../core/registry.mjs';
+import {candyHitTarget} from '../plugins/candy-crush-origin/settings.mjs';
 import {
   PROJECTS_ROOT,
   RESULT_ROOT,
@@ -229,7 +230,12 @@ export function updateTaskConfig(id, patch) {
   }
   if ('levelId' in (patch || {})) validateFixedLevel(doc.templateId, patch.levelId);
   if ('levelId' in (patch?.secondPlayable || {})) validateFixedLevel(doc.templateId, patch.secondPlayable.levelId);
-  if (['block-out-origin', 'freecell-origin', 'zen-word-100m-origin', 'zen-word-92m-origin', 'project-makeover-origin', 'word-search-explorer-origin', 'screwdom-origin', 'travel-town-origin', 'candy-crush-origin', 'color-block-jam-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) {
+  if (doc.templateId === 'candy-crush-origin' && 'gameplay' in (patch || {})) {
+    const settings=patch.gameplay;
+    if(!settings||typeof settings!=='object'||Array.isArray(settings)||Object.entries(settings).some(([key,value])=>key==='allowReplay'?typeof value!=='boolean':key!=='tapsToBreak'))throw Object.assign(new Error('糖果玩法仅支持点击次数和重玩开关。'),{statusCode:400});
+    candyHitTarget(getEntry(doc.templateId).template.game,settings);
+  }
+  if (['block-out-origin', 'freecell-origin', 'zen-word-100m-origin', 'zen-word-92m-origin', 'project-makeover-origin', 'word-search-explorer-origin', 'screwdom-origin', 'travel-town-origin', 'color-block-jam-origin'].includes(doc.templateId) && 'gameplay' in (patch || {})) {
     const settings = patch.gameplay;
     if (!settings || typeof settings !== 'object' || Array.isArray(settings) || Object.entries(settings).some(([key, value]) => key !== 'allowReplay' || typeof value !== 'boolean')) {
       const error = new Error('允许重玩须为布尔值。');

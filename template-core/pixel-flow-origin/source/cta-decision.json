@@ -10,7 +10,32 @@
     {
       "id": "assembly-auto-policy",
       "click_source": "forced_click_to_appstore"
+    },
+    {
+      "id": "assembly-fail-retry",
+      "label": "Try Again",
+      "when": "failure modal",
+      "click_source": "forced_click_to_appstore"
+    },
+    {
+      "id": "assembly-win-retry",
+      "label": "Retry",
+      "when": "success modal",
+      "click_source": "forced_click_to_appstore"
     }
   ],
-  "gamePlacements": []
+  "gamePlacements": [],
+  "followup": {
+    "request": "失败 Try Again、成功 Retry 改为 Tasty Travels 式弹窗，触发 CTA，返回后才继续。",
+    "question": "两个新增入口的 click_source 是否都设为 forced_click_to_appstore？",
+    "userAnswer": "两个都用 forced_click_to_appstore（推荐）",
+    "observedAt": "2026-11-06",
+    "supersedes": "原重玩不跳店决定；原底卡和步数策略分类保留"
+  },
+  "replayTimingCorrection": {
+    "userRequest": "点击重玩的时候，为什么会有“Try a fresh start! Come back to play again.” 然后一直显示waiting ?不应该是激活cta之后直接显示重玩吗？",
+    "observedAt": "2026-11-06",
+    "behavior": "CTA 接受后立即关闭弹窗并重建；不可见时暂停，返回后继续；不等待返回事件才能重建。",
+    "clickSourcesUnchanged": true
+  }
 }

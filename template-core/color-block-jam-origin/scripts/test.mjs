@@ -66,19 +66,75 @@ console.log('Color Block Jam: source integrity, deterministic build, real releas
 // Exercise the production assembly host in memory. This validates stage,
 // replay and conversion policy logic, not actual platform SDK reporting.
 async function hostFixture(config){
- class Bus{constructor(){this.listeners={};this.style={setProperty(){}};this.clientWidth=390;this.clientHeight=844;this.hidden=false;this.offsetHeight=90;}addEventListener(t,f){(this.listeners[t]||=[]).push(f);}dispatchEvent(e){for(const f of this.listeners[e.type]||[])f(e);}getBoundingClientRect(){return {bottom:100};}}
- const elements=Object.fromEntries(['color-block-jam-game','color-block-jam-status','color-block-jam-replay','color-block-jam-continue','novvy-cta'].map(id=>[id,new Bus()]));
- const window=new Bus(),document=new Bus(),calls=[],instances=[],state={now:0};document.body={append(){}};document.documentElement=new Bus();document.createElement=()=>new Bus();document.getElementById=id=>elements[id]||null;
+ class Bus{
+  constructor(){this.listeners={};this.style={setProperty(){}};this.clientWidth=390;this.clientHeight=844;this.hidden=false;this.offsetHeight=90;}
+  addEventListener(t,f){(this.listeners[t]||=[]).push(f);}
+  dispatchEvent(e){for(const f of this.listeners[e.type]||[])f(e);}
+  getBoundingClientRect(){return {bottom:100};} focus(){}
+ }
+ const ids=['game','status','replay','continue','result','result-title','result-copy'];
+ const elements=Object.fromEntries(ids.map(id=>['color-block-jam-'+id,new Bus()]));elements['novvy-cta']=new Bus();elements['color-block-jam-result'].hidden=true;
+ const window=new Bus(),document=new Bus(),calls=[],instances=[],state={now:0,failNext:false,rejectClick:false};
+ document.body={append(){}};document.documentElement=new Bus();document.createElement=()=>new Bus();document.getElementById=id=>elements[id]||null;
  window.COLOR_BLOCK_JAM_CONFIG={intro:false,title:false,ctaEnabled:true,allowReplay:false,policy:{enabled:true,mode:'steps',afterSteps:2,intervals:[3,1]},...config};
- window.NovvyPlayable=new Proxy({},{get:(o,key)=>(...args)=>calls.push([key,...args])});
- vm.runInNewContext(read('src/host.js'),{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,performance:{now:()=>state.now},getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},queueMicrotask,console});
- window.NovvyGame(async(root,shell)=>{const instance={shell,startCount:0,destroyCount:0,pauseCount:0,resumeCount:0,start(){this.startCount++;},pause(){this.pauseCount++;},resume(){this.resumeCount++;},destroy(){this.destroyCount++;},setEnv(){}};instances.push(instance);return instance;});
+ window.NovvyPlayable=new Proxy({},{get:(o,key)=>(...args)=>{calls.push([key,...args]);if(key==='click'&&state.rejectClick)return false;}});
+ vm.runInNewContext(read('src/host.js'),{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,performance:{now:()=>state.now},getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},queueMicrotask,console:{info(){},warn(){},error(){}}});
+ window.NovvyGame(async(root,shell)=>{
+  if(state.failNext){state.failNext=false;throw Error('Fixture load failure');}
+  const instance={shell,startCount:0,destroyCount:0,pauseCount:0,resumeCount:0,start(){this.startCount++;},pause(){this.pauseCount++;},resume(){this.resumeCount++;},destroy(){this.destroyCount++;},setEnv(){}};instances.push(instance);return instance;
+ });
  const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};await flush();
- return {window,document,elements,calls,instances,state,flush};
+ const button=elements['color-block-jam-replay'],modal=elements['color-block-jam-result'];
+ const visibility=hidden=>{document.hidden=hidden;document.dispatchEvent({type:'visibilitychange'});};
+ const viewability=viewable=>window.dispatchEvent({type:'novvy:viewablechange',detail:{viewable}});
+ const count=name=>calls.filter(c=>c[0]===name).length;
+ return {window,document,elements,calls,instances,state,flush,button,modal,visibility,viewability,count};
 }
-const host=await hostFixture({intro:true,allowReplay:true});assert.equal(host.instances[0].startCount,0,'video prevents early gameplay');host.instances[0].shell.step(50);assert.equal(host.calls.filter(c=>c[0]==='onStep').length,0);
-host.window.dispatchEvent({type:'novvy:intro-finished'});host.window.dispatchEvent({type:'novvy:intro-finished'});await host.flush();assert.equal(host.instances[0].startCount,1,'video transition starts once');assert.equal(host.calls.filter(c=>c[0]==='setStage').length,2);
-const h=host.instances[0].shell;h.win({continuePlaying:true});assert.equal(host.calls.filter(c=>c[0]==='onComplete').length,0,'intermediate win does not finish assembly');h.level(2);h.step(0);h.step(0);assert.equal(host.calls.filter(c=>c[0]==='click').length,1,'real steps trigger initial policy');h.step(25);h.step(25);h.step(25);assert.equal(host.calls.filter(c=>c[0]==='click').length,1,'cooldown blocks without consuming threshold');host.state.now=1001;h.step(25);assert.equal(host.calls.filter(c=>c[0]==='click').length,2,'pending threshold retries');host.state.now=2002;h.step(50);assert.equal(host.calls.filter(c=>c[0]==='click').length,3,'last interval repeats');h.win();h.win();assert.equal(host.calls.filter(c=>c[0]==='onComplete').length,1,'final result once');assert.equal(host.calls.filter(c=>c[0]==='click').length,3,'no extra win jump after step jump');
-host.elements['color-block-jam-replay'].dispatchEvent({type:'click'});await host.flush();assert.equal(host.instances.length,2);assert.equal(host.instances[0].destroyCount,1,'old instance disposed on replay');assert.equal(host.instances[1].startCount,1);assert.equal(host.calls.filter(c=>c[0]==='setStage').length,2,'replay stays in stage');assert.equal(host.calls.filter(c=>c[0]==='onReplay').length,1);host.document.hidden=true;host.document.dispatchEvent({type:'visibilitychange'});assert.equal(host.instances[1].pauseCount,1);host.document.hidden=false;host.document.dispatchEvent({type:'visibilitychange'});assert.equal(host.instances[1].resumeCount,1);
-const off=await hostFixture({policy:{enabled:false,mode:'steps',afterSteps:1,intervals:[]}});off.instances[0].shell.step(100);off.instances[0].shell.win();assert.equal(off.calls.filter(c=>c[0]==='click').length,0,'disabled auto policy stays disabled');off.window.dispatchEvent({type:'novvy:cta-interact'});assert.equal(off.calls.filter(c=>c[0]==='click').length,1,'manual CTA independent of auto switch');
-console.log('Production assembly host: intro gating, progress without elimination, cooldown retry, intervals, result deduplication, replay and visibility controls passed.');
+const host=await hostFixture({intro:true,allowReplay:true});
+assert.equal(host.instances[0].startCount,0,'video prevents early gameplay');
+host.instances[0].shell.step(50);assert.equal(host.count('onStep'),0);
+host.window.dispatchEvent({type:'novvy:intro-finished'});host.window.dispatchEvent({type:'novvy:intro-finished'});await host.flush();
+assert.equal(host.instances[0].startCount,1,'video transition starts once');assert.equal(host.count('setStage'),2);
+const h=host.instances[0].shell;h.win({continuePlaying:true});assert.equal(host.count('onComplete'),0,'intermediate win does not finish assembly');
+h.level(2);h.step(0);h.step(0);assert.equal(host.count('click'),1,'real steps trigger initial policy');
+h.step(25);h.step(25);h.step(25);assert.equal(host.count('click'),1,'cooldown blocks without consuming threshold');
+host.state.now=1001;h.step(25);assert.equal(host.count('click'),2,'pending threshold retries');
+host.state.now=2002;h.step(50);assert.equal(host.count('click'),3,'last interval repeats');
+h.win();h.win();assert.equal(host.count('onComplete'),1,'final result once');assert.equal(host.count('click'),3,'no extra win jump after step jump');
+assert.equal(host.modal.hidden,false);assert.equal(host.button.textContent,'Retry');assert.equal(host.instances[0].pauseCount,1,'modal pauses original ending and audio');
+host.button.dispatchEvent({type:'click'});await host.flush();assert.equal(host.instances.length,1,'cooldown never causes a restart');assert.equal(host.button.disabled,false,'cooldown leaves button available');
+host.state.now=3003;host.button.dispatchEvent({type:'click'});host.button.dispatchEvent({type:'click'});await host.flush();
+assert.equal(host.count('click'),4,'one replay CTA despite double click');
+assert.equal(host.calls.filter(c=>c[0]==='click').at(-1)[1].click_source,'forced_click_to_appstore');
+assert.equal(host.instances.length,1,'CTA cannot eagerly rebuild in background');assert.equal(host.button.disabled,true);
+host.window.dispatchEvent({type:'focus'});host.visibility(false);host.viewability(true);await host.flush();assert.equal(host.instances.length,1,'focus or visible without an exit is not a store return');
+host.visibility(true);host.viewability(false);host.visibility(false);await host.flush();assert.equal(host.instances.length,1,'both visibility signals must allow return');
+host.viewability(true);host.viewability(true);await host.flush();
+assert.equal(host.instances.length,2,'only real hidden-to-visible cycle rebuilds');assert.equal(host.instances[0].destroyCount,1);
+assert.equal(host.instances[1].startCount,1);assert.equal(host.modal.hidden,true);assert.equal(host.count('onReplay'),1);
+assert.equal(host.count('setStage'),2,'replay stays in the same stage and skips intro');
+h.step(20);h.win();assert.equal(host.count('onComplete'),1,'old instance cannot emit after rebuild');
+host.state.now=5000;host.instances[1].shell.step(0);assert.equal(host.count('click'),4,'replay resets policy steps');
+host.instances[1].shell.step(0);assert.equal(host.count('click'),5,'new round uses initial policy threshold');
+host.visibility(true);host.visibility(false);assert.equal(host.instances[1].resumeCount,1,'ordinary background/return resumes gameplay');
+
+for(const kind of ['win','fail']){
+ const f=await hostFixture({allowReplay:true,policy:{enabled:false}});
+ f.instances[0].shell[kind]();assert.equal(f.modal.hidden,false);assert.equal(f.button.textContent,kind==='win'?'Retry':'Try Again');
+ f.state.rejectClick=true;f.button.dispatchEvent({type:'click'});assert.equal(f.button.disabled,false,'SDK rejection does not strand replay');
+ f.state.rejectClick=false;f.button.dispatchEvent({type:'click'});assert.equal(f.instances.length,1);
+ assert.equal(f.calls.filter(c=>c[0]==='click').at(-1)[1].click_source,'forced_click_to_appstore',kind+' uses confirmed replay source');
+ f.state.failNext=true;f.viewability(false);f.viewability(true);await f.flush();
+ assert.equal(f.modal.hidden,false,'rebuild error retains modal');assert.equal(f.button.disabled,false);assert.equal(f.button.textContent,'Reload');assert.equal(f.count('onReplay'),0,'failed rebuild is not a replay');
+ f.button.dispatchEvent({type:'click'});await f.flush();assert.equal(f.instances.length,2);assert.equal(f.count('click'),2,'loading retry does not open store again');assert.equal(f.count('onReplay'),1);
+}
+const cached=await hostFixture({allowReplay:true,policy:{enabled:false}});cached.instances[0].shell.win();cached.button.dispatchEvent({type:'click'});
+cached.window.dispatchEvent({type:'pagehide',persisted:true});assert.equal(cached.count('endStage'),0,'bfcache/store suspension does not end stage');assert.equal(cached.instances[0].destroyCount,0);
+cached.window.dispatchEvent({type:'pageshow',persisted:true});await cached.flush();assert.equal(cached.instances.length,2,'bfcache return also restarts once');
+cached.instances[1].shell.fail();cached.elements['color-block-jam-continue'].dispatchEvent({type:'click'});cached.elements['color-block-jam-continue'].dispatchEvent({type:'click'});
+assert.equal(cached.count('endStage'),1,'modal Continue ends current stage once');assert.equal(cached.modal.hidden,true);
+cached.state.now=9000;cached.button.dispatchEvent({type:'click'});await cached.flush();assert.equal(cached.instances.length,2,'ended stage cannot replay');
+const off=await hostFixture({policy:{enabled:false,mode:'steps',afterSteps:1,intervals:[]}});off.instances[0].shell.step(100);off.instances[0].shell.win();
+assert.equal(off.modal.hidden,true,'replay off preserves native ending');assert.equal(off.count('click'),0,'disabled auto policy stays disabled');
+off.window.dispatchEvent({type:'novvy:cta-interact'});assert.equal(off.count('click'),1,'manual CTA independent of auto switch');
+console.log('Production host memory tests: success/failure modals, confirmed replay CTA, double-click/cooldown guards, real visibility-cycle gating, SDK rejection, failed rebuild recovery, stale callbacks, stage continuity and policy reset passed.');

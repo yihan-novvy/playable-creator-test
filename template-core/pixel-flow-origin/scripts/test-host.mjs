@@ -4,17 +4,18 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const code=fs.readFileSync(new URL('../src/host.js',import.meta.url),'utf8');
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-async function fixture({intro=false,ctaEnabled=true,policy={enabled:true,mode:'steps',afterSteps:3,intervals:[2,1]}}={}){
-  class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}}
-  const nodes=Object.fromEntries(['pixel-flow-game','pixel-flow-status','pixel-flow-replay','pixel-flow-continue',...(ctaEnabled?['novvy-cta']:[])].map(id=>[id,new Element()]));
+async function fixture({intro=false,ctaEnabled=true,allowReplay=true,clickImpl,preview=false,startReplay,failRestart=false,policy={enabled:true,mode:'steps',afterSteps:3,intervals:[2,1]}}={}){
+  class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;focus(){}getBoundingClientRect(){return{top:734,bottom:844};}}
+  const nodes=Object.fromEntries(['pixel-flow-game','pixel-flow-status','pixel-flow-replay','pixel-flow-result','pixel-flow-result-title','pixel-flow-result-copy',...(ctaEnabled?['novvy-cta']:[])].map(id=>[id,new Element()]));
   const document=Object.assign(new EventTarget(),{hidden:false,getElementById:id=>nodes[id]||null,createElement:()=>new Element(),body:{append(){}},documentElement:{style:{setProperty(){}}}});
   const calls=[],instances=[];let now=1000;
-  const window=Object.assign(new EventTarget(),{PIXEL_FLOW_CONFIG:{intro,title:false,allowReplay:true,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
+  const window=Object.assign(new EventTarget(),{PIXEL_FLOW_CONFIG:{intro,title:false,allowReplay,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>{calls.push([name,...args]);if(name==='click')return clickImpl?.(window,document,...args);}]))});
+  if(preview)delete window.NovvyPlayable.click;
   window.addEventListener('novvy:cta-card',()=>{if(ctaEnabled)nodes['novvy-cta'].hidden=false;});
-  vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console,queueMicrotask});
-  window.NovvyGame(async(_root,shell)=>{const game={shell,start(){},destroy(){},pause(){},resume(){},setEnv(env){game.env=env;}};instances.push(game);return game;});
+  vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console:{info(){},warn(){},error(){}},queueMicrotask});
+  window.NovvyGame(async(_root,shell)=>{if(failRestart&&instances.length){failRestart=false;throw new Error('test load failure');}const index=instances.length,game={shell,starts:0,pauses:0,resumes:0,destroyed:false,start(){game.starts++;if(index>0)return startReplay?.();},destroy(){game.destroyed=true;},pause(){game.pauses++;},resume(){game.resumes++;},setEnv(env){game.env=env;}};calls.push(['scene-create',index]);instances.push(game);return game;});
   await flush();
-  return{window,document,nodes,calls,instances,advance(){now+=1100;},emit(name,detail){window.dispatchEvent(new CustomEvent(name,{detail}));}};
+  return{window,document,nodes,calls,instances,advance(){now+=1100;},hidden(value){document.hidden=value;document.dispatchEvent(new Event('visibilitychange'));},emit(name,detail){window.dispatchEvent(new CustomEvent(name,{detail}));}};
 }
 const clicks=f=>f.calls.filter(c=>c[0]==='click');
 const actions=(f,n)=>{for(let i=0;i<n;i++){f.advance();f.instances.at(-1).shell.step(i);}};
@@ -31,8 +32,23 @@ actions(f,7);
 assert.deepEqual(clicks(f).slice(1).map(c=>c[1].step),[3,5,6,7],'first threshold then intervals; last interval repeats');
 assert(clicks(f).slice(1).every(c=>c[1].click_source==='forced_click_to_appstore'&&c[1].auto_jump_mode==='steps'));
 f.advance();f.instances[0].shell.win();assert.equal(clicks(f).length,5,'no duplicate win jump after step auto-jump');
-f.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));await flush();
-assert.equal(f.instances.length,2);assert.equal(clicks(f).length,5,'replay itself does not open store');
+assert.equal(f.nodes['pixel-flow-result'].hidden,false);assert.equal(f.nodes['pixel-flow-replay'].textContent,'Retry');
+f.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));
+assert.equal(f.nodes['pixel-flow-result'].hidden,true,'accepted replay immediately dismisses the result popup');
+assert.equal(f.instances.length,2,'CTA immediately resets the scene without requiring a return event');
+assert.equal(clicks(f).length,6);assert.equal(clicks(f).at(-1)[1].click_source,'forced_click_to_appstore');
+assert.equal(clicks(f).at(-1)[1].result,'win');
+assert(f.calls.indexOf(clicks(f).at(-1))<f.calls.findIndex(c=>c[0]==='scene-create'&&c[1]===1),'CTA precedes scene replacement');
+f.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));f.emit('novvy:cta-interact');
+f.emit('focus');f.emit('novvy:viewablechange',{viewable:true});await flush();
+assert.equal(clicks(f).length,6,'double tap and background card cannot duplicate replay CTA');
+assert.equal(f.instances.length,2,'visible/focus signals cannot create extra rounds');
+f.hidden(true);await flush();assert.equal(f.instances.length,2,'hiding pauses the already-reset scene');
+assert(f.instances[1].pauses>0);
+f.hidden(false);await flush();
+assert.equal(f.instances.length,2);assert.equal(f.nodes['pixel-flow-result'].hidden,true);
+assert.equal(f.instances[0].destroyed,true);assert.equal(f.nodes['pixel-flow-game'].inert,false);
+assert.equal(f.calls.filter(c=>c[0]==='onReplay').length,1);
 actions(f,3);assert.equal(clicks(f).at(-1)[1].step,3,'replay resets threshold and step count');
 assert.equal(f.calls.filter(c=>c[0]==='setStage').length,2,'replay retains playable stage');
 const before=clicks(f).length;f.advance();f.document.hidden=true;f.emit('novvy:cta-interact');actions(f,3);assert.equal(clicks(f).length,before);
@@ -45,7 +61,53 @@ const off=await fixture({ctaEnabled:false,policy:{enabled:false,mode:'steps',aft
 off.emit('novvy:cta-interact');actions(off,9);off.instances[0].shell.win();assert.equal(clicks(off).length,0);assert.equal(off.instances[0].env.insets.bottom,0,'card off gives space back');
 const once=await fixture({policy:{enabled:true,mode:'steps',afterSteps:2,intervals:[]}});actions(once,8);assert.equal(clicks(once).length,1,'empty intervals means once');
 const fail=await fixture();actions(fail,1);fail.instances[0].shell.fail();assert.equal(clicks(fail).length,0,'failure is not a completion CTA');
-console.log('Pixel Flow host: CTA stage, layout, cooldown, policy intervals, completion, visibility and replay passed.');
+assert.equal(fail.nodes['pixel-flow-replay'].textContent,'Try Again');assert.equal(fail.nodes['pixel-flow-result'].hidden,false);
+fail.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));
+assert.equal(clicks(fail).at(-1)[1].result,'fail');
+fail.emit('novvy:viewablechange',{viewable:false});fail.hidden(true);fail.emit('novvy:viewablechange',{viewable:true});await flush();
+assert.equal(fail.instances.length,2,'new scene loads even while the store hides the ad');
+assert.equal(fail.instances[1].starts,0,'hidden scene cannot start gameplay or audio');
+assert.equal(fail.nodes['pixel-flow-result'].hidden,true,'no waiting modal while the store is open');
+fail.hidden(false);await flush();fail.emit('novvy:viewablechange',{viewable:true});await flush();
+assert.equal(fail.instances.length,2);assert.equal(fail.calls.filter(c=>c[0]==='onReplay').length,1,'two return signals do not restart twice');
+fail.advance();fail.instances[1].shell.win();fail.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));
+fail.emit('pagehide');await flush();assert.equal(fail.instances[2].destroyed,false,'store pagehide keeps the new round alive');
+assert.equal(fail.instances[2].starts,0);
+assert.equal(fail.calls.filter(c=>c[0]==='endStage').length,0,'store visit does not end the playable stage');
+fail.emit('pageshow');await flush();assert.equal(fail.instances.length,3,'pageshow does not create a fourth scene');assert.equal(fail.instances[2].starts,1);
+assert.equal(clicks(fail).length,2,'consecutive fail and win replays each have one CTA');
+
+const noReplay=await fixture({allowReplay:false});noReplay.instances[0].shell.fail();noReplay.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(noReplay.nodes['pixel-flow-result'].hidden,true);assert.equal(noReplay.instances.length,1);assert.equal(clicks(noReplay).length,0);
+assert.equal(noReplay.calls.find(c=>c[0]==='onComplete')[1].continue_playing,false);
+for(const clickImpl of [()=>false,()=>{throw new Error('SDK unavailable');}]){
+ const rejected=await fixture({clickImpl});rejected.instances[0].shell.fail();rejected.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));
+ assert.equal(rejected.nodes['pixel-flow-replay'].disabled,false,'rejected CTA restores retry button');
+ rejected.hidden(true);rejected.hidden(false);await flush();assert.equal(rejected.instances.length,1,'unrelated return after rejected CTA must not restart');
+}
+const throttled=await fixture();throttled.emit('novvy:cta-interact');throttled.instances[0].shell.fail();throttled.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));
+assert.equal(throttled.nodes['pixel-flow-replay'].disabled,false);assert.equal(clicks(throttled).length,1);
+throttled.advance();throttled.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));assert.equal(clicks(throttled).length,2,'cooldown rejection does not permanently lock replay');
+const synchronous=await fixture({clickImpl:(_window,document)=>{document.hidden=true;document.dispatchEvent(new Event('visibilitychange'));}});
+synchronous.instances[0].shell.fail();synchronous.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(synchronous.instances.length,2);assert.equal(synchronous.instances[1].starts,0,'synchronous SDK hide defers game start, not scene reset');
+synchronous.hidden(false);await flush();assert.equal(synchronous.instances[1].starts,1);
+let ready;const deferred=await fixture({startReplay:()=>new Promise(resolve=>{ready=resolve;})});
+deferred.instances[0].shell.win();deferred.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(deferred.nodes['pixel-flow-result'].hidden,true);assert.equal(deferred.calls.filter(c=>c[0]==='onReplay').length,0,'replay is not reported before the new scene starts');
+assert.equal(deferred.nodes['pixel-flow-game'].inert,true,'input remains blocked only during scene loading');
+ready();await flush();assert.equal(deferred.nodes['pixel-flow-result'].hidden,true);assert.equal(deferred.calls.filter(c=>c[0]==='onReplay').length,1);
+const recovery=await fixture({failRestart:true});recovery.instances[0].shell.fail();recovery.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(recovery.nodes['pixel-flow-replay'].textContent,'Reload');assert.equal(recovery.nodes['pixel-flow-replay'].disabled,false);
+assert.equal(recovery.calls.filter(c=>c[0]==='onReplay').length,0);recovery.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(clicks(recovery).length,1,'loading recovery does not request another store visit');assert.equal(recovery.calls.filter(c=>c[0]==='onReplay').length,1);
+for(const kind of ['fail','win']){
+ const local=await fixture({preview:true});local.instances[0].shell[kind]();local.nodes['pixel-flow-replay'].dispatchEvent(new Event('click'));await flush();
+ assert.equal(local.instances.length,2,'SDK-free preview restarts without visibility events: '+kind);
+ assert.equal(local.nodes['pixel-flow-result'].hidden,true);assert.equal(local.nodes['pixel-flow-game'].inert,false);assert.equal(local.nodes['pixel-flow-status'].hidden,true);
+ assert.equal(local.instances[1].starts,1);assert.equal(local.calls.filter(c=>c[0]==='onReplay').length,1);
+}
+console.log('Pixel Flow host: immediate replay after CTA, SDK-free win/fail, hidden pause/start, deduplication, readiness, recovery and policy passed.');
 
 const defaults=await fixture({policy:{enabled:true,mode:'steps',afterSteps:10,intervals:[8,6,4]}});actions(defaults,36);assert.deepEqual(clicks(defaults).map(c=>c[1].step),[10,18,24,28,32,36]);
 const early=await fixture();actions(early,1);early.instances[0].shell.win();assert.equal(clicks(early).length,0,'settlement does not add an unapproved store jump');

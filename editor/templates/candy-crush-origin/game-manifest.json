@@ -1,18 +1,26 @@
 {
   "id": "candy-crush-origin",
   "name": "Candy Crush Saga · 原版糖果球",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "entry": "game/index.html",
   "levels": [
     {
       "id": 1,
-      "name": "Poke the Candy · 5 次有效点击",
+      "name": "Poke the Candy · 可设置点击次数",
       "game": "game/game.js"
     }
   ],
   "constants": {
+    "gameplayLimits": {
+      "tapsToBreak": {
+        "min": 1,
+        "max": 71
+      }
+    },
     "game": {
       "host": "game/host.js",
+      "defaultHits": 5,
+      "maxHits": 71,
       "hudInsideCanvas": true,
       "ctaCard": {
         "name": "Candy Crush Saga",
@@ -21,7 +29,7 @@
       }
     },
     "fileHashes": {
-      "game/game.js": "e78fa3719c670b7db49c4d0c4d4bd36667bf63a59f4eab965a47e59e4fad3e9d",
+      "game/game.js": "901bbf5992638517acae18b898c9ea44dfb353831d644e78cac075c86a3b8348",
       "game/index.html": "183af7b02118690b76727940cde122762139cab4043c7d83142866dd0890c635",
       "game/host.js": "d1eae35cfc3e53140ba33a01cf901c571f59a20f4a7cec0d9f52612dbbac0a0c",
       "game/cta-icon.jpg": "22d791bc1e37d7c880b158a5e2ee592ac62955ca4143e0b6be236b76b2f6ebaf",

@@ -33,6 +33,7 @@
   "defaults": {
     "levelId": 1,
     "gameplay": {
+      "tapsToBreak": 5,
       "allowReplay": false
     },
     "playableCta": {

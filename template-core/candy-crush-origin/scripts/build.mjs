@@ -3,6 +3,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
 import {createHash} from 'node:crypto';
+import {candyModel} from './candy-model.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const output=path.resolve(root,'../../editor/templates/candy-crush-origin');
 const read=file=>fs.readFileSync(path.join(root,file),'utf8');
@@ -10,6 +11,7 @@ const sha=value=>createHash('sha256').update(value).digest('hex');
 const provenance=JSON.parse(read('source/provenance.json'));
 for(const [file,hash] of Object.entries(provenance.files))if(sha(fs.readFileSync(path.join(root,'source',file)))!==hash)throw new Error('Frozen source changed: '+file);
 const scripts=[...read('source/original.html').matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)].map(m=>m[1]).filter(s=>s.trim());
+const {maxHits}=candyModel(read('source/original.html'));
 if(scripts.length!==3)throw new Error('Expected config, platform wrapper and embedded engine');
 const data={};vm.runInNewContext(scripts[0].slice(0,scripts[0].indexOf('function CreatePreloader')),data,{timeout:500});
 for(const key of ['linkAndroid','linkIOS'])delete data.params[key];
@@ -22,7 +24,7 @@ range('var n,i,r=t.MutationObserver','var h=[]','var i,n=function(){setTimeout(c
 range('c=c&&c.setTimeout','c.setImmediate=','c=t,n=function(t){setTimeout(d,0,t)},');
 // PIXI's optional image workers are unused; decode embedded images on the main thread.
 range('let im=null;','function cm(', 'const hm={isImageBitmapSupported:async()=>false};');
-patch('this.#At++,this.#At>=','this.#At++,globalThis.CCS_CONTEXT.step(this.#At,this.#Y.params.tapsToBreak.value),this.#At>=');
+patch('this.#At++,this.#At>=','this.#At++,globalThis.CCS_CONTEXT.step(this.#At,this.#Y.params.tapsToBreak.value,this.components.World["сolorbomb"],this.#Et),this.#At>=');
 patch('if(this.#G=10,this.#Y.platformManager.end(),','if(this.#G=10,globalThis.CCS_CONTEXT.win(),this.#Y.platformManager.end(),');
 patch('10!=this.#G&&(this.#G=10,this.#Y.platformManager.end(),','10!=this.#G&&(this.#G=10,globalThis.CCS_CONTEXT.fail(),this.#Y.platformManager.end(),');
 patch('globalThis.playable.add("Game",new PR({app:globalThis.playable})),globalThis.playable.resizeManager.call()', 'globalThis.playable.add("Game",new PR({app:globalThis.playable})),globalThis.playable.resizeManager.call(),globalThis.CCS_CONTEXT.ready(globalThis.playable,ux.Howler,iT)');
@@ -36,10 +38,10 @@ patch('this.#Ot.x=+this.#Ot.x*this.#Y.view2d.scene.scale.x/(.5*this.#Y.view2d.wi
 // Original sound.on can be called by focus/first touch, so enforce env.muted at that boundary.
 patch('this.#u.playSounds.value&&this.activeFocus&&this.activeUser','globalThis.CCS_CONTEXT.audible()&&this.#u.playSounds.value&&this.activeFocus&&this.activeUser');
 const source={params:data.params,images:data.images,texts:data.texts,engine};
-const game='(function(){\n'+read('src/engine-scope.js').replace(/^export /gm,'')+'\nconst SOURCE='+JSON.stringify(source)+';\n'+read('src/game.js')+'\n})();\n';
+const game='(function(){\n'+read('src/engine-scope.js').replace(/^export /gm,'')+'\nconst SOURCE='+JSON.stringify(source)+';\nconst CANDY_TARGET_HITS='+data.params.tapsToBreak.value+';\n'+read('src/remaining-candy.js')+'\n'+read('src/game.js')+'\n})();\n';
 for(const forbidden of [/postMessage/,/messageHandlers/,/NovvyPlayable/,/NovvyAnalytics/,/NovvyShell/,/tracking\.novvy\.ai/,/window\.open\(/,/mraid\./])if(forbidden.test(game))throw new Error('Forbidden game dependency '+forbidden);
 new vm.Script(game);
 const files={'game/game.js':game,'game/index.html':read('src/index.html'),'game/host.js':read('src/host.js'),'game/cta-icon.jpg':fs.readFileSync(path.join(root,'source/app-icon.jpg')),'source/provenance.json':JSON.stringify(provenance,null,2)+'\n'};
-const manifest={id:'candy-crush-origin',name:'Candy Crush Saga · 原版糖果球',version:'1.0.0',entry:'game/index.html',levels:[{id:1,name:'Poke the Candy · 5 次有效点击',game:'game/game.js'}],constants:{game:{host:'game/host.js',hudInsideCanvas:true,ctaCard:{name:'Candy Crush Saga',icon:'game/cta-icon.jpg',rating:provenance.card.rating}},fileHashes:Object.fromEntries(Object.entries(files).map(([name,value])=>[name,sha(value)]))}};
+const manifest={id:'candy-crush-origin',name:'Candy Crush Saga · 原版糖果球',version:'1.1.0',entry:'game/index.html',levels:[{id:1,name:'Poke the Candy · 可设置点击次数',game:'game/game.js'}],constants:{gameplayLimits:{tapsToBreak:{min:1,max:maxHits}},game:{host:'game/host.js',defaultHits:data.params.tapsToBreak.value,maxHits,hudInsideCanvas:true,ctaCard:{name:'Candy Crush Saga',icon:'game/cta-icon.jpg',rating:provenance.card.rating}},fileHashes:Object.fromEntries(Object.entries(files).map(([name,value])=>[name,sha(value)]))}};
 for(const [name,value] of Object.entries(files)){fs.mkdirSync(path.dirname(path.join(output,name)),{recursive:true});fs.writeFileSync(path.join(output,name),value);}fs.writeFileSync(path.join(output,'game-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
-console.log('Built Candy Crush Saga: frozen THREE/PIXI scene, five original candy hits');
+console.log(`Built Candy Crush Saga: frozen THREE/PIXI scene, 1–${maxHits} candy hits (default 5)`);

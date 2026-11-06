@@ -1,12 +1,12 @@
 {
   "id": "travel-town-origin",
   "name": "Travel Town · 原版剧情合并试玩",
-  "version": "1.0.0",
+  "version": "1.2.1",
   "entry": "game/index.html",
   "levels": [
     {
       "id": 1,
-      "name": "寒冷房间 · 粉刷或清理",
+      "name": "寒冷房间 · 连续粉刷与清理",
       "game": "game/game.js"
     }
   ],
@@ -22,9 +22,9 @@
       }
     },
     "fileHashes": {
-      "game/game.js": "17073a5ac1b96e16d6cfd28b6536bfa4d5db90b9f8a3e15fbfcba058a7e652dd",
-      "game/index.html": "eddaec228576b09ee558d1e95a0e1ff9ce2ffaca8ae186cb1baba5db45d0a01b",
-      "game/host.js": "78bfa85f383c6b5dc83e581a5918ae135bb1bf7b02ef31ac1679059e1fdbe488",
+      "game/game.js": "fd0d17e26854c5efc6ddab6eb1db3b7b88f2a1f26ccaeabf4ab4a1bd6ddc5d69",
+      "game/index.html": "6dc8c75ba0b2fa0260b63f1180d87d8e0f0ae1314f5fb7dc26f7c32373464f21",
+      "game/host.js": "eff2f59a9780461e88deace55c65a2a9e75fffceed98d6484453f3cb09e6c51e",
       "game/cta-icon.jpg": "41597e7ef71a63763cee4986699f2871df8e7e10c10204d6ef2957ac72bc43a6"
     }
   }

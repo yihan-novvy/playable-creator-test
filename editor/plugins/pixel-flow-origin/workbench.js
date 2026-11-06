@@ -42,7 +42,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
-    ]), el('p', { class: 'hint' }, ['默认关闭。开启后结算可重玩，恢复像素图、角色队列、弹药、暂存槽与引导，不重复片头。']));
+    ]), el('p', { class: 'hint' }, ['默认关闭。开启后胜负结算显示居中弹窗：失败为 Try Again，成功为 Retry；点击触发一次 CTA 后立即重开，恢复像素图、角色队列、弹药、暂存槽与引导，不重复片头。广告不可见时暂停，返回后继续；本地预览直接重开。修改后需重新打包。']));
     const policy=config().playableCta||{};
     const mode=el('select',{},[el('option',{value:'steps'},['按有效步数'])]);
     mode.value=policy.mode||'steps';

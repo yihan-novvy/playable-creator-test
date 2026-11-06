@@ -9,6 +9,7 @@ import {taskGeneratedDir,taskUploadsDir,taskResultDir} from '../../lib/paths.mjs
 import {requireFiles} from '../../core/lib/helpers.mjs';
 import {fixedViewportHtml} from '../../core/lib/fixed-viewport.mjs';
 import {addOriginCtaCard,originCtaPolicy} from '../../core/lib/origin-playable.mjs';
+import {candyHitTarget,configureCandyGame} from './settings.mjs';
 
 const run=promisify(execFile);
 const script=s=>`<script>${s.replace(/<\/script/gi,'<\\/script')}</script>`;
@@ -28,10 +29,11 @@ export function candyCrushHtml({root,pluginDir,template,config,media={},preview=
   }
   const policy={...originCtaPolicy({afterSteps:3,intervals:[2],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
-  const game=read(variant.game),host=read(template.game.host);
+  const targetHits=candyHitTarget(template.game,config.gameplay);
+  const game=configureCandyGame(read(variant.game),template.game,config.gameplay),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.CCS_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--CCS_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--CCS_SCRIPTS-->[\s\S]*?<!--CCS_SCRIPTS_END-->/,()=>tail);
-  return {html,game,variant,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};
+  return {html,game,variant,targetHits,maxHits:template.game.maxHits,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};
 }
 export function previewHtml({plugin:entry,task,taskId}){
   const config=effectiveConfig(entry.template,task.config),generated=taskGeneratedDir(taskId),upload=path.join(taskUploadsDir(taskId),'intro-video.mp4');
@@ -55,6 +57,6 @@ export async function pack(ctx){
   const budget=path.join(ctx.resultDir,'assembly-budget.zip');await run('zip',['-q','-X',budget,...files],{cwd:ctx.resultDir});
   const assemblyBytes=fs.statSync(budget).size;fs.rmSync(budget);
   if(assemblyBytes>10000000)throw new Error('组装 ZIP 超过 10 MB，请压缩片头视频');
-  return {metrics:{variant:built.variant.name,stageChain:built.stageChain,introEnabled:intro,outputBytes:rawBytes,assemblyBytes,gameZipBytes:fs.statSync(archive).size},warnings:[]};
+  return {metrics:{variant:built.variant.name,targetHits:built.targetHits,maxHits:built.maxHits,stageChain:built.stageChain,introEnabled:intro,outputBytes:rawBytes,assemblyBytes,gameZipBytes:fs.statSync(archive).size},warnings:[]};
 }
 export function exportGameZip({taskId}){return fs.readFileSync(path.join(taskResultDir(taskId),'game-only.zip'));}

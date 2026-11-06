@@ -14,7 +14,10 @@
     "assembly_step_policy",
     "assembly_complete_policy",
     "assembly_optional_replay",
-    "sound_environment_change"
+    "sound_environment_change",
+    "assembly_result_modal_win",
+    "assembly_result_modal_fail_memory_only_no_native_failure",
+    "assembly_replay_waits_for_visibility_return"
   ],
   "not_applicable": [
     "native_failure: source has no fail/lives/timer",
@@ -44,6 +47,18 @@
     {
       "id": "automatic_policy",
       "availability": "有效步数达到门槛或最终通关",
+      "click_source": "forced_click_to_appstore"
+    },
+    {
+      "id": "result_retry_win",
+      "location": "结算弹窗 Retry",
+      "availability": "最终通关且开启允许重玩",
+      "click_source": "forced_click_to_appstore"
+    },
+    {
+      "id": "result_retry_fail",
+      "location": "结算弹窗 Try Again",
+      "availability": "失败且开启允许重玩",
       "click_source": "forced_click_to_appstore"
     }
   ],

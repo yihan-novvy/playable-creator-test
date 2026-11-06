@@ -1,0 +1,81 @@
+
+== candy-crush-origin ==
+  ok  workbench receives actual model count limit
+  ok  template can create tasks
+  ok  replay off and CTA visible by default
+  ok  default auto-jump policy
+  ok  local official icon and correct brand
+  ok  manual CTA has no SDK duplicate auto-hook
+  ok  settings save
+  ok  settings read back
+  ok  reject unsupported level
+  ok  reject invalid replay flag
+  ok  reject invalid candy count
+  ok  reject invalid candy count
+  ok  reject invalid candy count
+  ok  reject invalid candy count
+  ok  reject invalid candy count
+  ok  accept count at both bounds and above five
+  ok  accept count at both bounds and above five
+  ok  accept count at both bounds and above five
+  ok  count-only save preserves replay
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  CTA and auto-jump settings save
+  ok  partial policy save preserves siblings
+  ok  CTA text is escaped in preview
+  ok  pack succeeds: 
+  ok  standalone meets 5 MB budget
+  ok  export endpoint succeeds
+  ok  archive contains only intended root entries
+  ok  export endpoint succeeds
+  ok  archive contains only intended root entries
+  ok  pack succeeds: 
+  ok  preview and standalone ZIP bake the same count
+  ok  assembly and standalone share configured game bytes
+  ok  preview and export share auto-jump settings
+  ok  pack includes configured CTA
+  ok  standalone game excludes CTA policy and card
+  ok  repack payload deterministic
+  ok  HUD edit invalidates old export
+  ok  pack succeeds: 
+  ok  count edit invalidates old export
+  ok  partial title edit preserves second line
+  ok  video requires transcoded assets
+  ok  intro upload succeeds
+  ok  core video processing succeeds
+  ok  CTA edits preserve transcoded intro
+  ok  legacy GO does not block automatic entry
+  ok  CTA off and complete mode reach preview
+  ok  pack succeeds: 
+  ok  video stage precedes game
+  ok  pack succeeds: 
+  ok  disabling intro removes old video and poster
+  ok  replay edit invalidates export
+  ok  pack succeeds: 
+  ok  auto-jump change invalidates old export
+  ok  pack succeeds: 
+  ok  CTA change invalidates old export
+== candy-crush-origin: 60 checks passed ==
+
+== task-creation ==
+  ok  Registered supported templates are offered for creation
+  ok  colorever-abandoned: direct API creation is rejected
+  ok  colorever-gemsort: direct API creation is rejected
+  ok  colorever-new: direct API creation is rejected
+  ok  colorever-origin: direct API creation is rejected
+  ok  dragon-cube: direct API creation is rejected
+  ok  escape-arrow: direct API creation is rejected
+  ok  water-sort: direct API creation is rejected
+  ok  rejected requests do not create tasks
+  ok  Tasty Travels can be created
+  ok  new tasks start without the story opening
+  ok  new tasks start without the GO button
+  ok  existing task template metadata remains available
+  ok  existing non-Tasty tasks remain readable
+  ok  existing non-Tasty task settings remain editable
+== task-creation: 15 checks passed ==

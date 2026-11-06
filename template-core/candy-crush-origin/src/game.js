@@ -3,6 +3,7 @@ NovvyGame(function(container,shell,options){
   const view=engineRoot(container,'<div id="progress"></div><div id="main"><div id="three"><canvas id="canvas_3d"></canvas></div><div id="pixi"><canvas id="canvas_2d"></canvas></div></div>',
     '.engine-root{background:#006dc5;touch-action:none;user-select:none}#main,#three,#pixi{position:absolute;inset:0}#main{visibility:hidden}canvas{position:absolute;inset:0;touch-action:none}#progress{display:none}');
   const scope=createEngineScope(view.root);
+  let targetTimer,turnState;
   let app,renderers=[],howler,tween,env=options.env||{},started=false,paused=true,disposed=false,finished=false,last=0,unlocked=false,resolveReady,rejectReady;
   const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
   const audible=()=>started&&!paused&&!disposed&&unlocked&&env.muted!==true;
@@ -34,7 +35,18 @@ NovvyGame(function(container,shell,options){
   function finish(kind){if(!started||paused||disposed||finished)return;finished=true;input(false);shell[kind]();}
   scope.window.CCS_CONTEXT={area,fit2d,fit3d,audible,alive:()=>!disposed,attach(value,views){app=value;renderers=views;},
     ready(value,audio,animation){app=value;howler=audio;tween=animation;layout();input(false);scope.window.requestAnimationFrame(()=>{if(disposed)return;pause();resolveReady(runtime);});},
-    step(count,total){if(!started||paused||disposed||finished||count<=last||total!==5)return;last=count;shell.step(Math.min(100,count/total*100));},
+    step(count,total,ball,raycaster){
+      if(!started||paused||disposed||finished||count!==last+1||total!==CANDY_TARGET_HITS||count>total)return;
+      last=count;shell.step(count/total*100);
+      scope.window.clearTimeout(targetTimer);if(turnState)tween.killTweensOf(turnState);
+      if(total>5&&count<total&&ball)targetTimer=scope.window.setTimeout(()=>{
+        if(disposed||finished)return;
+        const turn=remainingCandyTurn(ball,app.view3d.camera,raycaster);
+        if(!turn)return;
+        turnState={progress:0};const state=turnState;
+        tween.to(state,{duration:0.65,progress:1,ease:'sine.inOut',onUpdate(){ball.quaternion.slerpQuaternions(turn.from,turn.to,state.progress);}});
+      },1600);
+    },
     win(){finish('win');},fail(){finish('fail');},
   };
   const unlock=()=>{if(!started||paused||disposed||finished)return;unlocked=true;sound();scope.audioContexts.forEach(c=>{if(audible())c.resume().catch(()=>{});});};
@@ -50,6 +62,7 @@ NovvyGame(function(container,shell,options){
   input(false);
   Object.assign(scope.window,{params:JSON.parse(JSON.stringify(SOURCE.params)),images:SOURCE.images,texts:SOURCE.texts,adPlatform:{value:'local'},CreatePreloader(){},hidePreloader(){},platform:{load:done=>scope.window.setTimeout(done,0),init(){},end(){},clickAd(){}}});
   scope.window.params.language.value=env.language||'en';
+  scope.window.params.tapsToBreak.value=CANDY_TARGET_HITS;
   try{scope.run(SOURCE.engine);}catch(error){runtime.destroy();rejectReady(error);}
   return ready.catch(error=>{runtime.destroy();throw error;});
 });

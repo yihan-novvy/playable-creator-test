@@ -33,14 +33,32 @@ module(7909,'t2.EventsLogger=class {log(){}};');
 module(1455,'t2.RedirectEvent={};t2.RedirectManager=class RedirectManager {init(){}reset(){}resetTimeout(){}redirect(){}doComplete(){}waitFinalClick(){}removeInactivityRedirect(){}};');
 module('6e3','t2.CustomRedirectManager=class CustomRedirectManager extends i(1455).RedirectManager {};');
 module(48,'t2.RedirectCommand=class RedirectCommand extends i(3411).SceneStateActionBase {internalRun(){}};');
-// This creative terminates after the chosen repair. Do not turn its full-screen
-// conversion hit area into a fake second round or a native download placement.
-patch('o.App.app.stage.on("pointerdown", () => (0, s.dGet)(o.RedirectManager).redirect(), this), this.redirect();','(0,s.dGet)(a.WinContainer).hintLabel.node.visible=false; for(const key of ["item_0","item_1","item_2","item_3"])this.mainContainer.child(key).node.visible=false; window.TT_CONTEXT.complete();');
+// The user requested consecutive repairs. Keep the original merge boards and
+// repair animations, but return to selection instead of its conversion state.
+module(1849,`t2.ShowItem0UpgradeCommand=class ShowItem0UpgradeCommand extends i(3411).SceneStateActionBase {
+  internalRun(){super.internalRun();
+    for(const id of [0,1])this.mainContainer.child('bg character_'+id).playIdle();
+    if(window.TT_CONTEXT.repairComplete()){
+      i(8646).dGet(i(4056).WinContainer).hintLabel.node.visible=false;
+      for(const id of [0,1,2,3])this.mainContainer.child('item_'+id).node.visible=false;
+    }else{
+      i(8646).dGet(i(4056).WinContainer).hintLabel.render(i(893).TextShowRenderer,{dx:0,dy:-800});
+      this.internalResolve();
+    }
+  }
+  internalResolve(){super.internalResolve();i(9002).App.scenes.current.startState('Main');}
+};`);
 patch('this.startState("Game"), super._start();','this.startState("Game"), super._start(), window.TT_CONTEXT.ready(this);');
 // Choice icons scale in after scene readiness; fit their final bounds as well
 // as on resize, otherwise the lower option can grow beneath the shell card.
 patch('this.main.child("item_0 item_icon").tweens.scaleTo(1, 300, { ease: "backOut" })','this.main.child("item_0 item_icon").tweens.scaleTo(1, 300, { ease: "backOut" }).then(()=>window.TT_CONTEXT.fitChoices())');
 patch('this.main.child("item_1 item_icon").tweens.scaleTo({ x: 1, y: -1 }, 300, { ease: "backOut" })','this.main.child("item_1 item_icon").tweens.scaleTo({ x: 1, y: -1 }, 300, { ease: "backOut" }).then(()=>window.TT_CONTEXT.fitChoices())');
+// A rapid second tap must not start the same merge state twice.
+patch('o.App.audio.play("slot_button"), this.gameModel.current = e3,','if(this._choosing)return;this._choosing=true; o.App.audio.play("slot_button"), this.gameModel.current = e3,');
+patch('this.main.node.filters = [], this.items = [], this.current = 1,','this.main.node.filters = [], this._choosing=false, this.items = [], this.current = 1,');
+// Each board used to be visited only once. Release its old clip mask now that
+// a room can contain multiple repairs.
+patch('this.gameContainer.merge.cellsContainer.node.addChild(t3), this.gameContainer.merge.cellsContainer.node.mask = t3,','const cellsNode=this.gameContainer.merge.cellsContainer.node,previousMask=cellsNode.mask;cellsNode.mask=null;if(previousMask)previousMask.destroy(); cellsNode.addChild(t3), cellsNode.mask = t3,');
 // Pixi emits pointermove for touch, pen and mouse. The vendor's capability
 // switch drops mouse drags on touch-capable/hybrid devices and emulators.
 patch('this.interactionManager.supportsTouchEvents ? this.stage.on("touchmove", this.onPointerMove, this) : this.stage.on("pointermove", this.onPointerMove, this)','this.stage.on("pointermove", this.onPointerMove, this)');
@@ -57,7 +75,7 @@ const source={resources:scripts[0],engine:transformSync(engine,{minifyWhitespace
 const game='(function(){\n'+read('src/engine-scope.js').replace(/^export /gm,'')+'\nconst SOURCE='+JSON.stringify(source)+';\n'+read('src/game.js')+'\n})();\n';
 for(const forbidden of [/postMessage/,/messageHandlers/,/NovvyPlayable/,/NovvyAnalytics/,/NovvyShell/,/tracking\.novvy\.ai/,/window\.open\(/,/mraid\./,/window\[\\"location/])if(forbidden.test(game))throw new Error('Forbidden game dependency '+forbidden);
 const files={'game/game.js':game,'game/index.html':read('src/index.html'),'game/host.js':read('src/host.js'),'game/cta-icon.jpg':fs.readFileSync(path.join(root,'source/app-icon.jpg'))};
-const manifest={id:'travel-town-origin',name:'Travel Town · 原版剧情合并试玩',version:JSON.parse(read('package.json')).version,entry:'game/index.html',levels:[{id:1,name:'寒冷房间 · 粉刷或清理',game:'game/game.js'}],constants:{game:{host:'game/host.js',hudInsideCanvas:true,engine:'PixiJS',ctaCard:{name:provenance.brand.name,icon:'game/cta-icon.jpg',rating:provenance.brand.rating}},fileHashes:Object.fromEntries(Object.entries(files).map(([name,data])=>[name,sha(data)]))}};
+const manifest={id:'travel-town-origin',name:'Travel Town · 原版剧情合并试玩',version:JSON.parse(read('package.json')).version,entry:'game/index.html',levels:[{id:1,name:'寒冷房间 · 连续粉刷与清理',game:'game/game.js'}],constants:{game:{host:'game/host.js',hudInsideCanvas:true,engine:'PixiJS',ctaCard:{name:provenance.brand.name,icon:'game/cta-icon.jpg',rating:provenance.brand.rating}},fileHashes:Object.fromEntries(Object.entries(files).map(([name,data])=>[name,sha(data)]))}};
 for(const [name,data] of Object.entries(files)){fs.mkdirSync(path.dirname(path.join(out,name)),{recursive:true});fs.writeFileSync(path.join(out,name),data);}
 fs.writeFileSync(path.join(out,'game-manifest.json'),JSON.stringify(manifest,null,2)+'\n');
-console.log('Built Travel Town: original story, two selectable merge boards and embedded media');
+console.log('Built Travel Town: original story, consecutive repairs and embedded media');

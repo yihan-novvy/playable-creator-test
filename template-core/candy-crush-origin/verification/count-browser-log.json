@@ -1,0 +1,56 @@
+[
+  {
+    "level": "log",
+    "message": "%cPixiJS Deprecation Warning: %c%s color:#614108;background:#fffbe6 font-weight:normal;color:#614108;background:#fffbe6 settings.FILTER_RESOLUTION is deprecated, use Filter.defaultResolution\nDeprecated since v7.1.0",
+    "timestamp": "2026-11-06T15:20:54.577Z"
+  },
+  {
+    "level": "warn",
+    "message": "    at eval (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4198665)\n    at eval (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4231577)\n    at Proxy.eval (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4231581)\n    at eval (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:5:4)\n    at Object.run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:133)\n    at http://127.0.0.1:8092/result/candy-crush-saga/game.js:196:13\n    at create (http://127.0.0.1:8092/result/candy-crush-saga/index.html:367:26)\n    at window.NovvyGame (http://127.0.0.1:8092/result/candy-crush-saga/index.html:371:52)",
+    "timestamp": "2026-11-06T15:20:54.577Z"
+  },
+  {
+    "level": "log",
+    "message": "console.groupEnd",
+    "timestamp": "2026-11-06T15:20:54.577Z"
+  },
+  {
+    "level": "log",
+    "message": "%cPixiJS Deprecation Warning: %c%s color:#614108;background:#fffbe6 font-weight:normal;color:#614108;background:#fffbe6 utils.hex2rgb is deprecated, use Color#toRgbArray instead\nDeprecated since v7.2.0",
+    "timestamp": "2026-11-06T15:20:56.693Z"
+  },
+  {
+    "level": "warn",
+    "message": "    at set color (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4201492)\n    at Object.assign (<anonymous>)\n    at new vR (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4201348)\n    at new xR (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4204682)\n    at new PR (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4210111)\n    at globalThis.playable.params.onCompleteLoad (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4227084)\n    at #jt (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4224791)\n    at dx.eval (eval at run (http://127.0.0.1:8092/result/candy-crush-saga/game.js:42:42), <anonymous>:4:4224609)",
+    "timestamp": "2026-11-06T15:20:56.693Z"
+  },
+  {
+    "level": "log",
+    "message": "console.groupEnd",
+    "timestamp": "2026-11-06T15:20:56.693Z"
+  },
+  {
+    "level": "info",
+    "message": "Candy Crush Saga CTA preview {\"click_source\":\"forced_click_to_appstore\",\"scene\":\"playable-steps\",\"auto_jump\":\"true\",\"auto_jump_mode\":\"steps\",\"step\":3}",
+    "timestamp": "2026-11-06T15:21:55.944Z",
+    "url": "http://127.0.0.1:8092/result/candy-crush-saga/index.html"
+  },
+  {
+    "level": "info",
+    "message": "Candy Crush Saga CTA preview {\"click_source\":\"forced_click_to_appstore\",\"scene\":\"playable-steps\",\"auto_jump\":\"true\",\"auto_jump_mode\":\"steps\",\"step\":5}",
+    "timestamp": "2026-11-06T15:22:31.293Z",
+    "url": "http://127.0.0.1:8092/result/candy-crush-saga/index.html"
+  },
+  {
+    "level": "info",
+    "message": "Candy Crush Saga CTA preview {\"click_source\":\"forced_click_to_appstore\",\"scene\":\"playable-steps\",\"auto_jump\":\"true\",\"auto_jump_mode\":\"steps\",\"step\":7}",
+    "timestamp": "2026-11-06T15:23:12.785Z",
+    "url": "http://127.0.0.1:8092/result/candy-crush-saga/index.html"
+  },
+  {
+    "level": "info",
+    "message": "Candy Crush Saga CTA preview {\"click_source\":\"forced_click_to_appstore\",\"scene\":\"playable-steps\",\"auto_jump\":\"true\",\"auto_jump_mode\":\"steps\",\"step\":9}",
+    "timestamp": "2026-11-06T15:23:57.396Z",
+    "url": "http://127.0.0.1:8092/result/candy-crush-saga/index.html"
+  }
+]

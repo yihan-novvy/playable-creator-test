@@ -1,3 +1,20 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Color Block Jam · 原版三关滑块试玩</title>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#122a42}#color-block-jam-game{position:fixed;inset:0;touch-action:none}#color-block-jam-replay{position:fixed;right:12px;bottom:calc(var(--color-block-jam-cta-inset,0px) + 12px);z-index:11;border:0;border-radius:20px;padding:10px 16px;background:#fff;color:#164344;font:600 15px Arial;cursor:pointer}#color-block-jam-continue{position:fixed;left:12px;bottom:calc(var(--color-block-jam-cta-inset,0px) + 12px);z-index:11;padding:10px 16px;border:0;border-radius:20px}#color-block-jam-continue[hidden],#color-block-jam-replay[hidden]{display:none}#color-block-jam-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}</style>
-<!--COLOR_BLOCK_JAM_HEAD--></head><body><div id="color-block-jam-game"></div><p id="color-block-jam-status" role="status">Loading…</p><button id="color-block-jam-replay" hidden>Play again</button><button id="color-block-jam-continue" hidden>Continue</button><!--COLOR_BLOCK_JAM_SCRIPTS--><script>window.COLOR_BLOCK_JAM_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--COLOR_BLOCK_JAM_SCRIPTS_END--></body></html>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#122a42}
+#color-block-jam-game{position:fixed;inset:0;touch-action:none}
+#color-block-jam-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}
+#color-block-jam-result{position:fixed;inset:0;z-index:20;display:grid;place-items:center;box-sizing:border-box;padding:max(20px,var(--color-block-jam-hud-inset,0px)) 20px max(20px,var(--color-block-jam-cta-inset,0px));background:#081b32bc;color:#fff;text-align:center;font:700 20px/1.4 Arial,sans-serif;touch-action:none}
+.color-block-jam-result-card{width:min(100%,300px);box-sizing:border-box;max-height:100%;overflow:auto;padding:28px 20px 18px;border:2px solid #a9e5ff;border-radius:22px;background:#224f80;box-shadow:0 16px 48px #0006}
+#color-block-jam-result-title{margin:0;font-size:32px}
+#color-block-jam-result-copy{margin:14px 0 22px;font-size:16px;font-weight:400}
+#color-block-jam-replay{border:0;border-radius:12px;min-width:160px;min-height:48px;padding:14px 24px;background:#ffe39a;color:#233a5a;font:inherit;cursor:pointer;touch-action:manipulation}
+#color-block-jam-replay:disabled{opacity:.65;cursor:wait}
+#color-block-jam-continue{display:block;margin:12px auto 0;padding:8px 20px;border:0;background:transparent;color:#d8ecff;font:14px Arial;cursor:pointer;touch-action:manipulation}
+#color-block-jam-result[hidden],#color-block-jam-continue[hidden],#color-block-jam-status[hidden]{display:none}
+@media(orientation:landscape){.color-block-jam-result-card{padding:12px 20px}#color-block-jam-result-title{font-size:24px}#color-block-jam-result-copy{margin:8px 0}#color-block-jam-replay{padding:8px 24px}#color-block-jam-continue{margin-top:4px}}
+</style>
+<!--COLOR_BLOCK_JAM_HEAD--></head><body><div id="color-block-jam-game"></div><p id="color-block-jam-status" role="status">Loading…</p>
+<div id="color-block-jam-result" role="dialog" aria-modal="true" aria-labelledby="color-block-jam-result-title" aria-describedby="color-block-jam-result-copy" hidden>
+  <div class="color-block-jam-result-card"><h1 id="color-block-jam-result-title">You win!</h1><p id="color-block-jam-result-copy" aria-live="polite">All blocks cleared!</p><button id="color-block-jam-replay" type="button">Retry</button><button id="color-block-jam-continue" type="button">Continue</button></div>
+</div>
+<!--COLOR_BLOCK_JAM_SCRIPTS--><script>window.COLOR_BLOCK_JAM_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--COLOR_BLOCK_JAM_SCRIPTS_END--></body></html>
