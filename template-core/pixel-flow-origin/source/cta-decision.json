@@ -1,0 +1,16 @@
+{
+  "question": "Pixel Flow 的下载入口是否按上表执行：底部下载卡为 cta_click；第 10 次有效操作及后续 8、6、4 步策略为 forced_click_to_appstore；停用原生按钮和结算整屏跳店，重玩不跳店？",
+  "userAnswer": "确认按此方案执行",
+  "observedAt": "2026-11-06",
+  "placements": [
+    {
+      "id": "assembly-card",
+      "click_source": "cta_click"
+    },
+    {
+      "id": "assembly-auto-policy",
+      "click_source": "forced_click_to_appstore"
+    }
+  ],
+  "gamePlacements": []
+}

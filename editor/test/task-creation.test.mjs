@@ -17,7 +17,7 @@ export default async function test(a) {
   });
   try {
     const templates = await (await fetch(`${base}/api/templates`)).json();
-    a.equal(templates.filter(item => item.creatable).map(item => item.id), ['block-out-origin', 'freecell-origin', 'grill-sort-origin', 'project-makeover-origin', 'screwdom-origin', 'tasty-travels-origin', 'word-search-explorer-origin', 'zen-word-100m-origin', 'zen-word-92m-origin'], 'Block Out, FreeCell, Grill Sort, Project Makeover, Screwdom, Tasty Travels, Word Search Explorer and Zen Word are offered for creation');
+    a.equal(templates.filter(item => item.creatable).map(item => item.id), ['block-out-origin', 'candy-crush-origin', 'color-block-jam-origin', 'freecell-origin', 'grill-sort-origin', 'pixel-flow-origin', 'project-makeover-origin', 'screwdom-origin', 'tasty-travels-origin', 'travel-town-origin', 'word-search-explorer-origin', 'zen-word-100m-origin', 'zen-word-92m-origin'], 'Registered supported templates are offered for creation');
     const before = listTasks().map(task => task.id).sort();
     for (const item of templates.filter(item => !item.creatable)) {
       const response = await create(item.id);

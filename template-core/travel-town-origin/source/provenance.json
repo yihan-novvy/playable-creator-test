@@ -1,0 +1,33 @@
+{
+  "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/cc291b7a79f971ff107d1df63a064c1e",
+  "creativeId": "cc291b7a79f971ff107d1df63a064c1e",
+  "acquiredAt": "2026-11-06",
+  "appStoreUrl": "https://apps.apple.com/us/app/travel-town-merge-adventure/id1521236603",
+  "payloadUrl": "https://res1.applovin.com/o952006a/6f829315009ad4515e43226540ad3baa31cc6ba3_v1_js_load.js",
+  "brand": {
+    "name": "Travel Town",
+    "storeName": "Travel Town - Merge Adventure",
+    "seller": "Moon Active LTD",
+    "rating": 4.8,
+    "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/e5/a6/bd/e5a6bdcd-d09f-ad05-92b0-eef93b159a92/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg"
+  },
+  "selection": {
+    "search": "Travel Town",
+    "range": [
+      "2025-11-07",
+      "2026-11-06"
+    ],
+    "sort": "relevance descending",
+    "estimatedImpressions": "1 billion (Insightrackr estimate)",
+    "observedDays": 332,
+    "observedRange": [
+      "2025-12-10",
+      "2026-10-05"
+    ]
+  },
+  "files": {
+    "original-loader.html": "1d98acaa7c3efac51af9ced6df93fa8098c7dd2b33b478614a2e9a4719626bbe",
+    "app-icon.jpg": "41597e7ef71a63763cee4986699f2871df8e7e10c10204d6ef2957ac72bc43a6",
+    "original.js": "e67da0d232a40ab312e91168d160f54640b744a0dec0fe1756ef3e5fec713364"
+  }
+}

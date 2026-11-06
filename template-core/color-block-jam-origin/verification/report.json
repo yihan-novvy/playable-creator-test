@@ -1,0 +1,66 @@
+{
+  "status": "验收未完成",
+  "template_implementation": "implemented",
+  "static_pass": true,
+  "event_verified": false,
+  "document": {
+    "url": "https://developer.novvy.ai/eventLogs.md",
+    "retrievedAt": "2026-11-06T13:29:53.212304+00:00",
+    "sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39",
+    "protocol": "NovvyGame shell API; updated 2026-11-05",
+    "bundledSkillBaseline": "2026-11-02 postMessage helper is obsolete and is not used"
+  },
+  "document_final_refetch_sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39",
+  "artifacts": {
+    "game": {
+      "path": "/Users/code/novvyProject/NovvyAI/playable-ad/playable-creator/result/color-block-jam/game-only.zip",
+      "sha256": "9bd7c7c6057cd71d6d07addfe591ad1b204ff2d19ee31bfc6aa39659522b76c6",
+      "bytes": 3572421,
+      "uncompressedBytes": 12034658,
+      "entries": [
+        "game.js"
+      ],
+      "archive_checked": true
+    },
+    "assembly": {
+      "path": "/Users/code/novvyProject/NovvyAI/playable-ad/playable-creator/result/color-block-jam/assembly.zip",
+      "sha256": "cc2adf0f7318bcb329176c4a4beeeea7e1a978bdc2dd94cb2be7e1070e6461d6",
+      "bytes": 3591792,
+      "uncompressedBytes": 12069047,
+      "entries": [
+        "game.js",
+        "index.html"
+      ],
+      "archive_checked": true
+    }
+  },
+  "checks_passed": {
+    "source_and_adapter": "deterministic build, immutable source SHA, original onTouchEnd callback, grid moves vs elimination, duplicates, three level outcomes, CTA debounce",
+    "production_host_memory": "intro gate, stage transition once, real-step policy, cooldown retry, repeat last interval, final deduplication, replay in same stage, pause/resume",
+    "editor_template": 46,
+    "shared_origin_editor": 243,
+    "shared_config_patch": 10,
+    "registry": "0 warnings",
+    "local_browser": "Natural full progression through levels 1,2,3; native result page; native download bar, result CTA and shared card; policy preview calls; zero errors/warnings in final session",
+    "video_browser": "6-second temporary video auto-completed into playable without Legacy GO; real blue-block elimination; CTA disabled and native bar visible",
+    "layout": "390x844 default, 320x568 HUD, 844x390 HUD; actual root and canvas 844x390"
+  },
+  "runtime_limits": [
+    "No official platform upload/logs or Tracking request evidence: login screen remains",
+    "Native file:// cannot be opened by browser tool URL policy; no workaround attempted",
+    "iOS/Android ad WebView not tested",
+    "Optional replay, complete-only auto policy, sound and lifecycle verified by code/in-memory host tests; not fully repeated in real browser"
+  ],
+  "evidence": [
+    "final-local-session.json",
+    "three-level-complete.png",
+    "level-3.png",
+    "mobile-390-default.png",
+    "mobile-320-hud.png",
+    "landscape-844-hud.png",
+    "video-entered.png",
+    "video-browser-console.json",
+    "static-report.json",
+    "assembly-budget.json"
+  ]
+}

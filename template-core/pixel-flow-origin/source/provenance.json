@@ -1,0 +1,56 @@
+{
+  "app": {
+    "name": "Pixel Flow!",
+    "publisher": "Loom Games Oyun Yazilim ve Pazarlama Anonim Sirketi",
+    "storeId": "6751056652",
+    "storeUrl": "https://apps.apple.com/us/app/pixel-flow/id6751056652"
+  },
+  "source": {
+    "provider": "Insightrackr",
+    "fingerprint": "ff2dbfa4ecf11109c88fc4e8500718dc",
+    "searchUrl": "https://data.insightrackr.com/search/preplay?keyWord=Pixel%20Flow&gpt=0",
+    "assetUrl": "https://adinsights-1258892624.oss-accelerate.aliyuncs.com/htmls/zip/2025/12/16/ff2dbfa4ecf11109c88fc4e8500718dc/m_en_PF_wtUPsR8tm_ios_ty/m_en_PF_wtUPsR8tm_ios_ty.html",
+    "observedAt": "2026-11-06",
+    "acquisition": "Public asset retrieved without credentials after browser download control was unavailable. Original bytes retained.",
+    "filters": {
+      "query": "Pixel Flow",
+      "sort": "relevance",
+      "period": "2025-11-07 to 2026-11-06",
+      "platform": "all",
+      "network": "all"
+    },
+    "network": "Mintegral",
+    "estimatedImpressionsDisplay": "26 亿",
+    "displayedLifetimeDays": 326,
+    "displayedDates": "2025-12-16 to 2026-06-02",
+    "identityEvidence": "Both environment and embedded iOS URL match 6751056652. This does not establish publisher authorship."
+  },
+  "original": {
+    "engine": "Unity / Luna / PlayCanvas",
+    "scene": "Gameplay",
+    "levelCount": 1,
+    "grid": [
+      31,
+      35
+    ],
+    "queueLengths": [
+      10,
+      10,
+      10
+    ],
+    "waitingSlots": 5,
+    "conveyorLimit": 5,
+    "automaticStoreClicks": 3,
+    "automaticStoreSeconds": 1000
+  },
+  "files": {
+    "original.html": "f209e388e172bec858effb6622256ed91543f9acac3fc9e22b2a221afc8be82d",
+    "app-icon.jpg": "09faa0febb0145ef930bc52456bfc3463f431798c41163b7100fd673994bb0ac"
+  },
+  "ctaDecision": "cta-decision.json",
+  "brand": {
+    "source": "https://itunes.apple.com/lookup?id=6751056652&country=us",
+    "iconUrl": "https://is1-ssl.mzstatic.com/image/thumb/Purple221/v4/30/cd/e0/30cde016-8eba-b750-66ea-d142550aefde/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg",
+    "rating": 4.7
+  }
+}

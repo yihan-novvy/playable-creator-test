@@ -94,7 +94,8 @@ function decodePngDataUrl(dataUrl) {
 }
 
 // Retain metadata for existing tasks while limiting all new task creation.
-const CREATABLE_TEMPLATE_IDS = new Set(['block-out-origin', 'freecell-origin', 'grill-sort-origin', 'project-makeover-origin', 'word-search-explorer-origin', 'screwdom-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin']);
+const CREATABLE_TEMPLATE_IDS = new Set(['block-out-origin', 'freecell-origin', 'grill-sort-origin', 'project-makeover-origin', 'word-search-explorer-origin', 'screwdom-origin', 'travel-town-origin', 'candy-crush-origin', 'color-block-jam-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin']);
+CREATABLE_TEMPLATE_IDS.add('pixel-flow-origin');
 
 function listTemplates() {
   return listEntries().map((entry) => ({

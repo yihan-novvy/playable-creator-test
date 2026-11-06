@@ -1,0 +1,60 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {getEntry} from '../../../editor/core/registry.mjs';
+import {effectiveConfig} from '../../../editor/core/runner.mjs';
+import {candyCrushHtml,prerequisites} from '../../../editor/plugins/candy-crush-origin/lib.mjs';
+const root=new URL('../',import.meta.url),built=new URL('../../../editor/templates/candy-crush-origin/',import.meta.url);
+const read=file=>fs.readFileSync(new URL(file,root),'utf8');
+const game=fs.readFileSync(new URL('game/game.js',built),'utf8');
+execFileSync(process.execPath,['scripts/build.mjs'],{cwd:root});
+assert.equal(fs.readFileSync(new URL('game/game.js',built),'utf8'),game,'deterministic original-engine build');
+const manifest=JSON.parse(fs.readFileSync(new URL('game-manifest.json',built)));
+for(const [file,hash] of Object.entries(manifest.constants.fileHashes)){
+  const bytes=fs.readFileSync(new URL(file,built));assert.equal(createHash('sha256').update(bytes).digest('hex'),hash);
+  if(file.endsWith('.js'))new vm.Script(bytes.toString());
+}
+assert.equal((game.match(/NovvyGame\(function/g)||[]).length,1);
+assert.ok(!/postMessage|messageHandlers|NovvyPlayable|NovvyAnalytics|NovvyShell|window\.open\(|mraid\./.test(game));
+const source=JSON.parse(game.match(/^const SOURCE=(.*);$/m)[1]);
+assert.equal(source.params.tapsToBreak.value,5);
+assert.equal(source.params.hideCTA.value,true);
+assert.equal(source.params.fullscreenCta.value,false);
+assert.ok(source.engine.includes('e.length>0&&e[0].object.visible'));
+assert.ok(source.engine.includes('this.#At++,globalThis.CCS_CONTEXT.step(this.#At,this.#Y.params.tapsToBreak.value)'));
+assert.ok(source.engine.includes('onComplete:this.winGame'));
+// Adapter-only fixtures: no HTML mock, synthetic game input or official-platform claims.
+async function fixture(){
+  let entry,context,frame;const calls=[],events=new Map();let removed=false;
+  const node={style:{},clientWidth:390,clientHeight:844,addEventListener:(type,fn)=>events.set(type,fn),removeEventListener:type=>events.delete(type)};
+  const scope={window:{},audioContexts:new Set(),run(){context=scope.window.CCS_CONTEXT;},pause(){calls.push(['pause']);},resume(){calls.push(['resume']);},dispose(){calls.push(['dispose']);}};
+  scope.window.setTimeout=()=>0;scope.window.requestAnimationFrame=fn=>{frame=fn;};
+  vm.runInNewContext(read('src/game.js'),{NovvyGame:fn=>{entry=fn;},engineRoot:()=>({root:node,mount:{remove(){removed=true;}}}),createEngineScope:()=>scope,SOURCE:source,window:{devicePixelRatio:3},console});
+  const promise=entry({},Object.fromEntries(['step','win','fail'].map(name=>[name,(...args)=>calls.push([name,...args])])),{env:{muted:true,safeArea:{top:54},insets:{bottom:110}}});
+  const app={resizeManager:{call(){}},components:{},soundManager:{on(){},off(){}}};
+  context.ready(app,{mute(value){calls.push(['mute',value]);},unload(){calls.push(['unload']);}},{globalTimeline:{clear(){}},ticker:{sleep(){}}});frame();const instance=await promise;
+  return {instance,context,calls,node,unlock:()=>events.get('pointerdown')?.(),removed:()=>removed};
+}
+const f=await fixture();f.context.step(1,5);assert.equal(f.calls.filter(c=>c[0]==='step').length,0);
+f.instance.start();f.context.step(1,5);f.context.step(1,5);assert.deepEqual(f.calls.filter(c=>c[0]==='step'),[['step',20]]);
+f.unlock();assert.equal(f.context.audible(),false,'muted env wins over native first touch');f.instance.setEnv({muted:false});assert.equal(f.context.audible(),true);
+f.instance.pause();f.context.step(2,5);assert.equal(f.calls.filter(c=>c[0]==='step').length,1);assert.equal(f.context.audible(),false);
+f.instance.resume();for(let i=2;i<=5;i++)f.context.step(i,5);
+assert.deepEqual(f.calls.filter(c=>c[0]==='step').map(c=>c[1]),[20,40,60,80,100]);
+f.context.win();f.context.win();f.context.fail();assert.equal(f.calls.filter(c=>c[0]==='win').length,1);assert.equal(f.calls.filter(c=>c[0]==='fail').length,0);
+assert.equal(f.context.area().height,680,'layout respects top and bottom without shrinking canvas');
+f.instance.destroy();f.instance.destroy();assert.equal(f.removed(),true);assert.equal(f.context.alive(),false);assert.equal(f.calls.filter(c=>c[0]==='dispose').length,1);
+const retry=await fixture();retry.instance.start();retry.context.step(1,5);assert.equal(retry.calls.filter(c=>c[0]==='step').length,1);retry.instance.destroy();
+const entry=getEntry('candy-crush-origin'),config=effectiveConfig(entry.template,{});
+assert.equal(config.cta.enabled,true);assert.equal(config.playableCta.enabled,true);assert.equal(config.gameplay.allowReplay,false);assert.equal(config.intro.enabled,false);
+const build=config=>candyCrushHtml({root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config,preview:true});
+const html=build(config).html;assert.ok(html.includes('novvy-cta-btn'));assert.ok(html.includes('Candy Crush Saga'));
+assert.ok(!build({...config,cta:{enabled:false}}).html.includes('id="novvy-cta"'));
+assert.ok(build({...config,playableCta:{enabled:true,mode:'complete',afterSteps:3,intervals:[2]}}).html.includes('"mode":"complete"'));
+assert.deepEqual(prerequisites(config),{uploads:[],generated:[]});
+assert.deepEqual(prerequisites({...config,intro:{enabled:true}}),{uploads:['intro-video'],generated:['intro-video.mp4','poster.webp']});
+const intro=candyCrushHtml({root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config:{...config,intro:{enabled:true,goEnabled:true,goText:'Legacy GO'}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'},preview:false});
+assert.deepEqual(intro.stageChain,['video','playable']);assert.ok(!intro.html.includes('Legacy GO'));assert.ok(intro.html.includes('intro-video.mp4'));assert.ok(intro.html.includes('<script src="game.js"></script>'));
+console.log('Candy Crush: source/hash/determinism, native hooks, adapter lifecycle and assembly configuration passed.');

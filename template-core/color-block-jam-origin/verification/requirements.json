@@ -1,0 +1,52 @@
+{
+  "schema_version": 3,
+  "protocol": "NovvyGame shell API (2026-11-05)",
+  "playable_type": "level",
+  "level_count": 3,
+  "progress": "本关已消除可移动方块数 / 本关初始可移动方块数，2/15/15；障碍块不计入",
+  "successful_action": "一次手势提交不同格点位置或消除方块；有效挪动即使完成度不变仍记一步",
+  "required_branches": [
+    "full_progression_levels_1_2_3",
+    "pause_resume",
+    "native_download_bar",
+    "native_result_download",
+    "assembly_shared_cta",
+    "assembly_step_policy",
+    "assembly_complete_policy",
+    "assembly_optional_replay",
+    "sound_environment_change"
+  ],
+  "not_applicable": [
+    "native_failure: source has no fail/lives/timer",
+    "native_retry: source has no retry control",
+    "native_abandon: source has no skip control"
+  ],
+  "cta_confirmation_path": "cta-decision.md",
+  "cta_placements": [
+    {
+      "id": "download_bar",
+      "location": "原生底部 DOWNLOAD；项目组装时由共享卡替换",
+      "availability": "进入试玩后",
+      "click_source": "cta_click"
+    },
+    {
+      "id": "result_download",
+      "location": "原生结算页 Play Now",
+      "availability": "第三关完成后",
+      "click_source": "cta_click"
+    }
+  ],
+  "assembly_cta_placements": [
+    {
+      "id": "download_bar",
+      "click_source": "cta_click"
+    },
+    {
+      "id": "automatic_policy",
+      "availability": "有效步数达到门槛或最终通关",
+      "click_source": "forced_click_to_appstore"
+    }
+  ],
+  "official_platform_status": "pending_login",
+  "event_verified": false
+}

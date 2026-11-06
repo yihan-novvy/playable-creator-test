@@ -1,0 +1,12 @@
+{
+  "source_url": "https://developer.novvy.ai/eventLogs",
+  "resolved_url": "https://developer.novvy.ai/eventLogs",
+  "fetched_at_utc": "2026-11-06T13:31:48.451507+00:00",
+  "sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39",
+  "bytes": 58103,
+  "http_status": 200,
+  "etag": "\"6aedba22-e2f7\"",
+  "last_modified": "Fri, 06 Nov 2026 11:29:38 GMT",
+  "fresh_network_response": true,
+  "read_full_document_required": true
+}

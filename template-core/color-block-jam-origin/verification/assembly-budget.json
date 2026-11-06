@@ -1,0 +1,30 @@
+{
+  "status": "package_pass",
+  "runtime_status": "not_run",
+  "source": "result/color-block-jam/assembly.zip",
+  "protocol_url": "https://developer.novvy.ai/eventLogs",
+  "entry": "index.html",
+  "file_count": 2,
+  "uncompressed_bytes": 12069047,
+  "package_limits": {
+    "archive_checked": true,
+    "archive_bytes": 3591792,
+    "uncompressed_bytes": 12069047,
+    "entry_count": 2,
+    "max_archive_bytes": 10000000,
+    "max_uncompressed_bytes": 30000000,
+    "max_entries": 4000,
+    "scope": "input_only"
+  },
+  "artifact_sha256": "cc2adf0f7318bcb329176c4a4beeeea7e1a978bdc2dd94cb2be7e1070e6461d6",
+  "artifact_hash_kind": "file_sha256",
+  "content_sha256": "287a8f805e219dc4b630313f6bf471d0bf214604ff8fa2b89dd4b2877fc38769",
+  "errors": [],
+  "warnings": [
+    {
+      "code": "package_only",
+      "message": "Package budget/structure only; shell-owned code and gameplay/event behavior were not checked."
+    }
+  ],
+  "command": "package"
+}

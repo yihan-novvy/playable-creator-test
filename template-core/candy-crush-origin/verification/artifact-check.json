@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "checkedAt": "2026-11-06T13:58:13.232Z",
+  "staticPass": true,
+  "platformEventsVerified": false,
+  "nativeFileRuntimeVerified": false,
+  "game": {
+    "file": "game-only.zip",
+    "sha256": "3b8f0f7c1780a63b7b25766cee88633c523dffc9aa742fa6c9dfab342de81fe3",
+    "bytes": 2389802,
+    "entries": [
+      "game.js"
+    ]
+  },
+  "assembly": {
+    "file": "assembly.zip",
+    "sha256": "f995101e9cce53cc2d14aab89b6e5b538cdc02a414266e8708854a1adaa2bd49",
+    "bytes": 2464522,
+    "entries": [
+      "game.js",
+      "index.html"
+    ],
+    "uncompressedBytes": 4380915
+  },
+  "gameJsSha256": "e78fa3719c670b7db49c4d0c4d4bd36667bf63a59f4eab965a47e59e4fad3e9d",
+  "checks": [
+    "Root classic game.js, one synchronous registration and parseable syntax",
+    "Exact final build bytes in both archives",
+    "No legacy bridge, native channel, SDK, direct store opening or window messages in game",
+    "Standard host card has one event owner",
+    "Standalone and total assembly package limits"
+  ],
+  "limitations": [
+    "Static dependency inspection and local browser assembly testing do not establish official platform acceptance",
+    "Official message/Tracking correlation and native WebView/file execution remain unverified"
+  ]
+}

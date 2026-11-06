@@ -1,0 +1,73 @@
+[
+  {
+    "level": "log",
+    "message": "%cPlayable initialize. engine Cocos 3.8.2 isDebug : false color:#00AAEE",
+    "timestamp": "2026-11-06T14:08:33.855Z"
+  },
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/gameScene.scene: 408.008056640625 ms",
+    "timestamp": "2026-11-06T14:08:34.398Z"
+  },
+  {
+    "level": "log",
+    "message": "active scene nodes use time: 64 ms",
+    "timestamp": "2026-11-06T14:08:34.489Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame launch use time: 636 ms color:#AA00AA",
+    "timestamp": "2026-11-06T14:08:34.489Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame start color:#00AAEE",
+    "timestamp": "2026-11-06T14:08:38.549Z"
+  },
+  {
+    "level": "log",
+    "message": "屏幕转向了",
+    "timestamp": "2026-11-06T14:09:06.611Z"
+  },
+  {
+    "level": "log",
+    "message": "屏幕转向了",
+    "timestamp": "2026-11-06T14:09:06.616Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 4 [[2,2],[2,3],[3,2],[3,3]]",
+    "timestamp": "2026-11-06T14:11:11.647Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 1 color:#00AAEE",
+    "timestamp": "2026-11-06T14:11:11.717Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T14:11:12.708Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 2 color:#00AAEE",
+    "timestamp": "2026-11-06T14:11:13.577Z"
+  },
+  {
+    "level": "log",
+    "message": "屏幕转向了",
+    "timestamp": "2026-11-06T14:12:12.955Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:12:55.150Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam-2/index.html"
+  },
+  {
+    "level": "log",
+    "message": "屏幕转向了",
+    "timestamp": "2026-11-06T14:12:56.316Z"
+  }
+]

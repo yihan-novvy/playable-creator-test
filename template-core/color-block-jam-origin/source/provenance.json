@@ -1,0 +1,40 @@
+{
+  "appStoreUrl": "https://apps.apple.com/us/app/color-block-jam/id6504332779",
+  "appId": "6504332779",
+  "publisher": "Rollic Games",
+  "sourceUrl": "https://data.insightrackr.com/creative/preplay/detail/c8247db37c9c2be442420a9698da0344",
+  "fingerprint": "c8247db37c9c2be442420a9698da0344",
+  "observedAt": "2026-11-06",
+  "filters": {
+    "query": "Color Block Jam",
+    "dateFrom": "2025-11-07",
+    "dateTo": "2026-11-06",
+    "sort": "relevance",
+    "platform": "all",
+    "channels": "all",
+    "countries": "all"
+  },
+  "signals": {
+    "estimatedImpressions": "19亿",
+    "lifetimeDays": 461,
+    "channel": "Mintegral"
+  },
+  "engine": "Cocos Creator 3.8.2",
+  "attribution": "Observed source preview identifies Color Block Jam and id6504332779; publisher authorship not independently verified.",
+  "nativeStoreTriggers": {
+    "everyPresses": 2,
+    "afterLevel": 0,
+    "everyEliminations": 0,
+    "afterSeconds": 0
+  },
+  "levelCount": 3,
+  "removableBlocks": [
+    2,
+    15,
+    15
+  ],
+  "files": {
+    "loader.html": "07fee563e0b2f8ed817169ac9a65e043dbe586a986c5353a610c2a26b78bd621",
+    "original.zip": "c0d2ed6e11e53e972129c00e8aa5f5c6b463fc412c525536c65e265d654dbca1"
+  }
+}

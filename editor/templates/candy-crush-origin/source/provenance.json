@@ -1,0 +1,46 @@
+{
+  "observedAt": "2026-11-06",
+  "application": {
+    "id": "553834731",
+    "name": "Candy Crush Saga",
+    "publisher": "King.com Limited",
+    "storeUrl": "https://apps.apple.com/us/app/candy-crush-saga/id553834731"
+  },
+  "source": {
+    "searchUrl": "https://data.insightrackr.com/search/preplay?keyWord=Candy+Crush&gpt=0",
+    "fingerprint": "418b2b3d53aa81978ffdb132d94e6892",
+    "assetUrl": "https://adinsights-1258892624.oss-accelerate.aliyuncs.com/htmls/zip/2026/7/15/418b2b3d53aa81978ffdb132d94e6892/m_en_unzip_m3G6qb95l_ios_ty/m_en_unzip_m3G6qb95l_ios_ty.html",
+    "platform": "iOS",
+    "network": "Mintegral",
+    "displayedExposureEstimate": "11亿",
+    "displayedDays": 115,
+    "filterRange": [
+      "2025-11-07",
+      "2026-11-06"
+    ],
+    "filters": "Candy Crush keyword; relevance; no country/platform/network narrowing",
+    "identity": "Embedded iOS/Android destinations match Saga. Attribution to King is from the aggregation and store, not an independent authorship verification. Stable detail page could not be verified; retain search and fingerprint."
+  },
+  "gameplay": {
+    "name": "Poke the Candy",
+    "successfulHits": 5,
+    "engine": "THREE + PIXI + GSAP + Howler",
+    "sourceStudio": "studiocation.com template v5.0.4",
+    "result": "Colorbomb explosion after five visible mesh intersections",
+    "rejectedCandidate": "1f829cfebfedfddc6d469f73c4ff64f9 points to Candy Crush Soda id850417475"
+  },
+  "card": {
+    "rating": 4.7,
+    "iconSource": "https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/e8/7c/c8/e87cc8f5-5ed8-63b4-b548-9ce85f7ab628/AppIcon-0-0-1x_U007emarketing-0-8-0-85-220.png/512x512bb.jpg"
+  },
+  "protocol": {
+    "url": "https://developer.novvy.ai/eventLogs",
+    "sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39",
+    "fetchedAt": "2026-11-06T13:31:48.451507+00:00",
+    "entry": "NovvyGame game.js; standard host banner cta_click and auto forced_click_to_appstore per §2.1"
+  },
+  "files": {
+    "original.html": "0d3f94db22c6e226ac8c47142006eb78616798c6eb7a24ae8618922bfa45e118",
+    "app-icon.jpg": "22d791bc1e37d7c880b158a5e2ee592ac62955ca4143e0b6be236b76b2f6ebaf"
+  }
+}

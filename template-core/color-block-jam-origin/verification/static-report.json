@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "contract": "NovvyGame shell API, eventLogs 2026-11-05",
+  "checkedAt": "2026-11-06T14:13:29.347Z",
+  "static_pass": true,
+  "event_verified": false,
+  "acceptance": "验收未完成：尚缺官方试玩日志调试记录及对应 Tracking 上报",
+  "game": {
+    "path": "/Users/code/novvyProject/NovvyAI/playable-ad/playable-creator/result/color-block-jam/game-only.zip",
+    "sha256": "9bd7c7c6057cd71d6d07addfe591ad1b204ff2d19ee31bfc6aa39659522b76c6",
+    "bytes": 3572421,
+    "uncompressedBytes": 12034658,
+    "entries": [
+      "game.js"
+    ],
+    "archive_checked": true
+  },
+  "assembly": {
+    "path": "/Users/code/novvyProject/NovvyAI/playable-ad/playable-creator/result/color-block-jam/assembly.zip",
+    "sha256": "cc2adf0f7318bcb329176c4a4beeeea7e1a978bdc2dd94cb2be7e1070e6461d6",
+    "bytes": 3591792,
+    "uncompressedBytes": 12069047,
+    "entries": [
+      "game.js",
+      "index.html"
+    ],
+    "archive_checked": true
+  },
+  "embeddedResources": 21,
+  "checks": [
+    "Final ZIP budget and root entries",
+    "Classic-script syntax",
+    "Exactly one synchronous NovvyGame registration; no execution at import",
+    "No standalone SDK, transport, native channel or direct store open",
+    "All source resources embedded; engine fetch/XHR replaced by memory-only loaders"
+  ],
+  "manualLimitations": [
+    "Static inspection cannot establish runtime event delivery",
+    "Source engine uses isolated System.register modules and in-memory fetch-shaped decoding, not external module scripts or file XHR",
+    "Official platform, file:// and iOS/Android WebView still require validation"
+  ]
+}

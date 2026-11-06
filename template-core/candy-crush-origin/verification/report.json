@@ -1,0 +1,103 @@
+{
+  "status": "template implemented; official platform acceptance pending",
+  "templateId": "candy-crush-origin",
+  "taskId": "candy-crush-saga",
+  "sourceSha256": "0d3f94db22c6e226ac8c47142006eb78616798c6eb7a24ae8618922bfa45e118",
+  "artifact": {
+    "schemaVersion": 1,
+    "checkedAt": "2026-11-06T13:58:13.232Z",
+    "staticPass": true,
+    "platformEventsVerified": false,
+    "nativeFileRuntimeVerified": false,
+    "game": {
+      "file": "game-only.zip",
+      "sha256": "3b8f0f7c1780a63b7b25766cee88633c523dffc9aa742fa6c9dfab342de81fe3",
+      "bytes": 2389802,
+      "entries": [
+        "game.js"
+      ]
+    },
+    "assembly": {
+      "file": "assembly.zip",
+      "sha256": "f995101e9cce53cc2d14aab89b6e5b538cdc02a414266e8708854a1adaa2bd49",
+      "bytes": 2464522,
+      "entries": [
+        "game.js",
+        "index.html"
+      ],
+      "uncompressedBytes": 4380915
+    },
+    "gameJsSha256": "e78fa3719c670b7db49c4d0c4d4bd36667bf63a59f4eab965a47e59e4fad3e9d",
+    "checks": [
+      "Root classic game.js, one synchronous registration and parseable syntax",
+      "Exact final build bytes in both archives",
+      "No legacy bridge, native channel, SDK, direct store opening or window messages in game",
+      "Standard host card has one event owner",
+      "Standalone and total assembly package limits"
+    ],
+    "limitations": [
+      "Static dependency inspection and local browser assembly testing do not establish official platform acceptance",
+      "Official message/Tracking correlation and native WebView/file execution remain unverified"
+    ]
+  },
+  "requirements": {
+    "playableType": "level",
+    "levelCount": 1,
+    "goal": "5 successful visible candy-mesh hits",
+    "progress": "successfulHits / 5 * 100",
+    "normalResult": "win after original explosion callback",
+    "failure": "No naturally reachable failure in this fixed creative; defensive native fail handler is connected",
+    "ctaPlacements": [],
+    "assemblyPlacements": [
+      {
+        "id": "shared-download-card",
+        "click_source": "cta_click",
+        "basis": "Live protocol §2.1 standard shell banner"
+      },
+      {
+        "id": "configured-step-or-win",
+        "click_source": "forced_click_to_appstore",
+        "basis": "Live protocol §2.1 shell automatic strategy"
+      }
+    ]
+  },
+  "checks": {
+    "build": "pass; frozen source hash and unique patch anchors",
+    "deterministicRebuild": "pass",
+    "registration": "pass; zero warnings",
+    "gameAdapterTests": "pass",
+    "hostPolicyTests": "pass; disabled/steps/complete, replay, debounce, visibility, result-before-store",
+    "editorHttp": "46 checks passed",
+    "taskCreation": "15 checks passed",
+    "browser": {
+      "fullProgression": "Final game: five actual candy hits, step-3 and step-5 CTA preview requests, native explosion/result screen",
+      "invalidInput": "Observed misses did not consume successful-hit thresholds",
+      "replay": "Observed fresh original candy ball after Play again; final adapter tests also cover fresh instance and cleanup",
+      "intro": "Actual core:intro processed video automatically hands over to gameplay despite legacy GO settings",
+      "layout": [
+        "390x844 portrait",
+        "844x390 landscape",
+        "1280x720 desktop",
+        "HUD on/off, full canvases and shared CTA card"
+      ],
+      "cta": "One observed cta_click console request after final card click",
+      "errors": "No captured error-level logs in final local browser run"
+    },
+    "broaderEditorRegression": "Not fully green: unrelated legacy image-to-pattern/reference snapshot and export-layout tests fail; creation allowlist updated and rechecked",
+    "nativeFileRuntime": "Not tested: browser security policy prohibits file URLs",
+    "officialPlatform": "Not tested: no known authenticated debug-page URL; document page blocked in embedded browser"
+  },
+  "evidence": [
+    "artifact-check.json",
+    "editor-tests.log",
+    "local-browser-log.json",
+    "portrait.jpg",
+    "hud-portrait.jpg",
+    "win.jpg"
+  ],
+  "limitations": [
+    "Actual official received/dropped-message and Tracking-request correlation is missing; no platform event acceptance claimed",
+    "Native advertising WebView/file execution remains to be verified",
+    "Concurrent Color Block Jam / Pixel Flow work was preserved"
+  ]
+}

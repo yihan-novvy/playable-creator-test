@@ -1,0 +1,24 @@
+{
+  "evidenceKind": "actual local product-host console; not official platform reports",
+  "page": "http://127.0.0.1:8092/result/candy-crush-saga/index.html",
+  "entries": [
+    {
+      "level": "info",
+      "message": "Candy Crush Saga CTA preview {\"click_source\":\"forced_click_to_appstore\",\"scene\":\"playable-steps\",\"auto_jump\":\"true\",\"auto_jump_mode\":\"steps\",\"step\":3}",
+      "timestamp": "2026-11-06T13:59:38.437Z",
+      "url": "http://127.0.0.1:8092/result/candy-crush-saga/index.html"
+    },
+    {
+      "level": "info",
+      "message": "Candy Crush Saga CTA preview {\"click_source\":\"forced_click_to_appstore\",\"scene\":\"playable-steps\",\"auto_jump\":\"true\",\"auto_jump_mode\":\"steps\",\"step\":5}",
+      "timestamp": "2026-11-06T14:01:20.728Z",
+      "url": "http://127.0.0.1:8092/result/candy-crush-saga/index.html"
+    },
+    {
+      "level": "info",
+      "message": "Candy Crush Saga CTA preview {\"click_source\":\"cta_click\",\"scene\":\"cta-card\"}",
+      "timestamp": "2026-11-06T14:01:53.801Z",
+      "url": "http://127.0.0.1:8092/result/candy-crush-saga/index.html"
+    }
+  ]
+}

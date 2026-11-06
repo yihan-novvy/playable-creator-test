@@ -7,3 +7,4 @@ result/
 __pycache__/
 .DS_Store
 output
+dist/

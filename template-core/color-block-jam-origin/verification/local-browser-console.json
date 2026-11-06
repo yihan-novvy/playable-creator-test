@@ -1,0 +1,2325 @@
+[
+  {
+    "level": "log",
+    "message": "%cPlayable initialize. engine Cocos 3.8.2 isDebug : false color:#00AAEE",
+    "timestamp": "2026-11-06T13:45:23.776Z"
+  },
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/gameScene.scene: 212.64501953125 ms",
+    "timestamp": "2026-11-06T13:45:24.090Z"
+  },
+  {
+    "level": "log",
+    "message": "active scene nodes use time: 62 ms",
+    "timestamp": "2026-11-06T13:45:24.210Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame launch use time: 436 ms color:#AA00AA",
+    "timestamp": "2026-11-06T13:45:24.211Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame start color:#00AAEE",
+    "timestamp": "2026-11-06T13:45:24.250Z"
+  },
+  {
+    "level": "log",
+    "message": "屏幕转向了",
+    "timestamp": "2026-11-06T13:45:33.029Z"
+  },
+  {
+    "level": "log",
+    "message": "屏幕转向了",
+    "timestamp": "2026-11-06T13:45:33.032Z"
+  },
+  {
+    "level": "log",
+    "message": "%cPlayable initialize. engine Cocos 3.8.2 isDebug : false color:#00AAEE",
+    "timestamp": "2026-11-06T13:47:11.355Z"
+  },
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/gameScene.scene: 132.22802734375 ms",
+    "timestamp": "2026-11-06T13:47:11.530Z"
+  },
+  {
+    "level": "log",
+    "message": "active scene nodes use time: 36 ms",
+    "timestamp": "2026-11-06T13:47:11.649Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame launch use time: 297 ms color:#AA00AA",
+    "timestamp": "2026-11-06T13:47:11.649Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame start color:#00AAEE",
+    "timestamp": "2026-11-06T13:47:11.649Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 4 [[2,2],[2,3],[3,2],[3,3]]",
+    "timestamp": "2026-11-06T13:47:45.369Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 1 color:#00AAEE",
+    "timestamp": "2026-11-06T13:47:45.841Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:47:46.338Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 2 color:#00AAEE",
+    "timestamp": "2026-11-06T13:47:46.881Z"
+  },
+  {
+    "level": "log",
+    "message": "屏幕转向了",
+    "timestamp": "2026-11-06T13:47:53.580Z"
+  },
+  {
+    "level": "log",
+    "message": "%cPlayable initialize. engine Cocos 3.8.2 isDebug : false color:#00AAEE",
+    "timestamp": "2026-11-06T13:49:15.453Z"
+  },
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/gameScene.scene: 247.14111328125 ms",
+    "timestamp": "2026-11-06T13:49:15.775Z"
+  },
+  {
+    "level": "log",
+    "message": "active scene nodes use time: 47 ms",
+    "timestamp": "2026-11-06T13:49:15.902Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame launch use time: 448 ms color:#AA00AA",
+    "timestamp": "2026-11-06T13:49:15.904Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame start color:#00AAEE",
+    "timestamp": "2026-11-06T13:49:15.920Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 4 [[1,0],[1,1],[2,0],[2,1]]",
+    "timestamp": "2026-11-06T13:50:12.434Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 1 color:#00AAEE",
+    "timestamp": "2026-11-06T13:50:13.229Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 1",
+    "timestamp": "2026-11-06T13:50:16.122Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 2 color:#00AAEE",
+    "timestamp": "2026-11-06T13:50:16.616Z"
+  },
+  {
+    "level": "log",
+    "message": "屏幕转向了",
+    "timestamp": "2026-11-06T13:52:44.940Z"
+  },
+  {
+    "level": "log",
+    "message": "%cPlayable initialize. engine Cocos 3.8.2 isDebug : false color:#00AAEE",
+    "timestamp": "2026-11-06T13:52:46.599Z"
+  },
+  {
+    "level": "log",
+    "message": "LoadScene db://assets/gameScene.scene: 227.80908203125 ms",
+    "timestamp": "2026-11-06T13:52:46.946Z"
+  },
+  {
+    "level": "log",
+    "message": "active scene nodes use time: 43 ms",
+    "timestamp": "2026-11-06T13:52:47.025Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame launch use time: 423 ms color:#AA00AA",
+    "timestamp": "2026-11-06T13:52:47.025Z"
+  },
+  {
+    "level": "log",
+    "message": "%cgame start color:#00AAEE",
+    "timestamp": "2026-11-06T13:52:47.025Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 4 [[2,2],[2,3],[3,2],[3,3]]",
+    "timestamp": "2026-11-06T13:53:10.447Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 1 color:#00AAEE",
+    "timestamp": "2026-11-06T13:53:10.561Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:53:10.889Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 2 color:#00AAEE",
+    "timestamp": "2026-11-06T13:53:11.439Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 4 [[1,0],[1,1],[2,0],[2,1]]",
+    "timestamp": "2026-11-06T13:53:16.882Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 1",
+    "timestamp": "2026-11-06T13:53:17.195Z"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 3 color:#00AAEE",
+    "timestamp": "2026-11-06T13:53:17.746Z"
+  },
+  {
+    "level": "log",
+    "message": "游戏结束",
+    "timestamp": "2026-11-06T13:53:17.746Z"
+  },
+  {
+    "level": "log",
+    "message": "游戏结束",
+    "timestamp": "2026-11-06T13:53:19.270Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[0,3],[1,3]]",
+    "timestamp": "2026-11-06T13:53:40.127Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:53:40.741Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,3],[1,3]]",
+    "timestamp": "2026-11-06T13:53:40.741Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,2]]",
+    "timestamp": "2026-11-06T13:53:41.312Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:53:42.078Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,3]]",
+    "timestamp": "2026-11-06T13:53:42.078Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,1]]",
+    "timestamp": "2026-11-06T13:53:42.469Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:53:43.043Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,2]]",
+    "timestamp": "2026-11-06T13:53:43.043Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,0]]",
+    "timestamp": "2026-11-06T13:53:43.592Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:53:44.178Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,1]]",
+    "timestamp": "2026-11-06T13:53:44.178Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[1,0]]",
+    "timestamp": "2026-11-06T13:53:44.634Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 1",
+    "timestamp": "2026-11-06T13:53:44.927Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[2,0],[3,0]]",
+    "timestamp": "2026-11-06T13:53:58.669Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:00.261Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,0],[1,0]]",
+    "timestamp": "2026-11-06T13:54:00.261Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,0],[5,0]]",
+    "timestamp": "2026-11-06T13:54:02.013Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:03.961Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,0],[3,0]]",
+    "timestamp": "2026-11-06T13:54:03.961Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[2,0],[1,0]]",
+    "timestamp": "2026-11-06T13:54:04.628Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:06.040Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,0],[0,0]]",
+    "timestamp": "2026-11-06T13:54:06.040Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,0],[3,0]]",
+    "timestamp": "2026-11-06T13:54:06.713Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:07.530Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,0],[2,0]]",
+    "timestamp": "2026-11-06T13:54:07.530Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,1],[5,1]]",
+    "timestamp": "2026-11-06T13:54:08.036Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:08.902Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,0],[4,0]]",
+    "timestamp": "2026-11-06T13:54:08.903Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:54:08.903Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,2]]",
+    "timestamp": "2026-11-06T13:54:20.206Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:23.764Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,1]]",
+    "timestamp": "2026-11-06T13:54:23.765Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,3]]",
+    "timestamp": "2026-11-06T13:54:24.448Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:25.226Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,2]]",
+    "timestamp": "2026-11-06T13:54:25.226Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,1]]",
+    "timestamp": "2026-11-06T13:54:25.699Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:26.240Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,1]]",
+    "timestamp": "2026-11-06T13:54:26.241Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,2]]",
+    "timestamp": "2026-11-06T13:54:26.780Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:27.324Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,1]]",
+    "timestamp": "2026-11-06T13:54:27.324Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[3,2]]",
+    "timestamp": "2026-11-06T13:54:27.780Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:28.662Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,2]]",
+    "timestamp": "2026-11-06T13:54:28.662Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[3,3]]",
+    "timestamp": "2026-11-06T13:54:42.970Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:44.390Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2]]",
+    "timestamp": "2026-11-06T13:54:44.391Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[2,3],[1,3]]",
+    "timestamp": "2026-11-06T13:54:45.233Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:46.340Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,3],[3,3]]",
+    "timestamp": "2026-11-06T13:54:46.357Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[2,2]]",
+    "timestamp": "2026-11-06T13:54:47.423Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:48.399Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,3]]",
+    "timestamp": "2026-11-06T13:54:48.399Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:54:48.399Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[2,3]]",
+    "timestamp": "2026-11-06T13:54:49.290Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:50.701Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,3]]",
+    "timestamp": "2026-11-06T13:54:50.701Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,3],[3,3]]",
+    "timestamp": "2026-11-06T13:54:51.544Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:54:52.958Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:54:52.958Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,2]]",
+    "timestamp": "2026-11-06T13:55:09.676Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:55:10.777Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,3]]",
+    "timestamp": "2026-11-06T13:55:10.790Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[3,2]]",
+    "timestamp": "2026-11-06T13:55:11.457Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:55:12.393Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,2]]",
+    "timestamp": "2026-11-06T13:55:12.393Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[2,1],[3,1]]",
+    "timestamp": "2026-11-06T13:55:17.989Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:55:18.889Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2],[2,2]]",
+    "timestamp": "2026-11-06T13:55:18.889Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,0],[2,0]]",
+    "timestamp": "2026-11-06T13:55:19.469Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:55:20.295Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,1],[2,1]]",
+    "timestamp": "2026-11-06T13:55:20.299Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:55:20.319Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,0],[4,0]]",
+    "timestamp": "2026-11-06T13:55:20.850Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:55:21.835Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,0],[2,0]]",
+    "timestamp": "2026-11-06T13:55:21.835Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[5,1]]",
+    "timestamp": "2026-11-06T13:55:39.689Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:55:40.428Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,1]]",
+    "timestamp": "2026-11-06T13:55:41.776Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:55:42.393Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,0]]",
+    "timestamp": "2026-11-06T13:55:42.394Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,0]]",
+    "timestamp": "2026-11-06T13:55:42.950Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:55:43.218Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:55:43.220Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,2]]",
+    "timestamp": "2026-11-06T13:55:43.860Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:55:44.423Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,0]]",
+    "timestamp": "2026-11-06T13:55:44.423Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,2],[2,2]]",
+    "timestamp": "2026-11-06T13:55:44.870Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:55:45.325Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,2],[3,2]]",
+    "timestamp": "2026-11-06T13:55:45.325Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,2],[5,3]]",
+    "timestamp": "2026-11-06T13:56:05.836Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:06.511Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,1],[5,2]]",
+    "timestamp": "2026-11-06T13:56:06.512Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,3]]",
+    "timestamp": "2026-11-06T13:56:07.029Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:56:07.311Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:56:07.312Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:56:08.214Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:08.949Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,3],[4,3]]",
+    "timestamp": "2026-11-06T13:56:08.949Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,2],[3,2]]",
+    "timestamp": "2026-11-06T13:56:09.346Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:09.952Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2],[2,2]]",
+    "timestamp": "2026-11-06T13:56:09.953Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,1],[5,2]]",
+    "timestamp": "2026-11-06T13:56:10.468Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:11.307Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,1],[4,2]]",
+    "timestamp": "2026-11-06T13:56:11.307Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,2],[2,2]]",
+    "timestamp": "2026-11-06T13:56:22.240Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:23.360Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:56:23.364Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:56:23.368Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,1],[2,1]]",
+    "timestamp": "2026-11-06T13:56:23.831Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:24.315Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2],[2,2]]",
+    "timestamp": "2026-11-06T13:56:24.316Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,0],[2,0]]",
+    "timestamp": "2026-11-06T13:56:24.729Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:25.253Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,1],[2,1]]",
+    "timestamp": "2026-11-06T13:56:25.254Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,0]]",
+    "timestamp": "2026-11-06T13:56:25.635Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 2",
+    "timestamp": "2026-11-06T13:56:25.897Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[1,0],[0,0]]",
+    "timestamp": "2026-11-06T13:56:26.592Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:56:27.086Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:56:27.086Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,1]]",
+    "timestamp": "2026-11-06T13:56:43.291Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:44.165Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,0]]",
+    "timestamp": "2026-11-06T13:56:44.166Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,0]]",
+    "timestamp": "2026-11-06T13:56:44.746Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:45.485Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,0]]",
+    "timestamp": "2026-11-06T13:56:45.485Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,2]]",
+    "timestamp": "2026-11-06T13:56:46.115Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:47.096Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,0]]",
+    "timestamp": "2026-11-06T13:56:47.097Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,0]]",
+    "timestamp": "2026-11-06T13:56:47.555Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:48.166Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,0]]",
+    "timestamp": "2026-11-06T13:56:48.166Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:56:48.166Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,3]]",
+    "timestamp": "2026-11-06T13:56:48.634Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:56:49.334Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,2]]",
+    "timestamp": "2026-11-06T13:56:49.334Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[1,3]]",
+    "timestamp": "2026-11-06T13:57:04.365Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 1",
+    "timestamp": "2026-11-06T13:57:04.619Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,2]]",
+    "timestamp": "2026-11-06T13:57:05.338Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:05.837Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,3]]",
+    "timestamp": "2026-11-06T13:57:05.837Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,3]]",
+    "timestamp": "2026-11-06T13:57:06.419Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:07.084Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,3]]",
+    "timestamp": "2026-11-06T13:57:07.085Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:57:07.085Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,1],[4,2]]",
+    "timestamp": "2026-11-06T13:57:07.514Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:08.046Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,0],[4,1]]",
+    "timestamp": "2026-11-06T13:57:08.047Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,3],[4,3]]",
+    "timestamp": "2026-11-06T13:57:08.367Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:08.880Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,2],[4,2]]",
+    "timestamp": "2026-11-06T13:57:08.880Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:57:27.063Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:57:27.556Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[1,3]]",
+    "timestamp": "2026-11-06T13:57:28.532Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 3",
+    "timestamp": "2026-11-06T13:57:28.857Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:57:28.857Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,2],[2,2]]",
+    "timestamp": "2026-11-06T13:57:29.408Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:30.120Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:57:30.120Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:57:30.554Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:31.170Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,3],[0,3]]",
+    "timestamp": "2026-11-06T13:57:31.172Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,1],[2,1]]",
+    "timestamp": "2026-11-06T13:57:31.699Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:32.243Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:57:32.254Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[3,0]]",
+    "timestamp": "2026-11-06T13:57:43.071Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:43.462Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2]]",
+    "timestamp": "2026-11-06T13:57:43.462Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:57:43.462Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[2,0]]",
+    "timestamp": "2026-11-06T13:57:43.893Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 2",
+    "timestamp": "2026-11-06T13:57:44.086Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,0],[4,1]]",
+    "timestamp": "2026-11-06T13:57:44.743Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:45.199Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,0],[3,1]]",
+    "timestamp": "2026-11-06T13:57:45.199Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,2],[4,2]]",
+    "timestamp": "2026-11-06T13:57:45.602Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:57:45.922Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[3,2]]",
+    "timestamp": "2026-11-06T13:57:46.419Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:46.963Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,2]]",
+    "timestamp": "2026-11-06T13:57:46.963Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:57:46.964Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,2]]",
+    "timestamp": "2026-11-06T13:57:57.525Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:58.373Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,3]]",
+    "timestamp": "2026-11-06T13:57:58.374Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:57:58.856Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:57:59.392Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2],[2,2]]",
+    "timestamp": "2026-11-06T13:57:59.392Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,3]]",
+    "timestamp": "2026-11-06T13:57:59.852Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 3",
+    "timestamp": "2026-11-06T13:58:00.948Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,2],[2,2]]",
+    "timestamp": "2026-11-06T13:58:01.721Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:58:02.162Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:58:02.163Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:58:02.163Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,0],[3,1]]",
+    "timestamp": "2026-11-06T13:58:02.652Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:58:03.129Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,1],[3,2]]",
+    "timestamp": "2026-11-06T13:58:03.129Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:58:12.286Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:58:12.967Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,3],[4,3]]",
+    "timestamp": "2026-11-06T13:58:12.968Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,1],[3,2]]",
+    "timestamp": "2026-11-06T13:58:13.351Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 3",
+    "timestamp": "2026-11-06T13:58:13.854Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[1,3],[0,3]]",
+    "timestamp": "2026-11-06T13:58:14.759Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:58:15.528Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:58:15.528Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:58:15.528Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:58:15.993Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:58:16.668Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,0],[2,0]]",
+    "timestamp": "2026-11-06T13:58:16.668Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,3],[4,3]]",
+    "timestamp": "2026-11-06T13:58:17.161Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:58:17.893Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:58:17.893Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,0],[2,0]]",
+    "timestamp": "2026-11-06T13:58:18.361Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 1",
+    "timestamp": "2026-11-06T13:58:19.086Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,3],[2,3]]",
+    "timestamp": "2026-11-06T13:58:48.863Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 1",
+    "timestamp": "2026-11-06T13:58:49.288Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:58:49.289Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 4 color:#00AAEE",
+    "timestamp": "2026-11-06T13:58:49.857Z"
+  },
+  {
+    "level": "log",
+    "message": "游戏结束",
+    "timestamp": "2026-11-06T13:58:49.857Z"
+  },
+  {
+    "level": "log",
+    "message": "游戏结束",
+    "timestamp": "2026-11-06T13:58:51.351Z"
+  },
+  {
+    "level": "log",
+    "message": "最YOU边z: 16.676000000000002",
+    "timestamp": "2026-11-06T13:58:51.563Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[6,0]]",
+    "timestamp": "2026-11-06T13:59:24.388Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:59:26.030Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[6,2],[6,3]]",
+    "timestamp": "2026-11-06T13:59:26.750Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 2",
+    "timestamp": "2026-11-06T13:59:27.110Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[1,0]]",
+    "timestamp": "2026-11-06T13:59:28.004Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:28.569Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,0]]",
+    "timestamp": "2026-11-06T13:59:28.569Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[1,1]]",
+    "timestamp": "2026-11-06T13:59:29.125Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 2",
+    "timestamp": "2026-11-06T13:59:29.317Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:59:29.318Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,2],[5,3]]",
+    "timestamp": "2026-11-06T13:59:30.367Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:31.930Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,3],[5,4]]",
+    "timestamp": "2026-11-06T13:59:31.931Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,0],[5,0]]",
+    "timestamp": "2026-11-06T13:59:41.941Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:42.560Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[6,0],[5,0]]",
+    "timestamp": "2026-11-06T13:59:42.561Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[5,1]]",
+    "timestamp": "2026-11-06T13:59:43.031Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:43.683Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[6,1]]",
+    "timestamp": "2026-11-06T13:59:43.688Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[4,1]]",
+    "timestamp": "2026-11-06T13:59:44.169Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:44.785Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,1]]",
+    "timestamp": "2026-11-06T13:59:44.785Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:59:44.785Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[6,0],[5,0]]",
+    "timestamp": "2026-11-06T13:59:45.163Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:45.987Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,0],[4,0]]",
+    "timestamp": "2026-11-06T13:59:45.987Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[6,1]]",
+    "timestamp": "2026-11-06T13:59:46.452Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 2",
+    "timestamp": "2026-11-06T13:59:46.585Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[5,1]]",
+    "timestamp": "2026-11-06T13:59:54.184Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T13:59:54.351Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,0],[4,0]]",
+    "timestamp": "2026-11-06T13:59:55.083Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:55.536Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,1],[4,1]]",
+    "timestamp": "2026-11-06T13:59:55.536Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T13:59:55.537Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,1],[4,1]]",
+    "timestamp": "2026-11-06T13:59:55.890Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:56.398Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[6,1],[5,1]]",
+    "timestamp": "2026-11-06T13:59:56.398Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[6,1],[5,1]]",
+    "timestamp": "2026-11-06T13:59:56.965Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:57.454Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[6,2],[5,2]]",
+    "timestamp": "2026-11-06T13:59:57.454Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,3],[5,4]]",
+    "timestamp": "2026-11-06T13:59:57.858Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T13:59:58.354Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[6,3],[6,4]]",
+    "timestamp": "2026-11-06T13:59:58.354Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,4],[4,3],[4,4]]",
+    "timestamp": "2026-11-06T14:00:21.203Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:00:21.671Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,4],[5,4],[5,3]]",
+    "timestamp": "2026-11-06T14:00:21.671Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:00:21.671Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,2],[3,3],[4,2]]",
+    "timestamp": "2026-11-06T14:00:22.061Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:00:22.491Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[3,4],[4,3]]",
+    "timestamp": "2026-11-06T14:00:22.492Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[1,2],[1,3],[2,2]]",
+    "timestamp": "2026-11-06T14:00:22.970Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:00:23.448Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,2],[2,3],[3,2]]",
+    "timestamp": "2026-11-06T14:00:23.448Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[0,3],[0,4],[1,4]]",
+    "timestamp": "2026-11-06T14:00:23.880Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:00:24.378Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,3],[1,4],[2,4]]",
+    "timestamp": "2026-11-06T14:00:24.382Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[0,1],[0,2]]",
+    "timestamp": "2026-11-06T14:00:24.805Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 3",
+    "timestamp": "2026-11-06T14:00:25.059Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:00:25.059Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[0,0]]",
+    "timestamp": "2026-11-06T14:00:34.673Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 1",
+    "timestamp": "2026-11-06T14:00:34.817Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[1,3],[1,4],[2,4]]",
+    "timestamp": "2026-11-06T14:00:35.687Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:00:36.285Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,3],[0,4],[1,4]]",
+    "timestamp": "2026-11-06T14:00:36.285Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[0,3],[0,4],[1,4]]",
+    "timestamp": "2026-11-06T14:00:36.932Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 2",
+    "timestamp": "2026-11-06T14:00:37.285Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[2,2],[2,3],[3,2]]",
+    "timestamp": "2026-11-06T14:00:37.969Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:00:38.449Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,2],[0,3],[1,2]]",
+    "timestamp": "2026-11-06T14:00:38.450Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:00:38.450Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,3],[3,4],[4,3]]",
+    "timestamp": "2026-11-06T14:00:38.835Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:00:39.297Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,3],[1,4],[2,3]]",
+    "timestamp": "2026-11-06T14:00:39.297Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[1,3],[1,4],[2,3]]",
+    "timestamp": "2026-11-06T14:01:24.126Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:01:24.631Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,3],[2,4],[3,3]]",
+    "timestamp": "2026-11-06T14:01:24.632Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[0,2],[0,3],[1,2]]",
+    "timestamp": "2026-11-06T14:01:36.706Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:01:37.121Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,2],[1,3],[2,2]]",
+    "timestamp": "2026-11-06T14:01:37.131Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,0],[3,1]]",
+    "timestamp": "2026-11-06T14:02:04.329Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:04.810Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,1],[3,2]]",
+    "timestamp": "2026-11-06T14:02:04.811Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:02:04.811Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[1,2],[1,3],[2,2]]",
+    "timestamp": "2026-11-06T14:02:05.240Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:05.685Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,2],[0,3],[1,2]]",
+    "timestamp": "2026-11-06T14:02:05.686Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[2,1]]",
+    "timestamp": "2026-11-06T14:02:06.109Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:06.457Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,2]]",
+    "timestamp": "2026-11-06T14:02:06.457Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,1],[3,2]]",
+    "timestamp": "2026-11-06T14:02:06.889Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:07.257Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,0],[3,1]]",
+    "timestamp": "2026-11-06T14:02:07.257Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,0],[3,1]]",
+    "timestamp": "2026-11-06T14:02:07.686Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:08.076Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[0,0],[0,1]]",
+    "timestamp": "2026-11-06T14:02:08.076Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:02:08.077Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[2,2]]",
+    "timestamp": "2026-11-06T14:02:16.674Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:17.033Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,1]]",
+    "timestamp": "2026-11-06T14:02:17.034Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[0,2],[0,3],[1,2]]",
+    "timestamp": "2026-11-06T14:02:17.389Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:18.019Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,2],[1,3],[2,2]]",
+    "timestamp": "2026-11-06T14:02:18.022Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[0,0],[0,1]]",
+    "timestamp": "2026-11-06T14:02:18.923Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 1",
+    "timestamp": "2026-11-06T14:02:19.739Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[2,3],[2,4],[3,3]]",
+    "timestamp": "2026-11-06T14:02:20.678Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:22.498Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[3,4],[4,3]]",
+    "timestamp": "2026-11-06T14:02:22.501Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:02:22.508Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,3],[3,4],[4,3]]",
+    "timestamp": "2026-11-06T14:02:22.983Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:25.225Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,0],[3,1],[4,0]]",
+    "timestamp": "2026-11-06T14:02:25.225Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[1,2],[1,3],[2,2]]",
+    "timestamp": "2026-11-06T14:02:44.955Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:47.649Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2],[3,3],[4,2]]",
+    "timestamp": "2026-11-06T14:02:47.649Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 1 [[2,1]]",
+    "timestamp": "2026-11-06T14:02:48.930Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 3",
+    "timestamp": "2026-11-06T14:02:50.139Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,0],[3,1],[4,0]]",
+    "timestamp": "2026-11-06T14:02:51.697Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 2",
+    "timestamp": "2026-11-06T14:02:53.316Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:02:53.316Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[4,4],[5,4],[5,3]]",
+    "timestamp": "2026-11-06T14:02:54.358Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:55.980Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,4],[4,4],[4,3]]",
+    "timestamp": "2026-11-06T14:02:55.981Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[6,3],[6,4]]",
+    "timestamp": "2026-11-06T14:02:57.020Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:02:58.915Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,3],[5,4]]",
+    "timestamp": "2026-11-06T14:02:58.915Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,2],[3,3],[4,2]]",
+    "timestamp": "2026-11-06T14:03:28.913Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:03:29.729Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,2],[2,3],[3,2]]",
+    "timestamp": "2026-11-06T14:03:29.746Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,4],[4,4],[4,3]]",
+    "timestamp": "2026-11-06T14:03:30.221Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:03:31.611Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,4],[3,4],[3,3]]",
+    "timestamp": "2026-11-06T14:03:31.611Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:03:31.612Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,3],[5,4]]",
+    "timestamp": "2026-11-06T14:03:33.023Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:03:35.227Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,3],[4,4]]",
+    "timestamp": "2026-11-06T14:03:35.227Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[6,2],[5,2]]",
+    "timestamp": "2026-11-06T14:03:35.909Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 3",
+    "timestamp": "2026-11-06T14:03:36.306Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,3],[4,4]]",
+    "timestamp": "2026-11-06T14:03:49.779Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:03:50.653Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,3],[5,4]]",
+    "timestamp": "2026-11-06T14:03:50.653Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[2,4],[3,4],[3,3]]",
+    "timestamp": "2026-11-06T14:03:51.512Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:03:52.513Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,4],[4,4],[4,3]]",
+    "timestamp": "2026-11-06T14:03:52.513Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:03:52.514Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[2,2],[2,3],[3,2]]",
+    "timestamp": "2026-11-06T14:03:55.156Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:01.099Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2],[3,3],[4,2]]",
+    "timestamp": "2026-11-06T14:04:01.099Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,3],[5,4]]",
+    "timestamp": "2026-11-06T14:04:02.425Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:04.115Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[6,3],[6,4]]",
+    "timestamp": "2026-11-06T14:04:04.115Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,4],[4,4],[4,3]]",
+    "timestamp": "2026-11-06T14:04:04.727Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:05.448Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,4],[5,4],[5,3]]",
+    "timestamp": "2026-11-06T14:04:05.449Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,2],[3,3],[4,2]]",
+    "timestamp": "2026-11-06T14:04:17.386Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:19.418Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,2],[4,3],[5,2]]",
+    "timestamp": "2026-11-06T14:04:19.420Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:04:19.420Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[6,3],[6,4]]",
+    "timestamp": "2026-11-06T14:04:20.043Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:20.942Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[6,1],[6,2]]",
+    "timestamp": "2026-11-06T14:04:20.942Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[4,4],[5,4],[5,3]]",
+    "timestamp": "2026-11-06T14:04:21.491Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 3",
+    "timestamp": "2026-11-06T14:04:22.184Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[6,1],[6,2]]",
+    "timestamp": "2026-11-06T14:04:36.206Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:37.711Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[6,3],[6,4]]",
+    "timestamp": "2026-11-06T14:04:37.711Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[6,3],[6,4]]",
+    "timestamp": "2026-11-06T14:04:38.351Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:39.057Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[5,3],[5,4]]",
+    "timestamp": "2026-11-06T14:04:39.059Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:04:39.060Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[4,2],[4,3],[5,2]]",
+    "timestamp": "2026-11-06T14:04:39.411Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:40.204Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,2],[3,3],[4,2]]",
+    "timestamp": "2026-11-06T14:04:40.206Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[5,3],[5,4]]",
+    "timestamp": "2026-11-06T14:04:40.553Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:40.956Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,3],[4,4]]",
+    "timestamp": "2026-11-06T14:04:40.957Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[3,2],[3,3],[4,2]]",
+    "timestamp": "2026-11-06T14:04:41.471Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:41.792Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[2,2],[2,3],[3,2]]",
+    "timestamp": "2026-11-06T14:04:41.793Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[4,3],[4,4]]",
+    "timestamp": "2026-11-06T14:04:48.725Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:52.807Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[3,3],[3,4]]",
+    "timestamp": "2026-11-06T14:04:52.807Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:04:52.808Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[2,2],[2,3],[3,2]]",
+    "timestamp": "2026-11-06T14:04:53.362Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:53.927Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[1,2],[1,3],[2,2]]",
+    "timestamp": "2026-11-06T14:04:53.927Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 2 [[3,3],[3,4]]",
+    "timestamp": "2026-11-06T14:04:54.693Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 3",
+    "timestamp": "2026-11-06T14:04:55.052Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[1,2],[1,3],[2,2]]",
+    "timestamp": "2026-11-06T14:04:56.056Z"
+  },
+  {
+    "level": "log",
+    "message": "最优落点: Object",
+    "timestamp": "2026-11-06T14:04:56.915Z"
+  },
+  {
+    "level": "log",
+    "message": "更新后的grid: [[4,2],[4,3],[5,2]]",
+    "timestamp": "2026-11-06T14:04:56.915Z"
+  },
+  {
+    "level": "log",
+    "message": "点击到最近的 Block: 3 [[4,2],[4,3],[5,2]]",
+    "timestamp": "2026-11-06T14:05:24.989Z"
+  },
+  {
+    "level": "log",
+    "message": "可销毁: 0",
+    "timestamp": "2026-11-06T14:05:25.314Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:05:25.315Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "log",
+    "message": "%csend Action 5 color:#00AAEE",
+    "timestamp": "2026-11-06T14:05:25.889Z"
+  },
+  {
+    "level": "log",
+    "message": "show ending true",
+    "timestamp": "2026-11-06T14:05:26.654Z"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:06:07.962Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  },
+  {
+    "level": "info",
+    "message": "[Color Block Jam CTA preview] Object",
+    "timestamp": "2026-11-06T14:06:20.377Z",
+    "url": "http://127.0.0.1:8094/result/color-block-jam/index.html"
+  }
+]

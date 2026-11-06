@@ -1,0 +1,32 @@
+{
+  "id": "pixel-flow-origin",
+  "name": "Pixel Flow! · 原版像素传送带",
+  "version": "1.0.0",
+  "entry": "game/index.html",
+  "levels": [
+    {
+      "id": 1,
+      "name": "彩色拼图 · 31×35",
+      "game": "game/game.js"
+    }
+  ],
+  "constants": {
+    "game": {
+      "indexHtml": "game/index.html",
+      "host": "game/host.js",
+      "hudInsideCanvas": true,
+      "engine": "Unity / Luna / PlayCanvas",
+      "ctaCard": {
+        "name": "Pixel Flow!",
+        "icon": "game/cta-icon.jpg",
+        "rating": 4.7
+      }
+    },
+    "fileHashes": {
+      "game/game.js": "68d498f53039a21799e62090690f6d64e893b9e7053be418bf2157e0d5edc27a",
+      "game/index.html": "1c8c313f4a25598b8f55ed7737470fb41d09ad743ec8b3503028d8041ea259dd",
+      "game/host.js": "96584fb4ffd973393373ef2c1a6c5e0253affa106e0419cc154df147f18a1924",
+      "game/cta-icon.jpg": "09faa0febb0145ef930bc52456bfc3463f431798c41163b7100fd673994bb0ac"
+    }
+  }
+}
