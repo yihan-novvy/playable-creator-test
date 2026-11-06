@@ -1,0 +1,62 @@
+
+== candy-crush-origin ==
+  ok  count is no longer configurable
+  ok  template can create tasks
+  ok  replay off and CTA visible by default
+  ok  default conversion timing
+  ok  local official icon and correct brand
+  ok  manual CTA has no SDK duplicate auto-hook
+  ok  settings save
+  ok  settings read back
+  ok  reject unsupported level
+  ok  reject invalid replay flag
+  ok  reject all click-count configuration
+  ok  reject all click-count configuration
+  ok  reject all click-count configuration
+  ok  reject all click-count configuration
+  ok  reject all click-count configuration
+  ok  reject all click-count configuration
+  ok  reject all click-count configuration
+  ok  old 10-click task previews fixed 71
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  reject invalid auto-jump policy
+  ok  CTA and auto-jump settings save
+  ok  partial policy save preserves siblings
+  ok  CTA text is escaped in preview
+  ok  pack succeeds: 
+  ok  standalone meets 5 MB budget
+  ok  export endpoint succeeds
+  ok  archive contains only intended root entries
+  ok  export endpoint succeeds
+  ok  archive contains only intended root entries
+  ok  pack succeeds: 
+  ok  preview and standalone ZIP both use fixed 71
+  ok  assembly and standalone share configured game bytes
+  ok  preview and export share auto-jump settings
+  ok  pack includes configured CTA
+  ok  standalone game excludes CTA policy and card
+  ok  repack payload deterministic
+  ok  HUD edit invalidates old export
+  ok  saving clears obsolete stored count
+  ok  preview and exports remove footer text
+  ok  partial title edit preserves second line
+  ok  video requires transcoded assets
+  ok  intro upload succeeds
+  ok  core video processing succeeds
+  ok  CTA edits preserve transcoded intro
+  ok  legacy GO does not block automatic entry
+  ok  CTA off and complete mode reach preview
+  ok  pack succeeds: 
+  ok  video stage precedes game
+  ok  pack succeeds: 
+  ok  disabling intro removes old video and poster
+  ok  replay edit invalidates export
+  ok  pack succeeds: 
+  ok  auto-jump change invalidates old export
+  ok  pack succeeds: 
+  ok  CTA change invalidates old export
+== candy-crush-origin: 59 checks passed ==

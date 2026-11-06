@@ -28,6 +28,27 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.value.trim() } }); await refresh(true); });
     return field(label, input);
   }
+  function ctaTimingControls() {
+    const wrap=el('div',{class:'dragon-config-grid'}),policy=config().playableCta||{};
+    const mode=el('select',{'aria-label':'转化时机'});
+    for(const [value,label] of [['steps','第 N 次有效操作跳转'],['complete','完成后跳转']])mode.append(el('option',{value},[label]));
+    mode.value=policy.mode??'steps';
+    mode.addEventListener('change',async()=>{await save({playableCta:{mode:mode.value}});await refresh(true);});
+    wrap.append(checkbox('启用转化','playableCta','enabled',policy.enabled!==false),field('转化时机',mode));
+    if(mode.value==='steps'){
+      const first=el('input',{type:'number',min:1,max:99,step:1,required:'',value:policy.afterSteps??10});
+      first.addEventListener('change',async()=>{if(!first.checkValidity()){first.reportValidity();return;}await save({playableCta:{afterSteps:Number(first.value)}});await refresh(true);});
+      const intervals=el('input',{type:'text',placeholder:'5,4,3,2'});intervals.value=(policy.intervals??[5,4,3,2]).join(',');
+      intervals.addEventListener('input',()=>intervals.setCustomValidity(''));
+      intervals.addEventListener('change',async()=>{
+        const list=intervals.value.trim()?intervals.value.trim().split(/[,，\s]+/).map(Number):[];
+        if(list.length>24||list.some(n=>!Number.isInteger(n)||n<1||n>99)){intervals.setCustomValidity('请输入 1–99 的整数，最多 24 项');intervals.reportValidity();return;}
+        intervals.setCustomValidity('');await save({playableCta:{intervals:list}});await refresh(true);
+      });
+      wrap.append(field('首跳步数 N（1–99）',first),field('循环间隔（逗号分隔，表耗尽后按最后一个循环）',intervals));
+    }
+    return wrap;
+  }
   function renderConfig() {
     document.getElementById('config-hint').textContent = '原版 3D 糖果球：固定点击全部 71 个糖果点后爆炸通关；点击空白不计步。';
     const root = document.getElementById('config-grid'); root.textContent = '';
@@ -43,19 +64,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
     ]), el('p', { class: 'hint' }, ['每局固定 71 次有效点击，不可配置。每个糖果点只能计数一次；点完全部糖果后爆炸通关。剩余糖果全部在背面时会自动转到可点击的位置。']),el('p',{class:'hint'},['重玩默认关闭。开启后爆炸结束可重玩；重玩恢复糖果球与点击进度，不重复片头。']));
-    const policy=config().playableCta||{};
-    const first=el('input',{type:'number',min:1,max:99,step:1,value:policy.afterSteps??3});
-    first.addEventListener('change',async()=>{if(!first.checkValidity()){first.reportValidity();return;}await save({playableCta:{afterSteps:Number(first.value)}});await refresh(true);});
-    const intervals=el('input',{type:'text',placeholder:'2'});intervals.value=(policy.intervals??[2]).join(',');
-    intervals.addEventListener('change',async()=>{
-      const list=intervals.value.trim()?intervals.value.trim().split(/[,，\s]+/).map(Number):[];
-      if(list.length>24||list.some(n=>!Number.isInteger(n)||n<1||n>99)){intervals.setCustomValidity('请输入 1–99 的整数，最多 24 项');intervals.reportValidity();return;}
-      intervals.setCustomValidity('');await save({playableCta:{intervals:list}});await refresh(true);
-    });
-    const mode=el('select');for(const [value,label] of [['steps','按有效步数'],['complete','通关时']]){const option=el('option',{value},[label]);option.selected=(policy.mode||'steps')===value;mode.append(option);}mode.addEventListener('change',async()=>{await save({playableCta:{mode:mode.value}});await refresh(true);});
-    wrap.append(el('h3',{},['自动跳转设置']),el('div',{class:'dragon-config-grid'},[
-      checkbox('启用自动跳转','playableCta','enabled',policy.enabled!==false),field('触发模式',mode),field('首跳有效步数（1–99）',first),field('后续间隔（最后一项重复，留空仅首跳）',intervals)
-    ]),el('p',{class:'hint'},['成功点中可见糖果计 1 步，整局固定 71 步；空白点击不计步。默认第 3 步首跳，之后每 2 步重复。尚未触发步数跳转时，通关补跳一次；重玩重新计数。下载卡开关独立，修改后需重新打包。独立 game.js 包的跳转请在平台组装页设置。']));
+    wrap.append(el('h3',{},['转化时机']),ctaTimingControls(),el('p',{class:'hint'},['成功点中可见糖果计 1 次有效操作，整局固定 71 次；空白点击不计步。默认第 10 次首跳，之后间隔 5/4/3/2，末间隔循环；间隔留空时仅首跳。尚未触发步数转化时，通关补跳一次；重玩重新计数。下载卡开关独立，修改后需重新打包。独立 game.js 包的转化时机请在平台组装页设置。']));
     wrap.append(el('h3', {}, ['底部下载卡']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('显示下载卡', 'cta', 'enabled', config().cta?.enabled !== false),
       textField('按钮文字', 'cta', 'buttonText', config().cta?.buttonText, 'Play Now'),

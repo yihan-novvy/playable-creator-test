@@ -38,8 +38,11 @@
     "playableCta": {
       "enabled": true,
       "mode": "steps",
-      "afterSteps": 3,
+      "afterSteps": 10,
       "intervals": [
+        5,
+        4,
+        3,
         2
       ]
     },

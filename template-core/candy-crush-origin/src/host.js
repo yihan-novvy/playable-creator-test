@@ -2,7 +2,7 @@
 (function(){
   const config=window.CCS_CONFIG,root=document.getElementById('ccs-game'),status=document.getElementById('ccs-status'),replay=document.getElementById('ccs-replay');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=config.intro===true,viewable=true;
-  const policy=config.policy||{enabled:true,mode:'steps',afterSteps:3,intervals:[2]};
+  const policy=config.policy||{enabled:true,mode:'steps',afterSteps:10,intervals:[5,4,3,2]};
   let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;

@@ -28,6 +28,38 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.value.trim() } }); await refresh(true); });
     return field(label, input);
   }
+  function ctaTimingControls() {
+    const wrap = el('div', { class: 'dragon-config-grid' });
+    const cta = config().playableCta || {};
+    const select = el('select', { 'aria-label': '转化时机' });
+    for (const [value, label] of [['steps', '第 N 次有效操作跳转'], ['complete', '通关时']]) select.append(el('option', { value }, [label]));
+    select.value = cta.mode ?? 'complete';
+    select.disabled = cta.enabled === false;
+    select.addEventListener('change', async () => { await save({ playableCta: { mode: select.value } }); await refresh(true); });
+    wrap.append(checkbox('启用转化', 'playableCta', 'enabled', cta.enabled !== false), field('转化时机', select));
+    if (select.value === 'steps') {
+      const first = el('input', { type: 'number', min: 1, max: 99, step: 1, required: '', value: cta.afterSteps ?? 20 });
+      first.disabled = cta.enabled === false;
+      first.addEventListener('change', async () => {
+        if (!first.checkValidity()) { first.reportValidity(); return; }
+        await save({ playableCta: { afterSteps: Number(first.value) } }); await refresh(true);
+      });
+      wrap.append(field('首跳步数 N（1–99）', first));
+      const intervals = el('input', { type: 'text', placeholder: '10,8,6,4' });
+      intervals.value = Array.isArray(cta.intervals) ? cta.intervals.join(',') : '10,8,6,4';
+      intervals.disabled = cta.enabled === false;
+      intervals.addEventListener('input', () => intervals.setCustomValidity(''));
+      intervals.addEventListener('change', async () => {
+        const list = intervals.value.trim() ? intervals.value.trim().split(/[,，\s]+/).map(Number) : [];
+        if (list.length > 24 || list.some(n => !Number.isInteger(n) || n < 1 || n > 99)) {
+          intervals.setCustomValidity('请输入 1–99 的整数，最多 24 项'); intervals.reportValidity(); return;
+        }
+        intervals.setCustomValidity(''); await save({ playableCta: { intervals: list } }); await refresh(true);
+      });
+      wrap.append(field('循环间隔（逗号分隔，表耗尽后按最后一个循环）', intervals));
+    }
+    return wrap;
+  }
   function renderConfig() {
     document.getElementById('config-hint').textContent = '寒冷房间：选择粉刷或清理，将相同道具拖动合并，完成后继续选择下一项修复。';
     const root = document.getElementById('config-grid'); root.textContent = '';
@@ -43,30 +75,12 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
     ]), el('p', { class: 'hint' }, ['默认开启。成功和失败均显示结算弹窗；点击 Retry / Try again 先触发 CTA，返回试玩后恢复房间、棋盘与引导，不重复片头。无 SDK 的本地预览直接重开。']));
-    const policy=config().playableCta||{};
-    const mode=el('select',{},[el('option',{value:'steps'},['按有效步数']),el('option',{value:'complete'},['通关时'])]);
-    mode.value=policy.mode||'steps';
-    mode.addEventListener('change',async()=>{await save({playableCta:{mode:mode.value}});await refresh(true);});
-    const first=el('input',{type:'number',min:1,max:99,step:1,required:'',value:policy.afterSteps??20});
-    first.addEventListener('change',async()=>{if(!first.checkValidity()){first.reportValidity();return;}await save({playableCta:{afterSteps:Number(first.value)}});await refresh(true);});
-    const intervals=el('input',{type:'text',placeholder:'10,8,6,4'});intervals.value=(policy.intervals??[10,8,6,4]).join(',');
-    intervals.addEventListener('input',()=>intervals.setCustomValidity(''));
-    intervals.addEventListener('change',async()=>{
-      const list=intervals.value.trim()?intervals.value.trim().split(/[,，\s]+/).map(Number):[];
-      if(list.length>24||list.some(n=>!Number.isInteger(n)||n<1||n>99)){intervals.setCustomValidity('请输入 1–99 的整数，最多 24 项');intervals.reportValidity();return;}
-      intervals.setCustomValidity('');await save({playableCta:{intervals:list}});await refresh(true);
-    });
-    mode.disabled=policy.enabled===false;
-    first.disabled=intervals.disabled=policy.enabled===false||mode.value!=='steps';
-    wrap.append(el('h3',{},['自动跳转']),el('div',{class:'dragon-config-grid'},[
-      checkbox('启用自动跳转','playableCta','enabled',policy.enabled===true),field('跳转时机',mode),
-      field('首次跳转的有效步数',first),field('后续间隔（最后一项重复，留空仅首跳）',intervals)
-    ]),el('p',{class:'hint'},['默认关闭自动跳转。开启按步数模式后，第 20 次有效合并或移动后跳转，之后间隔 10、8、6、4 步，最后每 4 步重复。无效拖动、教程手势和修复动画不计步；单项修复不结算、不跳转；按步数模式不会在通关时补跳。重玩重新计数，返回后可继续操作。']));
+    wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls(), el('p', { class: 'hint' }, ['默认通关时跳转：完成粉刷和清理两项修复后触发一次；单项修复完成或失败不触发。选择第 N 次有效操作跳转时，可设置首跳步数与循环间隔。修改后可直接预览，导出需重新打包。']));
     wrap.append(el('h3',{},['底部下载卡']),el('div',{class:'dragon-config-grid'},[
       checkbox('显示底部 CTA','cta','enabled',config().cta?.enabled!==false),
       textField('按钮文字','cta','buttonText',config().cta?.buttonText,'Play Now'),
       textField('引导文案','cta','guideText',config().cta?.guideText,'Enjoy for free')
-    ]),el('p',{class:'hint'},['进入试玩后显示，可独立关闭。修改以上设置后重新打包；独立 game.js 包的下载卡与自动跳转在平台组装页配置。']));
+    ]),el('p',{class:'hint'},['进入试玩后显示，可独立关闭。修改以上设置后重新打包；独立 game.js 包的下载卡与转化时机在平台组装页配置。']));
     root.append(wrap);
   }
   function stateChip(id) {
@@ -134,7 +148,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const root = document.getElementById('steps'); root.textContent = '';
     const introInputs = [upload('intro-video', '片头视频 MP4', 'video/mp4'), upload('intro-poster', '可选海报 JPG', 'image/jpeg')];
     const intro = card('intro', 1, '开场视频', config().intro?.enabled ? '上传视频后运行。' : '已关闭，可直接跳过。', introInputs, renderIntroPreview);
-    const pack = card('pack', 2, '打包', '生成项目视频加试玩包，以及可上传新版平台的独立 game.js ZIP。片头、HUD、下载卡、重玩和自动跳转设置只用于项目组装包。', [], (right) => {
+    const pack = card('pack', 2, '打包', '生成项目视频加试玩包，以及可上传新版平台的独立 game.js ZIP。片头、HUD、下载卡、重玩和转化时机设置只用于项目组装包。', [], (right) => {
       if (stepState('pack').ok) {
         right.append(el('a', { class: 'primary', href: `/api/tasks/${taskId}/export`, download: `${taskId}.zip` }, ['下载项目组装 ZIP']));
         right.append(el('a', { class: 'primary', href: `/api/tasks/${taskId}/export?format=game`, download: `${taskId}-game.zip` }, ['下载独立 game.js ZIP']));

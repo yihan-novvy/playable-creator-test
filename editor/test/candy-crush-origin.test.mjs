@@ -15,7 +15,7 @@ export default async function test(a){
   const created=await request('/api/tasks',{name:`candy-crush-test-${Date.now()}`,templateId:'candy-crush-origin'});a.equal(created.status,201,'template can create tasks');id=(await created.json()).id;const route='/api/tasks/'+id;
   let preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('"allowReplay":false')&&preview.includes('id="novvy-cta"'),'replay off and CTA visible by default');
   const settings=html=>JSON.parse(html.match(/window\.CCS_CONFIG=(.*?);<\/script>/)[1]);
-  a.equal(settings(preview).policy,{mode:'steps',afterSteps:3,intervals:[2],enabled:true},'default auto-jump policy');
+  a.equal(settings(preview).policy,{mode:'steps',afterSteps:10,intervals:[5,4,3,2],enabled:true},'default conversion timing');
   a.check(preview.includes('data:image/jpeg;base64,')&&preview.includes('Download Candy Crush Saga'),'local official icon and correct brand');
   a.check(!preview.includes('data-action="download"')&&!preview.includes('data-novvy-cta data-'),'manual CTA has no SDK duplicate auto-hook');
   const patch=await request(route,{config:{gameplay:{allowReplay:true},hud:{titleEnabled:true,titleLine1:'Test',titleLine2:'Second line'}}},'PATCH');a.equal(patch.status,200,'settings save');

@@ -27,7 +27,7 @@ export function travelTownHtml({root,pluginDir,template,config,media={},preview=
     // so the shared card's single interact signal cannot also open a second time.
     injection.bodyDom=injection.bodyDom.map(dom=>dom.replace('class="novvy-cta-btn cta download"','class="novvy-cta-btn"').replace(' data-novvy-cta data-action="download"',''));
   }
-  const policy={...originCtaPolicy({mode:'steps',afterSteps:20,intervals:[10,8,6,4],...config.playableCta}),enabled:config.playableCta?.enabled===true};
+  const policy={...originCtaPolicy({mode:'complete',afterSteps:20,intervals:[10,8,6,4],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
   const game=read(variant.game),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.TRAVEL_TOWN_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');

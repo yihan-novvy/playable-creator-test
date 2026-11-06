@@ -4,7 +4,7 @@
   const dialog=document.getElementById('travel-town-result'),title=document.getElementById('travel-town-result-title'),copy=document.getElementById('travel-town-result-copy');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=false,viewable=true;
   let replayRequest=null,pageSuspended=false,blurred=false,lastResult='win',ended=false;
-  const policy=config.policy||{enabled:false,mode:'steps',afterSteps:20,intervals:[]};
+  const policy=config.policy||{enabled:true,mode:'complete',afterSteps:20,intervals:[10,8,6,4]};
   let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;

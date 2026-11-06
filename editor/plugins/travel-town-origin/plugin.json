@@ -53,8 +53,8 @@
       "guideText": "Enjoy for free"
     },
     "playableCta": {
-      "enabled": false,
-      "mode": "steps",
+      "enabled": true,
+      "mode": "complete",
       "afterSteps": 20,
       "intervals": [10, 8, 6, 4]
     }

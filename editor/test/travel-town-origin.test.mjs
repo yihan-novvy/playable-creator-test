@@ -12,7 +12,7 @@ export default async function test(a){
   const created=await request('/api/tasks',{name:`travel-town-test-${Date.now()}`,templateId:'travel-town-origin'});a.equal(created.status,201,'template can create tasks');id=(await created.json()).id;const route='/api/tasks/'+id;
   let preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('"allowReplay":true')&&preview.includes('id="novvy-cta"'),'replay on and CTA visible by default');
   const settings=html=>JSON.parse(html.match(/window\.TRAVEL_TOWN_CONFIG=(.*?);<\/script>/)[1]);
-  a.equal(settings(preview).policy,{mode:'steps',afterSteps:20,intervals:[10,8,6,4],enabled:false},'default auto-jump policy');
+  a.equal(settings(preview).policy,{mode:'complete',afterSteps:20,intervals:[10,8,6,4],enabled:true},'default conversion timing is level completion');
   a.check(preview.includes('data:image/jpeg;base64,')&&preview.includes('Download Travel Town'),'local official icon and correct brand');
   a.check(!preview.includes('data-action="download"')&&!preview.includes('data-novvy-cta data-'),'manual CTA has no SDK duplicate auto-hook');
   const patch=await request(route,{config:{gameplay:{allowReplay:true},hud:{titleEnabled:true,titleLine1:'Test',titleLine2:'Second line'}}},'PATCH');a.equal(patch.status,200,'settings save');
@@ -54,6 +54,7 @@ export default async function test(a){
   const final=path.join(tmp,'final.zip');fs.writeFileSync(final,Buffer.from(await(await fetch(base+route+'/export')).arrayBuffer()));a.equal(execFileSync('unzip',['-Z1',final],{encoding:'utf8'}).trim().split('\n').sort(),['game.js','index.html'],'disabling intro removes old video and poster');
   await request(route,{config:{gameplay:{allowReplay:false}}},'PATCH');a.equal((await fetch(base+route+'/export?format=game')).status,409,'replay edit invalidates export');
   await pack();await request(route,{config:{playableCta:{enabled:false}}},'PATCH');a.equal((await fetch(base+route+'/export')).status,409,'auto-jump change invalidates old export');
+  a.equal(settings(await(await fetch(base+route+'/preview')).text()).policy.enabled,false,'explicitly disabled conversion remains disabled');
   await pack();await request(route,{config:{cta:{enabled:true}}},'PATCH');a.equal((await fetch(base+route+'/export')).status,409,'CTA change invalidates old export');
  }finally{if(id)deleteTask(id);fs.rmSync(tmp,{recursive:true,force:true});await new Promise(resolve=>server.close(resolve));}
 }

@@ -26,7 +26,7 @@ export function candyCrushHtml({root,pluginDir,template,config,media={},preview=
     // The host handles the shared card signal. Avoid a second SDK auto-hook.
     injection.bodyDom=injection.bodyDom.map(dom=>dom.replace('class="novvy-cta-btn cta download"','class="novvy-cta-btn"').replace(' data-novvy-cta data-action="download"',''));
   }
-  const policy={...originCtaPolicy({afterSteps:3,intervals:[2],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
+  const policy={...originCtaPolicy({afterSteps:10,intervals:[5,4,3,2],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
   // The source build fixes the full 71-candy round; legacy task counts are ignored.
   const targetHits=template.game.maxHits;

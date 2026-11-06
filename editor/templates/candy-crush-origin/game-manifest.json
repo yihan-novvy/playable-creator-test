@@ -1,7 +1,7 @@
 {
   "id": "candy-crush-origin",
   "name": "Candy Crush Saga · 原版糖果球",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "entry": "game/index.html",
   "levels": [
     {
@@ -24,7 +24,7 @@
     "fileHashes": {
       "game/game.js": "17a996cef8b41668185fb5716a53ab53a892ec879003111033ca750250994fcd",
       "game/index.html": "183af7b02118690b76727940cde122762139cab4043c7d83142866dd0890c635",
-      "game/host.js": "d1eae35cfc3e53140ba33a01cf901c571f59a20f4a7cec0d9f52612dbbac0a0c",
+      "game/host.js": "4b5396a4da3b6ac5595f5c3c52ed60cf2599257128d15754d25b647fbd4d9032",
       "game/cta-icon.jpg": "22d791bc1e37d7c880b158a5e2ee592ac62955ca4143e0b6be236b76b2f6ebaf",
       "source/provenance.json": "b6707e483f4386988bec56aaf3267e6bd7bc51239c288f996069cc2f3d17ac4a"
     }

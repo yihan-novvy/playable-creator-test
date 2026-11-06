@@ -28,6 +28,19 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.value.trim() } }); await refresh(true); });
     return field(label, input);
   }
+  function ctaCardControls() {
+    const cta = config().cta || {};
+    const wrap = el('div', { class: 'dragon-config-grid' });
+    wrap.append(
+      checkbox('显示底部 CTA 卡片', 'cta', 'enabled', cta.enabled !== false),
+      textField('CTA 按钮文案（默认 Play Now）', 'cta', 'buttonText', cta.buttonText, 'Play Now'),
+      textField('CTA 引导文案（默认 Enjoy for free）', 'cta', 'guideText', cta.guideText, 'Enjoy for free'),
+    );
+    const color = el('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(cta.buttonColor || '') ? cta.buttonColor : '#10b981' });
+    color.addEventListener('change', async () => { await save({ cta: { buttonColor: color.value } }); await refresh(true); });
+    wrap.append(field('CTA 按钮颜色（默认绿色）', color));
+    return wrap;
+  }
   function renderConfig() {
     document.getElementById('config-hint').textContent = '点击队列或暂存槽中的角色，送上传送带消除同色像素；保持原版拼图、弹药与容量规则。';
     const root = document.getElementById('config-grid'); root.textContent = '';
@@ -62,11 +75,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       checkbox('启用自动跳转','playableCta','enabled',policy.enabled!==false),field('跳转时机',mode),
       field('首次跳转的有效步数',first),field('后续间隔（最后一项重复，留空仅首跳）',intervals)
     ]),el('p',{class:'hint'},['默认第 10 次有效出发后跳转，之后间隔 8、6、4 步，最后每 4 步重复。无效点击和自动射击不计步；胜负结算不额外跳转。重玩重新计数，返回后可继续操作。']));
-    wrap.append(el('h3',{},['底部下载卡']),el('div',{class:'dragon-config-grid'},[
-      checkbox('显示底部 CTA','cta','enabled',config().cta?.enabled!==false),
-      textField('按钮文字','cta','buttonText',config().cta?.buttonText,'Play Now'),
-      textField('引导文案','cta','guideText',config().cta?.guideText,'Enjoy for free')
-    ]),el('p',{class:'hint'},['进入试玩后显示，可独立关闭。修改以上设置后重新打包；独立 game.js 包的下载卡与自动跳转在平台组装页配置。']));
+    wrap.append(el('h3', {}, ['CTA 卡片']), ctaCardControls(), el('p', { class: 'hint' }, ['进入试玩后显示，可独立关闭。按钮文案与引导文案留空时使用默认值；颜色仅应用于底部卡片按钮。修改后可直接预览，导出需重新打包。']));
     root.append(wrap);
   }
   function stateChip(id) {

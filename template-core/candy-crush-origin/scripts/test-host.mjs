@@ -68,7 +68,7 @@ cooldown.advance();cooldown.instances[0].shell.step(24);assert.equal(clicks(cool
 console.log('Candy Crush Saga host: card, step schedule, single jump, win fallback, cooldown, visibility, intro and replay checks passed.');
 
 const complete=await fixture({policy:{enabled:true,mode:"complete",afterSteps:1,intervals:[1]}});for(let i=1;i<=5;i++){complete.advance();complete.instances[0].shell.step(i*20);}assert.equal(clicks(complete).length,0);complete.instances[0].shell.win();assert.equal(clicks(complete).length,1);assert.equal(clicks(complete)[0][1].auto_jump_mode,"win");
-const nativeRound=await fixture({policy:{enabled:true,mode:'steps',afterSteps:3,intervals:[2]}});
-for(let i=1;i<=5;i++){nativeRound.advance();nativeRound.instances[0].shell.step(i*20);}
-nativeRound.advance();nativeRound.instances[0].shell.win();assert.deepEqual(clicks(nativeRound).map(c=>c[1].step),[3,5]);
+const nativeRound=await fixture({policy:null});
+for(let i=1;i<=28;i++){nativeRound.advance();nativeRound.instances[0].shell.step(i/71*100);}
+nativeRound.advance();nativeRound.instances[0].shell.win();assert.deepEqual(clicks(nativeRound).map(c=>c[1].step),[10,15,19,22,24,26,28],'default first jump, all intervals and repeating final interval');
 assert.ok(complete.calls.findIndex(c=>c[0]==='onComplete')<complete.calls.findIndex(c=>c[0]==='click'),'settle the real result before the store request');
