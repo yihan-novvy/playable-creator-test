@@ -1,0 +1,82 @@
+{
+  "checkedAt": "2026-11-07T04:31:43.819153+00:00",
+  "changes": [
+    "Remove Continue from the assembly result dialog",
+    "Rename successful replay button to Replay; failure retains Try Again",
+    "SDK-free preview rebuilds immediately after logging its confirmed replay CTA",
+    "SDK-backed replay waits for a visibility or post-click blur/focus return cycle"
+  ],
+  "ctaClassification": "Existing success/failure replay placement retains forced_click_to_appstore; no new placement",
+  "ctaDecision": "../cta-decision.md",
+  "checks": {
+    "build": "passed",
+    "sourceAndHostMemoryTests": "passed",
+    "editorIntegration": 46,
+    "registryWarnings": 0,
+    "finalZipStatic": true,
+    "assemblyBudget": true
+  },
+  "browser": {
+    "sourceUrl": "http://127.0.0.1:8094/result/color-block-jam-replay/index.html",
+    "artifactAlsoAvailableAt": "http://127.0.0.1:8094/result/color-block-jam/index.html",
+    "naturalProgression": "Completed levels 1, 2 and 3 with real pointer drags",
+    "result": "Only Replay in success modal, no Continue",
+    "replay": "Clicked Replay, saw Preparing then first-level board and tutorial; real drag then eliminated blue block",
+    "consoleErrors": 0,
+    "consoleWarnings": 0,
+    "screens": [
+      "win-replay.png",
+      "replayed-and-moved.png"
+    ],
+    "viewport": "1280x720"
+  },
+  "memoryCoverage": [
+    "two consecutive SDK-free win and fail replays",
+    "single CTA for repeated clicks",
+    "SDK rejection and cooldown",
+    "hidden/visible and viewability gates",
+    "blur/focus return and no early restart from focus alone",
+    "failed rebuild recovery",
+    "stale instance callback isolation",
+    "same stage and no repeated intro",
+    "step policy reset"
+  ],
+  "artifacts": {
+    "game": {
+      "path": "/Users/code/novvyProject/NovvyAI/playable-ad/playable-creator/result/color-block-jam/game-only.zip",
+      "sha256": "96f463e0ff040a15c843435a752e0bd5521dfa7abd3f35343009ae882a36c9e4",
+      "bytes": 3572421,
+      "uncompressedBytes": 12034658,
+      "entries": [
+        "game.js"
+      ],
+      "archive_checked": true
+    },
+    "assembly": {
+      "path": "/Users/code/novvyProject/NovvyAI/playable-ad/playable-creator/result/color-block-jam/assembly.zip",
+      "sha256": "f00fa8395c14b097de2878ee335e2ef10806a3eccc445a40bdd64bf233facef0",
+      "bytes": 3593861,
+      "uncompressedBytes": 12075483,
+      "entries": [
+        "game.js",
+        "index.html"
+      ],
+      "archive_checked": true
+    }
+  },
+  "originalTaskDraft": "Intro remains enabled with no uploaded video. Existing pure-playable preview rebuilt with its previous packed settings; draft and step status were not modified.",
+  "static_pass": true,
+  "event_verified": false,
+  "officialPlatform": {
+    "status": "验收未完成",
+    "actualPlatformSessions": [],
+    "droppedCount": null,
+    "trackingReports": null,
+    "missing": "Official log-debug access and actual production SDK store-return / Tracking evidence; earlier platform inspection required login"
+  },
+  "limitations": [
+    "Production store return is covered by host memory regression, not a real SDK session",
+    "Failure is not naturally reachable in the original game; failure branch tested in memory",
+    "No new phone-size, file:// or native WebView acceptance in this revision"
+  ]
+}

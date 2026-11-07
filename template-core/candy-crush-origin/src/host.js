@@ -1,6 +1,7 @@
 // Product assembly host. This file is excluded from the standalone game ZIP.
 (function(){
   const config=window.CCS_CONFIG,root=document.getElementById('ccs-game'),status=document.getElementById('ccs-status'),replay=document.getElementById('ccs-replay');
+  const result=document.getElementById('ccs-result'),resultTitle=document.getElementById('ccs-result-title'),resultCopy=document.getElementById('ccs-result-copy');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=config.intro===true,viewable=true;
   const policy=config.policy||{enabled:true,mode:'steps',afterSteps:10,intervals:[5,4,3,2]};
   let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
@@ -19,10 +20,18 @@
     // Include the card's full height while its entrance transform is animating.
     const bottom=card&&!card.hidden?Math.max(card.offsetHeight,root.getBoundingClientRect().bottom-card.getBoundingClientRect().top)+8:0;
     document.documentElement.style.setProperty('--ccs-cta-inset',bottom+'px');
+    document.documentElement.style.setProperty('--ccs-top-inset',Math.max(top,safeArea.top+12)+'px');
     return {api:1,platform:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/i.test(navigator.userAgent)?'ios':'web',language:navigator.language,mode:'preview',viewport:{width:root.clientWidth,height:root.clientHeight,dpr:devicePixelRatio},safeArea,orientation:innerWidth>innerHeight?'landscape':'portrait',muted,insets:{top,bottom}};
   };
-  function finish(kind){if(!started||settled)return;settled=true;replay.hidden=!config.allowReplay;replay.textContent=kind==='fail'?'Try again':'Play again';
-    if(kind==='end'){if(!config.allowReplay)call('endStage');else document.getElementById('ccs-continue').hidden=false;}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
+  function showResult(kind){
+    resultTitle.textContent=kind==='win'?'You win!':kind==='fail'?'Try again':kind==='error'?'Unable to load':'Round complete';
+    resultCopy.textContent=kind==='win'?'All candies cleared.':kind==='error'?'Please try loading the game again.':'Start a fresh round and try again.';
+    replay.hidden=!config.allowReplay;replay.textContent=kind==='win'?'Play again':'Try again';
+    result.hidden=false;root.inert=true;
+    (config.allowReplay&&!replay.disabled?replay:result).focus({preventScroll:true});
+  }
+  function finish(kind){if(!started||settled)return;settled=true;showResult(kind);
+    if(kind==='end'){if(!config.allowReplay)call('endStage');}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
     if(kind==='win'&&policy.enabled!==false&&!autoJumped)autoClick('win');
   }
   function requestClick(detail){
@@ -57,16 +66,21 @@
   async function begin(){if(!instance||!entered||started)return;const token=generation;started=true;
     window.dispatchEvent(new CustomEvent('novvy:cta-card',{detail:{phase:'bar'}}));
     instance.setEnv(environment());await instance.start();if(token!==generation)return;
-    creating=false;status.hidden=true;replay.disabled=false;
+    creating=false;status.hidden=true;replay.disabled=false;result.hidden=true;root.inert=false;
+    if(replayPending)root.focus({preventScroll:true});
     if(replayPending){replayPending=false;call('onReplay');}
     if(document.hidden||!viewable)instance.pause();
   }
-  function loadFailed(error){creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;replay.hidden=!config.allowReplay;replay.textContent='Try again';status.hidden=false;status.textContent='Unable to load Candy Crush Saga: '+error.message;console.error(error);}
-  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;replay.hidden=true;document.getElementById('ccs-continue').hidden=true;replay.disabled=true;status.hidden=false;status.textContent='Loading…';
+  function loadFailed(error){creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
+  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
     try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
-  document.getElementById('ccs-continue').addEventListener('click',()=>{call('endStage');replay.hidden=true;document.getElementById('ccs-continue').hidden=true;});
+  result.addEventListener('keydown',event=>{
+    if(event.key!=='Tab')return;
+    event.preventDefault();
+    (!replay.hidden&&!replay.disabled?replay:result).focus({preventScroll:true});
+  });
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;muted=document.getElementById('novvy-intro-video')?.muted??muted;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
   replay.addEventListener('click',()=>{if(!settled||!config.allowReplay||creating)return;create(started||replayPending);});

@@ -1,3 +1,22 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Candy Crush Saga · 原版糖果球</title>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}#ccs-game{position:fixed;inset:0;touch-action:none}#ccs-replay{position:fixed;right:12px;bottom:calc(var(--ccs-cta-inset,0px) + 12px);z-index:11;border:0;border-radius:20px;padding:10px 16px;background:#fff;color:#164344;font:600 15px Arial;cursor:pointer}#ccs-continue{position:fixed;left:12px;bottom:calc(var(--ccs-cta-inset,0px) + 12px);z-index:11;padding:10px 16px;border:0;border-radius:20px}#ccs-continue[hidden],#ccs-replay[hidden]{display:none}#ccs-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}</style>
-<!--CCS_HEAD--></head><body><div id="ccs-game"></div><p id="ccs-status" role="status">Loading…</p><button id="ccs-replay" hidden>Play again</button><button id="ccs-continue" hidden>Continue</button><!--CCS_SCRIPTS--><script>window.CCS_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--CCS_SCRIPTS_END--></body></html>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#006dc5}
+#ccs-game{position:fixed;inset:0;touch-action:none}
+#ccs-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}
+#ccs-result{position:fixed;inset:0;z-index:20;display:grid;place-items:center;box-sizing:border-box;padding:max(20px,var(--ccs-top-inset,64px)) 20px max(20px,var(--ccs-cta-inset,0px));background:#051510b8;color:#fff;text-align:center;font:700 20px/1.4 Arial,sans-serif;overflow:auto}
+#ccs-result[hidden],#ccs-replay[hidden]{display:none}
+.ccs-result-card{width:min(100%,300px);box-sizing:border-box;padding:28px 22px 20px;border:2px solid #e6cf8b;border-radius:22px;background:linear-gradient(160deg,#205441,#123b30);box-shadow:0 16px 48px #0008;animation:ccs-result-in .2s ease-out}
+#ccs-result-title{margin:0;font-size:32px;line-height:1.2}
+#ccs-result-copy{margin:14px 0 22px;font-size:16px;font-weight:400;color:#e5f0e8}
+#ccs-replay{width:100%;min-height:48px;border:0;border-radius:12px;padding:12px 24px;background:#f4d27b;color:#173b28;font:inherit;cursor:pointer;touch-action:manipulation;box-shadow:0 4px 0 #b3964c}
+#ccs-replay:disabled{opacity:.65;cursor:wait}
+#ccs-result button:focus-visible{outline:3px solid #fff;outline-offset:4px}
+@keyframes ccs-result-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media (orientation:landscape){#ccs-result{padding-left:20px;padding-right:20px}.ccs-result-card{padding:16px 22px 12px}#ccs-result-title{font-size:26px}#ccs-result-copy{margin:8px 0 12px}#ccs-replay{min-height:40px;padding:8px 24px;font-size:18px}}
+@media (prefers-reduced-motion:reduce){.ccs-result-card{animation:none}}
+</style>
+<!--CCS_HEAD--></head><body><div id="ccs-game" tabindex="-1"></div><p id="ccs-status" role="status">Loading…</p>
+<div id="ccs-result" role="dialog" aria-modal="true" aria-labelledby="ccs-result-title" aria-describedby="ccs-result-copy" tabindex="-1" hidden>
+  <div class="ccs-result-card"><h1 id="ccs-result-title">You win!</h1><p id="ccs-result-copy">All candies cleared.</p><button id="ccs-replay" type="button" hidden>Play again</button></div>
+</div>
+<!--CCS_SCRIPTS--><script>window.CCS_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--CCS_SCRIPTS_END--></body></html>

@@ -55,7 +55,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
-    ]), el('p', { class: 'hint' }, ['默认关闭。开启后结算使用弹窗：成功 Retry、失败 Try Again；点击触发 CTA，返回试玩后恢复第一关棋盘与引导，不重复片头。']));
+    ]), el('p', { class: 'hint' }, ['默认关闭。开启后结算使用弹窗：成功 Replay、失败 Try Again；点击触发 CTA，返回试玩后恢复第一关棋盘与引导，不重复片头。无跳店 SDK 的本地预览会直接重开。']));
     const policy=config().playableCta||{};
     const mode=el('select',{},[el('option',{value:'steps'},['按有效步数']),el('option',{value:'complete'},['通关时'])]);
     mode.value=policy.mode||'steps';

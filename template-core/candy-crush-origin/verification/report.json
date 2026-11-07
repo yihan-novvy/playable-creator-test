@@ -7,29 +7,29 @@
     "schemaVersion": 1,
     "fixedHits": 71,
     "maxHits": 71,
-    "checkedAt": "2026-11-06T16:17:36.599Z",
+    "checkedAt": "2026-11-07T04:15:49.667Z",
     "staticPass": true,
     "platformEventsVerified": false,
     "nativeFileRuntimeVerified": false,
     "game": {
       "file": "game-only.zip",
-      "sha256": "c86b25ebec591e9120768a1ddf6c8831b1df4efe913ab022c0d7ef0317243df8",
-      "bytes": 2390435,
+      "sha256": "a15b1413365154187d96cc28358e3a55c362020ee1a7216edac1bca98214b1b2",
+      "bytes": 2390752,
       "entries": [
         "game.js"
       ]
     },
     "assembly": {
       "file": "assembly.zip",
-      "sha256": "f3ef5e3070caf25af9fb149b508d988a86c6501c82b50bfbaf428d8cec46ddc7",
-      "bytes": 2465875,
+      "sha256": "544940ebb63090957a38d83fde6013989461e68652dcf35ae37f3a3ff771ba15",
+      "bytes": 2466887,
       "entries": [
         "game.js",
         "index.html"
       ],
-      "uncompressedBytes": 4385085
+      "uncompressedBytes": 4388236
     },
-    "gameJsSha256": "17a996cef8b41668185fb5716a53ab53a892ec879003111033ca750250994fcd",
+    "gameJsSha256": "2ed569613ee52cfdfaf608295d4408c296ccee191b84c1de6b50570f4b2cb722",
     "checks": [
       "Root classic game.js, one synchronous registration and parseable syntax",
       "Exact fixed-71 build bytes in both archives; footer text removed",
@@ -47,7 +47,7 @@
     "levelCount": 1,
     "goal": "Fixed 71 successful distinct candy hits; no configuration",
     "progress": "successfulHits / 71 * 100",
-    "normalResult": "win after original explosion callback",
+    "normalResult": "71 real successful candy hits, then native finite success animations and explosion particles finish",
     "failure": "No naturally reachable failure in this fixed creative; defensive native fail handler is connected",
     "ctaPlacements": [],
     "assemblyPlacements": [
@@ -78,7 +78,7 @@
       ],
       "gameplaySmoke": "One actual pointer hit; candy ball continues rendering after rotation.",
       "errors": "No error-level logs captured in current final game tab.",
-      "fullProgression": "71-hit sequence covered by adapter and actual GLB geometry tests, not a full browser playthrough.",
+      "fullProgression": "71 real pointer hits; final candy clears with result still hidden; native success scene then visible single-button dialog",
       "historicalV1_1Evidence": {
         "fullProgression": "v1.1: 10 real pointer clicks on visible candies; still playable after hit 5 and 9; original explosion/result after hit 10.",
         "invalidInput": "Observed misses did not consume successful-hit thresholds",
@@ -105,7 +105,8 @@
           "errors": "No captured error-level logs in final local browser run"
         },
         "configuration": "Workbench input 1–71, maximum label, saved 10, invalidated old pack, rebuilt successfully."
-      }
+      },
+      "replay": "Play again creates new original candy ball; first candy hit produces fragments"
     },
     "broaderEditorRegression": "Not fully green: unrelated legacy image-to-pattern/reference snapshot and export-layout tests fail; creation allowlist updated and rechecked",
     "nativeFileRuntime": "Not tested: browser security policy prohibits file URLs",
@@ -127,6 +128,24 @@
       "browser": "Verified new labels, complete mode hides step fields, switching back preserves 10 and 5,4,3,2; final pack succeeds.",
       "artifact": "Final assembly policy matches defaults. Standalone game payload unchanged.",
       "platformEventsVerified": false
+    },
+    "resultModal20261107": {
+      "build": "pass; deterministic; frozen source hash unchanged",
+      "unit": "pass; actual animation-state gate, particle gate, pause/resume, destroy, single result, modal/replay and CTA policy",
+      "editorHttp": "59 checks passed including intro processing and both archives",
+      "registry": "pass; zero warnings",
+      "finalArchives": "pass; exact current game bytes, modal in assembly only, no Continue, size limits",
+      "browser": {
+        "fullProgression": "71 real pointer hits; final candy clears with result still hidden; native success scene then visible single-button dialog",
+        "replay": "Play again creates new original candy ball; first candy hit produces fragments",
+        "layouts": [
+          "390x844",
+          "320x568",
+          "844x390"
+        ],
+        "errorLevelLogs": 0,
+        "cta": "existing local step policy emits forced_click_to_appstore preview logs; not production SDK evidence"
+      }
     }
   },
   "evidence": [
@@ -144,16 +163,19 @@
     "fixed71-browser-log.json",
     "fixed71-editor-tests.log",
     "conversion-timing.jpg",
-    "conversion-editor-tests.log"
+    "conversion-editor-tests.log",
+    "../../../output/candy-crush-result-modal-20261107/report.json"
   ],
   "limitations": [
     "Actual official received/dropped-message and Tracking-request correlation is missing; no platform event acceptance claimed",
-    "Native advertising WebView/file execution remains to be verified",
-    "71-hit reachability is geometry-tested; the earlier complete browser run used 10 hits; current fixed-71 browser validation is a visual and click smoke check."
+    "Native advertising WebView/file execution remains to be verified"
   ],
   "templateVersion": "1.2.1",
   "freshProtocol": {
-    "fetchedAt": "2026-11-06T16:14:14.706450Z",
-    "sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39"
+    "url": "https://developer.novvy.ai/eventLogs",
+    "retrievedAt": "2026-11-07T04:04:06.625240+00:00",
+    "sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39",
+    "updated": "2026-11-05",
+    "fullyRead": true
   }
 }

@@ -1,9 +1,9 @@
 // Product assembly host. This file is excluded from the standalone game ZIP.
 (function(){
   const config=window.COLOR_BLOCK_JAM_CONFIG,root=document.getElementById('color-block-jam-game'),status=document.getElementById('color-block-jam-status'),replay=document.getElementById('color-block-jam-replay');
-  const result=document.getElementById('color-block-jam-result'),resultTitle=document.getElementById('color-block-jam-result-title'),resultCopy=document.getElementById('color-block-jam-result-copy'),continueButton=document.getElementById('color-block-jam-continue');
+  const result=document.getElementById('color-block-jam-result'),resultTitle=document.getElementById('color-block-jam-result-title'),resultCopy=document.getElementById('color-block-jam-result-copy');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=false,viewable=true,currentLevel=1;
-  let returnPending=false,leftForStore=false,pageSuspended=false,loadError=false,stageEnded=false,resultKind='win';
+  let returnPending=false,leftForStore=false,storeWindowBlurred=false,pageSuspended=false,loadError=false,stageEnded=false,resultKind='win';
   const policy=config.policy||{enabled:false,mode:'steps',afterSteps:12,intervals:[]};
   let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
@@ -27,7 +27,7 @@
   function showResult(kind){
     resultKind=kind;resultTitle.textContent=kind==='fail'?'Try again!':'You win!';
     resultCopy.textContent=kind==='fail'?'Give it another try.':'All blocks cleared!';
-    replay.textContent=kind==='fail'?'Try Again':'Retry';replay.disabled=false;continueButton.hidden=false;result.hidden=false;
+    replay.textContent=kind==='fail'?'Try Again':'Replay';replay.disabled=false;result.hidden=false;
     root.inert=true;instance?.pause();replay.focus();
   }
   function finish(kind){if(!started||settled)return;settled=true;
@@ -67,8 +67,8 @@
     if(replayPending){replayPending=false;call('onReplay');}
     if(document.hidden||!viewable||pageSuspended)instance.pause();
   }
-  function loadFailed(error){creating=false;started=false;settled=true;loadError=true;instance?.destroy();instance=null;replay.disabled=false;replay.textContent='Reload';resultTitle.textContent='Unable to load';resultCopy.textContent='Please try loading the game again.';continueButton.hidden=true;result.hidden=false;status.hidden=true;console.error(error);}
-  async function create(restarting=false){if(creating||stageEnded)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;currentLevel=1;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;returnPending=false;leftForStore=false;loadError=false;continueButton.hidden=true;replay.disabled=true;
+  function loadFailed(error){creating=false;started=false;settled=true;loadError=true;instance?.destroy();instance=null;replay.disabled=false;replay.textContent='Reload';resultTitle.textContent='Unable to load';resultCopy.textContent='Please try loading the game again.';result.hidden=false;status.hidden=true;console.error(error);}
+  async function create(restarting=false){if(creating||stageEnded)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;currentLevel=1;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;returnPending=false;leftForStore=false;storeWindowBlurred=false;loadError=false;replay.disabled=true;
     if(result.hidden){status.hidden=false;status.textContent='Loading…';}else{replay.textContent='Preparing…';resultCopy.textContent='Getting the blocks ready.';}
     // Ignore late callbacks from an old instance after a replay or unload.
     const scopedShell=Object.fromEntries(Object.entries(shell).map(([name,fn])=>[name,(...args)=>{if(token===generation)return fn(...args);} ]));
@@ -76,7 +76,6 @@
     catch(error){if(token===generation)loadFailed(error);}
   }
   function endStage(){if(stageEnded)return;stageEnded=true;returnPending=false;leftForStore=false;call('endStage');result.hidden=true;root.inert=false;}
-  continueButton.addEventListener('click',()=>{if(!settled||returnPending||creating)return;endStage();});
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
   replay.addEventListener('click',()=>{
@@ -84,11 +83,16 @@
     // Loading failures are not a gameplay result and do not open the store.
     if(loadError){create(replayPending);return;}
     if(!config.allowReplay)return;
-    returnPending=true;leftForStore=false;replay.disabled=true;continueButton.hidden=true;
+    const waitsForStore=typeof sdk()?.click==='function';
+    returnPending=true;leftForStore=false;storeWindowBlurred=false;replay.disabled=true;
     replay.textContent='Waiting…';resultCopy.textContent='Return to the game to play again.';
     // Arm before click: native SDKs can synchronously change viewability.
     if(!click('forced_click_to_appstore',{scene:'playable-replay',result:resultKind})){
       returnPending=false;leftForStore=false;showResult(resultKind);
+    }else if(!waitsForStore){
+      // Raw editor/export previews only log the CTA: no store opens and no
+      // return event can occur. Rebuild normally instead of waiting forever.
+      create(true);
     }
   });
   let touched=false;
@@ -100,15 +104,19 @@
   window.addEventListener('novvy:cta-interact',()=>{if(config.ctaEnabled&&!returnPending)click('cta_click',{scene:'cta-card'});});
   
   const syncVisibility=()=>{
-    const hidden=document.hidden||!viewable||pageSuspended;
+    const hidden=document.hidden||!viewable||pageSuspended||storeWindowBlurred;
     if(returnPending){
       if(hidden)leftForStore=true;
       else if(leftForStore){returnPending=false;leftForStore=false;create(true);return;}
     }
     if(hidden||returnPending||(!result.hidden&&settled))instance?.pause();else if(started&&!stageEnded)instance?.resume();
   };
-  document.addEventListener('visibilitychange',syncVisibility);
-  window.addEventListener('novvy:viewablechange',event=>{viewable=event.detail?.viewable===true;syncVisibility();});
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)storeWindowBlurred=false;syncVisibility();});
+  window.addEventListener('novvy:viewablechange',event=>{viewable=event.detail?.viewable===true;if(viewable)storeWindowBlurred=false;syncVisibility();});
+  // Some browser store windows only blur/focus the ad without hiding it.
+  // Focus alone is not a return; require a blur after the replay CTA.
+  window.addEventListener('blur',()=>{if(returnPending){storeWindowBlurred=true;syncVisibility();}});
+  window.addEventListener('focus',()=>{if(storeWindowBlurred){storeWindowBlurred=false;syncVisibility();}});
   window.addEventListener('pagehide',event=>{
     if(event.persisted){pageSuspended=true;syncVisibility();return;}
     if(started&&!stageEnded)endStage();returnPending=false;generation++;observer.disconnect();instance?.destroy();

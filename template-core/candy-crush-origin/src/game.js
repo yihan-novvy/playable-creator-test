@@ -4,13 +4,14 @@ NovvyGame(function(container,shell,options){
     '.engine-root{background:#006dc5;touch-action:none;user-select:none}#main,#three,#pixi{position:absolute;inset:0}#main{visibility:hidden}canvas{position:absolute;inset:0;touch-action:none}#progress{display:none}');
   const scope=createEngineScope(view.root);
   let targetTimer,turnState;
+  let winning=false,priorAnimations,winAnimations;
   let app,renderers=[],howler,tween,env=options.env||{},started=false,paused=true,disposed=false,finished=false,last=0,unlocked=false,resolveReady,rejectReady;
   const ready=new Promise((resolve,reject)=>{resolveReady=resolve;rejectReady=reject;});
   const audible=()=>started&&!paused&&!disposed&&unlocked&&env.muted!==true;
   function input(enabled){view.root.style.pointerEvents=enabled?'auto':'none';}
   function sound(){howler?.mute(!audible());if(app?.soundManager){app.soundManager.activeFocus=audible();audible()?app.soundManager.on():app.soundManager.off();}}
   function pause(){if(disposed)return;paused=true;input(false);sound();scope.pause();scope.audioContexts.forEach(c=>c.suspend().catch(()=>{}));}
-  function resume(){if(disposed||!started)return;paused=false;scope.resume();input(!finished);sound();if(audible())scope.audioContexts.forEach(c=>c.resume().catch(()=>{}));}
+  function resume(){if(disposed||!started)return;paused=false;scope.resume();input(!finished&&!winning);sound();if(audible())scope.audioContexts.forEach(c=>c.resume().catch(()=>{}));}
   function area(){
     const width=view.root.clientWidth,height=view.root.clientHeight;
     const inset=side=>Math.max(0,Number(env.safeArea?.[side])||0,Number(env.insets?.[side])||0);
@@ -36,7 +37,7 @@ NovvyGame(function(container,shell,options){
   scope.window.CCS_CONTEXT={area,fit2d,fit3d,audible,alive:()=>!disposed,attach(value,views){app=value;renderers=views;},
     ready(value,audio,animation){app=value;howler=audio;tween=animation;layout();input(false);scope.window.requestAnimationFrame(()=>{if(disposed)return;pause();resolveReady(runtime);});},
     step(count,total,ball,raycaster){
-      if(!started||paused||disposed||finished||count!==last+1||total!==CANDY_TARGET_HITS||count>total)return;
+      if(!started||paused||disposed||finished||winning||count!==last+1||total!==CANDY_TARGET_HITS||count>total)return;
       last=count;shell.step(count/total*100);
       scope.window.clearTimeout(targetTimer);if(turnState)tween.killTweensOf(turnState);
       if(count<total&&ball)targetTimer=scope.window.setTimeout(()=>{
@@ -47,7 +48,28 @@ NovvyGame(function(container,shell,options){
         tween.to(state,{duration:0.65,progress:1,ease:'sine.inOut',onUpdate(){ball.quaternion.slerpQuaternions(turn.from,turn.to,state.progress);}});
       },1600);
     },
-    win(){finish('win');},fail(){finish('fail');},
+    win(){
+      if(!started||paused||disposed||finished||winning||last!==CANDY_TARGET_HITS)return;
+      winning=true;input(false);
+      priorAnimations=new Set(tween.globalTimeline.getChildren(true,true,false));
+    },
+    winAnimationReady(){
+      if(!winning||disposed||winAnimations)return;
+      winAnimations=tween.globalTimeline.getChildren(true,true,false).filter(animation=>{
+        if(priorAnimations.has(animation))return false;
+        for(let node=animation;node;node=node.parent)if(node.repeat?.()===-1)return false;
+        return true;
+      });
+      priorAnimations=null;
+    },
+    winFrame(particles){
+      if(!winning||!winAnimations||particles||paused||disposed||finished)return;
+      // GSAP removes completed/overwritten tweens from their parent. A paused
+      // visible animation keeps its parent and must not release the result.
+      if(winAnimations.some(animation=>animation.parent&&animation.totalProgress()<1))return;
+      finish('win');winAnimations=null;
+    },
+    fail(){if(!winning)finish('fail');},
   };
   const unlock=()=>{if(!started||paused||disposed||finished)return;unlocked=true;sound();scope.audioContexts.forEach(c=>{if(audible())c.resume().catch(()=>{});});};
   view.root.addEventListener('pointerdown',unlock,{capture:true,passive:true});

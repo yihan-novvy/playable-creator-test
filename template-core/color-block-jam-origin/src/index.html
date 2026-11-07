@@ -9,12 +9,11 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#122a42}
 #color-block-jam-result-copy{margin:14px 0 22px;font-size:16px;font-weight:400}
 #color-block-jam-replay{border:0;border-radius:12px;min-width:160px;min-height:48px;padding:14px 24px;background:#ffe39a;color:#233a5a;font:inherit;cursor:pointer;touch-action:manipulation}
 #color-block-jam-replay:disabled{opacity:.65;cursor:wait}
-#color-block-jam-continue{display:block;margin:12px auto 0;padding:8px 20px;border:0;background:transparent;color:#d8ecff;font:14px Arial;cursor:pointer;touch-action:manipulation}
-#color-block-jam-result[hidden],#color-block-jam-continue[hidden],#color-block-jam-status[hidden]{display:none}
-@media(orientation:landscape){.color-block-jam-result-card{padding:12px 20px}#color-block-jam-result-title{font-size:24px}#color-block-jam-result-copy{margin:8px 0}#color-block-jam-replay{padding:8px 24px}#color-block-jam-continue{margin-top:4px}}
+#color-block-jam-result[hidden],#color-block-jam-status[hidden]{display:none}
+@media(orientation:landscape){.color-block-jam-result-card{padding:12px 20px}#color-block-jam-result-title{font-size:24px}#color-block-jam-result-copy{margin:8px 0}#color-block-jam-replay{padding:8px 24px}}
 </style>
 <!--COLOR_BLOCK_JAM_HEAD--></head><body><div id="color-block-jam-game"></div><p id="color-block-jam-status" role="status">Loading…</p>
 <div id="color-block-jam-result" role="dialog" aria-modal="true" aria-labelledby="color-block-jam-result-title" aria-describedby="color-block-jam-result-copy" hidden>
-  <div class="color-block-jam-result-card"><h1 id="color-block-jam-result-title">You win!</h1><p id="color-block-jam-result-copy" aria-live="polite">All blocks cleared!</p><button id="color-block-jam-replay" type="button">Retry</button><button id="color-block-jam-continue" type="button">Continue</button></div>
+  <div class="color-block-jam-result-card"><h1 id="color-block-jam-result-title">You win!</h1><p id="color-block-jam-result-copy" aria-live="polite">All blocks cleared!</p><button id="color-block-jam-replay" type="button">Replay</button></div>
 </div>
 <!--COLOR_BLOCK_JAM_SCRIPTS--><script>window.COLOR_BLOCK_JAM_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--COLOR_BLOCK_JAM_SCRIPTS_END--></body></html>

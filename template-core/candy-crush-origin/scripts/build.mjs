@@ -30,6 +30,11 @@ range('c=c&&c.setTimeout','c.setImmediate=','c=t,n=function(t){setTimeout(d,0,t)
 range('let im=null;','function cm(', 'const hm={isImageBitmapSupported:async()=>false};');
 patch('this.#At++,this.#At>=','this.#At++,globalThis.CCS_CONTEXT.step(this.#At,this.#Y.params.tapsToBreak.value,this.components.World["сolorbomb"],this.#Et),this.#At>=');
 patch('if(this.#G=10,this.#Y.platformManager.end(),','if(this.#G=10,globalThis.CCS_CONTEXT.win(),this.#Y.platformManager.end(),');
+// Native winGame schedules the camera, logo and randomized candy landing tweens.
+// Capture them after scheduling; the adapter waits for their actual completion
+// and for the explosion particles to disappear before settling the round.
+patch('visible:!0})}};enterframe=t=>{let e;', 'visible:!0}),globalThis.CCS_CONTEXT.winAnimationReady()}};enterframe=t=>{let e;');
+patch('this.components.World.gameStage.visible&&(e=this.components.World["сolorbomb000"]', 'globalThis.CCS_CONTEXT.winFrame(this.#Lt.length+this.#Dt.length),this.components.World.gameStage.visible&&(e=this.components.World["сolorbomb000"]');
 patch('10!=this.#G&&(this.#G=10,this.#Y.platformManager.end(),','10!=this.#G&&(this.#G=10,globalThis.CCS_CONTEXT.fail(),this.#Y.platformManager.end(),');
 patch('globalThis.playable.add("Game",new PR({app:globalThis.playable})),globalThis.playable.resizeManager.call()', 'globalThis.playable.add("Game",new PR({app:globalThis.playable})),globalThis.playable.resizeManager.call(),globalThis.CCS_CONTEXT.ready(globalThis.playable,ux.Howler,iT)');
 patch('this.params=r,this.onCompleteLoad=i,this.#Rt=n;', 'this.params=r,this.onCompleteLoad=i,this.#Rt=n,globalThis.CCS_CONTEXT.attach(this,n);');

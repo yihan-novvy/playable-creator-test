@@ -65,19 +65,19 @@ f.state.now=1001;new f.Over().btn_next();assert.equal(f.calls.filter(c=>c[0]==='
 console.log('Color Block Jam: source integrity, deterministic build, real release callback, move/elimination deduplication, 3-level results and native CTA guards passed.');
 // Exercise the production assembly host in memory. This validates stage,
 // replay and conversion policy logic, not actual platform SDK reporting.
-async function hostFixture(config){
+async function hostFixture(config,withSdk=true){
  class Bus{
   constructor(){this.listeners={};this.style={setProperty(){}};this.clientWidth=390;this.clientHeight=844;this.hidden=false;this.offsetHeight=90;}
   addEventListener(t,f){(this.listeners[t]||=[]).push(f);}
   dispatchEvent(e){for(const f of this.listeners[e.type]||[])f(e);}
   getBoundingClientRect(){return {bottom:100};} focus(){}
  }
- const ids=['game','status','replay','continue','result','result-title','result-copy'];
+ const ids=['game','status','replay','result','result-title','result-copy'];
  const elements=Object.fromEntries(ids.map(id=>['color-block-jam-'+id,new Bus()]));elements['novvy-cta']=new Bus();elements['color-block-jam-result'].hidden=true;
  const window=new Bus(),document=new Bus(),calls=[],instances=[],state={now:0,failNext:false,rejectClick:false};
  document.body={append(){}};document.documentElement=new Bus();document.createElement=()=>new Bus();document.getElementById=id=>elements[id]||null;
  window.COLOR_BLOCK_JAM_CONFIG={intro:false,title:false,ctaEnabled:true,allowReplay:false,policy:{enabled:true,mode:'steps',afterSteps:2,intervals:[3,1]},...config};
- window.NovvyPlayable=new Proxy({},{get:(o,key)=>(...args)=>{calls.push([key,...args]);if(key==='click'&&state.rejectClick)return false;}});
+ if(withSdk)window.NovvyPlayable=new Proxy({},{get:(o,key)=>(...args)=>{calls.push([key,...args]);if(key==='click'&&state.rejectClick)return false;}});
  vm.runInNewContext(read('src/host.js'),{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,performance:{now:()=>state.now},getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},CustomEvent:class{constructor(type,options){this.type=type;this.detail=options?.detail;}},queueMicrotask,console:{info(){},warn(){},error(){}}});
  window.NovvyGame(async(root,shell)=>{
   if(state.failNext){state.failNext=false;throw Error('Fixture load failure');}
@@ -101,7 +101,7 @@ h.step(25);h.step(25);h.step(25);assert.equal(host.count('click'),1,'cooldown bl
 host.state.now=1001;h.step(25);assert.equal(host.count('click'),2,'pending threshold retries');
 host.state.now=2002;h.step(50);assert.equal(host.count('click'),3,'last interval repeats');
 h.win();h.win();assert.equal(host.count('onComplete'),1,'final result once');assert.equal(host.count('click'),3,'no extra win jump after step jump');
-assert.equal(host.modal.hidden,false);assert.equal(host.button.textContent,'Retry');assert.equal(host.instances[0].pauseCount,1,'modal pauses original ending and audio');
+assert.equal(host.modal.hidden,false);assert.equal(host.button.textContent,'Replay');assert.equal(host.instances[0].pauseCount,1,'modal pauses original ending and audio');
 host.button.dispatchEvent({type:'click'});await host.flush();assert.equal(host.instances.length,1,'cooldown never causes a restart');assert.equal(host.button.disabled,false,'cooldown leaves button available');
 host.state.now=3003;host.button.dispatchEvent({type:'click'});host.button.dispatchEvent({type:'click'});await host.flush();
 assert.equal(host.count('click'),4,'one replay CTA despite double click');
@@ -120,7 +120,7 @@ host.visibility(true);host.visibility(false);assert.equal(host.instances[1].resu
 
 for(const kind of ['win','fail']){
  const f=await hostFixture({allowReplay:true,policy:{enabled:false}});
- f.instances[0].shell[kind]();assert.equal(f.modal.hidden,false);assert.equal(f.button.textContent,kind==='win'?'Retry':'Try Again');
+ f.instances[0].shell[kind]();assert.equal(f.modal.hidden,false);assert.equal(f.button.textContent,kind==='win'?'Replay':'Try Again');
  f.state.rejectClick=true;f.button.dispatchEvent({type:'click'});assert.equal(f.button.disabled,false,'SDK rejection does not strand replay');
  f.state.rejectClick=false;f.button.dispatchEvent({type:'click'});assert.equal(f.instances.length,1);
  assert.equal(f.calls.filter(c=>c[0]==='click').at(-1)[1].click_source,'forced_click_to_appstore',kind+' uses confirmed replay source');
@@ -131,10 +131,31 @@ for(const kind of ['win','fail']){
 const cached=await hostFixture({allowReplay:true,policy:{enabled:false}});cached.instances[0].shell.win();cached.button.dispatchEvent({type:'click'});
 cached.window.dispatchEvent({type:'pagehide',persisted:true});assert.equal(cached.count('endStage'),0,'bfcache/store suspension does not end stage');assert.equal(cached.instances[0].destroyCount,0);
 cached.window.dispatchEvent({type:'pageshow',persisted:true});await cached.flush();assert.equal(cached.instances.length,2,'bfcache return also restarts once');
-cached.instances[1].shell.fail();cached.elements['color-block-jam-continue'].dispatchEvent({type:'click'});cached.elements['color-block-jam-continue'].dispatchEvent({type:'click'});
-assert.equal(cached.count('endStage'),1,'modal Continue ends current stage once');assert.equal(cached.modal.hidden,true);
+cached.instances[1].shell.fail();cached.window.dispatchEvent({type:'pagehide',persisted:false});cached.window.dispatchEvent({type:'pagehide',persisted:false});
+assert.equal(cached.count('endStage'),1,'leaving the page ends current stage once');assert.equal(cached.modal.hidden,true);
 cached.state.now=9000;cached.button.dispatchEvent({type:'click'});await cached.flush();assert.equal(cached.instances.length,2,'ended stage cannot replay');
+// Regression: editor and raw ZIP previews have no SDK and therefore cannot
+// produce a store-return visibility event. They must become playable again.
+for(const kind of ['win','fail']){
+ const preview=await hostFixture({allowReplay:true,policy:{enabled:false}},false);
+ for(let round=0;round<2;round++){
+  preview.instances[round].shell[kind]();preview.state.now=round*2000;
+  preview.button.dispatchEvent({type:'click'});preview.button.dispatchEvent({type:'click'});await preview.flush();
+  assert.equal(preview.instances.length,round+2,'SDK-free preview rebuilds exactly once');
+  assert.equal(preview.instances[round].destroyCount,1);assert.equal(preview.instances[round+1].startCount,1);
+  assert.equal(preview.modal.hidden,true,'preview dismisses result without waiting for an impossible return');
+  assert.equal(preview.elements['color-block-jam-game'].inert,false,'new round accepts input');
+ }
+}
+const popup=await hostFixture({allowReplay:true,policy:{enabled:false}});
+popup.instances[0].shell.win();popup.button.dispatchEvent({type:'click'});
+popup.window.dispatchEvent({type:'blur'});await popup.flush();assert.equal(popup.instances.length,1,'blur alone waits for store return');
+popup.viewability(false);popup.window.dispatchEvent({type:'focus'});await popup.flush();assert.equal(popup.instances.length,1,'focus cannot bypass hidden SDK viewability');
+popup.viewability(true);await popup.flush();assert.equal(popup.instances.length,2);assert.equal(popup.modal.hidden,true);
+popup.instances[1].shell.win();popup.state.now=2000;popup.button.dispatchEvent({type:'click'});
+popup.window.dispatchEvent({type:'blur'});popup.window.dispatchEvent({type:'focus'});popup.window.dispatchEvent({type:'focus'});await popup.flush();
+assert.equal(popup.instances.length,3,'blur/focus-only store return restarts once');assert.equal(popup.count('onReplay'),2);
 const off=await hostFixture({policy:{enabled:false,mode:'steps',afterSteps:1,intervals:[]}});off.instances[0].shell.step(100);off.instances[0].shell.win();
 assert.equal(off.modal.hidden,true,'replay off preserves native ending');assert.equal(off.count('click'),0,'disabled auto policy stays disabled');
 off.window.dispatchEvent({type:'novvy:cta-interact'});assert.equal(off.count('click'),1,'manual CTA independent of auto switch');
-console.log('Production host memory tests: success/failure modals, confirmed replay CTA, double-click/cooldown guards, real visibility-cycle gating, SDK rejection, failed rebuild recovery, stale callbacks, stage continuity and policy reset passed.');
+console.log('Production host memory tests: SDK-free preview replay, visibility and blur/focus store returns, success/failure modals, confirmed replay CTA, double-click/cooldown guards, SDK rejection, failed rebuild recovery, stale callbacks, stage continuity and policy reset passed.');

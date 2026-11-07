@@ -4,12 +4,12 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const code=fs.readFileSync(new URL('../src/host.js',import.meta.url),'utf8');
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-async function fixture({intro=false,ctaEnabled=true,policy={enabled:false,mode:'steps',afterSteps:4,intervals:[4,3,2]}}={}){
-  class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}}
-  const nodes=Object.fromEntries(['ccs-game','ccs-status','ccs-replay','ccs-continue','novvy-cta'].map(id=>[id,new Element()]));
+async function fixture({allowReplay=true,intro=false,ctaEnabled=true,policy={enabled:false,mode:'steps',afterSteps:4,intervals:[4,3,2]}}={}){
+  class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;focus(){this.focused=true;}getBoundingClientRect(){return{top:734,bottom:844};}}
+  const nodes=Object.fromEntries(['ccs-game','ccs-status','ccs-replay','ccs-result','ccs-result-title','ccs-result-copy','novvy-cta'].map(id=>[id,new Element()]));
   const document=Object.assign(new EventTarget(),{hidden:false,getElementById:id=>nodes[id]||null,createElement:()=>new Element(),body:{append(){}},documentElement:{style:{setProperty(){}}}});
   const calls=[],instances=[];let now=1000;
-  const window=Object.assign(new EventTarget(),{CCS_CONFIG:{intro,title:false,allowReplay:true,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
+  const window=Object.assign(new EventTarget(),{CCS_CONFIG:{intro,title:false,allowReplay,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
   window.addEventListener('novvy:cta-card',()=>{if(ctaEnabled)nodes['novvy-cta'].hidden=false;});
   vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console,queueMicrotask});
   window.NovvyGame(async(_root,shell)=>{const game={shell,start(){},destroy(){},pause(){},resume(){},setEnv(env){game.env=env;}};instances.push(game);return game;});
@@ -30,9 +30,9 @@ f.advance();f.document.hidden=true;f.emit('novvy:cta-interact');assert.equal(cli
 f.document.hidden=false;f.emit('novvy:viewablechange',{viewable:false});f.emit('novvy:cta-interact');assert.equal(clicks(f).length,1);
 f.emit('novvy:viewablechange',{viewable:true});f.emit('novvy:cta-interact');assert.equal(clicks(f).length,2,'card works after return');
 for(let i=1;i<=17;i++)f.instances[0].shell.step(i/17*100);
-f.instances[0].shell.win();assert.equal(clicks(f).length,2,'disabled step policy never opens a store');
+f.instances[0].shell.win();assert.equal(f.nodes['ccs-result'].hidden,false);assert.equal(f.nodes['ccs-game'].inert,true);assert.equal(f.nodes['ccs-replay'].textContent,'Play again');assert.equal(f.nodes['ccs-replay'].focused,true);assert.equal(clicks(f).length,2,'disabled step policy never opens a store');
 f.advance();f.nodes['ccs-replay'].dispatchEvent(new Event('click'));await flush();
-assert.equal(f.instances.length,2);assert.equal(clicks(f).length,2,'replay is not a store control');
+assert.equal(f.instances.length,2);assert.equal(f.nodes['ccs-result'].hidden,true);assert.equal(f.nodes['ccs-game'].inert,false);assert.equal(clicks(f).length,2,'replay is not a store control');
 assert.equal(f.calls.filter(c=>c[0]==='setStage').length,2,'replay retains the playable stage');
 f.emit('novvy:cta-interact');assert.equal(clicks(f).length,3,'card remains usable after replay');
 const off=await fixture({ctaEnabled:false});off.emit('novvy:cta-interact');assert.equal(clicks(off).length,0);assert.equal(off.instances[0].env.insets.bottom,0,'disabled card gives space back');
@@ -72,3 +72,9 @@ const nativeRound=await fixture({policy:null});
 for(let i=1;i<=28;i++){nativeRound.advance();nativeRound.instances[0].shell.step(i/71*100);}
 nativeRound.advance();nativeRound.instances[0].shell.win();assert.deepEqual(clicks(nativeRound).map(c=>c[1].step),[10,15,19,22,24,26,28],'default first jump, all intervals and repeating final interval');
 assert.ok(complete.calls.findIndex(c=>c[0]==='onComplete')<complete.calls.findIndex(c=>c[0]==='click'),'settle the real result before the store request');
+
+const noReplay=await fixture({allowReplay:false});noReplay.instances[0].shell.win();
+assert.equal(noReplay.nodes['ccs-result'].hidden,false);assert.equal(noReplay.nodes['ccs-replay'].hidden,true);
+assert.equal(noReplay.nodes['ccs-result'].focused,true);
+assert.ok(!code.includes('ccs-continue'));
+assert.ok(!fs.readFileSync(new URL('../src/index.html',import.meta.url),'utf8').includes('ccs-continue'));

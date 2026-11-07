@@ -4,17 +4,18 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const code=fs.readFileSync(new URL('../src/host.js',import.meta.url),'utf8');
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-async function fixture({intro=false,ctaEnabled=true,allowReplay=true,policy={enabled:true,mode:'steps',afterSteps:3,intervals:[2,1]}}={}){
+const deferred=()=>{let resolve,reject;const promise=new Promise((ok,fail)=>{resolve=ok;reject=fail;});return{promise,resolve,reject};};
+async function fixture({intro=false,ctaEnabled=true,allowReplay=true,replayLoad,replayStart,policy={enabled:true,mode:'steps',afterSteps:3,intervals:[2,1]}}={}){
   class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}focus(){document.activeElement=this;}}
   const nodes=Object.fromEntries(['screwdom-game','screwdom-status','screwdom-replay','screwdom-result','screwdom-result-title','screwdom-result-copy',...(ctaEnabled?['novvy-cta']:[])].map(id=>[id,new Element()]));
   const document=Object.assign(new EventTarget(),{hidden:false,getElementById:id=>nodes[id]||null,createElement:()=>new Element(),body:{append(){}},documentElement:{style:{setProperty(){}}}});
-  const calls=[],instances=[];let now=1000;
+  const calls=[],instances=[],errors=[];let now=1000;
   const window=Object.assign(new EventTarget(),{SCREWDOM_CONFIG:{intro,title:false,allowReplay,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
   window.addEventListener('novvy:cta-card',()=>{if(ctaEnabled)nodes['novvy-cta'].hidden=false;});
-  vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console,queueMicrotask});
-  window.NovvyGame(async(_root,shell)=>{const game={shell,start(){},destroy(){},pause(){},resume(){},setEnv(env){game.env=env;}};instances.push(game);return game;});
+  vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console:{...console,error:error=>errors.push(error)},queueMicrotask});
+  window.NovvyGame(async(_root,shell)=>{const restarting=instances.length>0;const game={shell,start(){return restarting?replayStart:undefined;},destroy(){game.destroyed=true;game.resultHiddenOnDestroy=nodes['screwdom-result'].hidden;},pause(){},resume(){},setEnv(env){game.env=env;}};instances.push(game);if(restarting)await replayLoad;return game;});
   await flush();
-  return{window,document,nodes,calls,instances,advance(){now+=1100;},emit(name,detail){window.dispatchEvent(new CustomEvent(name,{detail}));}};
+  return{window,document,nodes,calls,instances,errors,advance(){now+=1100;},emit(name,detail){window.dispatchEvent(new CustomEvent(name,{detail}));}};
 }
 const clicks=f=>f.calls.filter(c=>c[0]==='click');
 const actions=(f,n)=>{for(let i=0;i<n;i++){f.advance();f.instances.at(-1).shell.step(i);}};
@@ -52,5 +53,38 @@ assert.equal(fail.nodes['screwdom-result'].hidden,false);assert.equal(fail.nodes
 fail.nodes['screwdom-replay'].dispatchEvent(new Event('click'));fail.nodes['screwdom-replay'].dispatchEvent(new Event('click'));await flush();
 assert.equal(fail.instances.length,2,'rapid retry clicks create one new instance');assert.equal(fail.nodes['screwdom-result'].hidden,true);assert.equal(fail.calls.filter(c=>c[0]==='onReplay').length,1);
 const noReplay=await fixture({allowReplay:false});actions(noReplay,1);noReplay.instances[0].shell.fail();assert.equal(noReplay.nodes['screwdom-replay'].hidden,true);assert.equal(noReplay.document.activeElement,noReplay.nodes['screwdom-result']);
+// Keep both asynchronous phases pending: an instantly resolved fixture misses
+// the old result card shrinking into a second-looking popup during reload.
+for(const outcome of ['fail','win']){
+  const load=deferred(),start=deferred();
+  const pending=await fixture({replayLoad:load.promise,replayStart:start.promise,policy:{enabled:false}});
+  actions(pending,1);pending.instances[0].shell[outcome]();
+  pending.nodes['screwdom-replay'].dispatchEvent(new Event('click'));
+  assert.equal(pending.nodes['screwdom-result'].hidden,true,`${outcome}: result closes synchronously on retry`);
+  assert.equal(pending.instances[0].resultHiddenOnDestroy,true,'close result before destroying the old scene');
+  const assertLoading=()=>{
+    assert.equal(pending.nodes['screwdom-result'].hidden,true,'no result popup while rebuilding');
+    assert.equal(pending.nodes['screwdom-status'].hidden,false);
+    assert.equal(pending.nodes['screwdom-game'].inert,true,'loading board cannot accept input');
+    assert.equal(pending.calls.filter(c=>c[0]==='onReplay').length,0,'retry event waits for a ready scene');
+  };
+  await flush();assertLoading();
+  pending.nodes['screwdom-replay'].dispatchEvent(new Event('click'));
+  assert.equal(pending.instances.length,2,'pending retry ignores repeated clicks');
+  load.resolve();await flush();assertLoading();
+  start.resolve();await flush();
+  assert.equal(pending.nodes['screwdom-result'].hidden,true);
+  assert.equal(pending.nodes['screwdom-status'].hidden,true);
+  assert.equal(pending.nodes['screwdom-game'].inert,false);
+  assert.equal(pending.calls.filter(c=>c[0]==='onReplay').length,1);
+  assert.equal(clicks(pending).length,0,'retry never opens the store');
+}
+const brokenStart=deferred(),broken=await fixture({replayStart:brokenStart.promise});
+actions(broken,1);broken.instances[0].shell.fail();broken.nodes['screwdom-replay'].dispatchEvent(new Event('click'));await flush();
+brokenStart.reject(new Error('Scene failed to start'));await flush();
+assert.equal(broken.nodes['screwdom-result'].hidden,false,'a genuine loading error still shows a retry dialog');
+assert.equal(broken.nodes['screwdom-result-title'].textContent,'Unable to load');
+assert.equal(broken.nodes['screwdom-replay'].disabled,false);assert.equal(broken.nodes['screwdom-status'].hidden,true);
+assert.equal(broken.calls.filter(c=>c[0]==='onReplay').length,0);assert.equal(broken.errors.length,1);
 const fallback=await fixture();actions(fallback,1);fallback.instances[0].shell.win();assert.equal(clicks(fallback).length,1,'win before first step threshold jumps once');
-console.log('Screwdom host: win/fail dialogs, retry/replay, input blocking, CTA policy, cooldown and visibility passed.');
+console.log('Screwdom host: win/fail dialogs, asynchronous retry/replay and load failure, input blocking, CTA policy, cooldown and visibility passed.');
