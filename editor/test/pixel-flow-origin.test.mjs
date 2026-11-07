@@ -47,7 +47,7 @@ export default async function test(a){
   await request(route,{config:{cta:{buttonText:'',guideText:''}}},'PATCH');
   a.equal((await fetch(base+route+'/export')).status,409,'CTA appearance edit invalidates old export');
   const fallback=await(await fetch(base+route+'/preview')).text();
-  a.check(fallback.includes('>Play Now</button>')&&fallback.includes('>Enjoy for free</div>')&&cardColor(fallback)===cardColor(preview),'blank copy uses defaults while partial save preserves button color');
+  a.check(fallback.includes('<span>Play Now</span>')&&fallback.includes('>Enjoy for free</div>')&&cardColor(fallback)===cardColor(preview),'blank copy uses defaults while partial save preserves button color');
   await pack();
   await request(route,{config:{hud:{titleLine1:'changed'}}},'PATCH');a.equal((await fetch(base+route+'/export')).status,409,'HUD edit invalidates old export');
   a.equal((await(await fetch(base+route)).json()).config.hud.titleLine2,'Second line','partial title edit preserves second line');
