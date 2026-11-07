@@ -1,6 +1,7 @@
 // Product assembly host. This file is excluded from the standalone game ZIP.
 (function(){
   const config=window.SCREWDOM_CONFIG,root=document.getElementById('screwdom-game'),status=document.getElementById('screwdom-status'),replay=document.getElementById('screwdom-replay');
+  const result=document.getElementById('screwdom-result'),resultTitle=document.getElementById('screwdom-result-title'),resultCopy=document.getElementById('screwdom-result-copy');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=false,viewable=true;
   const policy=config.policy||{enabled:false,mode:'steps',afterSteps:20,intervals:[]};
   let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
@@ -19,10 +20,17 @@
     // bounding rect would under-reserve space and overlap the lowest screws.
     const bottom=card&&!card.hidden?card.offsetHeight+8:0;
     document.documentElement.style.setProperty('--screwdom-cta-inset',bottom+'px');
+    document.documentElement.style.setProperty('--screwdom-top-inset',Math.max(top,safeArea.top+12)+'px');
     return {api:1,platform:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/i.test(navigator.userAgent)?'ios':'web',language:navigator.language,mode:'preview',viewport:{width:root.clientWidth,height:root.clientHeight,dpr:devicePixelRatio},safeArea,orientation:innerWidth>innerHeight?'landscape':'portrait',muted,insets:{top,bottom}};
   };
-  function finish(kind){if(!started||settled)return;settled=true;replay.hidden=!config.allowReplay;replay.textContent=kind==='fail'?'Try again':'Play again';
-    document.getElementById('screwdom-continue').hidden=!config.allowReplay;
+  function showResult(kind){
+    resultTitle.textContent=kind==='win'?'You win!':kind==='fail'?'Out of space':kind==='error'?'Unable to load':'Round complete';
+    resultCopy.textContent=kind==='win'?'All screws cleared.':kind==='fail'?'Try a different color order.':kind==='error'?'Please try loading the puzzle again.':'Start a fresh puzzle and try again.';
+    replay.hidden=!config.allowReplay;replay.textContent=kind==='win'?'Play again':'Try again';
+    result.hidden=false;root.inert=true;
+    (config.allowReplay&&!replay.disabled?replay:result).focus({preventScroll:true});
+  }
+  function finish(kind){if(!started||settled)return;settled=true;showResult(kind);
     if(kind==='end'){if(!config.allowReplay)call('endStage');}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
     if(kind==='win'&&policy.enabled!==false&&(policy.mode==='complete'||!autoJumped)){
       if(click('forced_click_to_appstore',{scene:'playable-complete',auto_jump:'true',auto_jump_mode:'win'}))autoJumped=true;
@@ -51,16 +59,21 @@
   async function begin(){if(!instance||!entered||started)return;const token=generation;started=true;
     if(config.ctaEnabled){window.__novvyCtaCardPhase='bar';window.dispatchEvent(new CustomEvent('novvy:cta-card',{detail:{phase:'bar'}}));}
     instance.setEnv(environment());await instance.start();if(token!==generation)return;
-    creating=false;status.hidden=true;replay.disabled=false;
+    creating=false;status.hidden=true;replay.disabled=false;result.hidden=true;root.inert=false;
+    if(replayPending)root.focus({preventScroll:true});
     if(replayPending){replayPending=false;call('onReplay');}
     if(document.hidden||!viewable)instance.pause();
   }
-  function loadFailed(error){creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;replay.hidden=!config.allowReplay;replay.textContent='Try again';status.hidden=false;status.textContent='Unable to load Screwdom: '+error.message;console.error(error);}
-  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;replay.hidden=true;document.getElementById('screwdom-continue').hidden=true;replay.disabled=true;status.hidden=false;status.textContent='Loading…';
+  function loadFailed(error){creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
+  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
     try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
-  document.getElementById('screwdom-continue').addEventListener('click',()=>{call('endStage');replay.hidden=true;document.getElementById('screwdom-continue').hidden=true;});
+  result.addEventListener('keydown',event=>{
+    if(event.key!=='Tab')return;
+    event.preventDefault();
+    (!replay.hidden&&!replay.disabled?replay:result).focus({preventScroll:true});
+  });
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
   replay.addEventListener('click',()=>{if(!settled||!config.allowReplay||creating)return;create(started||replayPending);});

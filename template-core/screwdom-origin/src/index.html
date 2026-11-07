@@ -1,3 +1,22 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Screwdom · 原版 3D 螺丝试玩</title>
-<style>html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#122a42}#screwdom-game{position:fixed;inset:0;touch-action:none}#screwdom-replay{position:fixed;right:12px;bottom:calc(var(--screwdom-cta-inset,0px) + 12px);z-index:11;border:0;border-radius:20px;padding:10px 16px;background:#fff;color:#164344;font:600 15px Arial;cursor:pointer}#screwdom-continue{position:fixed;left:12px;bottom:calc(var(--screwdom-cta-inset,0px) + 12px);z-index:11;padding:10px 16px;border:0;border-radius:20px}#screwdom-continue[hidden],#screwdom-replay[hidden]{display:none}#screwdom-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}</style>
-<!--SCREWDOM_HEAD--></head><body><div id="screwdom-game"></div><p id="screwdom-status" role="status">Loading…</p><button id="screwdom-replay" hidden>Play again</button><button id="screwdom-continue" hidden>Continue</button><!--SCREWDOM_SCRIPTS--><script>window.SCREWDOM_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--SCREWDOM_SCRIPTS_END--></body></html>
+<style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#122a42}
+#screwdom-game{position:fixed;inset:0;touch-action:none}
+#screwdom-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}
+#screwdom-result{position:fixed;inset:0;z-index:20;display:grid;place-items:center;box-sizing:border-box;padding:max(20px,var(--screwdom-top-inset,64px)) 20px max(20px,var(--screwdom-cta-inset,0px));background:#051510b8;color:#fff;text-align:center;font:700 20px/1.4 Arial,sans-serif;overflow:auto}
+#screwdom-result[hidden],#screwdom-replay[hidden]{display:none}
+.screwdom-result-card{width:min(100%,300px);box-sizing:border-box;padding:28px 22px 20px;border:2px solid #e6cf8b;border-radius:22px;background:linear-gradient(160deg,#205441,#123b30);box-shadow:0 16px 48px #0008;animation:screwdom-result-in .2s ease-out}
+#screwdom-result-title{margin:0;font-size:32px;line-height:1.2}
+#screwdom-result-copy{margin:14px 0 22px;font-size:16px;font-weight:400;color:#e5f0e8}
+#screwdom-replay{width:100%;min-height:48px;border:0;border-radius:12px;padding:12px 24px;background:#f4d27b;color:#173b28;font:inherit;cursor:pointer;touch-action:manipulation;box-shadow:0 4px 0 #b3964c}
+#screwdom-replay:disabled{opacity:.65;cursor:wait}
+#screwdom-result button:focus-visible{outline:3px solid #fff;outline-offset:4px}
+@keyframes screwdom-result-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media (orientation:landscape){#screwdom-result{padding-left:20px;padding-right:20px}.screwdom-result-card{padding:16px 22px 12px}#screwdom-result-title{font-size:26px}#screwdom-result-copy{margin:8px 0 12px}#screwdom-replay{min-height:40px;padding:8px 24px;font-size:18px}}
+@media (prefers-reduced-motion:reduce){.screwdom-result-card{animation:none}}
+</style>
+<!--SCREWDOM_HEAD--></head><body><div id="screwdom-game" tabindex="-1"></div><p id="screwdom-status" role="status">Loading…</p>
+<div id="screwdom-result" role="dialog" aria-modal="true" aria-labelledby="screwdom-result-title" aria-describedby="screwdom-result-copy" tabindex="-1" hidden>
+  <div class="screwdom-result-card"><h1 id="screwdom-result-title">You win!</h1><p id="screwdom-result-copy">All screws cleared.</p><button id="screwdom-replay" type="button" hidden>Play again</button></div>
+</div>
+<!--SCREWDOM_SCRIPTS--><script>window.SCREWDOM_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--SCREWDOM_SCRIPTS_END--></body></html>

@@ -25,7 +25,9 @@ npm run validate
 
 新任务默认关闭片头、HUD 标题及重玩，开启底部下载卡与自动跳转。示例任务还开启标题与重玩。片头自然结束后自动进入游戏，旧任务残留的 GO 配置被忽略。
 
-工作台「底部下载卡」可开关卡片、编辑按钮与引导文案；图标来自核实过的 App Store `6740043080`，已冻结为本地 JPG 并纳入 manifest 哈希，来源与当时评分记录在 `source/provenance.json`。卡片进入试玩才显示，游戏相机、重玩按钮为卡片与安全区留出空间，画布背景保持全屏。
+成功/失败采用与 Word Search Explorer 一致的居中结算弹窗：暗色遮罩、绿色卡片和金色按钮。开启「允许重玩」后，成功显示 Play again，失败显示 Try again；按用户要求移除 Continue。弹窗阻止底层游戏输入，重建场景就绪后关闭弹窗并恢复操作，连点只创建一局。关闭重玩时只显示结果。
+
+工作台「底部下载卡」可开关卡片、编辑按钮与引导文案；图标来自核实过的 App Store `6740043080`，已冻结为本地 JPG 并纳入 manifest 哈希，来源与当时评分记录在 `source/provenance.json`。卡片进入试玩才显示，游戏相机、结算弹窗为卡片与安全区留出空间，画布背景保持全屏。
 
 「自动跳转」可独立开关，支持按有效步数或通关时触发。默认第 20 步首次跳转，之后间隔 10、8、6、4 步，最后每 4 步重复；间隔留空表示仅首跳。每项接受 1–99 的整数，最多 24 个间隔。按步数模式在第一次自动跳转前通关会补跳一次，失败不跳。只统计真实成功的玩家操作，自动转移不额外计步；重玩重置本轮计数。卡片和策略共用 1 秒冷却，冷却期间到达步数阈值会在下一次有效操作重试，不提前消耗下一间隔。
 
@@ -40,16 +42,18 @@ npm run validate
 
 ## 事件与下载入口
 
-按 2026-11-06 重新读取的 [官方事件协议](https://developer.novvy.ai/eventLogs) 接入；读取的 Markdown SHA-256 为 `d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39`。
+按 2026-11-07 重新读取的 [官方事件协议](https://developer.novvy.ai/eventLogs) 接入；读取的 Markdown SHA-256 为 `d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39`。
 
 - `Screw.onPickHandle` 成功改变螺丝状态才调用 `shell.step`。无效/被遮挡点击、槽位满、自动转移不记额外步骤。进度为 `(totalScrewCount - CurrentScrewRemain) / totalScrewCount * 100`，不同于原版显示的已装盒计数。
 - 原生 `GameSystem.win/lose` 调用 `shell.win/fail`，每局只上报一次，不用计时器或零剩余数提前伪造胜利。
 - 项目宿主映射到 `NovvyPlayable` 的阶段、步骤、结果、离开和重玩 API；重玩创建全新实例，场景就绪后才调用 `onReplay`。独立包无内部重玩，因此结果不传 `continuePlaying`。
-- 原生 Play Now、失败页假重玩跳店、原版广告触发阈值均禁用；项目组装壳统一控制底部卡片和用户配置的自动策略。用户已确认底部卡片为 `cta_click`，自动策略为 `forced_click_to_appstore`，原始决定见 [cta-decision.md](verification/cta-decision.md)。重玩与 Continue 不跳店；独立游戏包的 CTA 位置列表为空。
+- 原生 Play Now、失败页假重玩跳店、原版广告触发阈值均禁用；项目组装壳统一控制底部卡片和用户配置的自动策略。用户已确认底部卡片为 `cta_click`，自动策略为 `forced_click_to_appstore`，原始决定见 [cta-decision.md](verification/cta-decision.md)。重玩不跳店，Continue 已移除；独立游戏包的 CTA 位置列表为空。
 - 卡片只发一次交互信号，按钮移除 SDK 自动绑定选择器，由项目 host 独占 click 调用；避免自定义监听与 SDK 自动钩子同时触发。未注入 SDK 的预览只输出触发信息，不打开商店。
 - 项目组装包是待官方 SDK 注入的原包；本地直接预览不代表事件已上报服务端。独立包只调用平台传入的 shell，不含旧 SDK、postMessage 桥或裸商店导航。
 
 ## 验证范围
+
+2026-11-07 弹窗修改：构建、源完整性/原生回调/宿主单测、46 项 Screwdom 编辑器检查和注册表检查通过。自动化验证成功/失败弹窗、重玩后的输入恢复、连点去重及原有 CTA 策略。最新项目包已通过真实操作触发暂存槽满的自然失败，确认弹窗只显示 Try again，在 390×844、320×568 和 844×390 下完整显示；实际重玩后小屋与暂存槽复位，再次拾取成功。加载及重建时仍有历史记录中的 Cocos 5302 `cc.LightProbesData` 诊断，未出现新的宿主异常。证据与最终包检查见 `output/screwdom-result-modal-20261107/`；自然胜利和官方事件验收仍未完成。
 
 2026-11-06：构建、源完整性、补丁锚点、确定性、脚本语法、346 资源检查通过；提取原生 Screw 方法的语义单测通过；编辑器四个相关套件共 127 项检查通过；registry 校验 0 警告。
 

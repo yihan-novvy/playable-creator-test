@@ -4,12 +4,12 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const code=fs.readFileSync(new URL('../src/host.js',import.meta.url),'utf8');
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
-async function fixture({intro=false,ctaEnabled=true,policy={enabled:true,mode:'steps',afterSteps:3,intervals:[2,1]}}={}){
-  class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}}
-  const nodes=Object.fromEntries(['screwdom-game','screwdom-status','screwdom-replay','screwdom-continue',...(ctaEnabled?['novvy-cta']:[])].map(id=>[id,new Element()]));
+async function fixture({intro=false,ctaEnabled=true,allowReplay=true,policy={enabled:true,mode:'steps',afterSteps:3,intervals:[2,1]}}={}){
+  class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}focus(){document.activeElement=this;}}
+  const nodes=Object.fromEntries(['screwdom-game','screwdom-status','screwdom-replay','screwdom-result','screwdom-result-title','screwdom-result-copy',...(ctaEnabled?['novvy-cta']:[])].map(id=>[id,new Element()]));
   const document=Object.assign(new EventTarget(),{hidden:false,getElementById:id=>nodes[id]||null,createElement:()=>new Element(),body:{append(){}},documentElement:{style:{setProperty(){}}}});
   const calls=[],instances=[];let now=1000;
-  const window=Object.assign(new EventTarget(),{SCREWDOM_CONFIG:{intro,title:false,allowReplay:true,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
+  const window=Object.assign(new EventTarget(),{SCREWDOM_CONFIG:{intro,title:false,allowReplay,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
   window.addEventListener('novvy:cta-card',()=>{if(ctaEnabled)nodes['novvy-cta'].hidden=false;});
   vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console,queueMicrotask});
   window.NovvyGame(async(_root,shell)=>{const game={shell,start(){},destroy(){},pause(){},resume(){},setEnv(env){game.env=env;}};instances.push(game);return game;});
@@ -31,8 +31,10 @@ actions(f,7);
 assert.deepEqual(clicks(f).slice(1).map(c=>c[1].step),[3,5,6,7],'first threshold then intervals; last interval repeats');
 assert(clicks(f).slice(1).every(c=>c[1].click_source==='forced_click_to_appstore'&&c[1].auto_jump_mode==='steps'));
 f.advance();f.instances[0].shell.win();assert.equal(clicks(f).length,5,'no duplicate win jump after step auto-jump');
+assert.equal(f.nodes['screwdom-result'].hidden,false);assert.equal(f.nodes['screwdom-result-title'].textContent,'You win!');assert.equal(f.nodes['screwdom-replay'].textContent,'Play again');assert.equal(f.nodes['screwdom-game'].inert,true,'win dialog blocks underlying board');
 f.nodes['screwdom-replay'].dispatchEvent(new Event('click'));await flush();
 assert.equal(f.instances.length,2);assert.equal(clicks(f).length,5,'replay itself does not open store');
+assert.equal(f.nodes['screwdom-result'].hidden,true);assert.equal(f.nodes['screwdom-game'].inert,false,'ready replay restores board input');
 actions(f,3);assert.equal(clicks(f).at(-1)[1].step,3,'replay resets threshold and step count');
 assert.equal(f.calls.filter(c=>c[0]==='setStage').length,2,'replay retains playable stage');
 const before=clicks(f).length;f.advance();f.document.hidden=true;f.emit('novvy:cta-interact');actions(f,3);assert.equal(clicks(f).length,before);
@@ -46,5 +48,9 @@ off.emit('novvy:cta-interact');actions(off,9);off.instances[0].shell.win();asser
 const once=await fixture({policy:{enabled:true,mode:'steps',afterSteps:2,intervals:[]}});actions(once,8);assert.equal(clicks(once).length,1,'empty intervals means once');
 const complete=await fixture({policy:{enabled:true,mode:'complete',afterSteps:1,intervals:[1]}});actions(complete,8);assert.equal(clicks(complete).length,0);complete.instances[0].shell.win();complete.instances[0].shell.win();assert.equal(clicks(complete).length,1);assert.equal(clicks(complete)[0][1].auto_jump_mode,'win');
 const fail=await fixture();actions(fail,1);fail.instances[0].shell.fail();assert.equal(clicks(fail).length,0,'failure is not a completion CTA');
+assert.equal(fail.nodes['screwdom-result'].hidden,false);assert.equal(fail.nodes['screwdom-result-title'].textContent,'Out of space');assert.equal(fail.nodes['screwdom-replay'].textContent,'Try again');
+fail.nodes['screwdom-replay'].dispatchEvent(new Event('click'));fail.nodes['screwdom-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(fail.instances.length,2,'rapid retry clicks create one new instance');assert.equal(fail.nodes['screwdom-result'].hidden,true);assert.equal(fail.calls.filter(c=>c[0]==='onReplay').length,1);
+const noReplay=await fixture({allowReplay:false});actions(noReplay,1);noReplay.instances[0].shell.fail();assert.equal(noReplay.nodes['screwdom-replay'].hidden,true);assert.equal(noReplay.document.activeElement,noReplay.nodes['screwdom-result']);
 const fallback=await fixture();actions(fallback,1);fallback.instances[0].shell.win();assert.equal(clicks(fallback).length,1,'win before first step threshold jumps once');
-console.log('Screwdom host: CTA stage, layout, cooldown, policy intervals, completion, visibility and replay passed.');
+console.log('Screwdom host: win/fail dialogs, retry/replay, input blocking, CTA policy, cooldown and visibility passed.');
