@@ -60,10 +60,16 @@ NovvyGame(function(container,shell,options){
         for(let node=animation;node;node=node.parent)if(node.repeat?.()===-1)return false;
         return true;
       });
+      // The large falling candy balls define the visible end of the celebration.
+      // Their child jitter/rotation and offscreen debris can continue much longer.
+      const landingTargets=new Set(Object.entries(app.components.World||{})
+        .filter(([name])=>name.startsWith('physicsBoxP_')).map(([,node])=>node.position));
+      const landings=winAnimations.filter(animation=>animation.targets().some(target=>landingTargets.has(target)));
+      if(landings.length)winAnimations=landings;
       priorAnimations=null;
     },
-    winFrame(particles){
-      if(!winning||!winAnimations||particles||paused||disposed||finished)return;
+    winFrame(){
+      if(!winning||!winAnimations||paused||disposed||finished)return;
       // GSAP removes completed/overwritten tweens from their parent. A paused
       // visible animation keeps its parent and must not release the result.
       if(winAnimations.some(animation=>animation.parent&&animation.totalProgress()<1))return;

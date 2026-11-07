@@ -41,11 +41,11 @@ async function fixture(target=71){
   scope.window.setTimeout=()=>0;scope.window.clearTimeout=()=>{};scope.window.requestAnimationFrame=fn=>{frame=fn;};
   vm.runInNewContext(read('src/game.js'),{NovvyGame:fn=>{entry=fn;},engineRoot:()=>({root:node,mount:{remove(){removed=true;}}}),createEngineScope:()=>scope,SOURCE:source,CANDY_TARGET_HITS:target,window:{devicePixelRatio:3},console});
   const promise=entry({},Object.fromEntries(['step','win','fail'].map(name=>[name,(...args)=>calls.push([name,...args])])),{env:{muted:true,safeArea:{top:54},insets:{bottom:110}}});
-  const app={resizeManager:{call(){}},components:{Legal:{visible:true,renderable:true}},soundManager:{on(){},off(){}}};
+  const app={resizeManager:{call(){}},components:{Legal:{visible:true,renderable:true},World:{physicsBoxP_0:{position:{}}}},soundManager:{on(){},off(){}}};
   context.ready(app,{mute(value){calls.push(['mute',value]);},unload(){calls.push(['unload']);}},{globalTimeline:{clear(){},getChildren(){return animations;}},ticker:{sleep(){}}});frame();const instance=await promise;
   assert.equal(app.components.Legal.visible,false,'footer node hidden');
   assert.equal(scope.window.params.tapsToBreak.value,target,'native win target matches baked configuration');
-  return {instance,context,calls,node,animations,unlock:()=>events.get('pointerdown')?.(),removed:()=>removed};
+  return {instance,context,calls,node,animations,landingPosition:app.components.World.physicsBoxP_0.position,unlock:()=>events.get('pointerdown')?.(),removed:()=>removed};
 }
 const f=await fixture();f.context.step(1,71);assert.equal(f.calls.filter(c=>c[0]==='step').length,0);
 f.instance.start();f.context.step(1,71);f.context.step(1,71);assert.deepEqual(f.calls.filter(c=>c[0]==='step'),[['step',1/71*100]]);
@@ -67,32 +67,33 @@ for(const target of [71]){
   assert.equal(values.length,target);assert.ok(Math.abs(values[0]-100/target)<1e-10);assert.equal(values.at(-1),100);
   f.context.win();f.context.win();f.context.winAnimationReady();f.context.winFrame(0);assert.equal(f.calls.filter(c=>c[0]==='win').length,1);f.instance.destroy();
 }
-// Success is settled by the real animation/particle boundary, not a wall-clock delay.
+// Success is settled by the main landing animation boundary, not a wall-clock delay.
 const animated=await fixture();animated.instance.start();
-animated.context.win();animated.context.winAnimationReady();animated.context.winFrame(0);
+animated.context.win();
+animated.context.winAnimationReady();animated.context.winFrame();
 assert.equal(animated.calls.filter(c=>c[0]==='win').length,0,'cannot win before 71 real steps');
 for(let i=1;i<=71;i++)animated.context.step(i,71);
 const oldLoop={parent:{},totalProgress:()=>0,repeat:()=>-1};animated.animations.push(oldLoop);
 animated.context.win();
 let progress=0;
-const landing={parent:{},totalProgress:()=>progress};animated.animations.push(landing);
+const landing={parent:{},totalProgress:()=>progress,targets:()=>[animated.landingPosition]};animated.animations.push(landing);
 const loop={parent:{repeat:()=>-1},totalProgress:()=>0};animated.animations.push(loop);
-animated.context.winAnimationReady();animated.context.winFrame(0);
+const jitter={parent:{},totalProgress:()=>0,targets:()=>[{}]};animated.animations.push(jitter);
+animated.context.winAnimationReady();animated.context.winFrame();
 assert.equal(animated.calls.filter(c=>c[0]==='win').length,0,'landing animation still running');
 assert.equal(animated.node.style.pointerEvents,'none','no gameplay during celebration');
 animated.instance.pause();progress=1;animated.context.winFrame(0);
 assert.equal(animated.calls.filter(c=>c[0]==='win').length,0,'hidden page cannot settle');
 animated.instance.resume();assert.equal(animated.node.style.pointerEvents,'none');
-animated.context.winFrame(1);assert.equal(animated.calls.filter(c=>c[0]==='win').length,0,'wait for last explosion particle');
 animated.context.winFrame(0);animated.context.winFrame(0);
-assert.equal(animated.calls.filter(c=>c[0]==='win').length,1,'one result after all finite animation and particles finish');
+assert.equal(animated.calls.filter(c=>c[0]==='win').length,1,'one result immediately after the main landing, without waiting for decorative jitter');
 animated.instance.destroy();
 const interrupted=await fixture();interrupted.instance.start();
 for(let i=1;i<=71;i++)interrupted.context.step(i,71);
 interrupted.context.win();interrupted.context.winAnimationReady();interrupted.instance.destroy();interrupted.context.winFrame(0);
 assert.equal(interrupted.calls.filter(c=>c[0]==='win').length,0,'destroy cancels pending result');
 assert.ok(source.engine.includes('globalThis.CCS_CONTEXT.winAnimationReady()'));
-assert.ok(source.engine.includes('globalThis.CCS_CONTEXT.winFrame(this.#Lt.length+this.#Dt.length)'));
+assert.ok(source.engine.includes('globalThis.CCS_CONTEXT.winFrame()'));
 const entry=getEntry('candy-crush-origin'),config=effectiveConfig(entry.template,{});
 assert.equal(config.gameplay.tapsToBreak,undefined);
 assert.equal(config.cta.enabled,true);assert.equal(config.playableCta.enabled,true);assert.equal(config.gameplay.allowReplay,false);assert.equal(config.intro.enabled,false);

@@ -7,29 +7,29 @@
     "schemaVersion": 1,
     "fixedHits": 71,
     "maxHits": 71,
-    "checkedAt": "2026-11-07T04:15:49.667Z",
+    "checkedAt": "2026-11-07T05:25:25.861Z",
     "staticPass": true,
     "platformEventsVerified": false,
     "nativeFileRuntimeVerified": false,
     "game": {
       "file": "game-only.zip",
-      "sha256": "a15b1413365154187d96cc28358e3a55c362020ee1a7216edac1bca98214b1b2",
-      "bytes": 2390752,
+      "sha256": "fbb5f3ac472247c7ecc9c9f08b06b21e4a08f8665f4a719fc6a5ec93cefd60c2",
+      "bytes": 2390915,
       "entries": [
         "game.js"
       ]
     },
     "assembly": {
       "file": "assembly.zip",
-      "sha256": "544940ebb63090957a38d83fde6013989461e68652dcf35ae37f3a3ff771ba15",
-      "bytes": 2466887,
+      "sha256": "f5db6c6eb19d545d8c92142bde11fdce8037a65aa1597ba94c63742291a74ddc",
+      "bytes": 2467050,
       "entries": [
         "game.js",
         "index.html"
       ],
-      "uncompressedBytes": 4388236
+      "uncompressedBytes": 4388683
     },
-    "gameJsSha256": "2ed569613ee52cfdfaf608295d4408c296ccee191b84c1de6b50570f4b2cb722",
+    "gameJsSha256": "2bae25a4fbffe295a289f2e120ae726818d8b1265f3410e6f6f3856e06fb3c6a",
     "checks": [
       "Root classic game.js, one synchronous registration and parseable syntax",
       "Exact fixed-71 build bytes in both archives; footer text removed",
@@ -47,7 +47,7 @@
     "levelCount": 1,
     "goal": "Fixed 71 successful distinct candy hits; no configuration",
     "progress": "successfulHits / 71 * 100",
-    "normalResult": "71 real successful candy hits, then native finite success animations and explosion particles finish",
+    "normalResult": "71 successful candy hits; result after main candy landing, without waiting for decorative motion or offscreen fragments",
     "failure": "No naturally reachable failure in this fixed creative; defensive native fail handler is connected",
     "ctaPlacements": [],
     "assemblyPlacements": [
@@ -78,7 +78,7 @@
       ],
       "gameplaySmoke": "One actual pointer hit; candy ball continues rendering after rotation.",
       "errors": "No error-level logs captured in current final game tab.",
-      "fullProgression": "71 real pointer hits; final candy clears with result still hidden; native success scene then visible single-button dialog",
+      "fullProgression": "71 real pointer hits in final exported assembly; dialog hidden immediately after final hit and shown after main landing",
       "historicalV1_1Evidence": {
         "fullProgression": "v1.1: 10 real pointer clicks on visible candies; still playable after hit 5 and 9; original explosion/result after hit 10.",
         "invalidInput": "Observed misses did not consume successful-hit thresholds",
@@ -146,6 +146,22 @@
         "errorLevelLogs": 0,
         "cta": "existing local step policy emits forced_click_to_appstore preview logs; not production SDK evidence"
       }
+    },
+    "resultTiming20261107": {
+      "build": "pass; deterministic; frozen source unchanged",
+      "unit": "pass; main landing still blocks; unfinished decorative jitter no longer blocks; pause/resume/destroy and single result",
+      "editorHttp": "59 passed",
+      "registry": "pass; zero warnings",
+      "browser": {
+        "fullProgression": "71 real pointer hits in final exported assembly; dialog hidden immediately after final hit and shown after main landing",
+        "lastClickToDialogObservedMs": 2602,
+        "timingIncludesAutomationLatency": true,
+        "mainLandingBoundFromNativeSourceSeconds": 1.615,
+        "oldDecorativeMotionBoundFromNativeSourceSeconds": 3.615,
+        "noContinue": true,
+        "errors": 0,
+        "viewport": "390x844"
+      }
     }
   },
   "evidence": [
@@ -164,7 +180,8 @@
     "fixed71-editor-tests.log",
     "conversion-timing.jpg",
     "conversion-editor-tests.log",
-    "../../../output/candy-crush-result-modal-20261107/report.json"
+    "../../../output/candy-crush-result-modal-20261107/report.json",
+    "../../../output/candy-crush-result-timing-20261107/report.json"
   ],
   "limitations": [
     "Actual official received/dropped-message and Tracking-request correlation is missing; no platform event acceptance claimed",
@@ -173,9 +190,8 @@
   "templateVersion": "1.2.1",
   "freshProtocol": {
     "url": "https://developer.novvy.ai/eventLogs",
-    "retrievedAt": "2026-11-07T04:04:06.625240+00:00",
+    "retrievedAt": "2026-11-07T05:22:47.720969+00:00",
     "sha256": "d8e11c14e3fc42db79a652c83e318f32f2342eb0e3b03db458ba93e1ef7e4b39",
-    "updated": "2026-11-05",
     "fullyRead": true
   }
 }

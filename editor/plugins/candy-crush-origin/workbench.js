@@ -63,7 +63,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
-    ]), el('p', { class: 'hint' }, ['每局固定 71 次有效点击，不可配置。每个糖果点只能计数一次；点完全部糖果后爆炸通关。剩余糖果全部在背面时会自动转到可点击的位置。']),el('p',{class:'hint'},['重玩默认关闭。开启后，成功爆炸和糖果落下动画全部结束才显示单按钮重玩弹窗（无 Continue）；重玩恢复糖果球与点击进度，不重复片头。']));
+    ]), el('p', { class: 'hint' }, ['每局固定 71 次有效点击，不可配置。每个糖果点只能计数一次；点完全部糖果后爆炸通关。剩余糖果全部在背面时会自动转到可点击的位置。']),el('p',{class:'hint'},['重玩默认关闭。开启后，成功画面的糖果落下后立即显示单按钮重玩弹窗，不等待尾部碎屑与晃动（无 Continue）；重玩恢复糖果球与点击进度，不重复片头。']));
     wrap.append(el('h3',{},['转化时机']),ctaTimingControls(),el('p',{class:'hint'},['成功点中可见糖果计 1 次有效操作，整局固定 71 次；空白点击不计步。默认第 10 次首跳，之后间隔 5/4/3/2，末间隔循环；间隔留空时仅首跳。尚未触发步数转化时，通关补跳一次；重玩重新计数。下载卡开关独立，修改后需重新打包。独立 game.js 包的转化时机请在平台组装页设置。']));
     wrap.append(el('h3', {}, ['底部下载卡']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('显示下载卡', 'cta', 'enabled', config().cta?.enabled !== false),
