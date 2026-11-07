@@ -28,6 +28,12 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     input.addEventListener('change', async () => { await save({ [key]: { [subkey]: input.value.trim() } }); await refresh(true); });
     return field(label, input);
   }
+  function ctaButtonColor() {
+    const value = config().cta?.buttonColor;
+    const input = el('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(value || '') ? value : '#10b981' });
+    input.addEventListener('change', async () => { await save({ cta: { buttonColor: input.value } }); await refresh(true); });
+    return field('CTA 按钮颜色（默认绿色）', input);
+  }
   function ctaTimingControls() {
     const wrap = el('div', { class: 'dragon-config-grid' });
     const cta = config().playableCta || {};
@@ -79,8 +85,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     wrap.append(el('h3',{},['底部下载卡']),el('div',{class:'dragon-config-grid'},[
       checkbox('显示底部 CTA','cta','enabled',config().cta?.enabled!==false),
       textField('按钮文字','cta','buttonText',config().cta?.buttonText,'Play Now'),
-      textField('引导文案','cta','guideText',config().cta?.guideText,'Enjoy for free')
-    ]),el('p',{class:'hint'},['进入试玩后显示，可独立关闭。修改以上设置后重新打包；独立 game.js 包的下载卡与转化时机在平台组装页配置。']));
+      textField('引导文案','cta','guideText',config().cta?.guideText,'Enjoy for free'),
+      ctaButtonColor()
+    ]),el('p',{class:'hint'},['进入试玩后显示，可独立关闭。CTA 按钮颜色默认绿色，可自定义；修改后可直接预览，导出需重新打包。独立 game.js 包的下载卡与转化时机在平台组装页配置。']));
     root.append(wrap);
   }
   function stateChip(id) {

@@ -50,7 +50,8 @@
       "enabled": true,
       "endMask": false,
       "buttonText": "Play Now",
-      "guideText": "Enjoy for free"
+      "guideText": "Enjoy for free",
+      "buttonColor": "#10b981"
     },
     "playableCta": {
       "enabled": true,
