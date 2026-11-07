@@ -41,6 +41,7 @@ export default async function test(a){
    a.equal(names.sort(),format?['game.js']:['game.js','index.html'],'archive contains only intended root entries');exports[format]=file;
   }
   const assemblyHtml=execFileSync('unzip',['-p',exports[''],'index.html'],{encoding:'utf8',maxBuffer:16000000});
+  a.check(/id="wse-result" role="dialog"[\s\S]*class="wse-result-card"[\s\S]*id="wse-replay"/.test(assemblyHtml)&&assemblyHtml.includes('All 17 words found.'),'pack includes the result modal with its replay action');
   a.equal(settings(assemblyHtml).policy,{mode:'steps',afterSteps:3,intervals:[],enabled:true},'pack preserves an empty interval list for one jump');
   const firstGame=execFileSync('unzip',['-p',exports['?format=game'],'game.js'],{maxBuffer:16000000});await pack();
   const second=await fetch(base+route+'/export?format=game');const repeat=path.join(tmp,'repeat.zip');fs.writeFileSync(repeat,Buffer.from(await second.arrayBuffer()));a.check(firstGame.equals(execFileSync('unzip',['-p',repeat,'game.js'],{maxBuffer:16000000})),'repack payload deterministic');

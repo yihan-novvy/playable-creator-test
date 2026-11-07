@@ -1,9 +1,10 @@
 // Product assembly host. This file is excluded from the standalone game ZIP.
 (function(){
   const config=window.WSE_CONFIG,root=document.getElementById('wse-game'),status=document.getElementById('wse-status'),replay=document.getElementById('wse-replay');
+  const result=document.getElementById('wse-result'),resultTitle=document.getElementById('wse-result-title'),resultCopy=document.getElementById('wse-result-copy'),continueButton=document.getElementById('wse-continue');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=config.intro===true,viewable=true;
   const policy=config.policy||{enabled:true,mode:'steps',afterSteps:4,intervals:[4,3,2]};
-  let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
+  let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity,pendingWinCta=false,winCtaTimer=null;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;
   const call=(name,...args)=>{try{sdk()?.[name]?.(...args);}catch(error){console.warn('Word Search Explorer host SDK',error);}};
@@ -19,11 +20,28 @@
     // Include the card's full height while its entrance transform is animating.
     const bottom=card&&!card.hidden?Math.max(card.offsetHeight,root.getBoundingClientRect().bottom-card.getBoundingClientRect().top)+8:0;
     document.documentElement.style.setProperty('--wse-cta-inset',bottom+'px');
+    document.documentElement.style.setProperty('--wse-top-inset',Math.max(top,safeArea.top+12)+'px');
     return {api:1,platform:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/i.test(navigator.userAgent)?'ios':'web',language:navigator.language,mode:'preview',viewport:{width:root.clientWidth,height:root.clientHeight,dpr:devicePixelRatio},safeArea,orientation:innerWidth>innerHeight?'landscape':'portrait',muted,insets:{top,bottom}};
   };
-  function finish(kind){if(!started||settled)return;settled=true;replay.hidden=!config.allowReplay;replay.textContent=kind==='fail'?'Try again':'Play again';
-    if(kind==='win'&&policy.enabled!==false&&!autoJumped)autoClick('win');
-    if(kind==='end'){if(!config.allowReplay)call('endStage');else document.getElementById('wse-continue').hidden=false;}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
+  function showResult(kind){
+    resultTitle.textContent=kind==='win'?'You win!':kind==='error'?'Unable to load':kind==='fail'?'Try again':'Round complete';
+    resultCopy.textContent=kind==='win'?'All 17 words found.':kind==='error'?'Please try loading the puzzle again.':'Start a fresh puzzle and try again.';
+    replay.hidden=!config.allowReplay;replay.textContent=kind==='win'?'Play again':'Try again';continueButton.hidden=false;
+    result.hidden=false;root.inert=true;
+    (config.allowReplay&&!replay.disabled?replay:continueButton).focus({preventScroll:true});
+  }
+  function finish(kind){if(!started||settled)return;settled=true;showResult(kind);
+    if(kind==='end'){if(!config.allowReplay)call('endStage');}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
+    if(kind==='win'&&policy.enabled!==false){pendingWinCta=true;replay.disabled=true;continueButton.disabled=true;flushWinCta();}
+  }
+  function clearWinCta(){clearTimeout(winCtaTimer);winCtaTimer=null;pendingWinCta=false;}
+  function flushWinCta(){
+    clearTimeout(winCtaTimer);winCtaTimer=null;
+    if(!pendingWinCta||!started||document.hidden||!viewable)return;
+    const wait=1000-(performance.now()-lastCta);
+    if(wait>0){winCtaTimer=setTimeout(flushWinCta,Math.ceil(wait));return;}
+    // A real win owns one request even after earlier step jumps. Only its cooldown is deferred.
+    pendingWinCta=false;autoClick('win');replay.disabled=false;continueButton.disabled=false;
   }
   function requestClick(detail){
     if(!started||document.hidden||!viewable||performance.now()-lastCta<1000)return false;
@@ -37,7 +55,7 @@
     const detail={click_source:'forced_click_to_appstore',scene:'playable-'+mode,auto_jump:'true',auto_jump_mode:mode};
     if(mode==='steps')detail.step=steps;
     if(!requestClick(detail))return false;
-    autoJumped=true;return true;
+    return true;
   }
   // Shell-owned download card: the standard banner source is fixed by §2.1.
   function click(){
@@ -48,7 +66,8 @@
   function step(percent){
     if(!started||settled||document.hidden||!viewable)return;
     steps++;call('onStep',steps,{progress:percent});
-    if(policy.enabled!==false&&policy.mode==='steps'&&steps>=nextCta&&autoClick('steps')){
+    // The last successful word is still reported as a step; its CTA belongs to the win.
+    if(percent<100&&policy.enabled!==false&&policy.mode==='steps'&&steps>=nextCta&&autoClick('steps')){
       const gap=policy.intervals[Math.min(intervalIndex++,policy.intervals.length-1)];
       nextCta=gap?steps+gap:Infinity;
     }
@@ -57,19 +76,28 @@
   async function begin(){if(!instance||!entered||started)return;const token=generation;started=true;
     window.dispatchEvent(new CustomEvent('novvy:cta-card',{detail:{phase:'bar'}}));
     instance.setEnv(environment());await instance.start();if(token!==generation)return;
-    creating=false;status.hidden=true;replay.disabled=false;
+    creating=false;status.hidden=true;replay.disabled=false;continueButton.disabled=false;result.hidden=true;root.inert=false;
+    if(replayPending)root.focus({preventScroll:true});
     if(replayPending){replayPending=false;call('onReplay');}
     if(document.hidden||!viewable)instance.pause();
   }
-  function loadFailed(error){creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;replay.hidden=!config.allowReplay;replay.textContent='Try again';status.hidden=false;status.textContent='Unable to load Word Search Explorer: '+error.message;console.error(error);}
-  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;replay.hidden=true;document.getElementById('wse-continue').hidden=true;replay.disabled=true;status.hidden=false;status.textContent='Loading…';
+  function loadFailed(error){clearWinCta();creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
+  async function create(restarting=false){if(creating)return;clearWinCta();creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;continueButton.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
     try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
-  document.getElementById('wse-continue').addEventListener('click',()=>{call('endStage');replay.hidden=true;document.getElementById('wse-continue').hidden=true;});
+  continueButton.addEventListener('click',()=>{if(pendingWinCta||creating)return;if(config.allowReplay)call('endStage');result.hidden=true;replay.hidden=true;continueButton.hidden=true;root.inert=false;root.focus({preventScroll:true});});
+  result.addEventListener('keydown',event=>{
+    if(event.key!=='Tab')return;
+    const buttons=[replay,continueButton].filter(button=>!button.hidden&&!button.disabled);
+    if(!buttons.length){event.preventDefault();return;}
+    const first=buttons[0],last=buttons[buttons.length-1];
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  });
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;muted=document.getElementById('novvy-intro-video')?.muted??muted;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
-  replay.addEventListener('click',()=>{if(!settled||!config.allowReplay||creating)return;create(started||replayPending);});
+  replay.addEventListener('click',()=>{if(!settled||!config.allowReplay||creating||pendingWinCta)return;create(started||replayPending);});
   let touched=false;
   root.addEventListener('pointerdown',()=>{if(started&&!settled&&!touched){touched=true;call('onStart');}},{passive:true});
   const resize=()=>instance?.setEnv(environment());
@@ -78,10 +106,10 @@
   for(const element of [root,document.getElementById('novvy-training-hud'),document.getElementById('novvy-cta')])if(element)observer.observe(element);
   window.addEventListener('novvy:cta-interact',click);
   
-  const syncVisibility=()=>{if(document.hidden||!viewable)instance?.pause();else if(started)instance?.resume();};
+  const syncVisibility=()=>{if(document.hidden||!viewable){clearTimeout(winCtaTimer);winCtaTimer=null;instance?.pause();}else if(started){instance?.resume();flushWinCta();}};
   document.addEventListener('visibilitychange',syncVisibility);
   window.addEventListener('novvy:viewablechange',event=>{viewable=event.detail?.viewable===true;syncVisibility();});
-  window.addEventListener('pagehide',()=>{if(started)call('endStage');generation++;observer.disconnect();instance?.destroy();});
+  window.addEventListener('pagehide',()=>{clearWinCta();if(started)call('endStage');generation++;observer.disconnect();instance?.destroy();});
   const video=document.getElementById('novvy-intro-video');
   document.getElementById('novvy-intro-sound')?.addEventListener('click',()=>queueMicrotask(()=>{muted=video.muted;instance?.setEnv({muted});}));
   try{if(video)window.NovvyAnalytics?.registerMedia(video,{name:'intro_video'});}catch(_){}

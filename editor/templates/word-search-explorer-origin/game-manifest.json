@@ -22,8 +22,8 @@
     },
     "fileHashes": {
       "game/game.js": "667156e3601623bc8c0a64f2ef4175e7419b335ad63778a91e6a43943439309f",
-      "game/index.html": "835c92f29144cc3e368f191e9c842bebff0d9cd6f32e61247d06dd5acc0117c3",
-      "game/host.js": "3bbf90fda4345fd3fba049c08517534dfb432eb8f74a6c4283852cf7527ac068",
+      "game/index.html": "3b5da21430371130dd81beb53b951278c5ae18e4b2c297a35fa0ff5757c3177c",
+      "game/host.js": "401f32499dd991e2f5b408bd217b4d484e75edbad915dd615c9be9eb64b769ca",
       "game/cta-icon.jpg": "7e83675929d4b7536953163ad83f69345b16b6e4fd3d4df349f525e99eb3e1f5",
       "source/provenance.json": "bf5c2c772986e2b72afb939a707faa80d14b9a73063c4016f48b550baa86fa35"
     }
