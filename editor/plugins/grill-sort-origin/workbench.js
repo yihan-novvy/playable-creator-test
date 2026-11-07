@@ -56,6 +56,18 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     }
     return wrap;
   }
+  function ctaCardControls() {
+    const cta = config().cta || {};
+    const wrap = el('div', { class: 'dragon-config-grid' });
+    wrap.append(
+      textField('CTA 按钮文案（默认 Play Now）', 'cta', 'buttonText', cta.buttonText, 'Play Now'),
+      textField('CTA 引导文案（默认 Enjoy for free）', 'cta', 'guideText', cta.guideText, 'Enjoy for free'),
+    );
+    const color = el('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(cta.buttonColor || '') ? cta.buttonColor : '#10b981' });
+    color.addEventListener('change', async () => { await save({ cta: { buttonColor: color.value } }); await refresh(true); });
+    wrap.append(field('CTA 按钮颜色（默认绿色）', color));
+    return wrap;
+  }
   function renderConfig() {
     document.getElementById('config-hint').textContent = '原版烧烤：120 串烧烤与原版引导。有效放置记步，实际打包数计算进度。片头期间预加载游戏，进入试玩后首次操作开始倒计时。成功或超时后可按设置重玩。';
     const root = document.getElementById('config-grid'); root.textContent = '';
@@ -68,10 +80,6 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'Grill Sort'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2, 'Match three skewers'),
     ]));
-    wrap.append(el('div', { class: 'dragon-config-grid' }, [
-      checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
-      textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
-    ]));
     const seconds = el('input', { type: 'number', min: 1, max: 3600, step: 1, value: config().gameplay?.countdownSeconds ?? 180 });
     seconds.addEventListener('change', async () => {
       if (!seconds.checkValidity() || !seconds.value) { seconds.reportValidity(); return; }
@@ -82,6 +90,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       checkbox('允许重玩', 'gameplay', 'allowReplay', config().gameplay?.allowReplay !== false),
     ]), el('p', { class: 'hint' }, ['开启后，成功显示 Play again、超时显示 Try again。点击先跳转 CTA，再重置当前局；返回后继续新一局，片头视频不重复播放。修改这些设置只需重新打包。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());
+    wrap.append(el('h3', {}, ['CTA 卡片']), ctaCardControls(), el('p', { class: 'hint' }, ['按钮文案与引导文案留空时使用默认值；颜色即时生效于底部常驻卡按钮，全屏结算卡保持金色。修改后可直接预览，导出需重新打包。']));
     root.append(wrap);
   }
   function stateChip(id) {

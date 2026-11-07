@@ -56,6 +56,18 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     }
     return wrap;
   }
+  function ctaCardControls() {
+    const cta = config().cta || {};
+    const wrap = el('div', { class: 'dragon-config-grid' });
+    wrap.append(
+      textField('CTA 按钮文案（默认 Play Now）', 'cta', 'buttonText', cta.buttonText, 'Play Now'),
+      textField('CTA 引导文案（默认 Enjoy for free）', 'cta', 'guideText', cta.guideText, 'Enjoy for free'),
+    );
+    const color = el('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(cta.buttonColor || '') ? cta.buttonColor : '#10b981' });
+    color.addEventListener('change', async () => { await save({ cta: { buttonColor: color.value } }); await refresh(true); });
+    wrap.append(field('CTA 按钮颜色（默认绿色）', color));
+    return wrap;
+  }
   function renderConfig() {
     document.getElementById('config-hint').textContent = '原版纸牌：52 张纸牌与原版引导。合法移牌记步，收牌区卡片数计算进度。默认第 20 次有效操作首跳，之后间隔 10/8/6/4，末间隔循环。';
     const root = document.getElementById('config-grid'); root.textContent = '';
@@ -68,14 +80,11 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'FreeCell'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2, 'Move cards from Ace to King'),
     ]));
-    wrap.append(el('div', { class: 'dragon-config-grid' }, [
-      checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
-      textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
-    ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
     ]), el('p', { class: 'hint' }, ['默认关闭。开启后，通关或无可用移牌时显示重玩按钮；点击先触发 CTA 跳转，再重新发牌，片头不重复播放。修改后只需重新打包。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());
+    wrap.append(el('h3', {}, ['CTA 卡片']), ctaCardControls(), el('p', { class: 'hint' }, ['按钮文案与引导文案留空时使用默认值；颜色即时生效于底部常驻卡按钮，全屏结算卡保持金色。修改后可直接预览，导出需重新打包。']));
     root.append(wrap);
   }
   function stateChip(id) {
