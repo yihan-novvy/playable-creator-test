@@ -6,7 +6,7 @@ const code=fs.readFileSync(new URL('../src/host.js',import.meta.url),'utf8');
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
 async function fixture({intro=false,ctaEnabled=true,allowReplay=true,policy={enabled:false,mode:'steps',afterSteps:4,intervals:[4,3,2]}}={}){
   class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}focus(){document.activeElement=this;}}
-  const nodes=Object.fromEntries(['wse-game','wse-status','wse-replay','wse-continue','wse-result','wse-result-title','wse-result-copy','novvy-cta'].map(id=>[id,new Element()]));
+  const nodes=Object.fromEntries(['wse-game','wse-status','wse-replay','wse-result','wse-result-title','wse-result-copy','novvy-cta'].map(id=>[id,new Element()]));
   const document=Object.assign(new EventTarget(),{hidden:false,getElementById:id=>nodes[id]||null,createElement:()=>new Element(),body:{append(){}},documentElement:{style:{setProperty(){}}}});
   const calls=[],instances=[],timers=new Map();let now=1000,timerId=0;
   const setTimeout=(fn,delay)=>{const id=++timerId;timers.set(id,{fn,due:now+delay});return id;};
@@ -87,5 +87,5 @@ background.document.hidden=true;background.document.dispatchEvent(new Event('vis
 background.document.hidden=false;background.document.dispatchEvent(new Event('visibilitychange'));assert.equal(clicks(background).length,2,'return flushes one pending win');
 const leaving=await fixture({policy});leaving.emit('novvy:cta-interact');leaving.instances[0].shell.win();leaving.emit('pagehide');leaving.advance();assert.equal(clicks(leaving).length,1,'page teardown cancels pending win');
 const noReplay=await fixture({policy,allowReplay:false});noReplay.instances[0].shell.step(100);noReplay.instances[0].shell.win();assert.equal(noReplay.nodes['wse-result'].hidden,false);assert.equal(noReplay.nodes['wse-replay'].hidden,true);assert.equal(clicks(noReplay).length,1,'completion jump works with replay disabled');
-noReplay.nodes['wse-continue'].dispatchEvent(new Event('click'));assert.equal(noReplay.nodes['wse-result'].hidden,true);assert.equal(noReplay.calls.filter(c=>c[0]==='endStage').length,0,'continue does not settle a terminal win twice');
+assert.equal(noReplay.document.activeElement,noReplay.nodes['wse-result'],'result retains focus when no replay button is available');
 console.log('Word Search Explorer host: result modal, step/win CTA arbitration, deferred cooldown, visibility, teardown and replay checks passed.');

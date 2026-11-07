@@ -2,9 +2,15 @@
 
 ## 当前结论
 
-本地模板可创建、配置、预览、重玩和导出；官方事件验收未完成。最终候选及哈希在 `output/word-search-explorer-delivery/`，本轮协议、截图、测试与分项报告在 `output/word-search-explorer-modal-20261107/`。以下较早记录保留为历史验证，不代表当前自动跳转规则，不混入 ZIP。
+本地模板可创建、配置、预览、重玩和导出；官方事件验收未完成。最终候选及哈希在 `output/word-search-explorer-delivery/`，最新移除 Continue 的协议、截图与报告在 `output/word-search-explorer-no-continue-20261107/`，弹窗初版记录在 `output/word-search-explorer-modal-20261107/`。以下较早记录保留为历史验证，不代表当前自动跳转规则，不混入 ZIP。
 
-## 通关弹窗与通关 CTA 复验（当前）
+## 移除 Continue（当前）
+
+- 按用户要求删除 Continue 按钮、样式、点击处理和焦点引用，通关弹窗仅保留 Play again。关闭重玩时焦点停留在结果弹窗；通关 CTA 策略不变。
+- 构建、现有适配器/宿主测试和注册表检查通过。重新启动编辑器读取新清单后，当前任务打包成功。
+- 390×844 最新产物实际完成 17 项，弹窗只显示 Play again；本地记录 4、8、11、13、15 步请求及一次通关请求，浏览器无 warning/error。已检查最终 ZIP 不再包含 wse-continue，独立 game.js 哈希保持不变。官方 SDK 与平台验收仍未完成。
+
+## 通关弹窗与通关 CTA 复验（移除 Continue 前）
 
 - 参考 FreeCell Origin 的居中绿色卡片、暗色遮罩和金色重玩按钮；通关弹窗包含结果与完成数量，替换原先角落的 Play again。底层棋盘禁用，重玩就绪后关闭弹窗并恢复输入。
 - 开启自动策略时，无论此前是否发生步数跳转，每局真实通关均发出一次 `auto_jump_mode: win`；最后一步仍上报进度，但不再触发步数跳转。冷却中的通关请求等待剩余时间，隐藏时暂停、返回后处理，销毁时取消，避免漏跳或重复跳转。

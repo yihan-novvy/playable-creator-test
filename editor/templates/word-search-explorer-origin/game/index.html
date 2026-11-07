@@ -4,20 +4,19 @@ html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
 #wse-game{position:fixed;inset:0;touch-action:none}
 #wse-status{position:fixed;inset:40% 20px auto;text-align:center;color:white;font:16px Arial;pointer-events:none}
 #wse-result{position:fixed;inset:0;z-index:20;display:grid;place-items:center;box-sizing:border-box;padding:max(20px,var(--wse-top-inset,64px)) 20px max(20px,var(--wse-cta-inset,0px));background:#051510b8;color:#fff;text-align:center;font:700 20px/1.4 Arial,sans-serif;overflow:auto}
-#wse-result[hidden],#wse-replay[hidden],#wse-continue[hidden]{display:none}
+#wse-result[hidden],#wse-replay[hidden]{display:none}
 .wse-result-card{width:min(100%,300px);box-sizing:border-box;padding:28px 22px 20px;border:2px solid #e6cf8b;border-radius:22px;background:linear-gradient(160deg,#205441,#123b30);box-shadow:0 16px 48px #0008;animation:wse-result-in .2s ease-out}
 #wse-result-title{margin:0;font-size:32px;line-height:1.2}
 #wse-result-copy{margin:14px 0 22px;font-size:16px;font-weight:400;color:#e5f0e8}
 #wse-replay{width:100%;min-height:48px;border:0;border-radius:12px;padding:12px 24px;background:#f4d27b;color:#173b28;font:inherit;cursor:pointer;touch-action:manipulation;box-shadow:0 4px 0 #b3964c}
 #wse-replay:disabled{opacity:.65;cursor:wait}
-#wse-continue{display:block;margin:16px auto 0;padding:4px 12px;border:0;background:none;color:#d6e5dc;font:400 14px/1.4 Arial,sans-serif;text-decoration:underline;text-underline-offset:3px;cursor:pointer;touch-action:manipulation}
 #wse-result button:focus-visible{outline:3px solid #fff;outline-offset:4px}
 @keyframes wse-result-in{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
-@media (orientation:landscape){#wse-result{padding-left:20px;padding-right:20px}.wse-result-card{padding:16px 22px 12px}#wse-result-title{font-size:26px}#wse-result-copy{margin:8px 0 12px}#wse-replay{min-height:40px;padding:8px 24px;font-size:18px}#wse-continue{margin-top:8px}}
+@media (orientation:landscape){#wse-result{padding-left:20px;padding-right:20px}.wse-result-card{padding:16px 22px 12px}#wse-result-title{font-size:26px}#wse-result-copy{margin:8px 0 12px}#wse-replay{min-height:40px;padding:8px 24px;font-size:18px}}
 @media (prefers-reduced-motion:reduce){.wse-result-card{animation:none}}
 </style>
 <!--WSE_HEAD--></head><body><div id="wse-game" tabindex="-1"></div><p id="wse-status" role="status">Loading…</p>
 <div id="wse-result" role="dialog" aria-modal="true" aria-labelledby="wse-result-title" aria-describedby="wse-result-copy" tabindex="-1" hidden>
-  <div class="wse-result-card"><h1 id="wse-result-title">You win!</h1><p id="wse-result-copy">All 17 words found.</p><button id="wse-replay" type="button" hidden>Play again</button><button id="wse-continue" type="button" hidden>Continue</button></div>
+  <div class="wse-result-card"><h1 id="wse-result-title">You win!</h1><p id="wse-result-copy">All 17 words found.</p><button id="wse-replay" type="button" hidden>Play again</button></div>
 </div>
 <!--WSE_SCRIPTS--><script>window.WSE_CONFIG={intro:false,title:false,allowReplay:false};</script><script src="host.js"></script><script src="game.js"></script><!--WSE_SCRIPTS_END--></body></html>

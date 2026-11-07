@@ -1,7 +1,7 @@
 // Product assembly host. This file is excluded from the standalone game ZIP.
 (function(){
   const config=window.WSE_CONFIG,root=document.getElementById('wse-game'),status=document.getElementById('wse-status'),replay=document.getElementById('wse-replay');
-  const result=document.getElementById('wse-result'),resultTitle=document.getElementById('wse-result-title'),resultCopy=document.getElementById('wse-result-copy'),continueButton=document.getElementById('wse-continue');
+  const result=document.getElementById('wse-result'),resultTitle=document.getElementById('wse-result-title'),resultCopy=document.getElementById('wse-result-copy');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=config.intro===true,viewable=true;
   const policy=config.policy||{enabled:true,mode:'steps',afterSteps:4,intervals:[4,3,2]};
   let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity,pendingWinCta=false,winCtaTimer=null;
@@ -26,13 +26,13 @@
   function showResult(kind){
     resultTitle.textContent=kind==='win'?'You win!':kind==='error'?'Unable to load':kind==='fail'?'Try again':'Round complete';
     resultCopy.textContent=kind==='win'?'All 17 words found.':kind==='error'?'Please try loading the puzzle again.':'Start a fresh puzzle and try again.';
-    replay.hidden=!config.allowReplay;replay.textContent=kind==='win'?'Play again':'Try again';continueButton.hidden=false;
+    replay.hidden=!config.allowReplay;replay.textContent=kind==='win'?'Play again':'Try again';
     result.hidden=false;root.inert=true;
-    (config.allowReplay&&!replay.disabled?replay:continueButton).focus({preventScroll:true});
+    (config.allowReplay&&!replay.disabled?replay:result).focus({preventScroll:true});
   }
   function finish(kind){if(!started||settled)return;settled=true;showResult(kind);
     if(kind==='end'){if(!config.allowReplay)call('endStage');}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
-    if(kind==='win'&&policy.enabled!==false){pendingWinCta=true;replay.disabled=true;continueButton.disabled=true;flushWinCta();}
+    if(kind==='win'&&policy.enabled!==false){pendingWinCta=true;replay.disabled=true;flushWinCta();}
   }
   function clearWinCta(){clearTimeout(winCtaTimer);winCtaTimer=null;pendingWinCta=false;}
   function flushWinCta(){
@@ -41,7 +41,7 @@
     const wait=1000-(performance.now()-lastCta);
     if(wait>0){winCtaTimer=setTimeout(flushWinCta,Math.ceil(wait));return;}
     // A real win owns one request even after earlier step jumps. Only its cooldown is deferred.
-    pendingWinCta=false;autoClick('win');replay.disabled=false;continueButton.disabled=false;
+    pendingWinCta=false;autoClick('win');replay.disabled=false;
   }
   function requestClick(detail){
     if(!started||document.hidden||!viewable||performance.now()-lastCta<1000)return false;
@@ -76,24 +76,20 @@
   async function begin(){if(!instance||!entered||started)return;const token=generation;started=true;
     window.dispatchEvent(new CustomEvent('novvy:cta-card',{detail:{phase:'bar'}}));
     instance.setEnv(environment());await instance.start();if(token!==generation)return;
-    creating=false;status.hidden=true;replay.disabled=false;continueButton.disabled=false;result.hidden=true;root.inert=false;
+    creating=false;status.hidden=true;replay.disabled=false;result.hidden=true;root.inert=false;
     if(replayPending)root.focus({preventScroll:true});
     if(replayPending){replayPending=false;call('onReplay');}
     if(document.hidden||!viewable)instance.pause();
   }
   function loadFailed(error){clearWinCta();creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
-  async function create(restarting=false){if(creating)return;clearWinCta();creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;continueButton.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
+  async function create(restarting=false){if(creating)return;clearWinCta();creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
     try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
-  continueButton.addEventListener('click',()=>{if(pendingWinCta||creating)return;if(config.allowReplay)call('endStage');result.hidden=true;replay.hidden=true;continueButton.hidden=true;root.inert=false;root.focus({preventScroll:true});});
   result.addEventListener('keydown',event=>{
     if(event.key!=='Tab')return;
-    const buttons=[replay,continueButton].filter(button=>!button.hidden&&!button.disabled);
-    if(!buttons.length){event.preventDefault();return;}
-    const first=buttons[0],last=buttons[buttons.length-1];
-    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
-    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+    event.preventDefault();
+    (!replay.hidden&&!replay.disabled?replay:result).focus({preventScroll:true});
   });
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;muted=document.getElementById('novvy-intro-video')?.muted??muted;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
