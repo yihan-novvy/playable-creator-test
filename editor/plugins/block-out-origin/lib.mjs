@@ -25,7 +25,7 @@ export function blockOutHtml({ root, overlaysRoot, template, config, media = {},
   const assetsJs = read(template.game.assetsJs), coreJs = read(template.game.coreJs);
   const pluginDir = overlaysRoot || path.resolve(root, '../../plugins/block-out-origin');
   const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config, media, optionalHudPortraits: true, analytics: false });
-  addOriginCtaCard(injection, template.game.ctaCard, read);
+  addOriginCtaCard(injection, template.game.ctaCard, read, config.cta);
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
   const policy = ctaPolicy(config.playableCta);
   const settings = { intro: injection.introEnabled, title: injection.hudEnabled, totalBlocks: template.blockCounts.reduce((a, b) => a + b, 0), policy,

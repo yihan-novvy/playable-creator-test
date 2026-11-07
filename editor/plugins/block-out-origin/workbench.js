@@ -56,6 +56,18 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     }
     return wrap;
   }
+  function ctaCardControls() {
+    const cta = config().cta || {};
+    const wrap = el('div', { class: 'dragon-config-grid' });
+    wrap.append(
+      textField('CTA 按钮文案（默认 Play Now）', 'cta', 'buttonText', cta.buttonText, 'Play Now'),
+      textField('CTA 引导文案（默认 Enjoy for free）', 'cta', 'guideText', cta.guideText, 'Enjoy for free'),
+    );
+    const color = el('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(cta.buttonColor || '') ? cta.buttonColor : '#10b981' });
+    color.addEventListener('change', async () => { await save({ cta: { buttonColor: color.value } }); await refresh(true); });
+    wrap.append(field('CTA 按钮颜色（默认绿色）', color));
+    return wrap;
+  }
   function renderConfig() {
     document.getElementById('config-hint').textContent = '原版两关：2 块新手引导 + 37 块挑战。有效操作为移动到新格子或匹配出门；两关作为一段试玩，进度累计。默认第 20 次操作首跳，之后间隔 10/8/6/4，末间隔循环；全部完成时结算并跳转。';
     const root = document.getElementById('config-grid'); root.textContent = '';
@@ -68,14 +80,11 @@ window.PlayablePlugins = window.PlayablePlugins || {};
       textField('HUD 主标题', 'hud', 'titleLine1', config().hud?.titleLine1, 'Block Out'),
       textField('HUD 副标题', 'hud', 'titleLine2', config().hud?.titleLine2, 'Slide blocks to matching exits'),
     ]));
-    wrap.append(el('div', { class: 'dragon-config-grid' }, [
-      checkbox('倒计时结束后显示 GO 按钮', 'intro', 'goEnabled'),
-      textField('GO 按钮文字', 'intro', 'goText', config().intro?.goText, 'GO'),
-    ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
     ]), el('p', { class: 'hint' }, ['默认关闭。开启后，结算时显示重玩按钮；点击先触发 CTA-card 跳转，再从第一关开始。']));
     wrap.append(el('h3', {}, ['转化时机']), ctaTimingControls());
+    wrap.append(el('h3', {}, ['CTA 卡片']), ctaCardControls(), el('p', { class: 'hint' }, ['按钮文案与引导文案留空时使用默认值；颜色即时生效于底部常驻卡按钮，全屏结算卡保持金色。修改后可直接预览，导出需重新打包。']));
     root.append(wrap);
   }
   function stateChip(id) {
