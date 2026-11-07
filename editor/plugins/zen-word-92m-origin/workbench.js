@@ -56,10 +56,14 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     wrap.append(el('h3',{},['步数跳转']),el('div',{class:'dragon-config-grid'},[
       checkbox('启用步数跳转','playableCta','enabled',policy.enabled!==false),field('首跳有效步数',first),field('后续间隔（最后一项重复，留空仅首跳）',intervals)
     ]));
+    const cta=config().cta||{};
+    const color=el('input',{type:'color',value:/^#[0-9a-f]{6}$/i.test(cta.buttonColor||'')?cta.buttonColor:'#10b981'});
+    color.addEventListener('change',async()=>{await save({cta:{buttonColor:color.value}});await refresh(true);});
     wrap.append(el('h3', {}, ['底部下载卡']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('显示下载卡', 'cta', 'enabled'),
       textField('按钮文字', 'cta', 'buttonText', config().cta?.buttonText, 'Play Now'),
       textField('引导文案', 'cta', 'guideText', config().cta?.guideText, 'Enjoy for free'),
+      field('按钮颜色（默认绿色）',color),
     ]));
     root.append(wrap);
   }
