@@ -1,3 +1,4 @@
+import {standaloneGame} from '../../core/lib/standalone-artifact.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -23,7 +24,7 @@ export function zenHtml({root,pluginDir,template,config,media={},preview=false})
   if(config.cta?.enabled!==false)addOriginCtaCard(injection,template.game.ctaCard,read,config.cta);
   const policy={...originCtaPolicy({afterSteps:20,intervals:[10,8,6,4],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay!==false,policy};
-  const game=read(variant.game),host=read(template.game.host);
+  const game=standaloneGame(root,config),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.ZEN_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--ZEN_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--ZEN_SCRIPTS-->[\s\S]*?<!--ZEN_SCRIPTS_END-->/,()=>tail);
   return {html,game,variant,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};

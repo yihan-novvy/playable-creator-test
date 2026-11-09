@@ -12,7 +12,11 @@
 
 每个游戏只需要自己的 `game.js`。图片、声音、字体、固定关卡、CSS 和引擎均已内嵌，没有配套 assets 目录，也不需要 ZIP。JS 内含 deflate 数据和同步解码器；构建在压缩前检查源码，校验压缩往返一致性，并实际执行最终文件检查同步注册。每个最终 JS 按原始文件字节数限制在 5,000,000 字节以内。
 
-`game/game.js` 与原有 HTML 打包流程仍用于编辑器兼容；本次独立交付以 `standalone/game.js` 为准。旧的「下载独立游戏 ZIP」不是本次单文件清单的入口。不要把编译中间产物或完整 HTML 素材包误作本次上传文件。
+编辑器预览、完整 ZIP 和「下载独立游戏 ZIP」统一读取 `standalone/game.js`。默认配置与集中交付副本逐字节一致。`game/game.js` 只保留为构建中间产物，不再由这 14 个模板的 editor 加载或交付。
+
+任务修改 Grill 倒计时、Tasty 出球档位或 Water Sort 关卡时，由同一 `packageGame` 流程将配置烘焙进成品。相同配置的预览和两种 ZIP 使用完全相同的 JS；不同玩法配置会生成不同的 JS。重玩开关、剧情、片头、标题和 CTA 属于外壳，不改变游戏成品。Water Sort 每份成品只含当前任务的一关，无运行时关卡选择器。Tasty 剧情模式也使用同一独立游戏，剧情音频由外壳管理。
+
+升级前打出的旧包会标为过期，需要重新运行「打包」；这样不会继续下载之前的中间产物。新包的 `game-only.zip` 仅含这个 `game.js`，完整 ZIP 另外包含外壳 HTML、视频等素材。
 
 14 个模板是 Block Out、Candy Crush、Color Block Jam、Freecell、Grill Sort、Pixel Flow、Project Makeover、Screwdom、Tasty Travels、Travel Town、Water Sort、Word Search Explorer、Zen Word 100m、Zen Word 92m。
 

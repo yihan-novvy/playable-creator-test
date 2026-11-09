@@ -1,3 +1,5 @@
+import {standaloneGame} from './standalone-artifact.mjs';
+import {unpackGame} from '../../../template-core/shared/standalone/build.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -5,7 +7,7 @@ import { buildWsOverlayInjection } from './ws-overlays.mjs';
 import { normalizeCtaPolicy, requireFiles } from './helpers.mjs';
 import { effectiveConfig } from '../runner.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
-import {configureOriginGame, originHostScript, packageOriginGame} from './standalone-origin.mjs';
+import {originHostScript, packageOriginGame} from './standalone-origin.mjs';
 import {fixedViewportHtml} from './fixed-viewport.mjs';
 
 const inline = value => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
@@ -54,12 +56,12 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
   };
   let html = read(template.game.indexHtml);
   const storyEnabled = template.id === 'tasty-travels-origin' && config.story?.enabled === true;
-  // The existing story uses the original game's music before gameplay. Keep
-  // that assembly path; its separate game export still uses the new lifecycle.
-  const standalone = template.game.standalone && !storyEnabled;
+  const standalone = Boolean(template.game.standalone);
   const files = standalone ? {} : Object.fromEntries([...template.game.scripts, template.game.boot].map(file => [path.basename(file), read(file)]));
-  if (template.game.standalone) files['game.js'] = configureOriginGame(read(template.game.standalone), config.gameplay);
-  if (standalone) html = html.replace(/<body>[\s\S]*?<!--ORIGIN_SCRIPTS-->/, '<body><div id="standalone-origin" style="position:fixed;inset:0"></div><!--ORIGIN_SCRIPTS-->');
+  if (template.game.standalone) files['game.js'] = standaloneGame(root,config);
+  const resultPrefix = template.id.split('-')[0];
+  const resultPanel = html.match(new RegExp('<div id="' + resultPrefix + '-result"[\\s\\S]*?</div>\\s*</div>'))?.[0] || '';
+  if (standalone) html = html.replace(/<body>[\s\S]*?<!--ORIGIN_SCRIPTS-->/, '<body><div id="standalone-origin" style="position:fixed;inset:0"></div>' + resultPanel + '<!--ORIGIN_SCRIPTS-->');
   const overlayConfig = template.game.standalone || storyEnabled ? { ...config, intro: { ...config.intro, goEnabled: false } } : config;
   const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config: overlayConfig, media, optionalHudPortraits: true, analytics: false });
   if (storyEnabled) {
@@ -68,12 +70,24 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
     const css = story('css').replace(/__STORY_IMAGE_([123])__/g, (_, n) => images[Number(n) - 1]);
     injection.headStyles.push(`<style data-novvy-story>${css}</style>`);
     injection.bodyDom.push(story('html').replace('__STORY_HIDDEN__', injection.introEnabled ? 'hidden' : ''));
+    // Story music is an assembly asset. Preparing the game must remain silent
+    // until its start(), so the story no longer boots a second native engine.
+    const payload = unpackGame(files['game.js']).source;
+    const resources = JSON.parse(payload.match(/const SOURCE=(.*);\nconst GAME_CONFIG=/)[1]).resources;
+    const music = [
+      ['assets/resources/native/27/27aabdb5-82bf-4789-a2f9-9f8525b2a3a8.mp3', 1],
+      ['assets/resources/native/d8/d858d56c-356a-46b2-8392-2003ff24daae.mp3', .4],
+    ].map(([key, volume]) => {
+      if (!resources[key]) throw new Error('Tasty story music missing: ' + key);
+      return {src: 'data:audio/mpeg;base64,' + resources[key], volume};
+    });
+    injection.bodyScripts.push(script('story-music', `window.__TASTY_STORY_MUSIC__=${inline(music)};`));
     injection.bodyScripts.push(script('story-audio', fs.readFileSync(path.join(pluginDir, 'overlays/story/story-audio.js'), 'utf8')), script('story', story('js')));
   }
   addOriginCtaCard(injection, template.game.ctaCard, read, config.cta);
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
   const policy = {...originCtaPolicy(config.playableCta), enabled:config.playableCta?.enabled !== false};
-  const settings = { intro: injection.introEnabled, title: injection.hudEnabled, policy };
+  const settings = { intro: injection.introEnabled, title: injection.hudEnabled, policy, resultPrefix };
   if (template.id === 'grill-sort-origin') settings.gameplay = { countdownSeconds: 180, allowReplay: true, ...config.gameplay };
   if (template.id === 'freecell-origin') settings.gameplay = { allowReplay: false, ...config.gameplay };
   if (template.id === 'tasty-travels-origin') {

@@ -1,3 +1,4 @@
+import {standaloneGame} from '../../core/lib/standalone-artifact.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -21,7 +22,7 @@ export function makeoverHtml({root,pluginDir,template,config,media={},preview=fa
   const injection=buildWsOverlayInjection({overlaysRoot:pluginDir,template,config,media,optionalHudPortraits:true,analytics:false});
   if(config.cta?.enabled===true)throw Object.assign(new Error('下载入口尚未配置，请先确认跳店分类。'),{statusCode:400});
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true};
-  const game=read(variant.game),host=read(template.game.host);
+  const game=standaloneGame(root,config),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.PM_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--PM_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--PM_SCRIPTS-->[\s\S]*?<!--PM_SCRIPTS_END-->/,()=>tail);
   return {html,game,variant,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};

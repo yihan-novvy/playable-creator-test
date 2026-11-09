@@ -1,7 +1,6 @@
 import {createGame} from './create-game.js';
-import level from './level.json';
 
-window.createWaterSort = function(host, shell, initialEnv) {
+window.createWaterSort = function(host, shell, initialEnv, level) {
   let env=initialEnv,started=false,paused=true,finished=false,moves=0;
   const game=createGame({host,level,autoStart:false,ui:{onState(state){
     if(!started||paused||finished||state.busy||state.moves<=moves)return;

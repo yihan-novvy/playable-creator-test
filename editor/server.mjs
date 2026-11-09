@@ -424,7 +424,7 @@ async function handleApi(req, res, url, publisher) {
   // 目录里可能存在的历史 *.zip,避免把旧导出打进新导出。
   if (rest[0] === 'export' && req.method === 'GET') {
     const patched = readTask(taskId);
-    const originPack = isOriginTemplate(patched.templateId)
+    const originPack = (isOriginTemplate(patched.templateId) || patched.templateId === 'water-sort')
       ? computeStatus(taskId, taskSteps(patched), stepInputFilesFor(patched.templateId)).steps.pack : null;
     if ((isColoreverTemplate(patched.templateId) && !patched.steps.pack?.ok) || (originPack && (!originPack.ok || originPack.stale))) {
       return sendError(res, 409, '当前游戏效果尚未打包，请先重新运行打包');

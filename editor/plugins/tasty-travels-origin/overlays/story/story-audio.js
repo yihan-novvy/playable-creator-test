@@ -1,8 +1,12 @@
 (function () {
   'use strict';
-  // The playable owns all background music. This context only plays short bubbles.
+  // The assembly plays the original two music loops during the story. The
+  // game starts its own audio only when the story hands over to gameplay.
   window.__novvyCreateStoryAudio = function (button) {
-    var context = null, master = null, active = false, stopped = false, muted = false;
+    var context = null, master = null, active = false, stopped = false, muted = new URLSearchParams(location.search).get('muted') === '1';
+    var music = (window.__TASTY_STORY_MUSIC__ || []).map(function (track) {
+      var audio = new Audio(track.src); audio.loop = true; audio.volume = track.volume; return audio;
+    });
     var bubble = null, pendingCue = false, voices = new Set();
     var nativeSound = window.__novvyStorySound = { active: false, muted: false };
     function publish() {
@@ -49,6 +53,7 @@
       source.start();
     }
     function sync() {
+      music.forEach(function (audio) { if (allowed()) audio.play().catch(function () {}); else audio.pause(); });
       if (running()) {
         master.gain.value = .45;
         if (pendingCue) { pendingCue = false; cue(); }
@@ -96,6 +101,7 @@
       stop: function () {
         if (stopped) return;
         stopped = true; active = false; pendingCue = false; silence();
+        music.forEach(function (audio) { audio.pause(); audio.removeAttribute('src'); audio.load(); });
         // The immediately following story-finished event hands music to the
         // playable. Do not emit a mute event here and interrupt those loops.
         nativeSound.active = false;

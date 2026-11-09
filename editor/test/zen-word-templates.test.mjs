@@ -1,3 +1,4 @@
+import {unpackGame} from '../../template-core/shared/standalone/build.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -34,7 +35,7 @@ const route=`/api/tasks/${task.id}`;
       a.equal((await request(route,{config:{levelId:2}},'PATCH')).status,400,'independent template rejects alternate variant');
       a.equal((await request(route,{config:{gameplay:{allowReplay:'yes'}}},'PATCH')).status,400,'invalid replay value rejected');
       const workbench=await(await fetch(base+'/plugins/'+templateId+'/workbench.js')).text();a.check(!workbench.includes('原版素材版本'),'workbench has no variant selector');
-      const preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('\"variant\":\"'+key+'\"'),'preview contains this template engine');a.check(!preview.includes('<b>test</b>'),'title is escaped');
+      const preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('\"id\":\"'+templateId+'\"'),'preview contains this template engine');a.check(!preview.includes('<b>test</b>'),'title is escaped');
       {
         const defaults=await(await fetch(base+route+'/preview')).text();
         a.check(defaults.includes('"afterSteps":20')&&defaults.includes('"intervals":[10,8,6,4]'),'default step CTA cadence reaches assembly');
@@ -57,7 +58,7 @@ const route=`/api/tasks/${task.id}`;
         const exported=await fetch(base+route+'/export'+format);a.equal(exported.status,200,'export succeeds');
         const zip=path.join(tmp,`v${key}${format?'game':'assembly'}.zip`);fs.writeFileSync(zip,Buffer.from(await exported.arrayBuffer()));
         const names=execFileSync('unzip',['-Z1',zip],{encoding:'utf8'}).trim().split('\n');
-        if(format){a.equal(names,['game.js'],'standalone ZIP contains only game.js');const game=execFileSync('unzip',['-p',zip,'game.js'],{maxBuffer:16000000,encoding:'utf8'});a.check(game.includes('\"variant\":\"'+key+'\"'),'export contains fixed template engine');}else a.check(names.includes('index.html')&&!names.some(n=>n.endsWith('.zip')),'assembly excludes nested ZIPs');
+        if(format){a.equal(names,['game.js'],'standalone ZIP contains only game.js');const game=execFileSync('unzip',['-p',zip,'game.js'],{maxBuffer:16000000,encoding:'utf8'});a.check(unpackGame(game).source.includes('\"variant\":\"'+key+'\"'),'export contains fixed template engine');}else a.check(names.includes('index.html')&&!names.some(n=>n.endsWith('.zip')),'assembly excludes nested ZIPs');
       }
       await request(route,{config:{gameplay:{allowReplay:false}}},'PATCH');
       a.equal((await fetch(base+route+'/export?format=game')).status,409,'changing replay invalidates standalone export');

@@ -1,3 +1,4 @@
+import {standaloneGame} from '../../core/lib/standalone-artifact.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -30,7 +31,7 @@ export function candyCrushHtml({root,pluginDir,template,config,media={},preview=
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
   // The source build fixes the full 71-candy round; legacy task counts are ignored.
   const targetHits=template.game.maxHits;
-  const game=read(variant.game),host=read(template.game.host);
+  const game=standaloneGame(root,config),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.CCS_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--CCS_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--CCS_SCRIPTS-->[\s\S]*?<!--CCS_SCRIPTS_END-->/,()=>tail);
   return {html,game,variant,targetHits,maxHits:template.game.maxHits,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};

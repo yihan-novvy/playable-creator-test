@@ -1,3 +1,4 @@
+import {standaloneGame} from '../../core/lib/standalone-artifact.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -29,7 +30,7 @@ export function travelTownHtml({root,pluginDir,template,config,media={},preview=
   }
   const policy={...originCtaPolicy({mode:'complete',afterSteps:20,intervals:[10,8,6,4],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
-  const game=read(variant.game),host=read(template.game.host);
+  const game=standaloneGame(root,config),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.TRAVEL_TOWN_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--TRAVEL_TOWN_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--TRAVEL_TOWN_SCRIPTS-->[\s\S]*?<!--TRAVEL_TOWN_SCRIPTS_END-->/,()=>tail);
   return {html,game,variant,ctaEnabled,policy,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};

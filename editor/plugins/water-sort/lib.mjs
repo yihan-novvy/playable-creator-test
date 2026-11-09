@@ -1,3 +1,4 @@
+import {standaloneGame} from '../../core/lib/standalone-artifact.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { buildWsOverlayInjection } from '../../core/lib/ws-overlays.mjs';
@@ -7,10 +8,7 @@ import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
 const WS_SHELL_SCRIPT_TAG = '<script src="game.js" defer></script>';
 const WS_SHELL_STONE_URL = 'url(./stone.svg)';
 
-// 构造 water-sort 试玩预览页:关卡以内联对象注入 window.__WATER_SORT_LEVEL__
-// (游戏优先读它;内联脚本先于后面的 game.js 标签执行,顺序可靠),资源全部
-// 改写为模板绝对路径,绕开文档相对路径(./game.js、url(./stone.svg))的解析。
-// 基础包是经典脚本、无运行时 fetch(file:// 直开可用),不再有 level.json 请求。
+// Preview and ZIP packaging bake one fixed level into the same standalone asset.
 export function previewHtml({ plugin: entry, task, taskId }) {
   const root = entry.templateDir;
   const template = entry.template;
@@ -19,11 +17,6 @@ export function previewHtml({ plugin: entry, task, taskId }) {
   if (!level || typeof level !== 'object' || Array.isArray(level)) {
     level = JSON.parse(fs.readFileSync(path.join(root, template.level?.assetPath || 'level.json'), 'utf8'));
   }
-  // 作者可控字段(关卡名等)直接进内联脚本,必须防 </script> 与行分隔符逃逸。
-  const levelJson = JSON.stringify(level)
-    .replaceAll('<', '\\u003c')
-    .replaceAll('\u2028', '\\u2028')
-    .replaceAll('\u2029', '\\u2029');
   const shell = fs.readFileSync(path.join(root, template.game.indexHtml), 'utf8');
   if (!shell.includes(WS_SHELL_SCRIPT_TAG) || !shell.includes(WS_SHELL_STONE_URL)) {
     throw new Error('预览改写失败:模板壳缺少预期的 script/url 标记');
@@ -51,10 +44,11 @@ export function previewHtml({ plugin: entry, task, taskId }) {
   };
   const injection = buildWsOverlayInjection({ overlaysRoot: entry.dir, template, config: task.config, media });
   let html = shell
+    .replace(WS_SHELL_STONE_URL, `url(/templates/${template.id}/game/stone.svg)`)
     .replace('</head>', `${[...injection.headStyles, ...injection.headScripts].join('\n')}\n</head>`)
     .replace(
       WS_SHELL_SCRIPT_TAG,
-      `${injection.uiScript}<script>window.__WATER_SORT_LEVEL__=${levelJson};</script><script src="/templates/${template.id}/game/game.js" defer></script>`,
+      `${injection.uiScript}${waterHost(injection)}<script data-novvy-standalone-game>${standaloneGame(root,{...config,level})}</script>`,
     );
   const bodyDom = injection.bodyDom.join('\n');
   if (bodyDom) html = html.replace('<body>', `<body>\n${bodyDom}`);
@@ -62,3 +56,9 @@ export function previewHtml({ plugin: entry, task, taskId }) {
   if (bodyScripts) html = html.replace('</body>', `${bodyScripts}\n</body>`);
   return html;
 }
+
+export function waterHost(injection) {
+  const host = fs.readFileSync(new URL('./host.js', import.meta.url), 'utf8');
+  return `<script>window.WATER_HOST_CONFIG=${JSON.stringify({intro:injection.introEnabled,cta:injection.ctaEnabled})};${host}</script>`;
+}
+export {exportGameZip} from '../../core/lib/standalone-origin.mjs';

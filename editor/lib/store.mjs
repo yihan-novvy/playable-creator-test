@@ -432,12 +432,17 @@ export function computeStatus(id, runnerSteps, inputFiles = STEP_INPUT_FILES) {
     };
   }
   const steps = {};
+  const artifactManifest = path.join(getEntry(doc.templateId).templateDir, 'standalone/manifest.json');
   for (const stepId of runnerSteps) {
     const record = doc.steps[stepId];
+    const artifactStale = stepId === 'pack' && record && fs.existsSync(artifactManifest) && (
+      record.metrics?.gameArtifactVersion !== 'standalone-v1' ||
+      fs.statSync(artifactManifest).mtimeMs > Date.parse(record.lastRunAt) + 5
+    );
     steps[stepId] = {
       ok: record?.ok === true,
       lastRunAt: record?.lastRunAt || null,
-      stale: record ? computeStale(id, stepId, record.lastRunAt, inputFiles) : false,
+      stale: record ? Boolean(artifactStale) || computeStale(id, stepId, record.lastRunAt, inputFiles) : false,
       metrics: record?.metrics || null,
       error: record?.error || null,
     };

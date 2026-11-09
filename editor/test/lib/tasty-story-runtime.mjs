@@ -46,7 +46,7 @@ function runtime({ intro = false, introFinished = false, reduced = false, audio 
     dispatchEvent(event) { events.push(event); listeners.get(event.type)?.(event); },
   };
   if (audio) window.AudioContext = AudioContext;
-  vm.runInNewContext(audioSource + '\n' + source, { document, window, setInterval(fn) { timers.add(fn); return fn; }, clearInterval(fn) { timers.delete(fn); }, CustomEvent: class { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } } });
+  vm.runInNewContext(audioSource + '\n' + source, { URLSearchParams, location:{search:''}, document, window, setInterval(fn) { timers.add(fn); return fn; }, clearInterval(fn) { timers.delete(fn); }, CustomEvent: class { constructor(type, init = {}) { this.type = type; this.detail = init.detail; } } });
   return { root, feed, next, skip, document, window, events, timers, audioState, sound: nodes['tasty-story-sound'],
     visibility: hidden => { document.hidden = hidden; documentListeners.get('visibilitychange')?.(); },
     tick: () => [...timers].forEach(fn => fn()), flush: () => timeouts.splice(0).forEach(fn => fn()),

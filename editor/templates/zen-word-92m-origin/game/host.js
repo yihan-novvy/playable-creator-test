@@ -7,7 +7,19 @@
   let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;
-  const call=(name,...args)=>{try{sdk()?.[name]?.(...args);}catch(error){console.warn('Zen Word host SDK',error);}};
+  const call=(name,...args)=>{try{
+    if (!sdk()) return;
+    switch(name) {
+      case 'setStageList': return window.NovvyPlayable.setStageList(...args);
+      case 'setStage': return window.NovvyPlayable.setStage(...args);
+      case 'onStep': return window.NovvyPlayable.onStep(...args);
+      case 'onStart': return window.NovvyPlayable.onStart(...args);
+      case 'onComplete': return window.NovvyPlayable.onComplete(...args);
+      case 'onReplay': return window.NovvyPlayable.onReplay(...args);
+      case 'endStage': return window.NovvyPlayable.endStage(...args);
+      case 'click': return window.NovvyPlayable.click(...args);
+    }
+  }catch(error){console.warn('Zen Word host SDK',error);}};
   call('setStageList',chain);call('setStage',1,chain[0]);
   const safeProbe=document.createElement('div');
   safeProbe.style.cssText='position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
@@ -18,7 +30,7 @@
     const top=config.title&&hud?hud.getBoundingClientRect().bottom+10:0;
     const bottom=card&&!card.hidden?root.clientHeight-card.getBoundingClientRect().top+8:0;
     document.documentElement.style.setProperty('--zen-cta-inset',bottom+'px');
-    return {api:1,platform:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/i.test(navigator.userAgent)?'ios':'web',language:navigator.language,mode:'preview',viewport:{width:root.clientWidth,height:root.clientHeight,dpr:devicePixelRatio},safeArea,orientation:innerWidth>innerHeight?'landscape':'portrait',muted:false,insets:{top,bottom}};
+    return {api:1,platform:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/i.test(navigator.userAgent)?'ios':'web',language:navigator.language,mode:'preview',viewport:{width:root.clientWidth,height:root.clientHeight,dpr:devicePixelRatio},safeArea,orientation:innerWidth>innerHeight?'landscape':'portrait',muted:new URLSearchParams(location.search).get('muted')==='1',insets:{top,bottom}};
   };
   function replayAvailability(){
     clearTimeout(replayTimer);replayTimer=0;

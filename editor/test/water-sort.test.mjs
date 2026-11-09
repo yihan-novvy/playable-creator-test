@@ -1,3 +1,4 @@
+import {unpackGame} from '../../template-core/shared/standalone/build.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -57,9 +58,9 @@ const VALID_LEVEL = {
   ],
 };
 
-const FULL_DIST = ['app-icon.png', 'background.webp', 'game.js', 'hud-left.webp', 'hud-right.webp', 'index.html', 'poster.webp', 'stone.svg', 'tail-ad-video.mp4'];
+const FULL_DIST = ['app-icon.png', 'background.webp', 'game-only.zip', 'game.js', 'hud-left.webp', 'hud-right.webp', 'index.html', 'poster.webp', 'stone.svg', 'tail-ad-video.mp4'];
 // hud/intro 关掉但 CTA(默认开)仍在的布局:基础包 + 背景 + CTA 图标。
-const BARE_DIST = ['app-icon.png', 'background.webp', 'game.js', 'index.html', 'stone.svg'];
+const BARE_DIST = ['app-icon.png', 'background.webp', 'game-only.zip', 'game.js', 'index.html', 'stone.svg'];
 
 export default async function run(assert) {
   const { server, base } = await startServer();
@@ -151,7 +152,7 @@ export default async function run(assert) {
     const distShell = fs.readFileSync(path.join(resultDir, 'index.html'), 'utf8');
     assert.check(distShell.includes('<script src="game.js" defer></script>'), 'dist 壳用经典 defer 标签加载 game.js');
     assert.check(!/type="module"|crossorigin/.test(distShell), 'dist 壳无 module/crossorigin(file:// 直开)');
-    assert.check(distShell.includes('window.__WATER_SORT_LEVEL__={"name":"测试关卡"'), '关卡以内联对象注入');
+    assert.check(unpackGame(fs.readFileSync(path.join(resultDir,'game.js'),'utf8')).source.includes('WATER_LEVEL*/{"name":"测试关卡"'), '当前关卡烘焙进独立 game.js');
     assert.check(distShell.includes('window.__NOVVY_UI__='), '__NOVVY_UI__ 文案注入');
     assert.check(distShell.includes('id="novvy-hud-title-line1"></div>'), 'HUD DOM 的文案占位为空(文案走 __NOVVY_UI__)');
     assert.check(distShell.includes('id="novvy-training-hud"'), '注入 HUD overlay');
@@ -182,7 +183,7 @@ export default async function run(assert) {
     await api(base, 'PATCH', `/api/tasks/${packId}`, { config: { cta: { enabled: false } } });
     const ctaOffRun = await api(base, 'POST', `/api/tasks/${packId}/run`, { step: 'pack' });
     assert.check(ctaOffRun.status === 200 && ctaOffRun.json?.metrics?.overlays?.cta === false, 'cta.enabled=false 时 pack 跳过 CTA 组');
-    assert.equal(fs.readdirSync(resultDir).sort(), ['background.webp', 'game.js', 'index.html', 'stone.svg'], 'CTA 关闭后 dist 无图标');
+    assert.equal(fs.readdirSync(resultDir).sort(), ['background.webp', 'game-only.zip', 'game.js', 'index.html', 'stone.svg'], 'CTA 关闭后 dist 无图标');
     const ctaOffShell = fs.readFileSync(path.join(resultDir, 'index.html'), 'utf8');
     assert.check(!ctaOffShell.includes('id="novvy-cta"') && !ctaOffShell.includes('data-novvy-cta') && !ctaOffShell.includes('data-novvy-ws-shell'), 'CTA 关闭后壳无 CTA/收缩样式(boot 里的 #novvy-cta 选择器字符串不算 CTA DOM)');
     assert.check(ctaOffShell.includes('<script data-novvy-analytics>'), '埋点组不随 CTA 开关退场');
@@ -192,8 +193,8 @@ export default async function run(assert) {
     assert.check(preview.status === 200, `preview 返回 200 (${preview.status})`);
     assert.check((preview.headers.get('content-type') || '').includes('text/html'), 'preview 是 text/html');
     const previewHtml = await preview.text();
-    assert.check(previewHtml.includes('window.__WATER_SORT_LEVEL__={"name":"测试关卡"'), 'preview 内联注入当前关卡对象');
-    assert.check(previewHtml.includes('<script src="/templates/water-sort/game/game.js" defer></script>'), 'preview 用模板绝对路径加载 game.js');
+    assert.check(previewHtml.includes(fs.readFileSync(path.join(resultDir,'game.js'),'utf8')), '预览和打包使用完全相同的配置成品');
+    assert.check(previewHtml.includes('<script data-novvy-standalone-game>'), 'preview 加载独立成品');
     assert.check(!previewHtml.includes('src="./game.js"'), 'preview 不按文档相对路径加载 game.js');
     assert.check(!previewHtml.includes('id="novvy-training-hud"') && !previewHtml.includes('id="novvy-video-intro"') && !previewHtml.includes('id="novvy-cta"'), 'disabled 的组不出现在预览');
     assert.check(previewHtml.includes('<script data-novvy-analytics-lib>') && previewHtml.includes('<script data-novvy-analytics>'), '预览同样注入埋点库与 boot');

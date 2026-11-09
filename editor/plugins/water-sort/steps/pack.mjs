@@ -1,3 +1,6 @@
+import {standaloneGame} from '../../../core/lib/standalone-artifact.mjs';
+import {packageOriginGame} from '../../../core/lib/standalone-origin.mjs';
+import {waterHost} from '../lib.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -19,10 +22,8 @@ export function prerequisites(config) {
 // defer 保证 head 里执行时 body 已就绪;前面的内联关卡脚本仍先于它运行。
 const WS_SHELL_SCRIPT_TAG = '<script src="game.js" defer></script>';
 
-// water-sort 无 Cocos 引擎,但带 colorever 同款三组 overlay(HUD/开场视频/
-// DOM 背景):pack = 模板基础包 + 内联关卡 + overlay 注入 + 媒体兄弟文件。
-// 基础包没有任何运行时 fetch(file:// 直开是硬要求),关卡以
-// window.__WATER_SORT_LEVEL__ 内联注入到 game.js 标签之前,而不是文件替换。
+// Pack the same standalone artifact as preview; the fixed level lives inside
+// game.js. The production assembly owns HUD, intro, background and CTA.
 export async function run(ctx) {
   const { config } = ctx;
   const levelPath = path.join(ctx.generatedDir, 'level.json');
@@ -43,12 +44,7 @@ export async function run(ctx) {
   if (introEnabled) prereqs.push(ctx.uploads['intro-video'], introVideoPath, posterPath);
   requireFiles(prereqs);
   const levelText = fs.readFileSync(levelPath, 'utf8');
-  // 作者可控字段(关卡名等)直接进内联脚本,必须防 </script> 与行分隔符逃逸。
-  const levelJson = JSON.stringify(JSON.parse(levelText))
-    .replaceAll('<', '\\u003c')
-    .replaceAll('\u2028', '\\u2028')
-    .replaceAll('\u2029', '\\u2029');
-  const levelInjection = `<script>window.__WATER_SORT_LEVEL__=${levelJson};</script>`;
+  const game = standaloneGame(ctx.templateRoot, {...config, level:JSON.parse(levelText)});
 
   const injection = buildWsOverlayInjection({
     overlaysRoot: ctx.pluginDir,
@@ -68,7 +64,9 @@ export async function run(ctx) {
   try {
     // 1. 模板只读:拷进工作区再改(templates 永远不落笔)。
     const wsGame = path.join(workspace, 'game');
-    fs.cpSync(path.join(ctx.templateRoot, 'game'), wsGame, { recursive: true });
+    fs.mkdirSync(wsGame);
+    for (const name of ['index.html','stone.svg']) fs.copyFileSync(path.join(ctx.templateRoot,'game',name),path.join(wsGame,name));
+    fs.writeFileSync(path.join(wsGame,'game.js'),game);
 
     // 2. 媒体兄弟文件:DOM 级引用(<img>/<video>/CSS url)按平铺文件发布,
     //    与 colorever 的交付布局同名(tail-ad-video.mp4 沿用埋点素材名)。
@@ -108,9 +106,8 @@ export async function run(ctx) {
     if (/type="module"|crossorigin/.test(shell)) throw new Error('模板壳仍含 module/crossorigin 属性,模板包可能已漂移');
     shell = shell
       .replace('</head>', `${[...injection.headStyles, ...injection.headScripts].join('\n')}\n</head>`)
-      // __NOVVY_UI__/关卡注入放 game.js 标签之前:defer 脚本在文档解析完后
-      // 才执行,经典内联脚本此时早已就位。
-      .replace(WS_SHELL_SCRIPT_TAG, `${injection.uiScript}${levelInjection}${WS_SHELL_SCRIPT_TAG}`)
+      // Register the production host before the deferred standalone script.
+      .replace(WS_SHELL_SCRIPT_TAG, `${injection.uiScript}${waterHost(injection)}${WS_SHELL_SCRIPT_TAG}`)
       .replace('</body>', `${injection.bodyScripts.join('\n')}\n</body>`);
     const bodyDom = injection.bodyDom.join('\n');
     if (bodyDom) shell = shell.replace('<body>', `<body>\n${bodyDom}`);
@@ -125,8 +122,8 @@ export async function run(ctx) {
     if (fs.statSync(path.join(ctx.resultDir, 'game.js')).size === 0) throw new Error('打包产物 game.js 为空');
     if (!distShell.includes(WS_SHELL_SCRIPT_TAG)) throw new Error('dist 壳缺少 game.js 的经典 script 标签');
     if (/type="module"|crossorigin/.test(distShell)) throw new Error('dist 壳仍含 module/crossorigin 属性');
-    if (!distShell.includes(levelInjection)) throw new Error('dist 壳缺少关卡注入脚本');
-    if (fs.existsSync(path.join(ctx.resultDir, 'level.json'))) throw new Error('dist 不应包含 level.json(关卡已改为内联注入)');
+    if (!distShell.includes('WATER_HOST_CONFIG')) throw new Error('dist 壳缺少独立成品宿主');
+    if (fs.existsSync(path.join(ctx.resultDir, 'level.json'))) throw new Error('dist 不应包含 level.json(关卡已烘焙进 game.js)');
     if (!distShell.includes(injection.uiScript)) throw new Error('dist 壳缺少 __NOVVY_UI__ 注入脚本');
     if (injection.hudEnabled && !distShell.includes('id="novvy-training-hud"')) throw new Error('dist 壳缺少 HUD overlay');
     if (injection.introEnabled && !distShell.includes('id="novvy-video-intro"')) throw new Error('dist 壳缺少开场视频 overlay');
@@ -150,11 +147,13 @@ export async function run(ctx) {
     for (const name of ['background.webp']) {
       if (fs.statSync(path.join(ctx.resultDir, name)).size === 0) throw new Error(`打包产物 ${name} 为空`);
     }
+    const budget = await packageOriginGame(ctx);
     const packageFiles = fs.readdirSync(ctx.resultDir).sort();
     const outputBytes = packageFiles.reduce((sum, name) => sum + fs.statSync(path.join(ctx.resultDir, name)).size, 0);
     const packedLevel = JSON.parse(levelText);
     return {
       metrics: {
+        ...budget,
         outputBytes,
         packageFiles,
         overlays: { hud: injection.hudEnabled, intro: injection.introEnabled, background: injection.backgroundEnabled, cta: injection.ctaEnabled, analytics: injection.analyticsEnabled },

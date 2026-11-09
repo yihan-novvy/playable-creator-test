@@ -1,3 +1,4 @@
+import {unpackGame} from '../../template-core/shared/standalone/build.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -27,7 +28,7 @@ export default async function test(a){
   const taskFile=path.join(taskProjectDir(id),'project.json'),legacy=JSON.parse(fs.readFileSync(taskFile));
   legacy.config.gameplay.tapsToBreak=10;fs.writeFileSync(taskFile,JSON.stringify(legacy));
   const legacyPreview=await(await fetch(base+route+'/preview')).text();
-  a.check(legacyPreview.includes('const CANDY_TARGET_HITS=71;'),'old 10-click task previews fixed 71');
+  a.check([...legacyPreview.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/g)].some(m=>m[1].includes('const payload=')&&unpackGame(m[1]).source.includes('const CANDY_TARGET_HITS=71;')),'old 10-click task previews fixed 71');
   for(const policy of [{enabled:'yes'},{mode:'timer'},{afterSteps:0},{afterSteps:100},{intervals:[2,0]},{intervals:Array(25).fill(1)}])a.equal((await request(route,{config:{playableCta:policy}},'PATCH')).status,400,'reject invalid auto-jump policy');
   a.equal((await request(route,{config:{playableCta:{enabled:true,mode:'steps',afterSteps:3,intervals:[2,1]},cta:{buttonText:'Install <now>',guideText:'Try & enjoy'}}},'PATCH')).status,200,'CTA and auto-jump settings save');
   await request(route,{config:{playableCta:{afterSteps:4}}},'PATCH');
@@ -42,7 +43,7 @@ export default async function test(a){
    a.equal(names.sort(),format?['game.js']:['game.js','index.html'],'archive contains only intended root entries');exports[format]=file;
   }
   const firstGame=execFileSync('unzip',['-p',exports['?format=game'],'game.js'],{maxBuffer:16000000});await pack();
-  a.check(preview.includes('const CANDY_TARGET_HITS=71;')&&firstGame.includes(Buffer.from('const CANDY_TARGET_HITS=71;')),'preview and standalone ZIP both use fixed 71');
+  a.check(preview.includes(firstGame.toString())&&unpackGame(firstGame.toString()).source.includes('const CANDY_TARGET_HITS=71;'),'preview and standalone ZIP both use fixed 71');
   a.check(firstGame.equals(execFileSync('unzip',['-p',exports[''],'game.js'],{maxBuffer:16000000})),'assembly and standalone share configured game bytes');
   const assembly=execFileSync('unzip',['-p',exports[''],'index.html'],{encoding:'utf8',maxBuffer:1000000});
   a.equal(settings(assembly).policy,settings(preview).policy,'preview and export share auto-jump settings');

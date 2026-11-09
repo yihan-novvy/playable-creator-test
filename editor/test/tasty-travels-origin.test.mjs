@@ -1,3 +1,4 @@
+import {unpackGame} from '../../template-core/shared/standalone/build.mjs';
 import { installOriginCta } from './lib/origin-cta-runtime.mjs';
 import { testStory } from './lib/tasty-story-runtime.mjs';
 import fs from 'node:fs';
@@ -95,7 +96,7 @@ export default async function test(a){
  const titled=originHtml({...base,config:{...base.config,hud:{...base.config.hud,titleEnabled:true}}}).html;
  for (const preview of [false, true]) for (const intro of [false, true]) {
    const built=originHtml({...base,preview,config:{...base.config,intro:{enabled:intro}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'}});
-   const source=JSON.parse(built.files['game.js'].match(/const SOURCE=(.*);\nconst GAME_CONFIG=/)[1]);
+   const source=JSON.parse(unpackGame(built.files['game.js']).source.match(/const SOURCE=(.*);\nconst GAME_CONFIG=/)[1]);
    a.check(/class="loading-logo" src="data:image\/png;base64,/.test(source.markup) && source.css.includes('@keyframes tasty-loading-stripes'), 'original logo and animated loader survive preview/export with and without intro');
  }
  a.check(originHtml({...base,config:{...base.config,gameplay:undefined}}).html.includes('"gameplay":{"allowReplay":false,"spawnTierOffset":0}'),'old tasks default to replay and tier boost off');

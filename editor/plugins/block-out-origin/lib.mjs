@@ -1,3 +1,4 @@
+import {standaloneGame} from '../../core/lib/standalone-artifact.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
@@ -6,7 +7,7 @@ import { normalizeCtaPolicy } from '../../core/lib/helpers.mjs';
 import { effectiveConfig } from '../../core/runner.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
 import { originCtaBridge, addOriginCtaCard } from '../../core/lib/origin-playable.mjs';
-import {configureOriginGame, originHostScript} from '../../core/lib/standalone-origin.mjs';
+import {originHostScript} from '../../core/lib/standalone-origin.mjs';
 
 const inline = value => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 const script = (tag, source) => `<script data-novvy-${tag}>${source.replace(/<\/script/gi, '<\\/script')}</script>`;
@@ -24,8 +25,8 @@ export function blockOutHtml({ root, overlaysRoot, template, config, media = {},
     return content;
   };
   let html = read(template.game.indexHtml);
-  const game = configureOriginGame(read(template.game.standalone), config.gameplay);
-  html = html.replace(/<body[^>]*>[\s\S]*?<!--BLOCK_OUT_BOOT-->/, '<body><div id="standalone-origin" style="position:fixed;inset:0"></div><!--BLOCK_OUT_BOOT-->');
+  const game = standaloneGame(root,config);
+  html = html.replace(/<body[^>]*>[\s\S]*?<!--BLOCK_OUT_BOOT-->/, '<body><div id="standalone-origin" style="position:fixed;inset:0"></div>' + fs.readFileSync(new URL("../../../template-core/block-out-origin/src/standalone-result.html", import.meta.url), "utf8") + '<!--BLOCK_OUT_BOOT-->');
   const assetsJs = read(template.game.assetsJs), coreJs = read(template.game.coreJs);
   const pluginDir = overlaysRoot || path.resolve(root, '../../plugins/block-out-origin');
   const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config, media, optionalHudPortraits: true, analytics: false });
@@ -41,7 +42,7 @@ export function blockOutHtml({ root, overlaysRoot, template, config, media = {},
     script('playable-bridge', readEngine('events.js')),
     originCtaBridge(config),
     ...injection.bodyScripts,
-    originHostScript(settings, true),
+    originHostScript({...settings, resultPrefix:"block-out"}, true),
     preview ? script('block-out-game', game) : '<script src="game.js"></script>',
   ].filter(Boolean).join('\n');
   if (html.split('<!--BLOCK_OUT_BOOT-->').length !== 2) throw new Error('Block Out boot anchor missing');

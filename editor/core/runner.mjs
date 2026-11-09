@@ -82,6 +82,9 @@ export async function runStep({ taskId, templateId, templateRoot, scriptsRoot, p
     const stepModule = await importStepModule(entry, stepId);
     const { metrics, warnings } = await stepModule.run(ctx);
     if (stepId === 'pack') {
+      if (fs.existsSync(path.join(ctx.templateRoot, 'standalone/manifest.json'))) {
+        metrics.gameArtifactVersion = 'standalone-v1';
+      }
       const indexPath = path.join(ctx.resultDir, 'index.html');
       const original = fs.readFileSync(indexPath, 'utf8');
       const fixed = fixedViewportHtml(original);

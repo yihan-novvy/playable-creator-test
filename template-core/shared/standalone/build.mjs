@@ -38,12 +38,39 @@ export function packageGame(source,metadata) {
   return {output,payloadSha256:sha(source),uncompressedBytes:bytes.length};
 }
 
+// The editor derives configured assets from the published standalone payload,
+// never from a second, unwrapped native bundle.
+export function unpackGame(output) {
+  const payload = output.match(/^const payload=("[A-Za-z0-9+/=]+");$/m);
+  const metadata = output.match(/^const metadata=(.+);$/m);
+  if (!payload || !metadata) throw new Error('Invalid standalone artifact; run build:standalone');
+  return {source: inflateSync(Buffer.from(JSON.parse(payload[1]), 'base64')).toString('utf8'), metadata: JSON.parse(metadata[1])};
+}
+
+export function configurePayload(source, config = {}) {
+  source = source.replace(/const GAME_CONFIG=\/\*ORIGIN_GAME_CONFIG\*\/([^;]+);/, (_, json) => {
+    const defaults = JSON.parse(json);
+    const gameplay = Object.fromEntries(Object.keys(defaults).map(key => [key, config.gameplay?.[key] ?? defaults[key]]));
+    // Replay controls belong to the assembly host, including in the editor.
+    gameplay.allowReplay = false;
+    return 'const GAME_CONFIG=/*ORIGIN_GAME_CONFIG*/' + JSON.stringify(gameplay).replaceAll('<', '\\u003c') + ';';
+  });
+  if (config.level) {
+    const marker = /const WATER_LEVEL=\/\*WATER_LEVEL\*\/([^\n]+);/;
+    if (!marker.test(source)) throw new Error('Standalone level configuration missing; run build:standalone');
+    source = source.replace(marker, () =>
+      'const WATER_LEVEL=/*WATER_LEVEL*/' + JSON.stringify(config.level).replaceAll('<', '\\u003c') + ';');
+  }
+  return source;
+}
+
 function waterSource() {
   const engine=buildSync({entryPoints:[path.join(ROOT,'template-core/water-sort/src/standalone-engine.js')],bundle:true,format:'iife',write:false,minify:true,legalComments:'eof',loader:{'.mp3':'dataurl'},target:'es2020'}).outputFiles[0].text;
   const scope=read('template-core/shared/origin-standalone/engine-scope.js').replace(/^export /gm,'');
   const stone='data:image/svg+xml;base64,'+Buffer.from(read('template-core/water-sort/public/stone.svg')).toString('base64');
-  const css='.engine-root{background:#30322e url("'+stone+'") center/cover;touch-action:none}canvas{display:block;width:100%;height:100%}';
-  return `(function(){\n${scope}\nNovvyGame(function(root,shell,options){\nconst view=engineRoot(root,'',${JSON.stringify(css)});\nconst scope=createEngineScope(view.root);\ntry { scope.run(${JSON.stringify(engine)});const game=scope.window.createWaterSort(view.root,shell,options.env||{});\nreturn {start(){scope.resume();game.start();},pause(){game.pause();scope.pause();},resume(){scope.resume();game.resume();},setEnv:game.setEnv,destroy(){try{game.destroy();}finally{scope.dispose();view.mount.remove();}}};\n}catch(error){scope.dispose();view.mount.remove();throw error;}\n});\n})();`;
+  const css='.engine-root{background:var(--water-game-background,#30322e url("'+stone+'") center/cover);touch-action:none}canvas{display:block;width:100%;height:100%}';
+  const level=JSON.parse(read('template-core/water-sort/src/level.json'));
+  return `(function(){\n${scope}\nconst WATER_LEVEL=/*WATER_LEVEL*/${JSON.stringify(level)};\nNovvyGame(function(root,shell,options){\nconst view=engineRoot(root,'',${JSON.stringify(css)});\nconst scope=createEngineScope(view.root);\ntry { scope.run(${JSON.stringify(engine)});const game=scope.window.createWaterSort(view.root,shell,options.env||{},WATER_LEVEL);\nreturn {start(){scope.resume();game.start();},pause(){game.pause();scope.pause();},resume(){scope.resume();game.resume();},setEnv:game.setEnv,destroy(){try{game.destroy();}finally{scope.dispose();view.mount.remove();}}};\n}catch(error){scope.dispose();view.mount.remove();throw error;}\n});\n})();`;
 }
 
 export function buildAll({rebuild=true}={}) {
@@ -54,7 +81,7 @@ export function buildAll({rebuild=true}={}) {
     let source=id==='water-sort'?waterSource():read(`editor/templates/${id}/game/game.js`);
     // Final standalone artifacts have no game-owned replay/end controls. The
     // host can enable replay through the uniform entry option instead.
-    source=source.replace(/const GAME_CONFIG=\/\*ORIGIN_GAME_CONFIG\*\/([^;]+);/,(_,json)=>'const GAME_CONFIG=/*ORIGIN_GAME_CONFIG*/'+JSON.stringify({...JSON.parse(json),allowReplay:false})+';');
+    source=configurePayload(source);
     const manifest=JSON.parse(read(`editor/templates/${id}/game-manifest.json`));
     const metadata={id,name:manifest.name,levelCount:id==='block-out-origin'?2:id==='color-block-jam-origin'?3:1,playableType:'level'};
     const {output,...check}=packageGame(source,metadata);

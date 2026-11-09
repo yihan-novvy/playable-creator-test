@@ -1,3 +1,4 @@
+import {standaloneGame} from '../../core/lib/standalone-artifact.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -29,7 +30,7 @@ export function pixelFlowHtml({root,pluginDir,template,config,media={},preview=f
   }
   const policy={...originCtaPolicy({mode:'steps',afterSteps:10,intervals:[8,6,4],...config.playableCta,mode:'steps'}),enabled:config.playableCta?.enabled!==false};
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
-  const game=read(variant.game),host=read(template.game.host);
+  const game=standaloneGame(root,config),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.PIXEL_FLOW_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--PIXEL_FLOW_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--PIXEL_FLOW_SCRIPTS-->[\s\S]*?<!--PIXEL_FLOW_SCRIPTS_END-->/,()=>tail);
   return {html,game,variant,ctaEnabled,policy,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};

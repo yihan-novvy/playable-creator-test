@@ -1,3 +1,4 @@
+import {standaloneGame} from '../../core/lib/standalone-artifact.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
@@ -24,7 +25,7 @@ export function wordSearchHtml({root,pluginDir,template,config,media={},preview=
   if(ctaEnabled)addOriginCtaCard(injection,template.game.ctaCard,read,config.cta);
   const policy={...originCtaPolicy({afterSteps:4,intervals:[4,3,2],...config.playableCta,mode:'steps'}),enabled:config.playableCta?.enabled!==false};
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay===true,ctaEnabled,policy};
-  const game=read(variant.game),host=read(template.game.host);
+  const game=standaloneGame(root,config),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.WSE_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
   const html=read(template.game.indexHtml).replace('<!--WSE_HEAD-->',()=>injection.headStyles.join('\n')).replace(/<!--WSE_SCRIPTS-->[\s\S]*?<!--WSE_SCRIPTS_END-->/,()=>tail);
   return {html,game,variant,introEnabled:injection.introEnabled,stageChain:settings.intro?['video','playable']:['playable']};
