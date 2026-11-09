@@ -3,6 +3,7 @@
   const config=window.SCREWDOM_CONFIG,root=document.getElementById('screwdom-game'),status=document.getElementById('screwdom-status'),replay=document.getElementById('screwdom-replay');
   const result=document.getElementById('screwdom-result'),resultTitle=document.getElementById('screwdom-result-title'),resultCopy=document.getElementById('screwdom-result-copy');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=false,viewable=true;
+  let outcome=null,storeVisit=null,pageHidden=false,loadError=false;
   const policy=config.policy||{enabled:false,mode:'steps',afterSteps:20,intervals:[]};
   let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
@@ -18,7 +19,6 @@
       case 'onComplete': window.NovvyPlayable.onComplete(...args);break;
       case 'onReplay': window.NovvyPlayable.onReplay(...args);break;
       case 'endStage': window.NovvyPlayable.endStage(...args);break;
-      case 'click': window.NovvyPlayable.click(...args);break;
     }
   }catch(error){console.warn('Screwdom host SDK',error);}};
   call('setStageList',chain);call('setStage',1,chain[0]);
@@ -41,24 +41,28 @@
     resultCopy.textContent=kind==='win'?'All screws cleared.':kind==='fail'?'Try a different color order.':kind==='error'?'Please try loading the puzzle again.':'Start a fresh puzzle and try again.';
     replay.hidden=!config.allowReplay;replay.textContent=kind==='win'?'Play again':'Try again';
     result.hidden=false;root.inert=true;
+    const card=document.getElementById('novvy-cta');if(card)card.inert=config.allowReplay;
     (config.allowReplay&&!replay.disabled?replay:result).focus({preventScroll:true});
   }
-  function finish(kind){if(!started||settled)return;settled=true;showResult(kind);
+  function finish(kind){if(!started||settled)return;settled=true;outcome=kind;showResult(kind);
     if(kind==='end'){if(!config.allowReplay)call('endStage');}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
     if(kind==='win'&&policy.enabled!==false&&(policy.mode==='complete'||!autoJumped)){
       if(click('forced_click_to_appstore',{scene:'playable-complete',auto_jump:'true',auto_jump_mode:'win'}))autoJumped=true;
     }
   }
   function click(source,details={}){
-    if(!started||creating||document.hidden||!viewable||performance.now()-lastCta<1000)return false;
+    if(!started||creating||document.hidden||pageHidden||!viewable||performance.now()-lastCta<1000)return false;
     if(source!=='cta_click'&&source!=='forced_click_to_appstore')return false;
-    lastCta=performance.now();
-    if(typeof sdk()?.click==='function')call('click',{...details,click_source:source});
-    else console.info('[Screwdom CTA preview]',{...details,click_source:source});
+    const previousCta=lastCta;lastCta=performance.now();
+    try{
+      if(typeof sdk()?.click==='function'){
+        if(window.NovvyPlayable.click({...details,click_source:source})===false){lastCta=previousCta;return false;}
+      }else console.info('[Screwdom CTA preview]',{...details,click_source:source});
+    }catch(error){lastCta=previousCta;console.warn('Screwdom CTA unavailable',error);return false;}
     return true;
   }
   function step(percent){
-    if(!started||settled||document.hidden||!viewable)return;
+    if(!started||creating||settled||document.hidden||pageHidden||!viewable)return;
     steps++;call('onStep',steps,{progress:percent});
     // Only the product assembly owns automatic navigation. The independent
     // game reports successful screw actions without any store policy.
@@ -69,20 +73,21 @@
     }
   }
   const shell={step,win(){finish('win');},fail(){finish('fail');},end(){finish('end');},retry(){call('onReplay');},level(){},sound(value){muted=value===true;instance?.setEnv({muted});},haptic(){},cta:click};
-  async function begin(){if(!instance||!entered||started)return;const token=generation;started=true;
+  async function begin(){if(!instance||!entered||started||document.hidden||pageHidden||!viewable)return;const token=generation;started=true;
     if(config.ctaEnabled){window.__novvyCtaCardPhase='bar';window.dispatchEvent(new CustomEvent('novvy:cta-card',{detail:{phase:'bar'}}));}
     instance.setEnv(environment());await instance.start();if(token!==generation)return;
     creating=false;status.hidden=true;replay.disabled=false;result.hidden=true;root.inert=false;
+    const card=document.getElementById('novvy-cta');if(card)card.inert=false;
     if(replayPending)root.focus({preventScroll:true});
     if(replayPending){replayPending=false;call('onReplay');}
-    if(document.hidden||!viewable)instance.pause();
+    if(document.hidden||pageHidden||!viewable)instance.pause();
   }
-  function loadFailed(error){creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
+  function loadFailed(error){creating=false;started=false;settled=true;loadError=true;instance?.destroy();instance=null;replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
   async function create(restarting=false){if(creating)return;creating=true;
     // Close the whole result before rebuilding; hiding only its button leaves
     // a smaller stale dialog visible throughout the asynchronous scene load.
     result.hidden=true;
-    const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
+    const token=++generation;instance?.destroy();instance=null;started=false;settled=false;loadError=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;autoJumped=false;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
     try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
@@ -93,19 +98,39 @@
   });
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
-  replay.addEventListener('click',()=>{if(!settled||!config.allowReplay||creating)return;create(started||replayPending);});
+  replay.addEventListener('click',()=>{
+    if(!settled||!config.allowReplay||creating||replay.disabled)return;
+    // Recovering a failed scene load must not request another store visit.
+    if(loadError){create(replayPending);return;}
+    if(!started)return;
+    storeVisit=typeof sdk()?.click==='function'?{left:false}:null;
+    replay.disabled=true;
+    // Match Pixel Flow: request CTA once, then close the dialog and rebuild.
+    // A store visit defers gameplay start, not dismissal of the old result.
+    if(click('forced_click_to_appstore',{scene:'playable-replay',result:outcome}))create(true);
+    else{storeVisit=null;replay.disabled=false;}
+  });
   let touched=false;
   root.addEventListener('pointerdown',()=>{if(started&&!settled&&!touched){touched=true;call('onStart');}},{passive:true});
   const resize=()=>instance?.setEnv(environment());
   window.addEventListener('resize',resize);
   const observer=new ResizeObserver(resize);
   for(const element of [root,document.getElementById('novvy-training-hud'),document.getElementById('novvy-cta')])if(element)observer.observe(element);
-  window.addEventListener('novvy:cta-interact',()=>{if(config.ctaEnabled)click('cta_click',{scene:'cta-card'});});
+  window.addEventListener('novvy:cta-interact',()=>{if(config.ctaEnabled&&(!config.allowReplay||result.hidden))click('cta_click',{scene:'cta-card'});});
   
-  const syncVisibility=()=>{if(document.hidden||!viewable)instance?.pause();else if(started)instance?.resume();};
+  const syncVisibility=()=>{
+    if(document.hidden||pageHidden||!viewable){if(storeVisit)storeVisit.left=true;instance?.pause();return;}
+    if(storeVisit?.left)storeVisit=null;
+    if(instance&&!started)begin().catch(loadFailed);
+    else if(started&&!creating)instance?.resume();
+  };
   document.addEventListener('visibilitychange',syncVisibility);
   window.addEventListener('novvy:viewablechange',event=>{viewable=event.detail?.viewable===true;syncVisibility();});
-  window.addEventListener('pagehide',()=>{if(started)call('endStage');generation++;observer.disconnect();instance?.destroy();});
+  window.addEventListener('pagehide',event=>{
+    if(storeVisit||event.persisted){pageHidden=true;syncVisibility();return;}
+    if(started)call('endStage');generation++;observer.disconnect();instance?.destroy();
+  });
+  window.addEventListener('pageshow',()=>{pageHidden=false;syncVisibility();});
   const video=document.getElementById('novvy-intro-video');
   document.getElementById('novvy-intro-sound')?.addEventListener('click',()=>queueMicrotask(()=>{muted=video.muted;instance?.setEnv({muted});}));
   try{if(video)window.NovvyAnalytics?.registerMedia(video,{name:'intro_video'});}catch(_){}

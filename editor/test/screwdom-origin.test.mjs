@@ -24,6 +24,7 @@ export default async function test(a){
   await request(route,{config:{playableCta:{afterSteps:4}}},'PATCH');
   const configured=await(await fetch(base+route)).json();a.equal(configured.config.playableCta,{enabled:true,mode:'steps',afterSteps:4,intervals:[2,1]},'partial policy save preserves siblings');
   preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('Install &lt;now>')&&preview.includes('Try &amp; enjoy'),'CTA text is escaped in preview');
+  a.check(preview.includes("scene:'playable-replay'"),'preview contains the replay CTA host');
   const pack=async()=>{const r=await request(route+'/run',{step:'pack'});const j=await r.json();a.equal(r.status,200,`pack succeeds: ${j.error||''}`);return j;};
   const first=await pack();a.check(first.metrics.gameZipBytes<5000000,'standalone meets 5 MB budget');
   const exports={};
@@ -36,7 +37,8 @@ export default async function test(a){
   const assembly=execFileSync('unzip',['-p',exports[''],'index.html'],{encoding:'utf8',maxBuffer:1000000});
   a.equal(settings(assembly).policy,settings(preview).policy,'preview and export share auto-jump settings');
   a.check(assembly.includes('id="novvy-cta"')&&assembly.includes('Install &lt;now>'),'pack includes configured CTA');
-  a.check(!firstGame.includes(Buffer.from('playable-steps'))&&!firstGame.includes(Buffer.from('novvy-cta')),'standalone game excludes CTA policy and card');
+  a.check(assembly.includes("scene:'playable-replay'"),'assembly contains the replay CTA host');
+  a.check(!firstGame.includes(Buffer.from('playable-steps'))&&!firstGame.includes(Buffer.from('playable-replay'))&&!firstGame.includes(Buffer.from('novvy-cta')),'standalone game excludes CTA policy, replay and card');
   const second=await fetch(base+route+'/export?format=game');const repeat=path.join(tmp,'repeat.zip');fs.writeFileSync(repeat,Buffer.from(await second.arrayBuffer()));a.check(firstGame.equals(execFileSync('unzip',['-p',repeat,'game.js'],{maxBuffer:16000000})),'repack payload deterministic');
   await request(route,{config:{hud:{titleLine1:'changed'}}},'PATCH');a.equal((await fetch(base+route+'/export')).status,409,'HUD edit invalidates old export');
   a.equal((await(await fetch(base+route)).json()).config.hud.titleLine2,'Second line','partial title edit preserves second line');

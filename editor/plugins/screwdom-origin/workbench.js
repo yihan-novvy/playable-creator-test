@@ -42,7 +42,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
-    ]), el('p', { class: 'hint' }, ['默认关闭。开启后成功/失败弹窗显示 Play again / Try again；重玩恢复小屋、螺丝、暂存槽与引导，不重复片头。']));
+    ]), el('p', { class: 'hint' }, ['默认关闭。开启后成功/失败弹窗显示 Play again / Try again；点击触发一次 CTA 后立即重开，恢复小屋、螺丝、暂存槽与引导，不重复片头。广告不可见时暂停，返回后继续；本地预览直接重开。重玩跳转独立于自动跳转开关，修改后需重新打包。']));
     const policy=config().playableCta||{};
     const mode=el('select',{},[el('option',{value:'steps'},['按有效步数']),el('option',{value:'complete'},['通关时'])]);
     mode.value=policy.mode||'steps';

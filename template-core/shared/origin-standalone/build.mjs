@@ -84,9 +84,12 @@ export function compileStandalone(root, files, scriptNames) {
   }
   const panel = {'tasty-travels':'tasty','grill-sort':'grill',freecell:'freecell','block-out':'block-out'}[id];
   markup = once(markup, `id="${panel}-replay"`, `id="${panel}-replay" data-origin-replay`);
-  markup = markup.replace(new RegExp(`(<button[^>]+id="${panel}-replay"[^>]*>[\\s\\S]*?<\\/button>)`), '$1<button type="button" data-origin-continue hidden>Continue</button>');
-  if (!markup.includes('data-origin-continue')) throw new Error('Missing native result panel: ' + id);
-  css += '\n[data-origin-continue]{display:block;margin:12px auto 0;border:1px solid currentColor;border-radius:12px;padding:10px 24px;background:transparent;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation}[data-origin-continue][hidden]{display:none}[data-origin-continue]:disabled{opacity:.65}';
+  // Grill Sort keeps only its native retry action in both result states.
+  if (id !== 'grill-sort') {
+    markup = markup.replace(new RegExp(`(<button[^>]+id="${panel}-replay"[^>]*>[\\s\\S]*?<\\/button>)`), '$1<button type="button" data-origin-continue hidden>Continue</button>');
+    if (!markup.includes('data-origin-continue')) throw new Error('Missing native result panel: ' + id);
+    css += '\n[data-origin-continue]{display:block;margin:12px auto 0;border:1px solid currentColor;border-radius:12px;padding:10px 24px;background:transparent;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation}[data-origin-continue][hidden]{display:none}[data-origin-continue]:disabled{opacity:.65}';
+  }
   const settings = {intro:false, story:false, title:false, policy:{mode:'none'}, gameplay:{allowReplay:id==='grill-sort', ...(id==='grill-sort'?{countdownSeconds:180}:{}), ...(id==='tasty-travels'?{spawnTierOffset:0}:{})}};
   if (id === 'tasty-travels') settings.localizedImages = [...new Set(Object.values(JSON.parse(resources['assets/resources/config.json']).paths).map(entry => entry[0]))];
   const source = {title:id, levelCount:id==='block-out'?2:1, markup, css, resources, settings, placements:{}, prelude, code};
