@@ -2,6 +2,7 @@
 window.InteractivePublish = (() => {
   let root, task, state, busy = false, authBusy = false, dirty = false, poll, saveTimer, parseTimer;
   let channel = '', previewId = '', sequence = 0, records = [], paused = false, saving = Promise.resolve(), logFrame = 0;
+  let previewOpen = false;
   let autoAppName = '', resolvedStoreUrl = '', resolvedApps = [], storeRequest;
   const fields = ['store_url', 'drama_name', 'episode', 'sequence', 'tag', 'min_view_duration'];
   const $ = id => root.querySelector('#pub-' + id);
@@ -305,8 +306,10 @@ window.InteractivePublish = (() => {
       text('package-meta', (state.package.bytes / 1024 / 1024).toFixed(2) + ' MB · ' + new Date(state.package.createdAt).toLocaleString('zh-CN'));
       $('download').href = endpoint('download');
       $('injected').replaceChildren(...state.package.injectedEvents.map(event => launchNode('div', '', '✔ ' + event)));
-      if (previewId !== state.package.id) loadPreview();
+      if (previewOpen && previewId !== state.package.id) loadPreview();
     }
+    if (previewOpen && !state.package) togglePreview();
+    renderPreviewControls();
     renderLaunch(running);
     if (state.interrupted) note(state.operation === 'launch' ? '上次直传被中断，请先到投放平台核实结果，避免重复创建创意。' : '上次操作被中断，请重新检查或生成素材包。', true);
     else if (state.error && !running) note(state.error, true);
@@ -381,6 +384,28 @@ window.InteractivePublish = (() => {
     addLog('workflow', 'launch', '开始直传投放平台，账号：' + state.launchEmail);
     state = await api('launch', { packageId, launchEmail: state.launchEmail });
     addLog('workflow', 'launch-success', state.launch.data);
+  }
+  function renderPreviewControls() {
+    $('preview-toggle').disabled = !state?.package;
+    $('preview-toggle').setAttribute('aria-expanded', String(previewOpen));
+    text('preview-toggle', previewOpen ? '关闭预览' : '展示预览');
+    $('reload').hidden = !previewOpen;
+    $('preview-container').hidden = !previewOpen;
+    $('preview-empty').hidden = previewOpen;
+    text('preview-empty', state?.package ? '预览已关闭，点击「展示预览」开始试玩。' : '生成素材包后，点击「展示预览」试玩注入后的结果。');
+  }
+  function togglePreview() {
+    if (!previewOpen && !state?.package) return;
+    previewOpen = !previewOpen;
+    if (previewOpen) loadPreview();
+    else {
+      channel = '';
+      // Unload the creative so closing also stops its audio, timers and events.
+      $('preview').removeAttribute('src');
+      $('preview').hidden = true;
+      addLog('preview', 'close', '预览已关闭');
+    }
+    renderPreviewControls();
   }
   function loadPreview() {
     if (!state?.package) return;
@@ -457,8 +482,9 @@ window.InteractivePublish = (() => {
       '<div class="publish-export-actions"><a id="pub-download" class="primary">📥 下载素材包 (.zip)</a><button type="button" id="pub-launch">🚀 一键直传投放平台</button></div>' +
       '<p id="pub-launch-account" class="publish-launch-account"></p><p id="pub-launch-stale" class="publish-launch-stale"></p><div id="pub-launch-feedback" class="publish-launch-feedback" role="status" aria-live="polite" hidden></div><div id="pub-injected" class="publish-injected-checklist"></div></section>' +
       '</div><aside class="publish-preview-panel" aria-label="投放素材预览与事件监听">' +
-      '<div class="publish-preview-actions"><button id="pub-reload" type="button" title="重新加载互动广告">🔄 重新体验</button><span class="publish-preview-mode">📦 互动广告模式</span></div>' +
-      '<div class="publish-phone-wrapper"><div class="publish-phone"><div class="publish-phone-island" aria-hidden="true"></div><div class="publish-phone-screen"><p id="pub-preview-empty">生成素材包后<br>在这里试玩注入后的结果</p><iframe id="pub-preview" title="注入后的投放素材预览" sandbox="allow-scripts" allow="autoplay" hidden></iframe></div></div></div>' +
+      '<div class="publish-preview-actions"><span class="publish-preview-mode">📦 互动广告模式</span><div class="row"><button id="pub-preview-toggle" type="button" aria-expanded="false" aria-controls="pub-preview-container" disabled>展示预览</button><button id="pub-reload" type="button" title="重新加载互动广告" hidden>🔄 重新体验</button></div></div>' +
+      '<p id="pub-preview-empty" class="hint publish-preview-hint">生成素材包后，点击「展示预览」试玩注入后的结果。</p>' +
+      '<div id="pub-preview-container" class="publish-phone-wrapper" hidden><div class="publish-phone"><div class="publish-phone-island" aria-hidden="true"></div><div class="publish-phone-screen"><iframe id="pub-preview" title="注入后的投放素材预览" sandbox="allow-scripts" allow="autoplay" hidden></iframe></div></div></div>' +
       '<section class="publish-console"><div class="publish-console-header"><h3><span class="publish-console-indicator" aria-hidden="true"></span>SDK & 事件实时监听控制台 (Live Monitor)</h3></div>' +
       '<div class="publish-console-tools"><input id="pub-filter" type="text" placeholder="筛选事件名称或内容" aria-label="筛选事件"><button id="pub-pause" type="button">暂停显示</button><button id="pub-clear" type="button">清空</button><button id="pub-export" type="button">导出日志</button></div>' +
       '<div id="pub-logs" class="publish-logs" role="log" aria-label="SDK 事件日志"></div><div class="publish-console-footer"><span id="pub-log-count" class="hint">0 条 · 实时监听</span><span class="hint">最多显示最近 1000 条</span></div></section>' +
@@ -506,6 +532,7 @@ window.InteractivePublish = (() => {
       updateFilenamePreview();
     });
     updateFilenamePreview();
+    $('preview-toggle').onclick = togglePreview;
     $('reload').onclick = loadPreview;
     $('filter').oninput = renderLogs;
     $('pause').onclick = () => { paused = !paused; text('pause', paused ? '继续显示' : '暂停显示'); renderLogs(); };
@@ -515,7 +542,7 @@ window.InteractivePublish = (() => {
       const a = document.createElement('a'); a.href = url; a.download = task.id + '-preview-events.json'; a.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
     window.addEventListener('message', event => {
-      if (event.source !== $('preview').contentWindow || !event.data || typeof event.data !== 'object') return;
+      if (!previewOpen || event.source !== $('preview').contentWindow || !event.data || typeof event.data !== 'object') return;
       const data = event.data;
       if (data.publishMonitor === channel && channel) addLog(data.kind, data.name, data.payload, data.ts);
       else if (['novvy_sdk_event', 'novvy_playable_event'].includes(data.type) || data.novvy === 'h5') {
