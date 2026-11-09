@@ -1,3 +1,4 @@
+import { assembledResult, checkAssemblyReplayCta } from './lib/origin-host-runtime.mjs';
 import { installOriginCta } from './lib/origin-cta-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -67,6 +68,16 @@ export function runtime(entry, intro = false, allowReplay = false) {
 export default async function test(a) {
   const entry = getEntry('freecell-origin');
   const base = { root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config:entry.template.defaults };
+  const assembled = originHtml({ ...base, config: { ...base.config, intro: { enabled: false }, gameplay: { allowReplay: true } } }).html;
+  await checkAssemblyReplayCta(a, assembled, 'freecell');
+  for (const kind of ['fail', 'win']) {
+    const result = await assembledResult(assembled, kind, 'freecell');
+    a.check(!result.elements['freecell-result'].hidden, kind + ' assembly displays its result panel');
+    a.equal(result.controls.map(button => button.textContent), [kind === 'win' ? 'Play again' : 'Try again'], kind + ' assembled result offers replay without Continue');
+    await result.replay();
+    a.check(result.rounds === 2 && result.elements['freecell-result'].hidden, kind + ' assembly replay still starts a fresh game');
+    a.equal(result.events.filter(event => event.type === 'novvy:origin-replay').length, 1, kind + ' assembly replay emits once');
+  }
   a.check(configWhitelistFor(entry.id).has('playableCta'),'CTA configuration persists');
   a.check(configWhitelistFor(entry.id).has('gameplay'),'replay configuration persists');
   a.equal(entry.template.defaults.gameplay, { allowReplay: false }, 'replay is opt-in');

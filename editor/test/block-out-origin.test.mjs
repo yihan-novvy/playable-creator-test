@@ -1,4 +1,5 @@
 import { installOriginCta } from './lib/origin-cta-runtime.mjs';
+import { assembledResult } from './lib/origin-host-runtime.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -60,10 +61,21 @@ export function runtime(entry, intro = false, allowReplay) {
 
 export default async function test(assert) {
   const entry = getEntry('block-out-origin');
+  const nativeSource = JSON.parse(fs.readFileSync(path.join(entry.templateDir, 'game/game.js'), 'utf8').match(/^const SOURCE=(.*);$/m)[1]);
+  assert.check(!nativeSource.markup.includes('data-origin-continue'), 'standalone native result also omits Continue');
   assert.check(configWhitelistFor(entry.id).has('playableCta'), 'CTA settings persist through task PATCH');
   assert.check(configWhitelistFor(entry.id).has('gameplay'), 'replay settings persist through task PATCH');
   const base = { root: entry.templateDir, overlaysRoot: entry.dir, template: entry.template, config: entry.template.defaults };
   const plain = blockOutHtml(base);
+  const replayHtml = blockOutHtml({ ...base, config: { ...base.config, gameplay: { allowReplay: true } } }).html;
+  const completed = await assembledResult(replayHtml, 'win', 'block-out', { level: 2, levelCount: 2 });
+  assert.check(!completed.elements['block-out-result'].hidden, 'last level displays the success panel');
+  assert.equal(completed.controls.map(button => button.textContent), ['Play again'], 'success panel has replay without Continue');
+  await completed.replay();
+  assert.check(completed.rounds === 2 && completed.elements['block-out-result'].hidden, 'success replay still starts a fresh game');
+  const intermediate = await assembledResult(replayHtml, null, 'block-out', { level: 1, levelCount: 2 });
+  intermediate.shell.win({ continuePlaying: true });
+  assert.check(intermediate.elements['block-out-result'].hidden, 'first level keeps its native transition without a final dialog');
   assert.check(plain.html.includes('"gameplay":{"allowReplay":false}'), 'replay defaults off');
   const withIntro = blockOutHtml({ ...base, config: { ...base.config, intro: { enabled: true } }, media: { introVideo: 'intro-video.mp4', introPoster: 'poster.webp' } });
   assert.equal(plain.stageChain, ['playable'], 'two native levels share one playable stage');

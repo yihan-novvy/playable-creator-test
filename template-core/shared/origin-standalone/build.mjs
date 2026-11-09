@@ -84,8 +84,8 @@ export function compileStandalone(root, files, scriptNames) {
   }
   const panel = {'tasty-travels':'tasty','grill-sort':'grill',freecell:'freecell','block-out':'block-out'}[id];
   markup = once(markup, `id="${panel}-replay"`, `id="${panel}-replay" data-origin-replay`);
-  // Grill Sort keeps only its native retry action in both result states.
-  if (id !== 'grill-sort') {
+  // These templates keep only their native retry action in the result panel.
+  if (!['grill-sort', 'freecell', 'block-out'].includes(id)) {
     markup = markup.replace(new RegExp(`(<button[^>]+id="${panel}-replay"[^>]*>[\\s\\S]*?<\\/button>)`), '$1<button type="button" data-origin-continue hidden>Continue</button>');
     if (!markup.includes('data-origin-continue')) throw new Error('Missing native result panel: ' + id);
     css += '\n[data-origin-continue]{display:block;margin:12px auto 0;border:1px solid currentColor;border-radius:12px;padding:10px 24px;background:transparent;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation}[data-origin-continue][hidden]{display:none}[data-origin-continue]:disabled{opacity:.65}';

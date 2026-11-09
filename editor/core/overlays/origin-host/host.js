@@ -3,6 +3,8 @@
   const config = window.ORIGIN_HOST_SETTINGS;
   const root = document.getElementById('standalone-origin');
   const prefix = config.blockOut ? 'block-out' : 'origin';
+  const replayCta = ['grill', 'freecell'].includes(config.resultPrefix);
+  if (replayCta) window.__novvyReplayable = config.gameplay.allowReplay === true;
   // A local preview can request silence without changing the exported game's
   // defaults; on the platform the real host provides options.env.muted.
   let instance, entry, creating = false, generation = 0, settled = false, started = false, steps = 0, viewable = true, muted = new URLSearchParams(location.search).get('muted') === '1';
@@ -10,11 +12,13 @@
   const emit = (name, detail) => window.dispatchEvent(new CustomEvent('novvy:' + name, {detail: detail || {}}));
   const panel = document.getElementById(config.resultPrefix + '-result');
   const replayButton = document.getElementById(config.resultPrefix + '-replay');
-  const continueButton = document.createElement('button');
-  continueButton.type = 'button'; continueButton.textContent = 'Continue';
-  continueButton.dataset.originContinue = '';
-  continueButton.style.cssText = 'display:block;margin:12px auto 0;border:1px solid currentColor;border-radius:12px;padding:10px 24px;background:transparent;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation';
-  if (replayButton) replayButton.after(continueButton);
+  const continueButton = ['grill', 'freecell', 'block-out'].includes(config.resultPrefix) ? null : document.createElement('button');
+  if (continueButton) {
+    continueButton.type = 'button'; continueButton.textContent = 'Continue';
+    continueButton.dataset.originContinue = '';
+    continueButton.style.cssText = 'display:block;margin:12px auto 0;border:1px solid currentColor;border-radius:12px;padding:10px 24px;background:transparent;color:inherit;font:inherit;cursor:pointer;touch-action:manipulation';
+    if (replayButton) replayButton.after(continueButton);
+  }
   function environment() {
     const hud = document.getElementById('novvy-training-hud'), card = document.getElementById('novvy-cta');
     return {api:1, platform:/Android/i.test(navigator.userAgent)?'android':/iPhone|iPad/i.test(navigator.userAgent)?'ios':'web', language:navigator.language, muted,
@@ -85,10 +89,13 @@
   }
   window.NovvyGame = function(factory) { entry = factory; create(); };
   replayButton?.addEventListener('click', () => {
-    if (!settled || creating || !config.gameplay.allowReplay) return;
-    replayButton.disabled = true; create(true);
+    if (!settled || creating || !config.gameplay.allowReplay || !entered || document.hidden || !viewable) return;
+    replayButton.disabled = true;
+    // Request conversion while the completed round still exists, then reset it.
+    if (replayCta) emit('replay-cta');
+    create(true);
   });
-  continueButton.addEventListener('click', () => {
+  continueButton?.addEventListener('click', () => {
     if (!settled) return;
     if (panel) panel.hidden = true;
     if (!instance?.end()) shell.end();

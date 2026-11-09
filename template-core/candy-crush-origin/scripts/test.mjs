@@ -98,11 +98,11 @@ const entry=getEntry('candy-crush-origin'),config=effectiveConfig(entry.template
 assert.equal(config.gameplay.tapsToBreak,undefined);
 assert.equal(config.cta.enabled,true);assert.equal(config.playableCta.enabled,true);assert.equal(config.gameplay.allowReplay,false);assert.equal(config.intro.enabled,false);
 const build=config=>candyCrushHtml({root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config,preview:true});
-const html=build(config).html;assert.ok(html.includes('novvy-cta-btn'));assert.ok(html.includes('Candy Crush Saga'));
+const {html,game:assembledGame}=build(config);assert.ok(html.includes('novvy-cta-btn'));assert.ok(html.includes('Candy Crush Saga'));
 for(const legacyCount of [1,5,10,71,72,'10',null]){
   const configured=build({...config,gameplay:{tapsToBreak:legacyCount}});
-  assert.equal(configured.game,game,'legacy settings cannot override fixed 71');
-  assert.ok(configured.html.includes('const CANDY_TARGET_HITS=71;'));
+  assert.equal(configured.game,assembledGame,'legacy settings cannot override the canonical fixed-71 artifact');
+  assert.ok(configured.html.includes(assembledGame),'preview embeds the same canonical artifact');
   assert.equal(configured.targetHits,71);
 }
 assert.ok(!build({...config,cta:{enabled:false}}).html.includes('id="novvy-cta"'));

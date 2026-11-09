@@ -43,10 +43,10 @@
       "levelCount": 2,
       "playableType": "level",
       "file": "editor/templates/block-out-origin/standalone/game.js",
-      "bytes": 3431981,
-      "sha256": "48687c45ffafb051dea6c1da6e5fe072faf3dd54e1dabfe3d442a46d8090b486",
-      "payloadSha256": "526777858b7401efe3f1ca6c7cd86edba3a449d3747a9cf90261f4997262cd0b",
-      "uncompressedBytes": 5581673
+      "bytes": 3431829,
+      "sha256": "7aa21f0ded5c693a89cd43076d580a1f34c3c19939eb8e20d8d17ff39d785584",
+      "payloadSha256": "d98e6ea2b445c102372d5517b8dadc94d7e6c3d274401b8c98346286007362a1",
+      "uncompressedBytes": 5581300
     },
     {
       "id": "candy-crush-origin",
@@ -76,10 +76,10 @@
       "levelCount": 1,
       "playableType": "level",
       "file": "editor/templates/freecell-origin/standalone/game.js",
-      "bytes": 1755673,
-      "sha256": "057465eb84604c31caead90254416900720faecb0985e74076dd2e978dfc9a40",
-      "payloadSha256": "91942f4eab63e6a50ee3f8ba968e4b0c81fae3d6107907d975cf9a7ac9bf05e2",
-      "uncompressedBytes": 2533447
+      "bytes": 1755537,
+      "sha256": "d66fc6a7ffc2e431acd29d93640e0c291df4a72c0b8bf3c9fbceb81a7e166b11",
+      "payloadSha256": "619737c5debca032ff25e96d91e875b1eb7097e49289d0a7db065d121b067296",
+      "uncompressedBytes": 2533074
     },
     {
       "id": "grill-sort-origin",

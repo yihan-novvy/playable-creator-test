@@ -1,3 +1,4 @@
+import { assembledResult, checkAssemblyReplayCta } from './lib/origin-host-runtime.mjs';
 import { installOriginCta } from './lib/origin-cta-runtime.mjs';
 import fs from 'node:fs';
 import vm from 'node:vm';
@@ -81,10 +82,22 @@ function nativeAudioManager(entry) {
   } });
   return { Type, sources, logs };
 }
+
+
 export default async function test(a) {
   const entry = getEntry('grill-sort-origin');
   a.check(configWhitelistFor(entry.id).has('gameplay'), 'gameplay settings persist');
   const base = { root: entry.templateDir, pluginDir: entry.dir, template: entry.template, config: entry.template.defaults };
+  const assembled = originHtml({ ...base, config: { ...base.config, intro: { enabled: false }, gameplay: { allowReplay: true } } }).html;
+  await checkAssemblyReplayCta(a, assembled, 'grill');
+  for (const kind of ['fail', 'win']) {
+    const result = await assembledResult(assembled, kind, 'grill');
+    a.check(!result.elements['grill-result'].hidden, kind + ' assembly displays its result panel');
+    a.equal(result.controls.map(button => button.textContent), [kind === 'win' ? 'Play again' : 'Try again'], kind + ' assembled result offers replay without Continue');
+    await result.replay();
+    a.check(result.rounds === 2 && result.elements['grill-result'].hidden, kind + ' assembly replay still starts a fresh game');
+    a.equal(result.events.filter(event => event.type === 'novvy:origin-replay').length, 1, kind + ' assembly replay emits once');
+  }
   a.equal(originHtml(base).stageChain, ['playable'], 'pure chain');
   a.equal(originHtml({ ...base, config: { ...base.config, intro: { enabled: true } }, media: { introVideo: 'intro-video.mp4', introPoster: 'poster.webp' } }).stageChain, ['video', 'playable'], 'combined chain');
   const custom = originHtml({ ...base, config: { ...base.config, gameplay: { countdownSeconds: 45, allowReplay: false } } }).html;

@@ -96,7 +96,11 @@
   });
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;muted=document.getElementById('novvy-intro-video')?.muted??muted;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
-  replay.addEventListener('click',()=>{if(!settled||!config.allowReplay||creating)return;create(started||replayPending);});
+  replay.addEventListener('click',()=>{
+    if(!settled||!config.allowReplay||creating||document.hidden||!viewable)return;
+    requestClick({click_source:'forced_click_to_appstore',scene:'playable-replay'});
+    create(started||replayPending);
+  });
   let touched=false;
   root.addEventListener('pointerdown',()=>{if(started&&!settled&&!touched){touched=true;call('onStart');}},{passive:true});
   const resize=()=>instance?.setEnv(environment());

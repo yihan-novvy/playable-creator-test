@@ -12,7 +12,7 @@ async function fixture({allowReplay=true,intro=false,ctaEnabled=true,policy={ena
   const window=Object.assign(new EventTarget(),{CCS_CONFIG:{intro,title:false,allowReplay,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
   window.addEventListener('novvy:cta-card',()=>{if(ctaEnabled)nodes['novvy-cta'].hidden=false;});
   vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console,queueMicrotask});
-  window.NovvyGame(async(_root,shell)=>{const game={shell,start(){},destroy(){},pause(){},resume(){},setEnv(env){game.env=env;}};instances.push(game);return game;});
+  window.NovvyGame(async(_root,shell)=>{const game={shell,start(){},destroy(){calls.push(['destroy']);},pause(){},resume(){},setEnv(env){game.env=env;}};instances.push(game);return game;});
   await flush();
   return{window,document,nodes,calls,instances,advance(){now+=1100;},emit(name,detail){window.dispatchEvent(new CustomEvent(name,{detail}));}};
 }
@@ -31,10 +31,14 @@ f.document.hidden=false;f.emit('novvy:viewablechange',{viewable:false});f.emit('
 f.emit('novvy:viewablechange',{viewable:true});f.emit('novvy:cta-interact');assert.equal(clicks(f).length,2,'card works after return');
 for(let i=1;i<=17;i++)f.instances[0].shell.step(i/17*100);
 f.instances[0].shell.win();assert.equal(f.nodes['ccs-result'].hidden,false);assert.equal(f.nodes['ccs-game'].inert,true);assert.equal(f.nodes['ccs-replay'].textContent,'Play again');assert.equal(f.nodes['ccs-replay'].focused,true);assert.equal(clicks(f).length,2,'disabled step policy never opens a store');
-f.advance();f.nodes['ccs-replay'].dispatchEvent(new Event('click'));await flush();
-assert.equal(f.instances.length,2);assert.equal(f.nodes['ccs-result'].hidden,true);assert.equal(f.nodes['ccs-game'].inert,false);assert.equal(clicks(f).length,2,'replay is not a store control');
+f.advance();f.nodes['ccs-replay'].dispatchEvent(new Event('click'));f.nodes['ccs-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(f.instances.length,2);assert.equal(f.nodes['ccs-result'].hidden,true);assert.equal(f.nodes['ccs-game'].inert,false);assert.equal(clicks(f).length,3,'double-clicked replay requests one CTA');
+assert.equal(clicks(f).at(-1)[1].click_source,'forced_click_to_appstore');
+assert.equal(clicks(f).at(-1)[1].scene,'playable-replay');
+assert.ok(f.calls.indexOf(clicks(f).at(-1))<f.calls.findIndex(c=>c[0]==='destroy'),'replay CTA precedes destroying the old game');
+assert.equal(f.calls.filter(c=>c[0]==='onReplay').length,1,'new game reports replay once');
 assert.equal(f.calls.filter(c=>c[0]==='setStage').length,2,'replay retains the playable stage');
-f.emit('novvy:cta-interact');assert.equal(clicks(f).length,3,'card remains usable after replay');
+f.advance();f.emit('novvy:cta-interact');assert.equal(clicks(f).length,4,'card remains usable after replay');
 const off=await fixture({ctaEnabled:false});off.emit('novvy:cta-interact');assert.equal(clicks(off).length,0);assert.equal(off.instances[0].env.insets.bottom,0,'disabled card gives space back');
 const policy={enabled:true,mode:'steps',afterSteps:4,intervals:[4,3,2]};
 const s=await fixture({intro:true,ctaEnabled:false,policy});
@@ -45,7 +49,7 @@ assert.deepEqual(clicks(s).map(c=>c[1].step),[4,8,11,13,15,17],'first threshold,
 assert.ok(clicks(s).every(c=>c[1].click_source==='forced_click_to_appstore'&&c[1].auto_jump==='true'&&c[1].auto_jump_mode==='steps'),'step policy attribution is fixed');
 s.advance();s.instances[0].shell.win();assert.equal(clicks(s).length,6,'win does not duplicate an earlier automatic jump');
 s.nodes['ccs-replay'].dispatchEvent(new Event('click'));await flush();
-assert.equal(clicks(s).length,6,'replay itself does not jump');
+assert.equal(clicks(s).length,7,'replay jumps independently of previous step conversions');
 for(let i=1;i<=4;i++){s.advance();s.instances[1].shell.step(i/17*100);}
 assert.equal(clicks(s).at(-1)[1].step,4,'replay resets the first threshold and round step count');
 const once=await fixture({policy:{...policy,afterSteps:2,intervals:[]}});
@@ -56,6 +60,12 @@ for(let i=1;i<=17;i++){fallback.advance();fallback.instances[0].shell.step(i/17*
 fallback.instances[0].shell.win();fallback.instances[0].shell.win();
 assert.equal(clicks(fallback).length,1);assert.equal(clicks(fallback)[0][1].auto_jump_mode,'win','win fallback applies before first threshold');
 const failed=await fixture({policy});failed.instances[0].shell.fail();assert.equal(clicks(failed).length,0,'failure has no automatic win jump');
+failed.document.hidden=true;failed.nodes['ccs-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(failed.instances.length,1);assert.equal(clicks(failed).length,0,'hidden replay cannot convert');
+failed.document.hidden=false;failed.nodes['ccs-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(failed.instances.length,2);assert.equal(clicks(failed).length,1,'failure retry requests CTA then starts a new round');
+fallback.nodes['ccs-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(fallback.instances.length,2);assert.equal(clicks(fallback).length,1,'immediate replay respects the one-second win CTA cooldown');
 const cooldown=await fixture({policy:{...policy,afterSteps:1,intervals:[2]}});
 cooldown.emit('novvy:cta-interact');cooldown.instances[0].shell.step(6);assert.equal(clicks(cooldown).length,1,'manual and automatic CTA share cooldown');
 cooldown.document.hidden=true;cooldown.advance();cooldown.instances[0].shell.step(12);
@@ -76,5 +86,7 @@ assert.ok(complete.calls.findIndex(c=>c[0]==='onComplete')<complete.calls.findIn
 const noReplay=await fixture({allowReplay:false});noReplay.instances[0].shell.win();
 assert.equal(noReplay.nodes['ccs-result'].hidden,false);assert.equal(noReplay.nodes['ccs-replay'].hidden,true);
 assert.equal(noReplay.nodes['ccs-result'].focused,true);
+noReplay.nodes['ccs-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(clicks(noReplay).length,0);assert.equal(noReplay.instances.length,1,'disabled replay cannot convert or restart');
 assert.ok(!code.includes('ccs-continue'));
 assert.ok(!fs.readFileSync(new URL('../src/index.html',import.meta.url),'utf8').includes('ccs-continue'));

@@ -12,6 +12,7 @@ const provenance = JSON.parse(fs.readFileSync(path.join(root, 'source/provenance
 assert.equal(createHash('sha256').update(source).digest('hex'), provenance.originalSha256);
 const first = compileSource(source), second = compileSource(source);
 assert.deepEqual(first, second);
+assert.ok(!first.files['game/game.js'].includes('data-origin-continue hidden'), 'standalone result panel has no Continue button');
 const level = JSON.parse(first.files['game/level.json']);
 const cards = Object.values(level.tableau).flatMap(column => [...column.closed, ...column.opened]);
 assert.equal(cards.length, 52);
