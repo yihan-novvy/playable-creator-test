@@ -8,18 +8,13 @@
       var SetLabel = requireModule('SetLabel').default;
       var utils = requireModule('Utils').default;
       // Cocos consumes and removes config.json while loading. The build keeps
-      // this small image-name inventory separately for later locale changes.
+      // this small image-name inventory separately for native label loading.
       var images = new Set(window.__ORIGIN_CONFIG__.localizedImages);
-      function language() {
-        var requested = window.ORIGIN_RUNTIME.env.language || navigator.language || 'en';
-        var key = String(requested).toLowerCase().split(/[-_]/)[0];
-        return Object.prototype.hasOwnProperty.call(languages, key) ? key : 'en';
-      }
       function syncManager() {
-        // The native component reads cc.sys when this flag is true. Resolve
-        // from env here instead, including supported-language fallback.
+        // This creative is the user's English template, as in layout.js.
+        // Device language supplied by the host must not translate its content.
         manager.isMultilingual = false;
-        manager.curLanguage = language();
+        manager.curLanguage = 'en';
       }
       Game.prototype.setLanguage = function () {
         syncManager();
@@ -45,16 +40,6 @@
           if (!images.has('images/' + name)) name = this.node.name + '-en';
           utils.setSpriteFrame(this.node, name);
         }
-      };
-      var previous = window.ORIGIN_RUNTIME.environmentChanged;
-      window.ORIGIN_RUNTIME.environmentChanged = function (env, old) {
-        if (previous) previous(env, old);
-        if (env.language === old.language) return;
-        syncManager();
-        var game = Game.instance;
-        if (game) game.setLanguage();
-        var scene = cc.director.getScene();
-        if (scene) scene.getComponentsInChildren(SetLabel).forEach(function (component) { component.onLoad(); });
       };
       syncManager();
     }

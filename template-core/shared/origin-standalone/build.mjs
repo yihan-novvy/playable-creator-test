@@ -19,8 +19,8 @@ export function compileStandalone(root, files, scriptNames) {
   let adapter = local('standalone-adapter.js');
   let layout = files['game/layout.js'] || '';
   if (id === 'tasty-travels') {
-    // Keep the legacy HTML template intact; only the standalone adapter takes
-    // its locale from the environment supplied to NovvyGame.
+    // Keep the legacy HTML template intact and preserve its English creative
+    // in the standalone adapter, including embedded order artwork.
     const start = layout.indexOf('      // SetLabel uses these settings');
     const end = layout.indexOf('      var originalBgm', start);
     if (start < 0 || end < start) throw new Error('Tasty locale seam changed');
