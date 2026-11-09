@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 const code=fs.readFileSync(new URL('../src/host.js',import.meta.url),'utf8');
 const flush=async()=>{for(let i=0;i<8;i++)await Promise.resolve();};
 async function fixture({intro=false,ctaEnabled=true,allowReplay=true,policy={enabled:false,mode:'steps',afterSteps:4,intervals:[4,3,2]}}={}){
-  class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}focus(){document.activeElement=this;}}
+  class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}focus(){document.activeElement=this;}replaceChildren(){}}
   const nodes=Object.fromEntries(['wse-game','wse-status','wse-replay','wse-result','wse-result-title','wse-result-copy','novvy-cta'].map(id=>[id,new Element()]));
   const document=Object.assign(new EventTarget(),{hidden:false,getElementById:id=>nodes[id]||null,createElement:()=>new Element(),body:{append(){}},documentElement:{style:{setProperty(){}}}});
   const calls=[],instances=[],timers=new Map(),frames=new Map();let now=1000,timerId=0,frameId=0;

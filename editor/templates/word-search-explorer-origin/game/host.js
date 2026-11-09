@@ -105,9 +105,14 @@
     if(replayPending){replayPending=false;call('onReplay');}
     if(document.hidden||!viewable)instance.pause();
   }
-  function loadFailed(error){clearWinCta();creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
-  async function create(restarting=false){if(creating)return;clearWinCta();creating=true;result.hidden=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
-    try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
+  function destroyInstance(){
+    const previous=instance;instance=null;
+    try{previous?.destroy();}catch(error){console.warn('Word Search Explorer instance cleanup',error);}
+    finally{root.replaceChildren();}
+  }
+  function loadFailed(error){clearWinCta();creating=false;started=false;settled=true;destroyInstance();replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
+  async function create(restarting=false){if(creating)return;clearWinCta();creating=true;result.hidden=true;const token=++generation;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
+    try{destroyInstance();const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
   result.addEventListener('keydown',event=>{
@@ -134,7 +139,7 @@
   const syncVisibility=()=>{if(document.hidden||!viewable){pauseWinCta();instance?.pause();}else if(started){instance?.resume();scheduleWinCta();}};
   document.addEventListener('visibilitychange',syncVisibility);
   window.addEventListener('novvy:viewablechange',event=>{viewable=event.detail?.viewable===true;syncVisibility();});
-  window.addEventListener('pagehide',()=>{clearWinCta();if(started)call('endStage');generation++;observer.disconnect();instance?.destroy();});
+  window.addEventListener('pagehide',()=>{clearWinCta();if(started)call('endStage');generation++;observer.disconnect();destroyInstance();});
   const video=document.getElementById('novvy-intro-video');
   document.getElementById('novvy-intro-sound')?.addEventListener('click',()=>queueMicrotask(()=>{muted=video.muted;instance?.setEnv({muted});}));
   try{if(video)window.NovvyAnalytics?.registerMedia(video,{name:'intro_video'});}catch(_){}

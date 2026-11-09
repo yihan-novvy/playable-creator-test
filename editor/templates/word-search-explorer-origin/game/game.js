@@ -134,13 +134,24 @@ NovvyGame(function(container,shell,options){
     configure(config){Object.assign(config.options,{isGoToMarketEnabled:false,openStoreForEveryMove:false,goToMarketMoves:0,goToMarketSeconds:0,goToMarketTaps:0,isEntireScreenCTAEnabled:false,isInGameCTAEnabled:false,isEndCardEnabled:false,endCardAutoForwardToStoreSeconds:0,isAutoplayEnabled:false});},
     attach(value){app=value;input(false);sound();},bounds,contentBounds,
     loadError(files){rejectReady(new Error('Original embedded assets failed: '+files.size));},
-    ready(value){app=value;layout();input(false);sound();scope.window.requestAnimationFrame(()=>{pause();resolveReady(runtime);});},
+    ready(value){if(disposed)return;app=value;layout();input(false);sound();scope.window.requestAnimationFrame(()=>{if(disposed)return;pause();resolveReady(runtime);});},
     step(count,total){if(!started||paused||disposed||finished||count<=last||total<=0)return;last=count;shell.step(Math.min(100,count/total*100));if(count===total){finished=true;scope.window.setTimeout(()=>{if(!disposed){input(false);shell.win();}},600);}},
   };
   const runtime={
     start(){if(disposed||started)return;started=true;resume();},pause,resume,
     setEnv(patch){env={...env,...patch};layout();sound();},
-    destroy(){if(disposed)return;disposed=true;input(false);const game=app?.playable?.phaserGame;if(game){game.destroy(true);game.runDestroy?.();}scope.dispose();view.mount.remove();},
+    destroy(){
+      if(disposed)return;
+      disposed=true;
+      // Phaser is paused after a result, so its deferred destroy needs to run
+      // here. A native cleanup error must not strand the next puzzle.
+      try{
+        scope.pause();input(false);
+        const game=app?.playable?.phaserGame;
+        if(game){game.destroy(true);game.runDestroy?.();}
+      }catch(error){console.warn('Word Search Explorer engine cleanup',error);}
+      finally{try{scope.dispose();}finally{view.mount.remove();app=null;}}
+    },
   };
   try{scope.run(SOURCE.engine);}catch(error){runtime.destroy();rejectReady(error);}
   return ready.catch(error=>{runtime.destroy();throw error;});

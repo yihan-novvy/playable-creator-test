@@ -54,7 +54,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     });
     wrap.append(el('h3',{},['步数自动跳转']),el('div',{class:'dragon-config-grid'},[
       checkbox('启用步数自动跳转','playableCta','enabled',policy.enabled!==false),field('首跳有效步数（1–99）',first),field('后续间隔（最后一项重复，留空仅首跳）',intervals)
-    ]),el('p',{class:'hint'},['成功找到一个未完成目标计 1 步，整局共 17 步；无效拖选不计步。默认第 4 步首跳，之后间隔 4、3、2，最后每 2 步重复。开启后每次通关都会跳转一次，最后一步的步数跳转合并为通关跳转；间隔留空只限制步数跳转次数。重玩重新计数，重玩按钮本身不跳店。下载卡开关独立，修改后需重新打包。独立 game.js 包的跳转请在平台组装页设置。']));
+    ]),el('p',{class:'hint'},['成功找到一个未完成目标计 1 步，整局共 17 步；无效拖选不计步。默认第 4 步首跳，之后间隔 4、3、2，最后每 2 步重复。开启后每次通关都会在弹窗显示后跳转一次，最后一步的步数跳转合并为通关跳转；间隔留空只限制步数跳转次数。重玩重新计数，重玩按钮同时请求跳店，所有跳转共享 1 秒间隔。下载卡开关独立，修改后需重新打包。独立 game.js 包的跳转请在平台组装页设置。']));
     const buttonColor = config().cta?.buttonColor;
     const color = el('input', { type: 'color', value: /^#[0-9a-f]{6}$/i.test(buttonColor || '') ? buttonColor : '#10b981' });
     color.addEventListener('change', async () => { await save({ cta: { buttonColor: color.value } }); await refresh(true); });
