@@ -94,8 +94,7 @@ function decodePngDataUrl(dataUrl) {
 }
 
 // Retain metadata for existing tasks while limiting all new task creation.
-const CREATABLE_TEMPLATE_IDS = new Set(['block-out-origin', 'freecell-origin', 'grill-sort-origin', 'project-makeover-origin', 'word-search-explorer-origin', 'screwdom-origin', 'travel-town-origin', 'candy-crush-origin', 'color-block-jam-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin']);
-CREATABLE_TEMPLATE_IDS.add('pixel-flow-origin');
+const CREATABLE_TEMPLATE_IDS = new Set(['block-out-origin', 'freecell-origin', 'grill-sort-origin', 'word-search-explorer-origin', 'screwdom-origin', 'travel-town-origin', 'candy-crush-origin', 'color-block-jam-origin', 'tasty-travels-origin', 'zen-word-100m-origin', 'zen-word-92m-origin']);
 
 function listTemplates() {
   return listEntries().map((entry) => ({
@@ -206,7 +205,7 @@ async function handleApi(req, res, url, publisher) {
     const name = String(body.name || '').trim();
     if (!name) return sendError(res, 400, '任务名不能为空');
     if (!templateById(String(body.templateId || ''))) return sendError(res, 400, '未知模板');
-    if (!CREATABLE_TEMPLATE_IDS.has(body.templateId)) return sendError(res, 400, '当前支持创建 Block Out、FreeCell、Grill Sort、Project Makeover、Tasty Travels 和 Zen Word 任务');
+    if (!CREATABLE_TEMPLATE_IDS.has(body.templateId)) return sendError(res, 400, '该模板暂不支持创建新任务，请选择其他模板');
     const doc = createTask({ name, templateId: String(body.templateId) });
     return sendJson(res, 201, doc);
   }
