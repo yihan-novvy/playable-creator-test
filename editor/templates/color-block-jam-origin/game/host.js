@@ -8,7 +8,19 @@
   let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;
-  const call=(name,...args)=>{try{sdk()?.[name]?.(...args);}catch(error){console.warn('Color Block Jam host SDK',error);}};
+  // Keep SDK calls explicit so the original-ZIP inspector can recognize them.
+  const call=(name,...args)=>{try{
+    if(sdk()?.[name]==null)return;
+    switch(name){
+      case 'setStageList': window.NovvyPlayable.setStageList(...args);break;
+      case 'setStage': window.NovvyPlayable.setStage(...args);break;
+      case 'onStep': window.NovvyPlayable.onStep(...args);break;
+      case 'onStart': window.NovvyPlayable.onStart(...args);break;
+      case 'onComplete': window.NovvyPlayable.onComplete(...args);break;
+      case 'onReplay': window.NovvyPlayable.onReplay(...args);break;
+      case 'endStage': window.NovvyPlayable.endStage(...args);break;
+    }
+  }catch(error){console.warn('Color Block Jam host SDK',error);}};
   call('setStageList',chain);call('setStage',1,chain[0]);
   const safeProbe=document.createElement('div');
   safeProbe.style.cssText='position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
@@ -42,7 +54,7 @@
     if(!started||creating||document.hidden||!viewable||pageSuspended||performance.now()-lastCta<1000)return false;
     if(source!=='cta_click'&&source!=='forced_click_to_appstore')return false;
     if(typeof sdk()?.click==='function'){
-      try{if(sdk().click({...details,click_source:source})===false)return false;}
+      try{if(window.NovvyPlayable.click({...details,click_source:source})===false)return false;}
       catch(error){console.warn('Color Block Jam host SDK',error);return false;}
     }else console.info('[Color Block Jam CTA preview]',{...details,click_source:source});
     lastCta=performance.now();

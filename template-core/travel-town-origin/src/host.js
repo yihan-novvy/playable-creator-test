@@ -8,7 +8,19 @@
   let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;
-  const call=(name,...args)=>{try{sdk()?.[name]?.(...args);}catch(error){console.warn('Travel Town host SDK',error);}};
+  // Keep SDK calls explicit so the original-ZIP inspector can recognize them.
+  const call=(name,...args)=>{try{
+    if(sdk()?.[name]==null)return;
+    switch(name){
+      case 'setStageList': window.NovvyPlayable.setStageList(...args);break;
+      case 'setStage': window.NovvyPlayable.setStage(...args);break;
+      case 'onStep': window.NovvyPlayable.onStep(...args);break;
+      case 'onStart': window.NovvyPlayable.onStart(...args);break;
+      case 'onComplete': window.NovvyPlayable.onComplete(...args);break;
+      case 'onReplay': window.NovvyPlayable.onReplay(...args);break;
+      case 'endStage': window.NovvyPlayable.endStage(...args);break;
+    }
+  }catch(error){console.warn('Travel Town host SDK',error);}};
   call('setStageList',chain);call('setStage',1,chain[0]);
   const safeProbe=document.createElement('div');
   safeProbe.style.cssText='position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
@@ -43,7 +55,7 @@
     if(source!=='cta_click'&&source!=='forced_click_to_appstore')return false;
     const previous=lastCta;lastCta=performance.now();
     try{
-      if(typeof sdk()?.click==='function')sdk().click({...details,click_source:source});
+      if(typeof sdk()?.click==='function')window.NovvyPlayable.click({...details,click_source:source});
       else console.info('[Travel Town CTA preview]',{...details,click_source:source});
     }catch(error){lastCta=previous;console.warn('Travel Town CTA failed',error);return false;}
     return true;

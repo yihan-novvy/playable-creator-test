@@ -7,7 +7,20 @@
   let nextCta=policy.afterSteps,intervalIndex=0,autoJumped=false,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;
-  const call=(name,...args)=>{try{sdk()?.[name]?.(...args);}catch(error){console.warn('Candy Crush Saga host SDK',error);}};
+  // Keep SDK calls explicit so the original-ZIP inspector can recognize them.
+  const call=(name,...args)=>{try{
+    if(sdk()?.[name]==null)return;
+    switch(name){
+      case 'setStageList': window.NovvyPlayable.setStageList(...args);break;
+      case 'setStage': window.NovvyPlayable.setStage(...args);break;
+      case 'onStep': window.NovvyPlayable.onStep(...args);break;
+      case 'onStart': window.NovvyPlayable.onStart(...args);break;
+      case 'onComplete': window.NovvyPlayable.onComplete(...args);break;
+      case 'onReplay': window.NovvyPlayable.onReplay(...args);break;
+      case 'endStage': window.NovvyPlayable.endStage(...args);break;
+      case 'click': window.NovvyPlayable.click(...args);break;
+    }
+  }catch(error){console.warn('Candy Crush Saga host SDK',error);}};
   call('setStageList',chain);call('setStage',1,chain[0]);
   const safeProbe=document.createElement('div');
   safeProbe.style.cssText='position:fixed;visibility:hidden;pointer-events:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)';
