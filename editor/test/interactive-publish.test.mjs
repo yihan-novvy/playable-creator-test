@@ -6,7 +6,7 @@ import { webcrypto } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { run } from '../core/lib/exec.mjs';
 import { createServer } from '../server.mjs';
-import { createTask, deleteTask, recordStepResult, updateTaskConfig, readTask } from '../lib/store.mjs';
+import { createTask, deleteTask, updateTaskConfig, readTask } from '../lib/store.mjs';
 import { taskResultDir, taskProjectDir } from '../lib/paths.mjs';
 import { mockPublishService } from './publish-service-fixture.mjs';
 
@@ -29,10 +29,12 @@ export default async function test(a) {
   const settings = { store_url: 'https://apps.apple.com/us/app/example/id123\nhttps://play.google.com/store/apps/details?id=com.example', app_name: 'Example', category: 'Tier1:剧情融合', sequence: '1', tag: 't'.repeat(64) };
   try {
     a.equal((await call('inspect', {})).status, 409, 'cannot publish without a successful current pack');
-    fs.mkdirSync(taskResultDir(task.id), { recursive: true });
-    fs.writeFileSync(path.join(taskResultDir(task.id), 'index.html'), '<!doctype html><html><head><title>HTTP fixture</title></head><body>ZIP contract fixture</body></html>');
+    const packed = await fetch(base + '/api/tasks/' + task.id + '/run', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ step: 'pack' }),
+    });
+    a.equal(packed.status, 200, 'publish fixture uses the current standalone pack pipeline');
+    await packed.json();
     fs.writeFileSync(path.join(taskResultDir(task.id), 'asset.txt'), 'archive-content');
-    recordStepResult(task.id, { stepId: 'pack', ok: true });
     const before = JSON.stringify(readTask(task.id));
     a.equal((await call('settings', settings, 'PATCH')).status, 200, 'publishing form can be saved');
     a.equal(JSON.stringify(readTask(task.id)), before, 'publishing settings do not invalidate gameplay pack');
@@ -55,7 +57,11 @@ export default async function test(a) {
     let release;
     mock.holdInspect(new Promise(resolve => { release = resolve; }));
     const checking = call('inspect', {});
-    while (!mock.calls.some(item => item.path === '/api/interactive-zip/inspect')) await new Promise(resolve => setTimeout(resolve, 10));
+    const inspectDeadline = Date.now() + 10_000;
+    while (!mock.calls.some(item => item.path === '/api/interactive-zip/inspect')) {
+      if (Date.now() > inspectDeadline) throw new Error('Inspection did not reach the fixture service within 10 seconds');
+      await new Promise(resolve => setTimeout(resolve, 10));
+    }
     a.equal((await call()).data.running, true, 'in-flight operation survives frontend reload');
     a.equal((await call('package', {})).status, 409, 'duplicate operation is blocked while inspection runs');
     release();

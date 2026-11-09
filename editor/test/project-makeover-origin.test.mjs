@@ -3,13 +3,15 @@ import path from 'node:path';
 import os from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {createServer} from '../server.mjs';
-import {deleteTask} from '../lib/store.mjs';
+import {createTask,deleteTask} from '../lib/store.mjs';
 export default async function test(a){
  const server=createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const base=`http://127.0.0.1:${server.address().port}`,tmp=fs.mkdtempSync(path.join(os.tmpdir(),'pm-test-'));let id;
  const request=(route,body,method='POST')=>fetch(base+route,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  try{
-  const created=await request('/api/tasks',{name:`makeover-test-${Date.now()}`,templateId:'project-makeover-origin'});a.equal(created.status,201,'template can create tasks');id=(await created.json()).id;const route='/api/tasks/'+id;
+  const fixture={name:`makeover-test-${Date.now()}`,templateId:'project-makeover-origin'};
+  const created=await request('/api/tasks',fixture);a.equal(created.status,400,'paused template rejects new tasks');await created.json();
+  id=createTask(fixture).id;const route='/api/tasks/'+id;
   let preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('"allowReplay":false')&&!preview.includes('id="novvy-cta"'),'default replay and store placements disabled');
   const patch=await request(route,{config:{gameplay:{allowReplay:true},hud:{titleEnabled:true,titleLine1:'Test',titleLine2:'Second line'}}},'PATCH');a.equal(patch.status,200,'settings save');
   const saved=await(await fetch(base+route)).json();a.check(saved.config.gameplay.allowReplay&&saved.config.hud.titleLine2==='Second line','settings read back');

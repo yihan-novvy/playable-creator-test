@@ -66,10 +66,20 @@ install -d -m 755 "$release"
 tar -xzf "$archive" --no-same-owner -C "$release"
 find "$release" -type d -exec chmod 755 {} +
 find "$release" -type f -exec chmod 644 {} +
+# Install the pinned runtime helpers for this Linux architecture. Local workspace
+# dependencies are intentionally not copied into the release archive.
+/opt/node22/bin/npm ci --prefix "$release" --omit=dev --no-audit --no-fund --cache /var/cache/playable-creator/npm
+chmod -R a+rX "$release/node_modules"
 ln -s /var/lib/playable-creator/project "$release/project"
 ln -s /var/lib/playable-creator/result "$release/result"
-node "$release/editor/tools/validate-registry.mjs"
-runuser -u playable -- /opt/node22/bin/node --input-type=module -e "const {environment}=await import('file://$release/editor/core/lib/exec.mjs');const env=await environment();console.log(env);if(!env.ok)process.exit(1)"
+(
+  # Child processes need an accessible working directory; the private upload
+  # directory belongs to the deploy account and is not accessible to playable.
+  cd "$release"
+  node "$release/editor/tools/validate-registry.mjs"
+  runuser -u playable -- /opt/node22/bin/node "$release/deploy/gce/verify-runtime.mjs"
+  runuser -u playable -- /opt/node22/bin/node --input-type=module -e "const {environment}=await import('file://$release/editor/core/lib/exec.mjs');const env=await environment();console.log(env);if(!env.ok)process.exit(1)"
+)
 
 cat > /etc/systemd/system/playable-creator.service <<'UNIT'
 [Unit]

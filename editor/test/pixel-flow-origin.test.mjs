@@ -3,13 +3,15 @@ import path from 'node:path';
 import os from 'node:os';
 import {execFileSync} from 'node:child_process';
 import {createServer} from '../server.mjs';
-import {deleteTask} from '../lib/store.mjs';
+import {createTask,deleteTask} from '../lib/store.mjs';
 export default async function test(a){
  const server=createServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
  const base=`http://127.0.0.1:${server.address().port}`,tmp=fs.mkdtempSync(path.join(os.tmpdir(),'pixel-flow-test-'));let id;
  const request=(route,body,method='POST')=>fetch(base+route,{method,headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
  try{
-  const created=await request('/api/tasks',{name:`pixel-flow-test-${Date.now()}`,templateId:'pixel-flow-origin'});a.equal(created.status,201,'template can create tasks');id=(await created.json()).id;const route='/api/tasks/'+id;
+  const fixture={name:`pixel-flow-test-${Date.now()}`,templateId:'pixel-flow-origin'};
+  const created=await request('/api/tasks',fixture);a.equal(created.status,400,'paused template rejects new tasks');await created.json();
+  id=createTask(fixture).id;const route='/api/tasks/'+id;
   let preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('"allowReplay":false')&&preview.includes('id="novvy-cta"'),'replay off and CTA visible by default');
   const settings=html=>JSON.parse(html.match(/window\.PIXEL_FLOW_CONFIG=(.*?);<\/script>/)[1]);
   a.equal(settings(preview).policy,{mode:'steps',afterSteps:10,intervals:[8,6,4],enabled:true},'default auto-jump policy');

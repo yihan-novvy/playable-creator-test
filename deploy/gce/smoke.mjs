@@ -6,6 +6,7 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 const base = new URL(process.argv[2]);
+const expectedTemplates = process.argv[3] ? JSON.parse(await fs.readFile(process.argv[3], 'utf8')) : null;
 const request = (route, options = {}) => fetch(new URL(route, base), {
   ...options, signal: AbortSignal.timeout(600_000),
 });
@@ -23,7 +24,9 @@ let id;
 try {
   assert.equal((await request('/')).status, 200);
   assert.equal((await json('/api/env')).ok, true);
-  assert.deepEqual((await json('/api/templates')).filter(template => template.creatable).map(template => template.id), ['tasty-travels-origin']);
+  const creatable = (await json('/api/templates')).filter(template => template.creatable).map(template => template.id).sort();
+  assert.ok(creatable.includes('tasty-travels-origin'));
+  if (expectedTemplates) assert.deepEqual(creatable, [...expectedTemplates].sort());
   const video = path.join(temporary, 'intro.mp4');
   await promisify(execFile)('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'lavfi', '-i',
     'color=c=blue:s=64x96:r=5:d=1', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', video]);

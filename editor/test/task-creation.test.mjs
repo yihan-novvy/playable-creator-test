@@ -32,7 +32,7 @@ export default async function test(a) {
     a.equal(response.status, 201, 'Tasty Travels can be created');
     const config = effectiveConfig(getEntry('tasty-travels-origin').template, task.config);
     a.equal(config.story.enabled, false, 'new tasks start without the story opening');
-    a.equal(config.intro.goEnabled, false, 'new tasks start without the GO button');
+    a.equal(Boolean(config.intro.goEnabled), false, 'new tasks start without the GO button');
 
     const legacy = createTask({ name: `legacy-creation-policy-${Date.now()}`, templateId: 'dragon-cube' });
     ids.push(legacy.id);

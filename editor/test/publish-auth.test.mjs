@@ -3,8 +3,8 @@ import path from 'node:path';
 import { Readable } from 'node:stream';
 import { createServer } from '../server.mjs';
 import { createPublishAuth } from '../lib/publish-auth.mjs';
-import { createTask, deleteTask, recordStepResult } from '../lib/store.mjs';
-import { taskResultDir, taskProjectDir } from '../lib/paths.mjs';
+import { createTask, deleteTask } from '../lib/store.mjs';
+import { taskProjectDir } from '../lib/paths.mjs';
 import { mockPublishService } from './publish-service-fixture.mjs';
 
 export default async function test(a) {
@@ -56,9 +56,8 @@ export default async function test(a) {
     a.equal((await call('/api/publish-auth', undefined, cookie)).data.user.email, credentials.email, 'failed account switch preserves current login');
     mock.setAuthResponse(null);
 
-    fs.mkdirSync(taskResultDir(task.id), { recursive: true });
-    fs.writeFileSync(path.join(taskResultDir(task.id), 'index.html'), '<!doctype html><title>Auth fixture</title>Fixture');
-    recordStepResult(task.id, { stepId: 'pack', ok: true });
+    const packed = await call('/api/tasks/' + task.id + '/run', { step: 'pack' });
+    a.equal(packed.status, 200, 'auth fixture uses the current standalone pack pipeline');
     const settings = { store_url: 'https://play.google.com/store/apps/details?id=com.example', tag: 'auth-fixture' };
     await call(prefix + '/settings', settings, '', 'PATCH');
     const inspection = await call(prefix + '/inspect', {});

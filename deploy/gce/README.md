@@ -3,7 +3,8 @@
 部署现有 `editor/server.mjs`，不启动 Vite 或图案画室，不修改 playable 模板。
 使用单个 Debian 12 x86_64 实例；Node 仅监听 `127.0.0.1:8088`，Caddy 提供公开 HTTPS 和 IP 加 8088 端口的 HTTP 入口，无网页密码。
 这是用户选择的公开编辑器：当前应用没有访客角色，访问者都可新建、修改、删除任务。网页访问不授予服务器部署权限。
-当前仅允许新建 Tasty Travels 任务，任务列表和模板探索遵循同一限制；已有其他模板任务仍可打开和编辑。
+新建任务范围遵循 `editor/server.mjs` 的 `CREATABLE_TEMPLATE_IDS`；当前维护 11 个模板，
+Pixel Flow 和 Project Makeover 暂停新建，已有任务仍可打开和编辑。
 实例应使用持久化磁盘、禁止自动删除磁盘，并开启实例删除保护。
 
 本次部署使用 Google Cloud 项目 `novvy-dev`，实例 `playable-creator-vm`，可用区 `us-central1-a`（美国爱荷华州）。
@@ -19,8 +20,11 @@ python3 deploy/gce/package-runtime.py output/gcloud/runtime.tar.gz
 bash -n deploy/gce/install.sh
 ```
 
-部署包只包含 Git 跟踪的 editor 运行文件和模板版本信息，不包含测试素材、现有任务、`.env`、Git 历史或本机凭据。
-运行时使用已提交的模板产物，不在服务器重建游戏，不需要安装 npm workspace 依赖。
+部署包包含 editor 运行文件、模板版本信息、独立成品配置所需的少量源文件及运行依赖锁，
+不包含测试素材、现有任务、`.env`、Git 历史、本机凭据或本机 node_modules。
+运行时使用已提交的模板产物，不在服务器重建游戏；安装脚本通过 `npm ci` 安装
+`runtime-package-lock.json` 锁定的 esbuild/three，确保 esbuild 使用 Linux 对应的二进制。
+切换版本前以服务账号运行 `verify-runtime.mjs`，检查全部插件加载、14 个独立成品预览和自定义配置导出。
 
 将 `runtime.tar.gz`、`runtime.tar.gz.sha256` 和 `install.sh` 上传到新实例，然后执行：
 
@@ -53,11 +57,12 @@ Caddy 在内网网卡的 8088 上接收公网 NAT 流量，再转发给回环地
 - 暂停计算：停止 GCE 实例；磁盘和保留的外部 IP 仍可能收费。
 
 ```sh
-node deploy/gce/smoke.mjs https://<HTTPS域名>
-node deploy/gce/smoke.mjs http://34.172.35.160:8088/
+node deploy/gce/smoke.mjs https://<HTTPS域名> [expected-template-ids.json]
+node deploy/gce/smoke.mjs http://34.172.35.160:8088/ [expected-template-ids.json]
 ```
 
-验收覆盖公开访问、环境自检、仅 Tasty Travels 可创建、视频上传与 Range、片头与打包两个步骤、预览和 ZIP 下载。
+验收覆盖公开访问、环境自检、Tasty Travels 可创建、视频上传与 Range、片头与打包两个步骤、预览和 ZIP 下载。
+可额外传入本次发布预期允许新建的模板 ID 数组文件，严格核对整份模板清单。
 检查只创建独立的 `deployment-check-*` 临时任务，并在完成后删除。
 关机重启后还应验证已有任务保留。后续更新复用实例和数据盘，并先备份数据目录。
 
