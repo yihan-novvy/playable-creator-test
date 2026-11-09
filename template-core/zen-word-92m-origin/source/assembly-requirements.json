@@ -12,7 +12,7 @@
     {
       "id": "92m-step-policy",
       "location": "项目组装壳有效拼词 step 策略",
-      "when": "本局第20次成功拼词，此后间隔10、8、6、4，末项4重复；错误与空点击不计步",
+      "when": "本局第4次成功拼词，此后间隔4、3、2、1，末项1重复；错误与空点击不计步",
       "click_source": "forced_click_to_appstore",
       "user_confirmed": true
     },
@@ -31,12 +31,12 @@
   "automatic_store_policy": {
     "enabled": true,
     "mode": "steps",
-    "afterSteps": 20,
+    "afterSteps": 4,
     "intervals": [
-      10,
-      8,
-      6,
-      4
+      4,
+      3,
+      2,
+      1
     ],
     "repeat_last_interval": true,
     "reset_on_replay": true,

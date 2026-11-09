@@ -3,7 +3,7 @@
   const config=window.ZEN_CONFIG,root=document.getElementById('zen-game'),status=document.getElementById('zen-status'),replay=document.getElementById('zen-replay');
   const dialog=document.getElementById('zen-result'),heading=document.getElementById('zen-result-title'),description=document.getElementById('zen-result-copy');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,loadError=false,replayTimer=0;
-  const policy=config.policy||{enabled:true,mode:'steps',afterSteps:20,intervals:[10,8,6,4]};
+  const policy=config.policy||{enabled:true,mode:'steps',afterSteps:4,intervals:[4,3,2,1]};
   let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;

@@ -38,11 +38,12 @@ const route=`/api/tasks/${task.id}`;
       const preview=await(await fetch(base+route+'/preview')).text();a.check(preview.includes('\"id\":\"'+templateId+'\"'),'preview contains this template engine');a.check(!preview.includes('<b>test</b>'),'title is escaped');
       {
         const defaults=await(await fetch(base+route+'/preview')).text();
-        a.check(defaults.includes('"afterSteps":20')&&defaults.includes('"intervals":[10,8,6,4]'),'default step CTA cadence reaches assembly');
+        const defaultPolicy=key==='92m'?{afterSteps:4,intervals:[4,3,2,1]}:{afterSteps:20,intervals:[10,8,6,4]};
+        a.check(defaults.includes(`"afterSteps":${defaultPolicy.afterSteps}`)&&defaults.includes(`"intervals":${JSON.stringify(defaultPolicy.intervals)}`),'default step CTA cadence reaches assembly');
         const changed=await request(route,{config:{playableCta:{afterSteps:12,intervals:[5,3]}}},'PATCH');
         a.equal((await changed.json()).config.playableCta,{afterSteps:12,intervals:[5,3]},'step policy persists in task');
         for(const policy of [{afterSteps:0},{afterSteps:2.5},{intervals:[10,0]},{intervals:'10,8'},{enabled:'yes'},{mode:'complete'}])a.equal((await request(route,{config:{playableCta:policy}},'PATCH')).status,400,'invalid/unapproved step policy rejected');
-        await request(route,{config:{playableCta:{enabled:true,mode:'steps',afterSteps:20,intervals:[10,8,6,4]}}},'PATCH');
+        await request(route,{config:{playableCta:{enabled:true,mode:'steps',...defaultPolicy}}},'PATCH');
       }
       a.check(preview.includes('id="novvy-cta"')&&preview.includes('data:image/png;base64,'),'shared CTA contains bundled original icon');
       await request(route,{config:{cta:{enabled:false}}},'PATCH');

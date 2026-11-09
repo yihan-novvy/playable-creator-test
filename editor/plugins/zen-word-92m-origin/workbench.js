@@ -29,7 +29,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     return field(label, input);
   }
   function renderConfig() {
-    document.getElementById('config-hint').textContent = 'Zen Word · 9200 万展示版：填完全部单词才通关，默认允许重玩。每个新填对的单词计一步：第 20 步首跳，之后间隔 10/8/6/4，最后每 4 步重复；重玩重新计数。';
+    document.getElementById('config-hint').textContent = 'Zen Word · 9200 万展示版：填完全部单词才通关，默认允许重玩。每个新填对的单词计一步：默认第 4 步首跳，之后间隔 4/3/2/1，最后每 1 步重复；重玩重新计数。';
     const root = document.getElementById('config-grid'); root.textContent = '';
     const wrap = el('div', { class: 'dragon-config' });
     wrap.append(el('div', { class: 'dragon-config-grid' }, [
@@ -45,9 +45,9 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]), el('p', { class: 'hint' }, ['默认开启。全部填完后显示完成弹窗。Play again / Try again 点击先触发强制 CTA，再重置棋盘和跳转步数，片头不重复播放。独立 game.js 包的重玩和跳转由平台组装页配置。']));
 
     const policy=config().playableCta||{};
-    const first=el('input',{type:'number',min:1,max:99,step:1,value:policy.afterSteps??20});
+    const first=el('input',{type:'number',min:1,max:99,step:1,value:policy.afterSteps??4});
     first.addEventListener('change',async()=>{if(!first.checkValidity()){first.reportValidity();return;}await save({playableCta:{afterSteps:Number(first.value)}});await refresh(true);});
-    const intervals=el('input',{type:'text',placeholder:'10,8,6,4'});intervals.value=(policy.intervals??[10,8,6,4]).join(',');
+    const intervals=el('input',{type:'text',placeholder:'4,3,2,1'});intervals.value=(policy.intervals??[4,3,2,1]).join(',');
     intervals.addEventListener('change',async()=>{
       const list=intervals.value.trim()?intervals.value.trim().split(/[,，\s]+/).map(Number):[];
       if(list.length>24||list.some(n=>!Number.isInteger(n)||n<1||n>99)){intervals.setCustomValidity('请输入 1–99 的整数，最多 24 项');intervals.reportValidity();return;}

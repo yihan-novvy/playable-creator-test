@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const code=fs.readFileSync(new URL('../src/host.js',import.meta.url),'utf8');
 const flush=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
-async function fixture({allowReplay=true,policy={enabled:true,mode:'steps',afterSteps:20,intervals:[10,8,6,4]},intro=false,initialFailure=false}={}){
+async function fixture({allowReplay=true,policy, intro=false,initialFailure=false}={}){
   class Element extends EventTarget{hidden=true;disabled=false;style={setProperty(){}};clientWidth=390;clientHeight=844;getBoundingClientRect(){return{top:720,bottom:115};}focus(){this.focused=true;}}
   const root=new Element(),status=new Element(),replay=new Element(),card=new Element(),dialog=new Element(),heading=new Element(),copy=new Element();
   const nodes={'zen-game':root,'zen-status':status,'zen-replay':replay,'novvy-cta':card,'zen-result':dialog,'zen-result-title':heading,'zen-result-copy':copy};
@@ -19,10 +19,11 @@ async function fixture({allowReplay=true,policy={enabled:true,mode:'steps',after
 const events=(f,name)=>f.calls.filter(c=>c[0]===name);
 const tap=f=>f.replay.dispatchEvent(new Event('click'));
 const f=await fixture(),shell=f.instances[0].shell;
-for(let i=1;i<=57;i++){f.advance();shell.step(i);}
-assert.deepEqual(events(f,'click').map(c=>c[1].step),[20,30,38,44,48,52,56],'20 then 10,8,6,4 and repeat 4');
+for(let i=1;i<=21;i++){f.advance();shell.step(i);}
+assert.deepEqual(events(f,'click').map(c=>c[1].step),[4,8,11,13,14,15,16,17,18,19,20,21],'4 then 4,3,2,1 and repeat 1');
 assert.ok(events(f,'click').every(c=>c[1].click_source==='forced_click_to_appstore'&&c[1].auto_jump==='true'));
-assert.equal(events(f,'onStep').length,57);assert.equal(f.dialog.hidden,true,'step CTA never settles gameplay');
+assert.equal(events(f,'onStep').length,21);assert.equal(f.dialog.hidden,true,'step CTA never settles gameplay');
+f.advance();
 shell.win();shell.win();shell.fail();
 assert.equal(events(f,'onComplete').length,1);assert.equal(events(f,'onComplete')[0][1].continue_playing,true);
 assert.equal(f.dialog.hidden,false);assert.equal(f.dialog.focused,true);assert.equal(f.heading.textContent,'All words found!');assert.match(f.copy.textContent,/Play again/);assert.equal(f.replay.textContent,'Play again');
@@ -32,9 +33,9 @@ assert.equal(f.instances.length,2);assert.equal(events(f,'onReplay').length,0,'r
 assert.deepEqual(f.calls.slice(mark).map(c=>c[0]),['click','destroy','start'],'CTA precedes destruction and new round start');
 assert.equal(f.calls[mark][1].click_source,'forced_click_to_appstore');assert.equal(f.calls[mark][1].scene,'playable-replay');
 f.release();await flush();assert.equal(events(f,'onReplay').length,1);assert.equal(f.dialog.hidden,true);
-for(let i=1;i<=19;i++){f.advance();f.instances[1].shell.step(i);}
-assert.equal(events(f,'click').length,8,'new round resets first-jump threshold');
-f.advance();f.instances[1].shell.step(95);assert.equal(events(f,'click').at(-1)[1].step,20);
+for(let i=1;i<=3;i++){f.advance();f.instances[1].shell.step(i);}
+assert.equal(events(f,'click').length,13,'new round resets first-jump threshold');
+f.advance();f.instances[1].shell.step(95);assert.equal(events(f,'click').at(-1)[1].step,4);
 f.instances[1].shell.fail();assert.equal(f.replay.textContent,'Try again');assert.equal(f.replay.disabled,true,'replay respects shared one-second cooldown');
 const beforeCooldown=events(f,'click').length;tap(f);await flush();assert.equal(f.instances.length,2);
 f.advance();assert.equal(f.replay.disabled,false);assert.equal(events(f,'click').length,beforeCooldown,'cooldown timer never opens store');

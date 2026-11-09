@@ -8,16 +8,19 @@ async function fixture({intro=false,ctaEnabled=true,allowReplay=true,policy={ena
   class Element extends EventTarget{hidden=true;style={setProperty(){}};clientWidth=390;clientHeight=844;offsetHeight=124;getBoundingClientRect(){return{top:734,bottom:844};}focus(){document.activeElement=this;}}
   const nodes=Object.fromEntries(['wse-game','wse-status','wse-replay','wse-result','wse-result-title','wse-result-copy','novvy-cta'].map(id=>[id,new Element()]));
   const document=Object.assign(new EventTarget(),{hidden:false,getElementById:id=>nodes[id]||null,createElement:()=>new Element(),body:{append(){}},documentElement:{style:{setProperty(){}}}});
-  const calls=[],instances=[],timers=new Map();let now=1000,timerId=0;
+  const calls=[],instances=[],timers=new Map(),frames=new Map();let now=1000,timerId=0,frameId=0;
   const setTimeout=(fn,delay)=>{const id=++timerId;timers.set(id,{fn,due:now+delay});return id;};
   const clearTimeout=id=>timers.delete(id);
+  const requestAnimationFrame=fn=>{const id=++frameId;frames.set(id,fn);return id;};
+  const cancelAnimationFrame=id=>frames.delete(id);
   const advance=(ms=1100)=>{now+=ms;for(let i=0;i<100;i++){const due=[...timers].find(([,t])=>t.due<=now);if(!due)return;timers.delete(due[0]);due[1].fn();}throw new Error('timer loop');};
+  const paint=()=>{for(let i=0;i<2;i++){const callbacks=[...frames.values()];frames.clear();for(const callback of callbacks)callback(now);}advance(200);};
   const window=Object.assign(new EventTarget(),{WSE_CONFIG:{intro,title:false,allowReplay,ctaEnabled,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
   window.addEventListener('novvy:cta-card',()=>{if(ctaEnabled)nodes['novvy-cta'].hidden=false;});
-  vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console,queueMicrotask,setTimeout,clearTimeout});
+  vm.runInNewContext(code,{window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console,queueMicrotask,setTimeout,clearTimeout,requestAnimationFrame,cancelAnimationFrame});
   window.NovvyGame(async(_root,shell)=>{const game={shell,start(){},destroy(){},pause(){},resume(){},setEnv(env){game.env=env;}};instances.push(game);return game;});
   await flush();
-  return{window,document,nodes,calls,instances,timers,advance,emit(name,detail){window.dispatchEvent(new CustomEvent(name,{detail}));}};
+  return{window,document,nodes,calls,instances,timers,advance,paint,emit(name,detail){window.dispatchEvent(new CustomEvent(name,{detail}));}};
 }
 const clicks=f=>f.calls.filter(c=>c[0]==='click');
 const f=await fixture({intro:true});
@@ -35,11 +38,14 @@ f.emit('novvy:viewablechange',{viewable:true});f.emit('novvy:cta-interact');asse
 for(let i=1;i<=17;i++)f.instances[0].shell.step(i/17*100);
 f.instances[0].shell.win();assert.equal(clicks(f).length,2,'disabled step policy never opens a store');
 assert.equal(f.nodes['wse-result'].hidden,false);assert.equal(f.nodes['wse-result-title'].textContent,'You win!');assert.equal(f.nodes['wse-game'].inert,true,'modal blocks the completed board');
-f.advance();f.nodes['wse-replay'].dispatchEvent(new Event('click'));await flush();
-assert.equal(f.instances.length,2);assert.equal(clicks(f).length,2,'replay is not a store control');
+f.advance();f.nodes['wse-replay'].dispatchEvent(new Event('click'));
+assert.equal(f.nodes['wse-result'].hidden,true,'replay closes the modal before the next instance is ready');
+f.nodes['wse-replay'].dispatchEvent(new Event('click'));await flush();
+assert.equal(f.instances.length,2);assert.equal(clicks(f).length,3,'replay requests one store jump despite a double click');
+assert.equal(clicks(f).at(-1)[1].click_source,'forced_click_to_appstore');assert.equal(clicks(f).at(-1)[1].scene,'playable-replay');
 assert.equal(f.nodes['wse-result'].hidden,true);assert.equal(f.nodes['wse-game'].inert,false,'ready replay hides the modal and restores input');
 assert.equal(f.calls.filter(c=>c[0]==='setStage').length,2,'replay retains the playable stage');
-f.emit('novvy:cta-interact');assert.equal(clicks(f).length,3,'card remains usable after replay');
+f.advance();f.emit('novvy:cta-interact');assert.equal(clicks(f).length,4,'card remains usable after replay');
 const off=await fixture({ctaEnabled:false});off.emit('novvy:cta-interact');assert.equal(clicks(off).length,0);assert.equal(off.instances[0].env.insets.bottom,0,'disabled card gives space back');
 const policy={enabled:true,mode:'steps',afterSteps:4,intervals:[4,3,2]};
 const s=await fixture({intro:true,ctaEnabled:false,policy});
@@ -48,22 +54,25 @@ s.emit('novvy:intro-finished');await flush();
 for(let i=1;i<=17;i++){s.advance();s.instances[0].shell.step(i/17*100);}
 assert.deepEqual(clicks(s).map(c=>c[1].step),[4,8,11,13,15],'last step reserves its jump for completion');
 assert.ok(clicks(s).every(c=>c[1].click_source==='forced_click_to_appstore'&&c[1].auto_jump==='true'&&c[1].auto_jump_mode==='steps'),'step policy attribution is fixed');
-s.advance();s.instances[0].shell.win();s.instances[0].shell.win();assert.equal(clicks(s).length,6,'one completion jump even after earlier automatic jumps');
+s.advance();s.instances[0].shell.win();s.instances[0].shell.win();assert.equal(clicks(s).length,5,'completion waits for the modal to appear');
+s.paint();assert.equal(clicks(s).length,6,'one completion jump even after earlier automatic jumps');
 assert.equal(clicks(s).at(-1)[1].auto_jump_mode,'win');
 s.nodes['wse-replay'].dispatchEvent(new Event('click'));await flush();
-assert.equal(clicks(s).length,6,'replay itself does not jump');
+assert.equal(clicks(s).length,6,'immediate replay respects the shared one-second CTA cooldown');
 for(let i=1;i<=4;i++){s.advance();s.instances[1].shell.step(i/17*100);}
 assert.equal(clicks(s).at(-1)[1].step,4,'replay resets the first threshold and round step count');
 for(let i=5;i<=17;i++){s.advance();s.instances[1].shell.step(i/17*100);}
 s.advance();s.instances[1].shell.win();s.instances[1].shell.win();
+s.paint();
 assert.equal(clicks(s).filter(c=>c[1].auto_jump_mode==='win').length,2,'each completed round owns exactly one win jump');
 const once=await fixture({policy:{...policy,afterSteps:2,intervals:[]}});
 for(let i=1;i<=17;i++){once.advance();once.instances[0].shell.step(i/17*100);}
 assert.equal(clicks(once).length,1,'empty intervals allow only one step jump');
-once.advance();once.instances[0].shell.win();assert.equal(clicks(once).length,2,'completion still has its own jump');
+once.advance();once.instances[0].shell.win();once.paint();assert.equal(clicks(once).length,2,'completion still has its own jump');
 const fallback=await fixture({policy:{...policy,afterSteps:20}});
 for(let i=1;i<=17;i++){fallback.advance();fallback.instances[0].shell.step(i/17*100);}
 fallback.instances[0].shell.win();fallback.instances[0].shell.win();
+fallback.paint();
 assert.equal(clicks(fallback).length,1);assert.equal(clicks(fallback)[0][1].auto_jump_mode,'win','completion applies before first threshold');
 const failed=await fixture({policy});failed.instances[0].shell.fail();assert.equal(clicks(failed).length,0,'failure has no automatic win jump');
 const cooldown=await fixture({policy:{...policy,afterSteps:1,intervals:[2]}});
@@ -77,15 +86,18 @@ cooldown.advance();cooldown.instances[0].shell.step(18);assert.equal(clicks(cool
 cooldown.advance();cooldown.instances[0].shell.step(24);assert.equal(clicks(cooldown).at(-1)[1].step,4,'next gap starts at actual jump step');
 const pending=await fixture({policy:{...policy,afterSteps:16,intervals:[1]}});
 for(let i=1;i<=17;i++)pending.instances[0].shell.step(i/17*100);
-pending.instances[0].shell.win();assert.equal(clicks(pending).length,1);assert.equal(pending.nodes['wse-replay'].disabled,true);
-pending.nodes['wse-replay'].dispatchEvent(new Event('click'));await flush();assert.equal(pending.instances.length,1,'pending completion CTA cannot leak into a replay');
-pending.advance(999);assert.equal(clicks(pending).length,1,'completion respects one-second cooldown');
+pending.instances[0].shell.win();assert.equal(clicks(pending).length,1);assert.equal(pending.nodes['wse-replay'].disabled,false,'pending win CTA never locks replay');
+pending.paint();pending.advance(799);assert.equal(clicks(pending).length,1,'completion respects one-second cooldown');
 pending.advance(1);assert.equal(clicks(pending).length,2);assert.equal(clicks(pending).at(-1)[1].auto_jump_mode,'win');assert.equal(pending.nodes['wse-replay'].disabled,false);
 pending.instances[0].shell.win();pending.advance();assert.equal(clicks(pending).length,2,'repeated finish callback never duplicates completion');
+const cancelled=await fixture({policy});cancelled.instances[0].shell.win();
+cancelled.nodes['wse-replay'].dispatchEvent(new Event('click'));assert.equal(cancelled.nodes['wse-result'].hidden,true);await flush();
+cancelled.paint();cancelled.advance();assert.equal(cancelled.instances.length,2);assert.equal(clicks(cancelled).length,1,'replay replaces the pending win jump');
+assert.equal(clicks(cancelled)[0][1].scene,'playable-replay');
 const background=await fixture({policy});background.emit('novvy:cta-interact');background.instances[0].shell.win();
 background.document.hidden=true;background.document.dispatchEvent(new Event('visibilitychange'));background.advance();assert.equal(clicks(background).length,1,'pending win does not run in background');
-background.document.hidden=false;background.document.dispatchEvent(new Event('visibilitychange'));assert.equal(clicks(background).length,2,'return flushes one pending win');
+background.document.hidden=false;background.document.dispatchEvent(new Event('visibilitychange'));assert.equal(clicks(background).length,1,'return waits for the modal to paint again');background.paint();assert.equal(clicks(background).length,2,'return flushes one pending win');
 const leaving=await fixture({policy});leaving.emit('novvy:cta-interact');leaving.instances[0].shell.win();leaving.emit('pagehide');leaving.advance();assert.equal(clicks(leaving).length,1,'page teardown cancels pending win');
-const noReplay=await fixture({policy,allowReplay:false});noReplay.instances[0].shell.step(100);noReplay.instances[0].shell.win();assert.equal(noReplay.nodes['wse-result'].hidden,false);assert.equal(noReplay.nodes['wse-replay'].hidden,true);assert.equal(clicks(noReplay).length,1,'completion jump works with replay disabled');
+const noReplay=await fixture({policy,allowReplay:false});noReplay.instances[0].shell.step(100);noReplay.instances[0].shell.win();noReplay.paint();assert.equal(noReplay.nodes['wse-result'].hidden,false);assert.equal(noReplay.nodes['wse-replay'].hidden,true);assert.equal(clicks(noReplay).length,1,'completion jump works with replay disabled');
 assert.equal(noReplay.document.activeElement,noReplay.nodes['wse-result'],'result retains focus when no replay button is available');
 console.log('Word Search Explorer host: result modal, step/win CTA arbitration, deferred cooldown, visibility, teardown and replay checks passed.');

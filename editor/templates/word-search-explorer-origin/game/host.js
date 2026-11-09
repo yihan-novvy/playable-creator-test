@@ -4,7 +4,7 @@
   const result=document.getElementById('wse-result'),resultTitle=document.getElementById('wse-result-title'),resultCopy=document.getElementById('wse-result-copy');
   let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,muted=config.intro===true,viewable=true;
   const policy=config.policy||{enabled:true,mode:'steps',afterSteps:4,intervals:[4,3,2]};
-  let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity,pendingWinCta=false,winCtaTimer=null;
+  let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity,pendingWinCta=false,winCtaTimer=null,winCtaFrame=null;
   const chain=config.intro?['video','playable']:['playable'];
   const sdk=()=>window.NovvyPlayable;
   // Keep SDK calls explicit so the original-ZIP inspector can recognize them.
@@ -45,16 +45,27 @@
   }
   function finish(kind){if(!started||settled)return;settled=true;showResult(kind);
     if(kind==='end'){if(!config.allowReplay)call('endStage');}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
-    if(kind==='win'&&policy.enabled!==false){pendingWinCta=true;replay.disabled=true;flushWinCta();}
+    if(kind==='win'&&policy.enabled!==false){pendingWinCta=true;scheduleWinCta();}
   }
-  function clearWinCta(){clearTimeout(winCtaTimer);winCtaTimer=null;pendingWinCta=false;}
+  function pauseWinCta(){clearTimeout(winCtaTimer);winCtaTimer=null;cancelAnimationFrame(winCtaFrame);winCtaFrame=null;}
+  function clearWinCta(){pauseWinCta();pendingWinCta=false;}
+  function scheduleWinCta(){
+    pauseWinCta();
+    if(!pendingWinCta||!started||!settled||result.hidden||document.hidden||!viewable)return;
+    // Let the modal paint and finish its 200 ms entrance before opening the store.
+    winCtaFrame=requestAnimationFrame(()=>{
+      winCtaFrame=requestAnimationFrame(()=>{
+        winCtaFrame=null;winCtaTimer=setTimeout(flushWinCta,200);
+      });
+    });
+  }
   function flushWinCta(){
     clearTimeout(winCtaTimer);winCtaTimer=null;
-    if(!pendingWinCta||!started||document.hidden||!viewable)return;
+    if(!pendingWinCta||!started||!settled||result.hidden||document.hidden||!viewable)return;
     const wait=1000-(performance.now()-lastCta);
     if(wait>0){winCtaTimer=setTimeout(flushWinCta,Math.ceil(wait));return;}
     // A real win owns one request even after earlier step jumps. Only its cooldown is deferred.
-    pendingWinCta=false;autoClick('win');replay.disabled=false;
+    pendingWinCta=false;autoClick('win');
   }
   function requestClick(detail){
     if(!started||document.hidden||!viewable||performance.now()-lastCta<1000)return false;
@@ -95,7 +106,7 @@
     if(document.hidden||!viewable)instance.pause();
   }
   function loadFailed(error){clearWinCta();creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;status.hidden=true;showResult('error');console.error(error);}
-  async function create(restarting=false){if(creating)return;clearWinCta();creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
+  async function create(restarting=false){if(creating)return;clearWinCta();creating=true;result.hidden=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;replay.disabled=true;root.inert=true;status.hidden=false;status.textContent='Loading…';
     try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
@@ -106,7 +117,12 @@
   });
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;muted=document.getElementById('novvy-intro-video')?.muted??muted;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
-  replay.addEventListener('click',()=>{if(!settled||!config.allowReplay||creating||pendingWinCta)return;create(started||replayPending);});
+  replay.addEventListener('click',()=>{
+    if(!settled||!config.allowReplay||creating||replay.disabled||document.hidden||!viewable)return;
+    replay.disabled=true;result.hidden=true;clearWinCta();
+    requestClick({click_source:'forced_click_to_appstore',scene:'playable-replay'});
+    create(started||replayPending);
+  });
   let touched=false;
   root.addEventListener('pointerdown',()=>{if(started&&!settled&&!touched){touched=true;call('onStart');}},{passive:true});
   const resize=()=>instance?.setEnv(environment());
@@ -115,7 +131,7 @@
   for(const element of [root,document.getElementById('novvy-training-hud'),document.getElementById('novvy-cta')])if(element)observer.observe(element);
   window.addEventListener('novvy:cta-interact',click);
   
-  const syncVisibility=()=>{if(document.hidden||!viewable){clearTimeout(winCtaTimer);winCtaTimer=null;instance?.pause();}else if(started){instance?.resume();flushWinCta();}};
+  const syncVisibility=()=>{if(document.hidden||!viewable){pauseWinCta();instance?.pause();}else if(started){instance?.resume();scheduleWinCta();}};
   document.addEventListener('visibilitychange',syncVisibility);
   window.addEventListener('novvy:viewablechange',event=>{viewable=event.detail?.viewable===true;syncVisibility();});
   window.addEventListener('pagehide',()=>{clearWinCta();if(started)call('endStage');generation++;observer.disconnect();instance?.destroy();});

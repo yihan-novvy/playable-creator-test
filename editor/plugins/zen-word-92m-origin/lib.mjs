@@ -22,7 +22,7 @@ export function zenHtml({root,pluginDir,template,config,media={},preview=false})
   if(template.levels.length!==1||config.levelId!==1)throw Object.assign(new Error('该独立模板只有固定的一份 playable'),{statusCode:400});
   const injection=buildWsOverlayInjection({overlaysRoot:pluginDir,template,config,media,optionalHudPortraits:true,analytics:false});
   if(config.cta?.enabled!==false)addOriginCtaCard(injection,template.game.ctaCard,read,config.cta);
-  const policy={...originCtaPolicy({afterSteps:20,intervals:[10,8,6,4],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
+  const policy={...originCtaPolicy({afterSteps:4,intervals:[4,3,2,1],...config.playableCta}),enabled:config.playableCta?.enabled!==false};
   const settings={intro:injection.introEnabled,title:injection.hudEnabled,allowReplay:config.gameplay?.allowReplay!==false,policy};
   const game=standaloneGame(root,config),host=read(template.game.host);
   const tail=[...injection.bodyDom,injection.uiScript,script(`window.ZEN_CONFIG=${JSON.stringify(settings)};`),script(host),...injection.bodyScripts,preview?script(game):'<script src="game.js"></script>'].join('\n');
