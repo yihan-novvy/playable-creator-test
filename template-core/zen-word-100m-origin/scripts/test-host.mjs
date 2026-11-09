@@ -12,7 +12,7 @@ async function fixture({allowReplay=true,policy={enabled:true,mode:'steps',after
   const calls=[],instances=[];let now=1000,failLoad=failInitial,finishStart=null,holdStart=false;
   const window=Object.assign(new EventTarget(),{ZEN_CONFIG:{intro,title:false,allowReplay,policy},NovvyPlayable:Object.fromEntries(['setStageList','setStage','onStart','onStep','onComplete','onReplay','endStage','click'].map(name=>[name,(...args)=>calls.push([name,...args])]))});
   vm.runInNewContext(code,{URLSearchParams,location:{search:""},window,document,navigator:{userAgent:'test',language:'en'},innerWidth:390,innerHeight:844,devicePixelRatio:1,getComputedStyle:()=>({}),ResizeObserver:class{observe(){}disconnect(){}},performance:{now:()=>now},CustomEvent,console:{error(){},warn(){}}});
-  const factory=async(_root,shell)=>{if(failLoad)throw new Error('fixture load failure');const game={shell,start(){return holdStart?new Promise(resolve=>finishStart=resolve):Promise.resolve();},destroy(){game.destroyed=true;},pause(){game.paused=true;},resume(){game.paused=false;},setEnv(){}};instances.push(game);return game;};
+  const factory=async(_root,shell,options)=>{if(failLoad)throw new Error('fixture load failure');const game={shell,options,start(){return holdStart?new Promise(resolve=>finishStart=resolve):Promise.resolve();},destroy(){game.destroyed=true;},pause(){game.paused=true;},resume(){game.paused=false;},setEnv(){}};instances.push(game);return game;};
   window.NovvyGame(factory);await flush();
   return{calls,instances,document,window,replay,advance(){now+=1100;},hold(){holdStart=true;},release(){holdStart=false;finishStart();},fail(value){failLoad=value;},emit(name){window.dispatchEvent(new Event(name));}};
 }
@@ -42,3 +42,23 @@ intro.emit('novvy:intro-finished');await flush();intro.advance();intro.instances
 console.log('Zen Word host: CTA cadence/classification/cooldown, replay readiness/reset/failure, intro gates passed');
 const initial=await fixture({failInitial:true});initial.fail(false);initial.replay.dispatchEvent(new Event('click'));await flush();
 assert.equal(initial.instances.length,1);assert.equal(initial.calls.filter(c=>c[0]==='onReplay').length,0,'initial load recovery is not a gameplay replay');
+assert.equal(initial.calls.filter(c=>c[0]==='click').length,0,'initial load recovery is not a gameplay CTA');
+
+// Replay conversion belongs to the assembly, even when step conversion is off.
+for(const outcome of ['fail','win']){
+  const retry=await fixture({policy:{enabled:false,mode:'steps',afterSteps:20,intervals:[10,8,6,4]}});
+  assert.equal(retry.instances[0].options.keepResultScene,true,'assembly preserves the native result panel');
+  retry.instances[0].shell[outcome]();
+  assert.equal(retry.calls.filter(c=>c[0]==='click').length,0,'the result itself does not convert');
+  assert.equal(retry.calls.at(-1)[1].result,outcome,'the actual result is preserved');
+  retry.hold();retry.replay.dispatchEvent(new Event('click'));retry.replay.dispatchEvent(new Event('click'));await flush();
+  const clicks=retry.calls.filter(c=>c[0]==='click');
+  assert.equal(clicks.length,1,'one replay gesture requests one CTA before the new scene starts');
+  assert.equal(clicks[0][1].scene,'playable-replay','replay conversion is attributable to its own placement');
+  assert.equal(clicks[0][1].click_source,'forced_click_to_appstore','retry uses the project replay classification');
+  assert.equal(retry.instances.length,2,'replay still rebuilds the game only once');
+  assert.equal(retry.calls.filter(c=>c[0]==='onReplay').length,0,'no restart report while the new scene is loading');
+  retry.release();await flush();
+  assert.equal(retry.calls.filter(c=>c[0]==='onReplay').length,1,'the ready new scene reports one restart');
+  assert.equal(retry.calls.filter(c=>c[0]==='onComplete').length,1,'replay CTA does not fabricate another result');
+}

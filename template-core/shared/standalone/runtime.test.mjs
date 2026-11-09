@@ -50,6 +50,30 @@ test('host-controlled retry replaces only its own instance and rejects stale cal
   assert.deepEqual(f.events.at(-1),['end']);assert.equal(await r.replay(),false);
   r.destroy();
 });
+test('host can preserve native result rendering without accepting more gameplay',async()=>{
+  const f=await fixture({keepResultScene:true}),r=f.runtime,n=f.instances[0];
+  await r.start();const pauses=n.pauses;
+  n.bridge.fail();
+  assert.deepEqual(f.events,[['fail',undefined]],'failure is reported immediately');
+  assert.equal(n.pauses,pauses,'native delayed result animation is not paused by settlement');
+  assert.equal(r.getState().ended,true);assert.equal(r.getState().paused,false);
+  const input=new Event('click',{cancelable:true});f.root.children[0].dispatchEvent(input);
+  assert.equal(input.defaultPrevented,true,'keeping the scene does not unlock gameplay');
+  n.bridge.step(100);n.bridge.win();n.bridge.fail();assert.equal(f.events.length,1);
+  r.pause();assert.equal(n.pauses,pauses+1,'backgrounding still pauses the native scene');
+  r.resume();assert.equal(n.resumes,1,'returning resumes the result presentation');
+  assert.equal(r.end(),false,'an already reported terminal result is not reported twice');
+  r.resume();assert.equal(n.resumes,1,'explicit end stops presentation permanently');
+  r.destroy();assert.equal(n.disposals,1);
+});
+test('continued result rendering ends cleanly on replay or explicit end',async()=>{
+  const f=await fixture({keepResultScene:true,allowReplay:true}),r=f.runtime,n=f.instances[0];
+  await r.start();n.bridge.fail();assert.equal(r.getState().canReplay,true);
+  assert.equal(await r.replay(),true);assert.equal(n.disposals,1);
+  const next=f.instances[1];next.bridge.fail();assert.equal(r.end(),true);
+  const resumes=next.resumes;r.resume();assert.equal(next.resumes,resumes);
+  assert.deepEqual(f.events.map(event=>event[0]),['fail','retry','fail','end']);r.destroy();
+});
 test('multi-level progression is sequential and resets per-level progress',async()=>{
   const f=await fixture({}, {id:'campaign',levelCount:2}),r=f.runtime,n=f.instances[0];await r.start();
   n.bridge.level(2);assert.equal(f.events.length,0);

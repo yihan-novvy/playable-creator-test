@@ -1,7 +1,7 @@
 // Product assembly host. This file is excluded from the standalone game ZIP.
 (function(){
   const config=window.ZEN_CONFIG,root=document.getElementById('zen-game'),status=document.getElementById('zen-status'),replay=document.getElementById('zen-replay');
-  let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false;
+  let entry,instance,entered=!config.intro,started=false,settled=false,steps=0,generation=0,creating=false,replayPending=false,loadError=false;
   const policy=config.policy||{enabled:true,mode:'steps',afterSteps:20,intervals:[10,8,6,4]};
   let nextCta=policy.afterSteps,intervalIndex=0,lastCta=-Infinity;
   const chain=config.intro?['video','playable']:['playable'];
@@ -34,9 +34,9 @@
   function finish(kind){if(!started||settled)return;settled=true;replay.hidden=!config.allowReplay;replay.textContent=kind==='fail'?'Try again':'Play again';
     if(kind==='end'){if(!config.allowReplay)call('endStage');}else call('onComplete',{result:kind,continue_playing:config.allowReplay});
   }
-  function click(source){
-    if(!started||document.hidden||performance.now()-lastCta<1000)return;
-    lastCta=performance.now();call('click',{click_source:source});
+  function click(source,detail={}){
+    if(!started||document.hidden||performance.now()-lastCta<1000)return false;
+    lastCta=performance.now();call('click',{...detail,click_source:source});return true;
   }
   function step(percent){
     if(!started||settled||document.hidden)return;
@@ -45,7 +45,7 @@
     if(policy.enabled!==false&&policy.mode==='steps'&&steps>=nextCta){
       const gap=policy.intervals[Math.min(intervalIndex++,policy.intervals.length-1)];
       nextCta=gap?nextCta+gap:Infinity;
-      click('forced_click_to_appstore');
+      click('forced_click_to_appstore',{scene:'playable',auto_jump:'true',auto_jump_mode:'steps',step:steps});
     }
   }
   const shell={step,win(){finish('win');},fail(){finish('fail');},end(){finish('end');},retry(){call('onReplay');},level(){},sound(muted){instance?.setEnv({muted});},haptic(){},cta:click};
@@ -56,14 +56,19 @@
     if(replayPending){replayPending=false;call('onReplay');}
     if(document.hidden)instance.pause();
   }
-  function loadFailed(error){creating=false;started=false;settled=true;instance?.destroy();instance=null;replay.disabled=false;replay.hidden=!config.allowReplay;replay.textContent='Try again';status.hidden=false;status.textContent='Unable to load Zen Word: '+error.message;console.error(error);}
-  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;replay.disabled=true;status.hidden=false;status.textContent='Loading…';
-    try{const game=await entry(root,shell,{base:'./',env:environment(),config:{}});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
+  function loadFailed(error){creating=false;started=false;settled=true;loadError=true;instance?.destroy();instance=null;replay.disabled=false;replay.hidden=!config.allowReplay;replay.textContent='Try again';status.hidden=false;status.textContent='Unable to load Zen Word: '+error.message;console.error(error);}
+  async function create(restarting=false){if(creating)return;creating=true;const token=++generation;instance?.destroy();instance=null;started=false;settled=false;loadError=false;touched=false;steps=0;nextCta=policy.afterSteps;intervalIndex=0;replayPending=restarting;replay.hidden=true;replay.disabled=true;status.hidden=false;status.textContent='Loading…';
+    try{const game=await entry(root,shell,{base:'./',env:environment(),config:{},keepResultScene:true});if(token!==generation){game.destroy?.();return;}instance=game;await begin();}
     catch(error){if(token===generation)loadFailed(error);}
   }
   window.NovvyGame=function(factory){entry=factory;create();};
   window.addEventListener('novvy:intro-finished',()=>{if(entered)return;entered=true;call('setStage',chain.length,'playable');begin().catch(loadFailed);});
-  replay.addEventListener('click',()=>{if(!settled||!config.allowReplay||creating)return;create(started||replayPending);});
+  replay.addEventListener('click',()=>{if(!settled||creating)return;
+    // A failed load retries without monetizing a non-gameplay action.
+    if(loadError){create(replayPending);return;}
+    if(!config.allowReplay)return;
+    // Play again and Try again request CTA before any reset.
+    click('forced_click_to_appstore',{scene:'playable-replay'});create(started||replayPending);});
   let touched=false;
   root.addEventListener('pointerdown',()=>{if(started&&!settled&&!touched){touched=true;call('onStart');}},{passive:true});
   const resize=()=>instance?.setEnv(environment());

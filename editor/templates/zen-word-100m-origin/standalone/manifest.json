@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/zen-word-100m-origin/standalone/game.js",
-  "bytes": 4181444,
-  "sha256": "52bb3fc36969d76fbd028ff5f3d47d6a2758a94f8d2fd21d542f31e4916b7bc7",
+  "bytes": 4182089,
+  "sha256": "0f353d4807e3f89040fac13cf0a7c32aa1b12ec43079dda8090612bf24fd03bc",
   "payloadSha256": "3e9373edb395dde68f7606d2e36c84d7ac5cc757f0e8f92d2cb402a8fd0c747d",
   "uncompressedBytes": 8445229,
   "methods": [

@@ -42,7 +42,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     ]));
     wrap.append(el('h3', {}, ['游戏设置']), el('div', { class: 'dragon-config-grid' }, [
       checkbox('允许重玩', 'gameplay', 'allowReplay'),
-    ]), el('p', { class: 'hint' }, ['默认开启。填完全部单词或失败后可重玩，棋盘、生命和步数跳转节奏重置，片头不重复播放。独立 game.js 包的重玩由平台组装页配置。']));
+    ]), el('p', { class: 'hint' }, ['默认开启。失败时保留游戏内弹窗；点击 Try again / Play again 请求商店跳转并重玩，棋盘、生命和步数跳转节奏重置，片头不重复播放。独立 game.js 包的重玩由平台组装页配置。']));
     const policy=config().playableCta||{};
     const first=el('input',{type:'number',min:1,max:99,step:1,value:policy.afterSteps??20});
     first.addEventListener('change',async()=>{if(!first.checkValidity()){first.reportValidity();return;}await save({playableCta:{afterSteps:Number(first.value)}});await refresh(true);});
