@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/travel-town-origin/standalone/game.js",
-  "bytes": 3431963,
-  "sha256": "03be7c87ab0dd805382a972834e7da53021200e0280feebbbee73041228b7d16",
+  "bytes": 3432608,
+  "sha256": "7a080a1edb0f78fbcb2df12d1709f1766dc334bf75518406970560d1cbf4ca4e",
   "payloadSha256": "7dff1df1c735f1325abab6e412569ea182d881ac3b40c56372fa17b8ca76332f",
   "uncompressedBytes": 4243875,
   "methods": [

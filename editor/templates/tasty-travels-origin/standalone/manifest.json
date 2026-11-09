@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/tasty-travels-origin/standalone/game.js",
-  "bytes": 4119115,
-  "sha256": "51acd830efc9bf2df6717b996146ac2448ef6deb39491d3f4e88d44588a9d8fa",
+  "bytes": 4119760,
+  "sha256": "a8ab9e46756c2ed335291cc6fe3b2d5e7d0d919eacb84e2f988d77e60283eeea",
   "payloadSha256": "699257a1be516d7e13d16d6f975a9609b116d092a6da055307c2f4e93b588770",
   "uncompressedBytes": 5318906,
   "methods": [

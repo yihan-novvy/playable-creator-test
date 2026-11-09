@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/pixel-flow-origin/standalone/game.js",
-  "bytes": 2944735,
-  "sha256": "d597590b5aa9d75017ea19dadaa6cf457fd0b260dd752de22e1848e9c7d445e7",
+  "bytes": 2945380,
+  "sha256": "73f5a26304ec819c8373587548e39a607011aa8dc7eb4312e53bd116b4b09cf1",
   "payloadSha256": "90f6a53eb98a3e114bb4b72ab10c4588e45559e08f8dba6be0f0b4070de5a87b",
   "uncompressedBytes": 10029570,
   "methods": [

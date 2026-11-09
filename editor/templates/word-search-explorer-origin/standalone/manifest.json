@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/word-search-explorer-origin/standalone/game.js",
-  "bytes": 2693515,
-  "sha256": "42c1503e9af6f95d5cdce5ad1053ded8aed00d5d4b880bf9623534d8ff4bd3af",
+  "bytes": 2694160,
+  "sha256": "ddab96a43cde18a2d40074b5ca4aa2d6e33f3bfe062a207e1a22a4853b0aca57",
   "payloadSha256": "667156e3601623bc8c0a64f2ef4175e7419b335ad63778a91e6a43943439309f",
   "uncompressedBytes": 4326956,
   "methods": [

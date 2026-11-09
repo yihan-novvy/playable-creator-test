@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/grill-sort-origin/standalone/game.js",
-  "bytes": 2161076,
-  "sha256": "899e072f7a04690881fd6d426cb16cf78a07a17d5f28ab2fd6d735f2e946f7a5",
+  "bytes": 2161721,
+  "sha256": "07d2e090c859d7a5874a524bfe5f9a3a8634b46b2956524230016790dfd0dfce",
   "payloadSha256": "765d407144cdd5a52640d2da3a1c05e77509939379194ce58a153b225e4a8d53",
   "uncompressedBytes": 4678541,
   "methods": [

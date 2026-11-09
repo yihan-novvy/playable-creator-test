@@ -21,6 +21,10 @@ function createStandaloneEntry(factory, metadata) {
     // Replay is an explicit host choice. With the default, the final result lets
     // the official shell advance. Multi-level campaigns keep their native flow.
     const allowReplay = options.allowReplay === true && metadata.levelCount === 1;
+    // Assembly hosts may keep native result panels rendering after settlement.
+    // Input and gameplay reports still stop at the result.
+    const keepResultScene = options.keepResultScene === true;
+    let presentingResult = false;
     const mount = document.createElement('div');
     mount.style.cssText = 'position:absolute;inset:0;overflow:hidden;';
     root.appendChild(mount);
@@ -49,11 +53,13 @@ function createStandaloneEntry(factory, metadata) {
         result = kind;
         continuing = detail?.continuePlaying === true || allowReplay;
         closed = !continuing;
+        const holdForHost = closed || (allowReplay && !detail?.continuePlaying);
+        presentingResult = keepResultScene && holdForHost;
         shell[kind](continuing ? {continuePlaying: true} : undefined);
         emit('result', {result: kind, continuePlaying: continuing});
         // Native inter-level animations must keep running. Other completed
         // rounds wait for the host, with input, timers and sound held.
-        if (closed || (allowReplay && !detail?.continuePlaying)) {
+        if (holdForHost && !presentingResult) {
           paused = true;
           native?.pause();
         }
@@ -75,7 +81,7 @@ function createStandaloneEntry(factory, metadata) {
         },
         retry() {
           if (!current() || !continuing || closed || retries >= 50) return;
-          result = null; continuing = false; retries++;
+          result = null; continuing = false; presentingResult = false; retries++;
           shell.retry(); emit('retry', {retry: retries});
         },
         end() { if (current()) runtime.end(); },
@@ -104,13 +110,13 @@ function createStandaloneEntry(factory, metadata) {
         if (started || destroyed || closed) return;
         started = true; paused = false; emit('start');
         await native.start();
-        if (paused || destroyed || closed) native?.pause();
+        if (paused || destroyed || (closed && !presentingResult)) native?.pause();
       },
       pause() { if (destroyed) return; if (rebuilding) holdAfterRebuild = true; const changed = !paused; paused = true; native?.pause(); if (changed) emit('pause'); },
-      resume() { if (!started || destroyed || closed) return; if (rebuilding) { holdAfterRebuild = false; return; } if (result && metadata.levelCount === 1) return; const changed = paused; paused = false; native.resume(); if (changed) emit('resume'); },
+      resume() { if (!started || destroyed || (closed && !presentingResult)) return; if (rebuilding) { holdAfterRebuild = false; return; } if (result && metadata.levelCount === 1 && !presentingResult) return; const changed = paused; paused = false; native.resume(); if (changed) emit('resume'); },
       async replay() {
         if (!state().canReplay) return false;
-        rebuilding = true; holdAfterRebuild = false; paused = true; generation++; native.destroy(); native = null;
+        rebuilding = true; holdAfterRebuild = false; presentingResult = false; paused = true; generation++; native.destroy(); native = null;
         try {
           await construct();
           if (destroyed) return false;
@@ -118,12 +124,14 @@ function createStandaloneEntry(factory, metadata) {
           shell.retry(); emit('retry', {retry: retries});
           paused = holdAfterRebuild;
           await native.start();
-          if (paused || destroyed || closed) native?.pause();
+          if (paused || destroyed || (closed && !presentingResult)) native?.pause();
           return !destroyed;
         } catch (error) { runtime.destroy(); throw error; }
       },
       end() {
-        if (!started || closed || destroyed) return false;
+        if (!started || destroyed) return false;
+        if (closed) { if (presentingResult) { presentingResult = false; paused = true; native?.pause(); } return false; }
+        presentingResult = false;
         closed = true; continuing = false; paused = true;
         native?.pause(); shell.end(); emit('end'); return true;
       },

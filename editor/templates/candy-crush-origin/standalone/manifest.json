@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/candy-crush-origin/standalone/game.js",
-  "bytes": 3191191,
-  "sha256": "b6613a84c3dcd96da67c73adef08995e43b1b0868b7f2e4f85a880c9cac68319",
+  "bytes": 3191836,
+  "sha256": "753604931f28a30c9c0e44ae52132864d1a7a6fbd7d83939062721dec6604187",
   "payloadSha256": "2bae25a4fbffe295a289f2e120ae726818d8b1265f3410e6f6f3856e06fb3c6a",
   "uncompressedBytes": 4277147,
   "methods": [

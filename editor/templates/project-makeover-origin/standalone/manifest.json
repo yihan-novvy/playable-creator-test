@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/project-makeover-origin/standalone/game.js",
-  "bytes": 618339,
-  "sha256": "931a15abac141fd4e2edfb7a7c7939d6e2216c3469a399694d250d58ed8c716b",
+  "bytes": 618984,
+  "sha256": "b95e40a4ea0b173e251861e51b1437ec90ec8a26b2cdc3ded1f7b4c53961b457",
   "payloadSha256": "7022a26c3482fcec289e5ccb33ae0175870169df1fce61e626d0a6688840451c",
   "uncompressedBytes": 891436,
   "methods": [

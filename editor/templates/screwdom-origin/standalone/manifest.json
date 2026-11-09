@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/screwdom-origin/standalone/game.js",
-  "bytes": 4512883,
-  "sha256": "4035151d89dde6078fc08de489dc44ba70cbd51679e81c78939c5865ee9ee06e",
+  "bytes": 4513528,
+  "sha256": "fbfee2a0910d81448360d4314b60f00637d93a5871c249e802f6acf452c3fe23",
   "payloadSha256": "04a186dc2cdc56984f49faa1b0e8cca042f1a813fe3d75e7c192a117578ea8a3",
   "uncompressedBytes": 8927050,
   "methods": [

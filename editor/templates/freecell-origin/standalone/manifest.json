@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/freecell-origin/standalone/game.js",
-  "bytes": 1755028,
-  "sha256": "ee95c661482c64b4b59a2a1fbdf8e0c18ac88a1fb5b40b8c7feb02c6e2e86002",
+  "bytes": 1755673,
+  "sha256": "057465eb84604c31caead90254416900720faecb0985e74076dd2e978dfc9a40",
   "payloadSha256": "91942f4eab63e6a50ee3f8ba968e4b0c81fae3d6107907d975cf9a7ac9bf05e2",
   "uncompressedBytes": 2533447,
   "methods": [

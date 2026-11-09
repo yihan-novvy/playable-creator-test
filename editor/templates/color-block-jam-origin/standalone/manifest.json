@@ -4,8 +4,8 @@
   "levelCount": 3,
   "playableType": "level",
   "file": "editor/templates/color-block-jam-origin/standalone/game.js",
-  "bytes": 4748591,
-  "sha256": "c60e68b8fc78e93d4527c5bec98b252c9273ae7ae9051fd7b6fd5765f8cadf67",
+  "bytes": 4749236,
+  "sha256": "8a08096c4dfbef4f43930b84266aacc5755954f1a5a248e5ef386f3e4a233fea",
   "payloadSha256": "de1a1cd39ba34eff93081203a75288d08fda57a808c21820d4d9c86bb12e6320",
   "uncompressedBytes": 12034909,
   "methods": [

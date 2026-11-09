@@ -4,8 +4,8 @@
   "levelCount": 1,
   "playableType": "level",
   "file": "editor/templates/water-sort/standalone/game.js",
-  "bytes": 451128,
-  "sha256": "9a2cd7aed9801389d11931ab950a840e77cebf5ec42e49b7426eed539f46e3c1",
+  "bytes": 451773,
+  "sha256": "467f87da4445293c80269f1b31d18b98e4e966245ef30589fd4e70d4aab9e83c",
   "payloadSha256": "c790bc30ad22b9f1614973c8d3001b24e9797df57f0e1f24114d17e62da7dbb8",
   "uncompressedBytes": 806065,
   "methods": [
