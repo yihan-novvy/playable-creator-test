@@ -5,6 +5,8 @@ import { buildWsOverlayInjection } from './ws-overlays.mjs';
 import { normalizeCtaPolicy, requireFiles } from './helpers.mjs';
 import { effectiveConfig } from '../runner.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
+import {configureOriginGame, originHostScript, packageOriginGame} from './standalone-origin.mjs';
+import {fixedViewportHtml} from './fixed-viewport.mjs';
 
 const inline = value => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 const script = (tag, source) => `<script data-novvy-${tag}>${source.replace(/<\/script/gi, '<\\/script')}</script>`;
@@ -51,9 +53,14 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
     return content;
   };
   let html = read(template.game.indexHtml);
-  const files = Object.fromEntries([...template.game.scripts, template.game.boot].map(file => [path.basename(file), read(file)]));
   const storyEnabled = template.id === 'tasty-travels-origin' && config.story?.enabled === true;
-  const overlayConfig = storyEnabled ? { ...config, intro: { ...config.intro, goEnabled: false } } : config;
+  // The existing story uses the original game's music before gameplay. Keep
+  // that assembly path; its separate game export still uses the new lifecycle.
+  const standalone = template.game.standalone && !storyEnabled;
+  const files = standalone ? {} : Object.fromEntries([...template.game.scripts, template.game.boot].map(file => [path.basename(file), read(file)]));
+  if (template.game.standalone) files['game.js'] = configureOriginGame(read(template.game.standalone), config.gameplay);
+  if (standalone) html = html.replace(/<body>[\s\S]*?<!--ORIGIN_SCRIPTS-->/, '<body><div id="standalone-origin" style="position:fixed;inset:0"></div><!--ORIGIN_SCRIPTS-->');
+  const overlayConfig = template.game.standalone || storyEnabled ? { ...config, intro: { ...config.intro, goEnabled: false } } : config;
   const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config: overlayConfig, media, optionalHudPortraits: true, analytics: false });
   if (storyEnabled) {
     const story = name => fs.readFileSync(path.join(pluginDir, 'overlays/story', `story.${name}`), 'utf8');
@@ -65,7 +72,7 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
   }
   addOriginCtaCard(injection, template.game.ctaCard, read, config.cta);
   const stageChain = [...(injection.introEnabled ? ['video'] : []), 'playable'];
-  const policy = originCtaPolicy(config.playableCta);
+  const policy = {...originCtaPolicy(config.playableCta), enabled:config.playableCta?.enabled !== false};
   const settings = { intro: injection.introEnabled, title: injection.hudEnabled, policy };
   if (template.id === 'grill-sort-origin') settings.gameplay = { countdownSeconds: 180, allowReplay: true, ...config.gameplay };
   if (template.id === 'freecell-origin') settings.gameplay = { allowReplay: false, ...config.gameplay };
@@ -81,9 +88,11 @@ export function originHtml({ root, pluginDir, template, config, media = {}, prev
     script('playable-bridge', readEngine('events.js')),
     originCtaBridge(config),
     ...injection.bodyScripts,
-    ...template.game.scripts.map(sourceScript),
-    script('origin-adapter', readEngine('engine.js')),
-    sourceScript(template.game.boot),
+    ...(standalone ? [originHostScript(settings), sourceScript(template.game.standalone)] : [
+      ...template.game.scripts.map(sourceScript),
+      script('origin-adapter', readEngine('engine.js')),
+      sourceScript(template.game.boot),
+    ]),
   ].filter(Boolean).join('\n');
   if (html.split('<!--ORIGIN_SCRIPTS-->').length !== 2) throw new Error('Original playable boot anchor missing');
   html = html.replace(/<!--ORIGIN_SCRIPTS-->[\s\S]*?<!--ORIGIN_SCRIPTS_END-->/, () => boot);
@@ -110,8 +119,9 @@ export async function packOrigin(ctx) {
     media: { introVideo: intro ? 'intro-video.mp4' : null, introPoster: intro ? 'poster.webp' : null } });
   fs.rmSync(ctx.resultDir, { recursive: true, force: true });
   fs.mkdirSync(ctx.resultDir, { recursive: true });
-  for (const [file, content] of Object.entries({ ...built.files, 'index.html': built.html })) fs.writeFileSync(path.join(ctx.resultDir, file), content);
+  for (const [file, content] of Object.entries({ ...built.files, 'index.html': fixedViewportHtml(built.html) })) fs.writeFileSync(path.join(ctx.resultDir, file), content);
   if (intro) for (const file of ['intro-video.mp4', 'poster.webp']) fs.copyFileSync(path.join(ctx.generatedDir, file), path.join(ctx.resultDir, file));
   const packageFiles = fs.readdirSync(ctx.resultDir).sort();
-  return { metrics: { packageFiles, outputBytes: packageFiles.reduce((n, file) => n + fs.statSync(path.join(ctx.resultDir, file)).size, 0), stageChain: built.stageChain, introEnabled: intro, ctaPolicy: built.policy }, warnings: [] };
+  const budget = ctx.template.game.standalone ? await packageOriginGame(ctx) : {};
+  return { metrics: { packageFiles, outputBytes: packageFiles.reduce((n, file) => n + fs.statSync(path.join(ctx.resultDir, file)).size, 0), stageChain: built.stageChain, introEnabled: intro, ctaPolicy: built.policy, ...budget }, warnings: [] };
 }

@@ -25,15 +25,15 @@ async function fixture(total=33){
   GameMgr.prototype.OnCorrectInput=vm.runInNewContext('(function(){'+nativeCorrect+'})',{BaseManager$1:()=>({Instance:{EventTrigger:()=>current.OnVictory()}}),EventCenter:{},EventName:{Victory:'win'}});
   let current;
   class TZ{ButtonOnClick(){}}
-  const view={root:{querySelector(){return null;},querySelectorAll(){return[];}},mount:{style:{},remove(){lifecycle.push('remove');}}};
-  const w={dispatchEvent(){},Luna:{Unity:{Playable:{},LifeCycle:{},Analytics:{}}},GameMgr,TZ_Script:TZ,UnityEngine:{AudioListener:{volume:0},Input:{GetMouseButtonDown:()=>true}},pc:{TextGenerator:{}},$environment:{packageConfig:{}}};
+  const view={root:{style:{},querySelector(){return null;},querySelectorAll(){return[];}},mount:{style:{},remove(){lifecycle.push('remove');}}};
+  const w={requestAnimationFrame:fn=>fn(),dispatchEvent(){},Luna:{Unity:{Playable:{},LifeCycle:{},Analytics:{}}},GameMgr,TZ_Script:TZ,UnityEngine:{AudioListener:{volume:0},Input:{GetMouseButtonDown:()=>true}},pc:{TextGenerator:{}},$environment:{packageConfig:{}}};
   class Application{app={pause:()=>lifecycle.push('pause'),resume:()=>lifecycle.push('resume'),destroy:()=>lifecycle.push('destroy'),muteAudio(){},unmuteAudio(){}};InitializeAsync(){return{continueWith:fn=>fn({})};}StartWithJSCallback(fn){lifecycle.push('start');fn();}}
   Application.StartupScene=class{};w.LunaUnity={Application};
   const scope={window:w,run(){},audioContexts:new Set(),audioElements:new Set(),pause:()=>lifecycle.push('scopePause'),resume:()=>lifecycle.push('scopeResume'),dispose:()=>lifecycle.push('dispose')};
   const shell=Object.fromEntries(['step','win','fail','end','cta'].map(name=>[name,(...args)=>calls.push([name,...args])]));
   vm.runInNewContext(read('src/game.js'),{NovvyGame:fn=>entry=fn,SOURCE:{variant:'100m',markup:'',css:'',config:'',engine:'',jsons:{},sounds:{},blobs:{}},engineRoot:()=>view,createEngineScope:()=>scope,structuredClone,Event,atob,console,installZenLayout(){}});
   const instance=await entry({},shell,{env:{muted:true}});
-  assert.equal(calls.length,0,'no events before start');assert.ok(!lifecycle.includes('start'),'loading does not start gameplay');
+  assert.equal(calls.length,0,'no events before start');assert.ok(lifecycle.includes('start')&&lifecycle.includes('scopePause'),'ready includes the prepared, paused first scene');
   current=new GameMgr();current.CreatWordBox();return {instance,calls,lifecycle,w,game:current,TZ,fills};
 }
 const a=await fixture();await a.instance.start();

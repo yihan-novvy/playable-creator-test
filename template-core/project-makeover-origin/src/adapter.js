@@ -43,17 +43,16 @@ function pmResize(){
   if(logo_l)logo_l.visible=top===0;if(logo_r)logo_r.visible=top===0;
   stage.tickOnUpdate=!main_mc;stage.update();stage.tickOnUpdate=true;
 }
-function pmStart(){
-  if(pmStarted||pmDestroyed)return;
-  pmStarted=true;
+function pmPrepare(){
   document.getElementById('loading').style.display='none';document.getElementById('font-preload').style.display='none';
   const scene=new lib.main();stage=new lib.Stage(canvas);stage.addChild(scene);
   pmResize(); // Native frame zero creates the scene references and listeners.
   main_mc.instance.visible=false;scene.shape_1.visible=false;
   stage.addChildAt(new lib.bg_pm(),0);
-  createjs.Touch.enable(stage);createjs.Ticker.framerate=lib.properties.fps;createjs.Ticker.addEventListener('tick',stage);
+  createjs.Ticker.framerate=lib.properties.fps;createjs.Ticker.addEventListener('tick',stage);
   // The first native frame installs the palette and face listeners.
   pmResize();pmAudio();window.addEventListener('resize',pmResize);
+  stage.mouseEnabled=false;stage.enableDOMEvents(false);pmContext.scope.pause();
 }
 canvas=document.getElementById('canvas');
 var pmComposition=AdobeAn.getComposition(comp_id);lib=pmComposition.getLibrary();
@@ -63,8 +62,9 @@ return new Promise(function(resolve,reject){
     const img=new Image();img.onload=()=>{images[item.id]=img;done();};img.onerror=()=>fail(new Error('Original image unavailable: '+item.id));img.src=item.src;
   }))).then(()=>{
     for(const info of lib.ssMetadata)pmComposition.getSpriteSheet()[info.name]=new createjs.SpriteSheet({images:[images[info.name]],frames:info.frames});
+    pmPrepare();
     resolve({
-      start:pmStart,
+      start(){if(pmStarted||pmDestroyed)return;pmStarted=true;pmPaused=false;pmContext.scope.resume();stage.mouseEnabled=true;stage.enableDOMEvents(true);createjs.Touch.enable(stage);pmAudio();},
       pause(){if(!pmStarted||pmPaused||pmDestroyed)return;pmPaused=true;stage.mouseEnabled=false;stage.enableDOMEvents(false);createjs.Touch.disable(stage);pmAudio();pmContext.scope.pause();},
       resume(){if(!pmStarted||!pmPaused||pmDestroyed)return;pmPaused=false;pmContext.scope.resume();stage.mouseEnabled=true;stage.enableDOMEvents(true);createjs.Touch.enable(stage);pmAudio();},
       setEnv(patch){pmEnv={...pmEnv,...patch};pmResize();pmAudio();},

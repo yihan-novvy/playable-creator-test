@@ -6,6 +6,7 @@
   "constants": {
     "sourceSha256": "e4dc06f17bf776b3aaa76daf4b71bcc5374455b9e3c7580a1518cce3db939fd8",
     "game": {
+      "standalone": "game/game.js",
       "assetsJs": "game/assets.js",
       "coreJs": "game/core.js",
       "hudInsideCanvas": true,
@@ -18,7 +19,8 @@
       "game/index.html": "58520c6b6ab795d6ce23e92bb7e0135b5c90f4e04f5608208c3a68aa19afddba",
       "game/assets.js": "d59bb063062b41a0d109dd44dc4807b73955244f7a850b9ae64d7a3c1713cb5b",
       "game/core.js": "31f1bff473b78f530112850ba5ec651f6b8803c874b9e3a5b9e3e040a84e6244",
-      "game/cta-icon.webp": "bb388403f67db467349f210b5a2688b33449a8e733d221681b7286a352e98683"
+      "game/cta-icon.webp": "bb388403f67db467349f210b5a2688b33449a8e733d221681b7286a352e98683",
+      "game/game.js": "526777858b7401efe3f1ca6c7cd86edba3a449d3747a9cf90261f4997262cd0b"
     },
     "blockCounts": [
       2,

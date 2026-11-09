@@ -1,0 +1,27 @@
+{
+  "id": "color-block-jam-origin",
+  "name": "Color Block Jam · 原版三关滑块试玩",
+  "levelCount": 3,
+  "playableType": "level",
+  "file": "editor/templates/color-block-jam-origin/standalone/game.js",
+  "bytes": 4748591,
+  "sha256": "c60e68b8fc78e93d4527c5bec98b252c9273ae7ae9051fd7b6fd5765f8cadf67",
+  "payloadSha256": "de1a1cd39ba34eff93081203a75288d08fda57a808c21820d4d9c86bb12e6320",
+  "uncompressedBytes": 12034909,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

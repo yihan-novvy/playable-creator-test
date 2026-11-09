@@ -1,0 +1,27 @@
+{
+  "id": "travel-town-origin",
+  "name": "Travel Town · 原版剧情合并试玩",
+  "levelCount": 1,
+  "playableType": "level",
+  "file": "editor/templates/travel-town-origin/standalone/game.js",
+  "bytes": 3431963,
+  "sha256": "03be7c87ab0dd805382a972834e7da53021200e0280feebbbee73041228b7d16",
+  "payloadSha256": "7dff1df1c735f1325abab6e412569ea182d881ac3b40c56372fa17b8ca76332f",
+  "uncompressedBytes": 4243875,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

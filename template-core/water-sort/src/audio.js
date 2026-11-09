@@ -3,9 +3,11 @@
 import BGM_URL from './bgm.mp3?inline';
 // A lookahead scheduler fires pitched "glug" bubbles whose pitch and tempo climb as the vessel fills,
 // each with a splashy noise transient. Browsers require a user gesture, so unlockAudio() runs in pointerdown.
+let muted = false, disposed = false;
 let context = null, master = null, noise = null, voice = null, bgm = null, fillNow = 0;
 
 export function unlockAudio() {
+  if (muted || disposed) return;
   if (context) { if (context.state === 'suspended') context.resume(); return; }
   context = new (window.AudioContext || window.webkitAudioContext)();
   master = context.createGain(); master.gain.value = .6; master.connect(context.destination);
@@ -38,6 +40,7 @@ function glug(time, out, amplitude = .34) {
 }
 
 export function startPour() {
+  if (muted || disposed) return;
   unlockAudio();
   if (voice) return;
   fillNow = 0;
@@ -76,6 +79,7 @@ export function stopPour() {
 // master) at 0.5 lands around -33.5 LUFS — roughly midway between "too quiet
 // to notice" (-41) and "too loud" (-23.5). One knob: gain.value below.
 export function startBGM() {
+  if (muted || disposed) return;
   unlockAudio();
   if (bgm) return;
   bgm = 'loading';
@@ -83,10 +87,22 @@ export function startBGM() {
     .then(response => { if (!response.ok) throw new Error(response.status); return response.arrayBuffer(); })
     .then(data => context.decodeAudioData(data))
     .then(buffer => {
+      if(disposed)return;
       const source = context.createBufferSource(); source.buffer = buffer; source.loop = true;
       const gain = context.createGain(); gain.gain.value = .5;
       source.connect(gain); gain.connect(context.destination); source.start();
       bgm = { source, gain };
     })
     .catch(() => { bgm = null; });
+}
+
+export function setAudioMuted(value) {
+  muted = !!value;
+  if(context && context.state !== 'closed') (muted ? context.suspend() : context.resume()).catch(()=>{});
+}
+export function disposeAudio() {
+  if(disposed)return;disposed=true;
+  if(voice){clearInterval(voice.timer);voice.bus.disconnect();voice=null;}
+  if(bgm && bgm !== 'loading'){bgm.source.stop();bgm.gain.disconnect();}
+  if(context && context.state !== 'closed')context.close().catch(()=>{});
 }

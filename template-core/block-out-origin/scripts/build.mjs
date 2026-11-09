@@ -1,3 +1,4 @@
+import { compileStandalone } from '../../shared/origin-standalone/build.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -58,6 +59,7 @@ export function build() {
   if (hash(source) !== provenance.hashes['unpacked-game.html']) throw new Error('Frozen Block Out source hash mismatch');
   const result = compileSource(source);
   const files = { 'game/index.html': result.shell, 'game/assets.js': result.assets, 'game/core.js': result.core, 'game/cta-icon.webp': storeIcon() };
+  files['game/game.js'] = compileStandalone(root, files, []);
   fs.rmSync(path.join(out, 'game'), { recursive: true, force: true });
   fs.mkdirSync(path.join(out, 'game'), { recursive: true });
   for (const [file, content] of Object.entries(files)) fs.writeFileSync(path.join(out, file), content);
@@ -66,7 +68,7 @@ export function build() {
     id: 'block-out-origin', name: appStore.name, version, entry: 'game/index.html',
     constants: {
       sourceSha256: hash(source),
-      game: { assetsJs: 'game/assets.js', coreJs: 'game/core.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } },
+      game: { standalone: 'game/game.js', assetsJs: 'game/assets.js', coreJs: 'game/core.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } },
       fileHashes: Object.fromEntries(Object.entries(files).map(([file, content]) => [file, hash(content)])),
       blockCounts: result.counts,
       sourceUrl: 'https://data.insightrackr.com/creative/preplay/detail/7ffa03d526a4b106c4f1f82c8ab1afae',

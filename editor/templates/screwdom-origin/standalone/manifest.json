@@ -1,0 +1,27 @@
+{
+  "id": "screwdom-origin",
+  "name": "Screwdom · 原版 3D 螺丝试玩",
+  "levelCount": 1,
+  "playableType": "level",
+  "file": "editor/templates/screwdom-origin/standalone/game.js",
+  "bytes": 4512883,
+  "sha256": "4035151d89dde6078fc08de489dc44ba70cbd51679e81c78939c5865ee9ee06e",
+  "payloadSha256": "04a186dc2cdc56984f49faa1b0e8cca042f1a813fe3d75e7c192a117578ea8a3",
+  "uncompressedBytes": 8927050,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

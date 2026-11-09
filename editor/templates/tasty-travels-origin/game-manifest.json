@@ -5,6 +5,7 @@
   "entry": "game/index.html",
   "constants": {
     "game": {
+      "standalone": "game/game.js",
       "scripts": [
         "game/assets.js",
         "game/settings.js",
@@ -39,7 +40,8 @@
       "game/layout.js": "29d6713a040a4661e21f415ea6bc511b34fbe76252cdb70e94101d5b240f956c",
       "game/cta-icon.webp": "a053e3e26b4b42b9cc00f0b4e028cc330ae9276a1417a334b0fdb0abce366c7a",
       "game/boot.js": "d846632344483ea431edddcb88ef8bba3244a7bfb0358e9015f3218621b730d9",
-      "game/index.html": "5d9ba73a7df436a0762ef5d91c573f1440e2b043b49a7b73e6dc5030100cd6a3"
+      "game/index.html": "5d9ba73a7df436a0762ef5d91c573f1440e2b043b49a7b73e6dc5030100cd6a3",
+      "game/game.js": "2916e4395b12c535e52fef7440387b1d69aac830682b8fd262325acc646586e3"
     }
   }
 }

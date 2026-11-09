@@ -1,0 +1,27 @@
+{
+  "id": "zen-word-92m-origin",
+  "name": "Zen Word · 9200 万展示版",
+  "levelCount": 1,
+  "playableType": "level",
+  "file": "editor/templates/zen-word-92m-origin/standalone/game.js",
+  "bytes": 3784174,
+  "sha256": "802057516e55fff9f85e21c6db209e69862a85ff8c4d4b61dbbfebeac11c2c50",
+  "payloadSha256": "96b758cefe69c0a816d2ac77c52beb2280ead34fccd1607692483495a4828645",
+  "uncompressedBytes": 9320050,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

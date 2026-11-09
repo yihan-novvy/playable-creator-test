@@ -1,3 +1,4 @@
+import { compileStandalone } from '../../shared/origin-standalone/build.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -61,6 +62,7 @@ export function compileSource(html) {
     'game/boot.js': fs.readFileSync(path.join(root, 'src/boot.js'), 'utf8'),
     'game/index.html': shell.replace('__TASTY_SPLASH_IMAGE__', splash),
   };
+  files['game/game.js'] = compileStandalone(root, files, ['game/assets.js','game/settings.js','game/main.js','game/layout.js','game/loader.js']);
   return { files, assets, archive };
 }
 export function build() {
@@ -72,7 +74,7 @@ export function build() {
   fs.mkdirSync(path.join(out, 'game'), { recursive: true });
   for (const [file, content] of Object.entries(files)) fs.writeFileSync(path.join(out, file), content);
   fs.writeFileSync(path.join(out, 'game-manifest.json'), JSON.stringify({ id: 'tasty-travels-origin', name: appStore.name, version: '1.0.0', entry: 'game/index.html',
-    constants: { game: { scripts: ['game/assets.js','game/settings.js','game/main.js','game/layout.js','game/loader.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: 'Tasty Travels', icon: 'game/cta-icon.webp' }, storyImages: [1, 2, 3].map(n => `game/story-reference-${n}.jpg`) }, targetTier: 9,
+    constants: { game: { standalone: 'game/game.js', scripts: ['game/assets.js','game/settings.js','game/main.js','game/layout.js','game/loader.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: 'Tasty Travels', icon: 'game/cta-icon.webp' }, storyImages: [1, 2, 3].map(n => `game/story-reference-${n}.jpg`) }, targetTier: 9,
       sourceSha256: hash(raw), sourceUrl: provenance.sourceUrl, appStoreUrl: provenance.appStoreUrl,
       fileHashes: Object.fromEntries(Object.entries(files).map(([file, value]) => [file, hash(value)])) } }, null, 2) + '\n');
   console.log('tasty-travels-origin: built original physics merge game and local resources');

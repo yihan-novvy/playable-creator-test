@@ -39,6 +39,7 @@ export function createAssert() {
 }
 
 export const TESTS = [
+  { name: 'origin-standalone', file: path.join(TEST_DIR, 'origin-standalone.test.mjs') },
   { name: 'travel-town-origin', file: path.join(TEST_DIR, 'travel-town-origin.test.mjs') },
   { name: 'candy-crush-origin', file: path.join(TEST_DIR, 'candy-crush-origin.test.mjs') },
   { name: 'pixel-flow-origin', file: path.join(TEST_DIR, 'pixel-flow-origin.test.mjs') },

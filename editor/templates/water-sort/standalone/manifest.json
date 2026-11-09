@@ -1,0 +1,27 @@
+{
+  "id": "water-sort",
+  "name": "水色排序",
+  "levelCount": 1,
+  "playableType": "level",
+  "file": "editor/templates/water-sort/standalone/game.js",
+  "bytes": 451048,
+  "sha256": "4e6844ed1a2b036a6fc02220c136ad91f07e2619dad2d1c3c20f4886866f2f97",
+  "payloadSha256": "98da0c3a705b986759171791ad73b189052fb8111f7777f6fc6156487c731754",
+  "uncompressedBytes": 806018,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

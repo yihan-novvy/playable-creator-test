@@ -50,7 +50,7 @@ NovvyGame(function(container,shell,options){
       const ui=config.layouts.gameScene.children.ui.children;
       ui.ctaButton.visible=false;ui.playNowButton.visible=false;ui.disclaimer.visible=false;
     },
-    ready(value){if(disposed)return;scene=value;layout();input();sound();resolveStart?.();},
+    ready(value){if(disposed)return;scene=value;layout();input();sound();scope.window.requestAnimationFrame(()=>{if(disposed)return;scope.pause();resolveStart?.(runtime);});},
     bounds(component,original){
       if(component.getElement().key!=='gameContainer')return original;
       const a=area();return [a.left,a.top,a.width,a.height];
@@ -71,11 +71,7 @@ NovvyGame(function(container,shell,options){
     move(){step();},fail(){complete('fail');},
   };
   const runtime={
-    start(){if(disposed)return Promise.resolve();if(started)return startPromise;started=true;paused=false;input();
-      startPromise=new Promise((resolve,reject)=>{resolveStart=resolve;rejectStart=reject;});
-      try{scope.window.Globals.settings.network='local';scope.window.Globals.settings.allowAudioOnInteract=true;app.run(config);sound();}catch(error){rejectStart(error);}
-      return startPromise;
-    },pause,resume,
+    start(){if(disposed||started)return;started=true;paused=false;scope.resume();input();sound();},pause,resume,
     setEnv(patch){env={...env,...patch};layout();sound();},
     destroy(){if(disposed)return;disposed=true;view.root.style.pointerEvents='none';
       if(app?.audio){app.audio.available=false;Object.values(app.audio._audios||{}).forEach(audio=>audio.unload());}
@@ -84,5 +80,7 @@ NovvyGame(function(container,shell,options){
     },
   };
   input();scope.run(SOURCE.resources);scope.run(SOURCE.engine);
-  return runtime;
+  startPromise=new Promise((resolve,reject)=>{resolveStart=resolve;rejectStart=reject;});
+  try{scope.window.Globals.settings.network='local';scope.window.Globals.settings.allowAudioOnInteract=true;app.run(config);sound();}catch(error){runtime.destroy();rejectStart(error);}
+  return startPromise.catch(error=>{runtime.destroy();throw error;});
 });

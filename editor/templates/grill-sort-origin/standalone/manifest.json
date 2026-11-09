@@ -1,0 +1,27 @@
+{
+  "id": "grill-sort-origin",
+  "name": "Grill Sort™",
+  "levelCount": 1,
+  "playableType": "level",
+  "file": "editor/templates/grill-sort-origin/standalone/game.js",
+  "bytes": 2161076,
+  "sha256": "899e072f7a04690881fd6d426cb16cf78a07a17d5f28ab2fd6d735f2e946f7a5",
+  "payloadSha256": "765d407144cdd5a52640d2da3a1c05e77509939379194ce58a153b225e4a8d53",
+  "uncompressedBytes": 4678541,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

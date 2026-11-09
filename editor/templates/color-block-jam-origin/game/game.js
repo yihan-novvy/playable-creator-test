@@ -161,12 +161,20 @@ async function colorBlockJamAdapter({cc,system,scope,shell,isRunning}) {
     };
     return original.apply(this,args);
   });
-  // Existing explicit buttons are the only game-owned store controls. Both
-  // placements were confirmed as cta_click by the user on 2026-11-06.
-  let lastClick=-Infinity;
-  const download=()=>{if(!isRunning()||performance.now()-lastClick<1000)return;lastClick=performance.now();shell.cta('cta_click');};
-  Game.prototype.btn_play=download;
-  Over.prototype.btn_next=download;
+  // Conversion UI belongs to the host. Remove the existing native controls.
+  function cleanControls() {
+    const scene=cc.director.getScene();
+    for(const button of scene?.getComponentsInChildren(cc.Button)||[]) {
+      if(button.clickEvents?.some(event=>['btn_play','btn_next'].includes(event.handler))) button.node.active=false;
+    }
+    if(game?.bannerIcon?.node.parent)game.bannerIcon.node.parent.active=false;
+  }
+  Game.prototype.btn_play=function(){};
+  Over.prototype.btn_next=function(){};
+  for(const type of [Game,Over]) {
+    const original=type.prototype.onEnable;
+    type.prototype.onEnable=function(...args){const value=original?.apply(this,args);cleanControls();return value;};
+  }
   framework.playable.install=()=>{};
   Game.prototype.timeInstall=function(){};
   Game.prototype.levelInstall=function(){};
@@ -188,7 +196,7 @@ async function colorBlockJamAdapter({cc,system,scope,shell,isRunning}) {
     const offset=(top-bottom)/height*distance*Math.tan(game.camera.fov*Math.PI/360);
     game.camera.node.setPosition(position.x+up.x*offset,position.y+up.y*offset,position.z+up.z*offset);
     for(const {node,scale} of backgrounds)node.setScale(scale.x/ratio*1.2,scale.y,scale.z/ratio*1.2);
-    if(game.bannerIcon?.node.parent)game.bannerIcon.node.parent.active=!(env.insets?.bottom>0);
+    cleanControls();
     if(game.topNode)game.topNode.active=!(env.insets?.top>0);
     if(game.levelNode)game.levelNode.active=!(env.insets?.top>0);
     if(game.tishilNode){

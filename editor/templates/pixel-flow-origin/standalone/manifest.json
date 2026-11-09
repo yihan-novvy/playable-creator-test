@@ -1,0 +1,27 @@
+{
+  "id": "pixel-flow-origin",
+  "name": "Pixel Flow! · 原版像素传送带",
+  "levelCount": 1,
+  "playableType": "level",
+  "file": "editor/templates/pixel-flow-origin/standalone/game.js",
+  "bytes": 2944735,
+  "sha256": "d597590b5aa9d75017ea19dadaa6cf457fd0b260dd752de22e1848e9c7d445e7",
+  "payloadSha256": "90f6a53eb98a3e114bb4b72ab10c4588e45559e08f8dba6be0f0b4070de5a87b",
+  "uncompressedBytes": 10029570,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

@@ -12,6 +12,7 @@ try {
   game = createGame({
     host: $('scene'),
     level: window.__WATER_SORT_LEVEL__ ?? DEFAULT_LEVEL,
+    audioEnabled: () => !document.getElementById('novvy-video-intro'),
     // Wholehouse 覆盖层占用的竖直比例:顶部 hud(标题+进度条,宽 88dvw、
     // 高约 16%)与底部 cta 下载卡(约 15%),画布被悬浮其上,瓶子须排进中间。
     insets: { top: .18, bottom: .16 },

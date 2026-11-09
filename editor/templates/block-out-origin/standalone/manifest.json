@@ -1,0 +1,27 @@
+{
+  "id": "block-out-origin",
+  "name": "Block Out! - Color Sort Puzzle",
+  "levelCount": 2,
+  "playableType": "level",
+  "file": "editor/templates/block-out-origin/standalone/game.js",
+  "bytes": 3431336,
+  "sha256": "4030e368735d5b092f79d582b019716a6589dade29c7f35e1d4d9d5bfb797d0b",
+  "payloadSha256": "526777858b7401efe3f1ca6c7cd86edba3a449d3747a9cf90261f4997262cd0b",
+  "uncompressedBytes": 5581673,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

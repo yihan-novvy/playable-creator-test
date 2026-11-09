@@ -38,6 +38,7 @@ NovvyGame(async function(container,shell,options){
     const loadImage=(url,config,done)=>{const image=new Image();image.onload=()=>done(null,image);image.onerror=()=>done(new Error('Image failed: '+url));image.src=resource(url);};
     const bytes=url=>{const data=resource(url),raw=atob(data.slice(data.indexOf(',')+1));return Uint8Array.from(raw,c=>c.charCodeAt(0)).buffer;};
     downloader.register({'.js':loadScript,'.json':loadJson,'.png':loadImage,'.jpg':loadImage,'.jpeg':loadImage,'.webp':loadImage,'.bin':(url,config,done)=>{try{done(null,bytes(url));}catch(error){done(error);}},'.ttf':(url,config,done)=>{const family='screwdom-'+url.replace(/\W/g,'');const face=new FontFace(family,'url('+resource(url)+')');fonts.add(face);document.fonts.add(face);face.load().then(()=>{if(!destroyed)done(null,family);},error=>{if(!destroyed)done(error);});}});
+    view.root.style.pointerEvents='none';
     // Cocos bundle scripts are classic embedded resources; no file:// request.
     scope.window._createLocalJSElement=()=>{
       const element=document.createElement('script');element.type='application/x-screwdom-embedded';let embeddedUrl='';
@@ -51,6 +52,10 @@ NovvyGame(async function(container,shell,options){
       adapter=await screwdomAdapter({cc,system,scope,shell,root:view.root,isRunning:()=>started&&!paused&&!destroyed});
     });
     await cc.game.init({debugMode:cc.DebugMode.ERROR,settingsPath:'src/settings.json',overrideSettings:{profiling:{showFPS:false},splashScreen:{totalTime:0}}});
+    await new Promise(resolve => cc.game.run(() => {
+      adapter?.start();
+      scope.window.requestAnimationFrame(resolve);
+    }));
     cc.game.pause();scope.pause();sound();
     view.root.style.pointerEvents='none';
     function setEnv(patch){
@@ -60,7 +65,7 @@ NovvyGame(async function(container,shell,options){
     }
     setEnv(env);
     return {
-      start(){if(started||destroyed)return;started=true;paused=false;scope.resume();setEnv(env);return new Promise(resolve=>cc.game.run(()=>{adapter?.start();setEnv(env);view.root.style.pointerEvents='auto';resolve();}));},
+      start(){if(started||destroyed)return;started=true;paused=false;scope.resume();cc.game.resume();setEnv(env);view.root.style.pointerEvents='auto';},
       pause(){if(destroyed)return;paused=true;view.root.style.pointerEvents='none';cc.game.pause();scope.pause();sound();},
       resume(){if(!started||destroyed)return;paused=false;view.root.style.pointerEvents='auto';scope.resume();cc.game.resume();sound();},
       setEnv,

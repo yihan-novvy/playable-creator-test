@@ -41,9 +41,7 @@
     },
     "intro": {
       "enabled": false,
-      "ariaLabel": "",
-      "goEnabled": false,
-      "goText": "GO"
+      "ariaLabel": ""
     },
     "cta": {
       "endMask": false

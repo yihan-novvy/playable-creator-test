@@ -1,0 +1,27 @@
+{
+  "id": "tasty-travels-origin",
+  "name": "Tasty Travels: Merge Game",
+  "levelCount": 1,
+  "playableType": "level",
+  "file": "editor/templates/tasty-travels-origin/standalone/game.js",
+  "bytes": 4119375,
+  "sha256": "e182903f5dd492e0aacaf236933edf12659348c9c530ffb01b15195c732e65a2",
+  "payloadSha256": "2916e4395b12c535e52fef7440387b1d69aac830682b8fd262325acc646586e3",
+  "uncompressedBytes": 5319688,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

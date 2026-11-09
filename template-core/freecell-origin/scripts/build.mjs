@@ -1,3 +1,4 @@
+import { compileStandalone } from '../../shared/origin-standalone/build.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -28,6 +29,7 @@ export function compileSource(html) {
   files['game/layout.js'] = fs.readFileSync(path.join(root, 'src/layout.js'), 'utf8');
   files['game/boot.js'] = fs.readFileSync(path.join(root, 'src/boot.js'), 'utf8');
   files['game/index.html'] = fs.readFileSync(path.join(root, 'src/index.html'), 'utf8');
+  files['game/game.js'] = compileStandalone(root, files, names.map(name => `game/${name}.js`));
   return { files, scripts: [...names.map(name => `game/${name}.js`), 'game/layout.js'] };
 }
 export function build() {
@@ -42,7 +44,7 @@ export function build() {
   fs.writeFileSync(path.join(out, 'game-manifest.json'), JSON.stringify({
     id: 'freecell-origin', name: appStore.name, version, entry: 'game/index.html',
     levels: [{ id: 'original', name: 'Original 52-card deal', path: 'game/level.json' }],
-    constants: { game: { scripts: result.scripts, boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } }, totalCards: 52,
+    constants: { game: { standalone: 'game/game.js', scripts: result.scripts, boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } }, totalCards: 52,
       sourceSha256: hash(raw), sourceUrl: provenance.sourceUrl, appStoreUrl: provenance.appStoreUrl,
       fileHashes: Object.fromEntries(Object.entries(result.files).map(([file, value]) => [file, hash(value)])) },
   }, null, 2) + '\n');

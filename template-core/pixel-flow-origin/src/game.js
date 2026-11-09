@@ -2,6 +2,7 @@ NovvyGame(function(container,shell,options){
   options=options||{};
   let env={...(options.env||{})},started=false,paused=false,destroyed=false,settled=false,layout=()=>{};
   const view=engineRoot(container,SOURCE.markup,SOURCE.css),scope=createEngineScope(view.root),w=scope.window;
+  view.root.style.pointerEvents='none';
   const running=()=>started&&!paused&&!destroyed&&!settled;
   const buffer=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0)).buffer;
   w.jsons=structuredClone(SOURCE.jsons);
@@ -32,15 +33,26 @@ NovvyGame(function(container,shell,options){
       const task=w.app.InitializeAsync?w.app.InitializeAsync():w.System.Threading.Tasks.Task.fromResult(true);
       task.continueWith(function(done){
         if(done?.exception){dispose();reject(new Error(String(done.exception)));return;}
-        audio();scope.pause();
-        resolve({
-          start(){if(started||destroyed)return;started=true;scope.resume();
-            return new Promise(resolve=>{w.app.StartWithJSCallback(function(){view.root.querySelector('#application-preloader')?.remove();audio();resize();resolve();});audio();});},
-          pause(){if(!started||paused||destroyed)return;paused=true;w.Luna.Unity.LifeCycle.OnPause?.();w.app.app?.pause?.();audio();scope.pause();},
-          resume(){if(!started||!paused||destroyed)return;paused=false;scope.resume();w.Luna.Unity.LifeCycle.OnResume?.();w.app.app?.resume?.();audio();},
-          setEnv(patch){env={...env,...patch};if(patch.language)w.$environment.packageConfig.languages=[patch.language,patch.language];resize();audio();},
-          destroy:dispose
-        });
+        // Build and draw the original first scene while gameplay input is held.
+        // StartWithJSCallback is engine preparation, not the public start signal.
+        try { w.app.StartWithJSCallback(function(){
+          if(destroyed)return;
+          try {
+            view.root.querySelector('#application-preloader')?.remove();
+            audio();resize();
+            scope.window.requestAnimationFrame(function(){
+              if(destroyed)return;
+              w.Luna.Unity.LifeCycle.OnPause?.();w.app.app?.pause?.();audio();scope.pause();
+              resolve({
+                start(){if(started||destroyed)return;started=true;paused=false;scope.resume();w.Luna.Unity.LifeCycle.OnResume?.();w.app.app?.resume?.();view.root.style.pointerEvents='auto';audio();resize();},
+                pause(){if(destroyed)return;paused=true;view.root.style.pointerEvents='none';w.Luna.Unity.LifeCycle.OnPause?.();w.app.app?.pause?.();audio();scope.pause();},
+                resume(){if(!started||!paused||destroyed)return;paused=false;scope.resume();w.Luna.Unity.LifeCycle.OnResume?.();w.app.app?.resume?.();view.root.style.pointerEvents='auto';audio();},
+                setEnv(patch){env={...env,...patch};if(patch.language)w.$environment.packageConfig.languages=[patch.language,patch.language];resize();audio();},
+                destroy:dispose
+              });
+            });
+          } catch(error) { dispose();reject(error); }
+        });audio(); } catch(error) { dispose();reject(error); }
       });
     }catch(error){dispose();reject(error);}
   });

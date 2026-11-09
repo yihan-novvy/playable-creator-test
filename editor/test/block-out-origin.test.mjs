@@ -69,7 +69,7 @@ export default async function test(assert) {
   assert.equal(plain.stageChain, ['playable'], 'two native levels share one playable stage');
   assert.equal(withIntro.stageChain, ['video', 'playable'], 'optional video precedes playable');
   assert.check(withIntro.html.indexOf('data-novvy-playable-bridge') < withIntro.html.indexOf('<script data-novvy-intro>'), 'media registration precedes intro playback');
-  assert.check(plain.html.includes('src="core.js"') && !plain.html.includes('mraid.js'), 'pack uses local runtime');
+  assert.check(plain.html.includes('src="game.js"') && !plain.html.includes('mraid.js'), 'pack uses independent local runtime');
   assert.check(!blockOutHtml({ ...base, preview: true }).html.includes('src="core.js"'), 'preview inlines same runtime');
   assert.equal(ctaPolicy({ mode: 'steps', afterSteps: 20, intervals: [10, -1, 1.2, 8] }).intervals, [10, 8], 'invalid CTA intervals rejected');
   assert.equal(prerequisites(base.config), { uploads: [], generated: [] }, 'pure playable needs no video');
@@ -174,6 +174,6 @@ export default async function test(assert) {
     const first = fs.readFileSync(path.join(ctx.resultDir, 'index.html'), 'utf8');
     await run(ctx);
     assert.equal(fs.readFileSync(path.join(ctx.resultDir, 'index.html'), 'utf8'), first, 'repack is idempotent');
-    assert.equal(fs.readdirSync(ctx.resultDir).sort(), ['assets.js','core.js','index.html'], 'pure playable package is self-contained');
+    assert.equal(fs.readdirSync(ctx.resultDir).sort(), ['game-only.zip','game.js','index.html'], 'assembly includes independent game ZIP');
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 }

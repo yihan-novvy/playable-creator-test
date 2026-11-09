@@ -94,8 +94,9 @@ export default async function test(a){
  const base={root:entry.templateDir,pluginDir:entry.dir,template:entry.template,config:entry.template.defaults};
  const titled=originHtml({...base,config:{...base.config,hud:{...base.config.hud,titleEnabled:true}}}).html;
  for (const preview of [false, true]) for (const intro of [false, true]) {
-   const built=originHtml({...base,preview,config:{...base.config,intro:{enabled:intro}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'}}).html;
-   a.check(/class="loading-logo" src="data:image\/png;base64,/.test(built) && built.includes('@keyframes tasty-loading-stripes'), 'original logo and animated loader survive preview/export with and without intro');
+   const built=originHtml({...base,preview,config:{...base.config,intro:{enabled:intro}},media:{introVideo:'intro-video.mp4',introPoster:'poster.webp'}});
+   const source=JSON.parse(built.files['game.js'].match(/const SOURCE=(.*);\nconst GAME_CONFIG=/)[1]);
+   a.check(/class="loading-logo" src="data:image\/png;base64,/.test(source.markup) && source.css.includes('@keyframes tasty-loading-stripes'), 'original logo and animated loader survive preview/export with and without intro');
  }
  a.check(originHtml({...base,config:{...base.config,gameplay:undefined}}).html.includes('"gameplay":{"allowReplay":false,"spawnTierOffset":0}'),'old tasks default to replay and tier boost off');
  for (const preview of [false, true]) a.check(originHtml({...base,preview,config:{...base.config,gameplay:{spawnTierOffset:2}}}).html.includes('"gameplay":{"allowReplay":false,"spawnTierOffset":2}'),'saved boost reaches preview and export');

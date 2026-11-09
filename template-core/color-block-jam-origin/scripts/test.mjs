@@ -60,9 +60,8 @@ f.game.onTouchStart(b);f.model.removeBlock(b);f.game.gameOver();f.game.gameOver(
 f.enter(2,[f.block(),f.block(-1)]);assert.deepEqual(f.calls.at(-1),['level',2]);
 const c=f.model.blocks[0];f.game.onTouchStart(c);f.model.removeBlock(c);assert.deepEqual(f.calls.at(-1),['step',100],'obstacle excluded from progress');f.game.gameOver();assert.deepEqual(f.calls.at(-1),['win',{continuePlaying:true}]);
 f.enter(3,[f.block()]);assert.deepEqual(f.calls.at(-1),['level',3]);f.game.onTouchStart(f.model.blocks[0]);f.model.removeBlock(f.model.blocks[0]);f.game.gameOver();f.game.gameOver();assert.deepEqual(f.calls.at(-1),['win',null],'third level is terminal');
-f.game.btn_play();new f.Over().btn_next();assert.deepEqual(f.calls.at(-1),['cta','cta_click']);assert.equal(f.calls.filter(c=>c[0]==='cta').length,1,'CTA cooldown shared across native placements');
-f.state.now=1001;new f.Over().btn_next();assert.equal(f.calls.filter(c=>c[0]==='cta').length,2);f.state.running=false;f.state.now=3000;f.game.btn_play();assert.equal(f.calls.filter(c=>c[0]==='cta').length,2,'paused CTA blocked');
-console.log('Color Block Jam: source integrity, deterministic build, real release callback, move/elimination deduplication, 3-level results and native CTA guards passed.');
+f.game.btn_play();new f.Over().btn_next();assert.equal(f.calls.filter(c=>c[0]==='cta').length,0,'native conversion controls are disabled');
+console.log('Color Block Jam: source integrity, deterministic build, real release callback, move/elimination deduplication, 3-level results and host-owned CTA passed.');
 // Exercise the production assembly host in memory. This validates stage,
 // replay and conversion policy logic, not actual platform SDK reporting.
 async function hostFixture(config,withSdk=true){

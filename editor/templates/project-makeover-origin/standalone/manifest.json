@@ -1,0 +1,27 @@
+{
+  "id": "project-makeover-origin",
+  "name": "Project Makeover · 原版化妆试玩",
+  "levelCount": 1,
+  "playableType": "level",
+  "file": "editor/templates/project-makeover-origin/standalone/game.js",
+  "bytes": 618339,
+  "sha256": "931a15abac141fd4e2edfb7a7c7939d6e2216c3469a399694d250d58ed8c716b",
+  "payloadSha256": "7022a26c3482fcec289e5ccb33ae0175870169df1fce61e626d0a6688840451c",
+  "uncompressedBytes": 891436,
+  "methods": [
+    "init",
+    "start",
+    "pause",
+    "resume",
+    "replay",
+    "end",
+    "destroy",
+    "setEnv",
+    "setMuted",
+    "setInsets",
+    "resize",
+    "getState",
+    "on",
+    "off"
+  ]
+}

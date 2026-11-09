@@ -6,6 +6,7 @@ import { normalizeCtaPolicy } from '../../core/lib/helpers.mjs';
 import { effectiveConfig } from '../../core/runner.mjs';
 import { taskGeneratedDir, taskUploadsDir } from '../../lib/paths.mjs';
 import { originCtaBridge, addOriginCtaCard } from '../../core/lib/origin-playable.mjs';
+import {configureOriginGame, originHostScript} from '../../core/lib/standalone-origin.mjs';
 
 const inline = value => JSON.stringify(value).replaceAll('<', '\\u003c').replaceAll('\u2028', '\\u2028').replaceAll('\u2029', '\\u2029');
 const script = (tag, source) => `<script data-novvy-${tag}>${source.replace(/<\/script/gi, '<\\/script')}</script>`;
@@ -16,12 +17,15 @@ export function ctaPolicy(raw) {
 }
 
 export function blockOutHtml({ root, overlaysRoot, template, config, media = {}, preview = false }) {
+  config = {...config, intro:{...config.intro, goEnabled:false}};
   const read = (file, encoding = 'utf8') => {
     const content = fs.readFileSync(path.join(root, file), encoding);
     if (createHash('sha256').update(content).digest('hex') !== template.fileHashes?.[file]) throw new Error(`Block Out 产物校验失败，请重新 build: ${file}`);
     return content;
   };
   let html = read(template.game.indexHtml);
+  const game = configureOriginGame(read(template.game.standalone), config.gameplay);
+  html = html.replace(/<body[^>]*>[\s\S]*?<!--BLOCK_OUT_BOOT-->/, '<body><div id="standalone-origin" style="position:fixed;inset:0"></div><!--BLOCK_OUT_BOOT-->');
   const assetsJs = read(template.game.assetsJs), coreJs = read(template.game.coreJs);
   const pluginDir = overlaysRoot || path.resolve(root, '../../plugins/block-out-origin');
   const injection = buildWsOverlayInjection({ overlaysRoot: pluginDir, template, config, media, optionalHudPortraits: true, analytics: false });
@@ -32,14 +36,13 @@ export function blockOutHtml({ root, overlaysRoot, template, config, media = {},
     gameplay: { allowReplay: false, ...config.gameplay } };
   const readEngine = name => fs.readFileSync(path.join(pluginDir, template.overlays.engine, name), 'utf8');
   const boot = [
-    ...injection.bodyDom, readEngine('result.html'), injection.uiScript,
+    ...injection.bodyDom, injection.uiScript,
     script('block-out-config', `window.__novvyStageChain__=${inline(stageChain)};window.__BLOCK_OUT_CONFIG__=${inline(settings)};`),
     script('playable-bridge', readEngine('events.js')),
     originCtaBridge(config),
-    script('block-out-engine', readEngine('engine.js')),
     ...injection.bodyScripts,
-    preview ? script('block-out-assets', assetsJs) : '<script src="assets.js"></script>',
-    preview ? script('block-out-core', coreJs) : '<script src="core.js"></script>',
+    originHostScript(settings, true),
+    preview ? script('block-out-game', game) : '<script src="game.js"></script>',
   ].filter(Boolean).join('\n');
   if (html.split('<!--BLOCK_OUT_BOOT-->').length !== 2) throw new Error('Block Out boot anchor missing');
   html = html.replace(/<!--BLOCK_OUT_BOOT-->[\s\S]*?<!--BLOCK_OUT_BOOT_END-->/, () => boot);
@@ -49,7 +52,7 @@ export function blockOutHtml({ root, overlaysRoot, template, config, media = {},
       #preloader{z-index:5}canvas{touch-action:none}
       #novvy-cta .novvy-cta-name{white-space:normal}
     </style>`, '</head>'].join('\n'));
-  return { html, assetsJs, coreJs, stageChain, policy, introEnabled: injection.introEnabled };
+  return { html, assetsJs, coreJs, game, stageChain, policy, introEnabled: injection.introEnabled };
 }
 
 export function previewHtml({ plugin: entry, task, taskId }) {
@@ -59,3 +62,5 @@ export function previewHtml({ plugin: entry, task, taskId }) {
   return blockOutHtml({ root: entry.templateDir, overlaysRoot: entry.dir, template: entry.template, config, preview: true,
     media: { introVideo: hasVideo ? `/project/${taskId}/uploads/intro-video.mp4` : null, introPoster: hasPoster ? `/project/${taskId}/generated/poster.webp` : null } }).html;
 }
+
+export {exportGameZip} from '../../core/lib/standalone-origin.mjs';

@@ -1,3 +1,4 @@
+import { compileStandalone } from '../../shared/origin-standalone/build.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +30,7 @@ export function compileSource(html) {
     'game/boot.js': fs.readFileSync(path.join(root, 'src/boot.js'), 'utf8'),
     'game/index.html': fs.readFileSync(path.join(root, 'src/index.html'), 'utf8'),
   };
+  files['game/game.js'] = compileStandalone(root, files, ['game/assets.js','game/loader.js','game/layout.js']);
   return { files, assets };
 }
 export function build() {
@@ -41,7 +43,7 @@ export function build() {
   for (const [file, content] of Object.entries(files)) fs.writeFileSync(path.join(out, file), content);
   fs.writeFileSync(path.join(out, 'game-manifest.json'), JSON.stringify({
     id: 'grill-sort-origin', name: appStore.name, version: '1.0.0', entry: 'game/index.html',
-    constants: { game: { scripts: ['game/assets.js', 'game/loader.js', 'game/layout.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } }, totalItems: 120,
+    constants: { game: { standalone: 'game/game.js', scripts: ['game/assets.js', 'game/loader.js', 'game/layout.js'], boot: 'game/boot.js', hudInsideCanvas: true, ctaCard: { name: appStore.name, icon: 'game/cta-icon.webp' } }, totalItems: 120,
       sourceSha256: hash(raw), sourceUrl: provenance.sourceUrl, appStoreUrl: provenance.appStoreUrl,
       fileHashes: Object.fromEntries(Object.entries(files).map(([file, value]) => [file, hash(value)])) },
   }, null, 2) + '\n');

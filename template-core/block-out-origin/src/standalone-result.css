@@ -1,0 +1,8 @@
+#block-out-result { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 124px 20px 140px; box-sizing: border-box; background: #102747b8; color: #fff; text-align: center; font: 700 20px/1.4 Arial, sans-serif; }
+#block-out-result[hidden] { display: none; }
+.block-out-result-card { width: min(100%, 300px); box-sizing: border-box; padding: 28px 20px; border: 2px solid #a5daff; border-radius: 22px; background: #245a93; box-shadow: 0 16px 48px #0006; }
+#block-out-result-title { margin: 0; font-size: 32px; }
+#block-out-result-copy { margin: 14px 0 22px; font-size: 16px; font-weight: 400; }
+#block-out-replay { border: 0; border-radius: 12px; padding: 14px 28px; background: #ffe39a; color: #193c66; font: inherit; cursor: pointer; touch-action: manipulation; }
+#block-out-replay:disabled { opacity: .65; cursor: wait; }
+@media (orientation: landscape) { #block-out-result { padding: 64px 20px 110px; } .block-out-result-card { padding: 12px 20px; } #block-out-result-title { font-size: 24px; } #block-out-result-copy { margin: 8px 0; } #block-out-replay { padding: 8px 24px; } }

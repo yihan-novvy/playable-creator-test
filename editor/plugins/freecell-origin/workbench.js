@@ -155,6 +155,7 @@ window.PlayablePlugins = window.PlayablePlugins || {};
     const pack = card('pack', 2, '打包', '组合片头视频与原版纸牌 playable，接入视频、操作、进度与转化事件，生成可导出的 H5 ZIP。', [], (right) => {
       if (stepState('pack').ok) {
         right.append(el('a', { class: 'primary', href: `/api/tasks/${taskId}/export`, download: `${taskId}.zip` }, ['下载 ZIP 包']));
+        right.append(el('a', { href: `/api/tasks/${taskId}/export?format=game`, download: `${taskId}-game.zip` }, ['下载独立游戏 ZIP']));
         appendPackPreviewControls(right, () => mountPlayPreview(right, `/result/${taskId}/index.html?v=${Date.now()}`));
       } else {
         right.append(el('span', { class: 'hint' }, ['打包成功后，这里可下载 ZIP 并试玩产物。']));

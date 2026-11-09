@@ -3,7 +3,7 @@ import { validateLevel, getMove, pour, isWon } from './game.js';
 import { lightStudio, createGlass, createLiquidMaterial, createSurfaceMaterial } from './appearance.js';
 import { createLiquidGeometry, liquidSurfaceLevel, liquidVolumeBelowLevel as liquidVolumeFractionAtLevel, angleForPour } from './liquid-volume.js';
 import { VESSEL } from './vessel-shape.js';
-import { unlockAudio, startPour, updatePour, stopPour, startBGM } from './audio.js';
+import { unlockAudio, startPour, updatePour, stopPour, startBGM, setAudioMuted, disposeAudio } from './audio.js';
 
 // Mountable game core shared by the dev workshop (main.js) and the ad shell
 // (ad-main.js). All DOM access goes through the optional `ui` callbacks, so
@@ -12,7 +12,7 @@ import { unlockAudio, startPour, updatePour, stopPour, startBGM } from './audio.
 //   ui.onState({moves, canUndo, busy, won}) - emitted after every state change
 //   ui.onLevel(level)                       - emitted after a level is applied
 // The host owns every button; the game exposes load/reset/undo for it to call.
-export function createGame({ host, level: initialLevel, ui = {}, insets = {} }) {
+export function createGame({ host, level: initialLevel, ui = {}, insets = {}, autoStart = true, audioEnabled = () => true }) {
   const status = text => ui.onStatus?.(text);
   const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -22,7 +22,8 @@ export function createGame({ host, level: initialLevel, ui = {}, insets = {} }) 
   host.prepend(renderer.domElement);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 1, .1, 100);
-  lightStudio(renderer, scene);
+  const environment = lightStudio(renderer, scene);
+  let paused = !autoStart, destroyed = false, pausedAt = 0, muted = false;
   const SCALE = new THREE.Vector3(.86, 1.35, .86);
   const INTERIOR = { radius:VESSEL.liquidRadius, bottom:VESSEL.innerBottom, top:VESSEL.mouthHeight, rounding:VESSEL.innerBottomHeight, scaleY:SCALE.y, scaleXZ:SCALE.x };
   const REST_VOLUME = liquidVolumeFractionAtLevel(2.4 * SCALE.y, 0, INTERIOR);
@@ -146,7 +147,7 @@ export function createGame({ host, level: initialLevel, ui = {}, insets = {} }) 
     status(index < 0 ? '选择一个杯子，开始整理颜色' : `已选择第 ${index + 1} 杯 · 点击空杯或顶部同色的杯子`);
   }
   function clickCup(index) {
-    if (busy || isWon(state, level.capacity)) return;
+    if (paused || destroyed || busy || isWon(state, level.capacity)) return;
     if (selected < 0) { if (state[index].length) select(index); return; }
     if (selected === index) { select(-1); return; }
     const from = selected, move = getMove(state, from, index, level.capacity);
@@ -219,23 +220,37 @@ export function createGame({ host, level: initialLevel, ui = {}, insets = {} }) 
       }
     }};
   }
-  // 广告壳的片头视频覆盖层(#novvy-video-intro)活动时,首次点按只解锁音频
-  // 不起 BGM(视频有自己的声音);片头结束事件后再起,两处调用都幂等。
-  document.addEventListener('pointerdown', () => { unlockAudio(); if (!document.getElementById('novvy-video-intro')) startBGM(); });
-  // intro.js 在 window 上派发 novvy:intro-finished,window 派发不会进入
-  // document 监听,这里必须同样挂在 window。
-  window.addEventListener('novvy:intro-finished', () => startBGM());
-  renderer.domElement.addEventListener('pointerdown', event => {
+  const onPointer = event => {
+    if (paused || destroyed) return;
+    if (!muted && audioEnabled()) { unlockAudio(); startBGM(); }
     const rect = renderer.domElement.getBoundingClientRect();
     pointer.set((event.clientX-rect.left)/rect.width*2-1,-(event.clientY-rect.top)/rect.height*2+1);
     raycaster.setFromCamera(pointer,camera);
     const hits = raycaster.intersectObjects(cups.map(cup=>cup.hit));if(hits.length)clickCup(hits[0].object.userData.index);
-  });
-  new ResizeObserver(()=>{if(!state)return;if(busy)resizePending=true;else layout();}).observe(host);
-  renderer.setAnimationLoop(time=>{if(animation)animation.tick(Math.min(1,(time-animation.start)/2400));renderer.render(scene,camera);});
+  };
+  renderer.domElement.addEventListener('pointerdown', onPointer);
+  const observer = new ResizeObserver(()=>{if(!state||destroyed)return;if(busy)resizePending=true;else layout();});observer.observe(host);
+  const frame = time => { if (!paused && !destroyed && animation) animation.tick(Math.min(1,(time-animation.start)/2400));renderer.render(scene,camera); };
+  if (autoStart) renderer.setAnimationLoop(frame);
   if (initialLevel) load(initialLevel);
+  renderer.render(scene,camera);
+  setAudioMuted(paused || muted);
   return {
     load,
+    start() { this.resume(); },
+    pause() { if (destroyed || paused) return; paused=true;pausedAt=performance.now();renderer.setAnimationLoop(null);setAudioMuted(true); },
+    resume() { if (destroyed || !paused) return; if(animation)animation.start+=performance.now()-pausedAt;paused=false;renderer.setAnimationLoop(frame);setAudioMuted(muted); },
+    setMuted(value) { muted=!!value;setAudioMuted(paused||muted); },
+    resize(next = {}) { Object.assign(INSETS,next);if(busy)resizePending=true;else {layout();renderer.render(scene,camera);} },
+    destroy() {
+      if(destroyed)return;destroyed=true;renderer.setAnimationLoop(null);observer.disconnect();
+      renderer.domElement.removeEventListener('pointerdown',onPointer);disposeAudio();
+      const geometries=new Set(),materials=new Set();
+      scene.traverse(node=>{if(node.geometry)geometries.add(node.geometry);if(node.material)(Array.isArray(node.material)?node.material:[node.material]).forEach(m=>materials.add(m));});
+      materialCache.forEach(list=>list.forEach(m=>materials.add(m)));
+      geometries.forEach(g=>g.dispose());materials.forEach(m=>m.dispose());environment.dispose();
+      renderer.dispose();renderer.forceContextLoss();renderer.domElement.remove();
+    },
     reset: () => { if (!busy) load(level); },
     undo: () => { if (busy || !history.length) return; state = history.pop(); select(-1); drawLiquids(); updateUI(); },
   };
