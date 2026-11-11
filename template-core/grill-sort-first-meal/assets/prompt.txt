@@ -1,0 +1,8 @@
+Built-in imagegen, illustration-story, generated 2026-11-11.
+Reference 1: opening-vera-reference.jpg from the approved video — adult blonde heroine, pale blue/white medieval gown.
+Reference 2: king-character-reference.jpg from the approved video — adult dark-haired royal man, black/gold coat.
+
+Create a production sprite-sheet illustration for a mobile playable ad. Render both reference characters as appealing polished 2.5D casual mobile game cartoon adults, not children. Square sprite sheet divided into exactly three equal horizontal panels, stacked edge-to-edge, without gutters, frames, labels or text. All panels share the same wide camera, positions, character scale, and warm ivory/gold palace dining-room background. Waist-up heroine on left, royal man on right, wooden table at the bottom, plate in front of heroine. Top: visibly hungry and exhausted heroine holding her stomach, worried eyes, empty plate with a tiny crumb; concerned man. Middle: hopeful, surprised heroine looking at a modest serving of grilled skewers; reassuring man. Bottom: relieved, smiling heroine and a warm generous plate of grilled skewers; smiling man. Expressive faces readable at small size, warm amber light, rounded shapes, painterly finish. No captions, speech bubbles, icons, UI, subtitles, watermarks or other characters.
+
+Source image: /Users/code/.codex/generated_images/01a1ca62-3c7f-7451-b1ef-f185a8b95159/exec-e2127827-ed66-43b3-b6a1-1ae603da1f88.png
+Project PNG retains original. JPEG uses macOS sips format conversion at quality 88 without cropping or composition edits, embedded in final game.js.
