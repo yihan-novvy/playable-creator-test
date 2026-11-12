@@ -73,7 +73,7 @@ test('artwork load failure disposes a successfully loaded base', async () => {
 test('story crosses exactly at 10% and 30%; delivery feedback cannot cancel stage feedback', async () => {
   const f=fixture(),root=new Element(),game=await f.entry(root,f.shell,{}),wrapper=root.children[0];
   const serve=delivered=>f.instances[0].options.onMealServed({delivered});
-  const badge=wrapper.querySelector('.fm-stage-notice');
+  const badge=wrapper.querySelector('.fm-line');
   assert.equal(wrapper.dataset.mood,'hungry');assert.equal(badge.animationLog.length,0);
   await game.start();
   for(const n of [3,6,9]) serve(n);

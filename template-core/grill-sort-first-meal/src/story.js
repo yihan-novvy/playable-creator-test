@@ -18,38 +18,23 @@ export function createFirstMealEntry(baseFactory, artwork, css) {
           <div class="fm-scene fm-scene--hopeful"></div>
           <div class="fm-scene fm-scene--happy"></div>
           <div class="fm-glow" aria-hidden="true"></div>
-          <span class="fm-chapter">HER FIRST WARM MEAL</span>
-          <span class="fm-delivery" aria-hidden="true">+3 served</span>
-          <span class="fm-stage-notice" aria-hidden="true"></span>
         </div>
-        <div class="fm-dialogue"><span class="fm-speaker">VERA</span><span class="fm-line">“Just one warm meal. Please…”</span></div>
+        <div class="fm-dialogue"><span class="fm-line" aria-live="polite">“Please… I’m so hungry.”</span></div>
         <div class="fm-progress">
-          <div class="fm-status">She's so hungry…</div>
           <ol class="fm-stages" aria-label="Vera's journey">
-            <li class="fm-stage fm-stage--hungry">
-              <svg class="fm-stage-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 10h.01M16 10h.01M8 17q4-5 8 0"/></svg>
-              <span>Hungry</span><span class="fm-stage-bar" aria-hidden="true"></span>
-            </li>
-            <li class="fm-stage fm-stage--hopeful">
-              <svg class="fm-stage-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h18c-1 6-4 8-9 8s-8-2-9-8ZM7 8c-3-3 3-3 0-6M12 8c-3-3 3-3 0-6M17 8c-3-3 3-3 0-6"/></svg>
-              <span>First Bite</span><span class="fm-stage-bar" aria-hidden="true"></span>
-            </li>
-            <li class="fm-stage fm-stage--happy">
-              <svg class="fm-stage-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 3.5 12.5C-3 5.5 7-2 12 6c5-8 15-.5 8.5 6.5Z"/></svg>
-              <span>Warm Again</span><span class="fm-stage-bar" aria-hidden="true"></span>
-            </li>
+            <li class="fm-stage fm-stage--hungry" aria-label="Hungry"></li>
+            <li class="fm-stage fm-stage--hopeful" aria-label="First bite"></li>
+            <li class="fm-stage fm-stage--happy" aria-label="Warm again"></li>
           </ol>
         </div>
         <div class="fm-game"></div>
-        <div class="fm-hint">Match 3 skewers. Bring her a warm meal.</div>
       </div>`;
     root.appendChild(wrapper);
     const query = selector => wrapper.querySelector(selector);
     const board = query('.fm-game'), story = query('.fm-story');
-    const line = query('.fm-line'), speaker = query('.fm-speaker'), status = query('.fm-status');
+    const line = query('.fm-line');
     const stageItems = ['hungry', 'hopeful', 'happy'].map(mood => query(`.fm-stage--${mood}`));
-    const notice = query('.fm-delivery');
-    const stageNotice = query('.fm-stage-notice'), glow = query('.fm-glow');
+    const glow = query('.fm-glow');
     const unlockAudio = () => chime.unlock();
     wrapper.addEventListener('pointerdown', unlockAudio, {capture: true, passive: true});
     for (const scene of wrapper.querySelectorAll('.fm-scene')) scene.style.backgroundImage = `url("${artwork}")`;
@@ -82,7 +67,6 @@ export function createFirstMealEntry(baseFactory, artwork, css) {
       if (!running()) return;
       const delivery = animations.get('delivery');
       if (delivery) { delivery.onfinish = null; delivery.cancel(); animations.delete('delivery'); }
-      stageNotice.textContent = mood === 'hopeful' ? 'HER FIRST BITE' : 'HOPE IS BACK';
       chime.play(mood);
       if (env.reducedMotion) return;
       animate('scene-out', query(`.fm-scene--${previous}`), [{opacity: 1}, {opacity: 0}], {duration: 850, easing: 'ease-out'});
@@ -92,21 +76,13 @@ export function createFirstMealEntry(baseFactory, artwork, css) {
         {opacity: 1, transform: 'scale(1)'}
       ], {duration: 1300, easing: 'ease-out'});
       animate('glow', glow, [{opacity: 0}, {opacity: .8, offset: .25}, {opacity: 0}], {duration: 1000, easing: 'ease-out'});
-      animate('stage-notice', stageNotice, [
-        {opacity: 0, transform: 'translate(-50%, 12px) scale(.85)'},
-        {opacity: 1, transform: 'translate(-50%, 0) scale(1.05)', offset: .16},
-        {opacity: 1, transform: 'translate(-50%, 0) scale(1)', offset: .8},
-        {opacity: 0, transform: 'translate(-50%, -8px) scale(1)'}
-      ], {duration: 2200, easing: 'ease-out'});
+      animate('dialogue', line, [{opacity: .35}, {opacity: 1}], {duration: 450, easing: 'ease-out'});
     }
     function animateDelivery() {
       if (!running() || env.reducedMotion) return;
-      animate('delivery', notice, [
-        {opacity: 0, transform: 'translate(-50%, 12px) scale(.8)'},
-        {opacity: 1, transform: 'translate(-50%, 0) scale(1.08)', offset: .2},
-        {opacity: 1, transform: 'translate(-50%, -6px) scale(1)', offset: .7},
-        {opacity: 0, transform: 'translate(-50%, -18px) scale(1)'}
-      ], {duration: 1500, easing: 'ease-out'});
+      animate('delivery', query(`.fm-stage--${wrapper.dataset.mood}`), [
+        {filter: 'brightness(1)'}, {filter: 'brightness(1.5)', offset: .3}, {filter: 'brightness(1)'}
+      ], {duration: 700, easing: 'ease-out'});
     }
     function paint() {
       const percent = Math.min(100, delivered / 120 * 100);
@@ -118,27 +94,18 @@ export function createFirstMealEntry(baseFactory, artwork, css) {
         item.dataset.state = index < currentStage ? 'past' : index === currentStage ? 'current' : 'upcoming';
         item.setAttribute('aria-current', index === currentStage ? 'step' : 'false');
       });
-      status.textContent = ["She's so hungry…", 'Her first bite. Keep cooking!', 'Warm food. Hope is back.'][currentStage];
-      speaker.textContent = 'VERA';
       if (result === 'fail') {
         line.textContent = delivered ? '“The kitchen closed too soon…”' : '“Please… I’m still hungry.”';
-        status.textContent = 'The kitchen is closed';
       } else if (result === 'win') {
         line.textContent = '“I won’t go hungry anymore.”';
-        status.textContent = 'A warm meal. A new beginning.';
       } else if (percent < 10) {
-        line.textContent = '“Just one warm meal. Please…”';
-      } else if (percent < 20) {
-        line.textContent = '“Is that… really for me?”';
+        line.textContent = '“Please… I’m so hungry.”';
       } else if (percent < 30) {
-        speaker.textContent = 'THE KING';
-        line.textContent = '“You won’t go hungry here.”';
-      } else if (percent < 75) {
-        line.textContent = '“I haven’t felt this warm in days.”';
+        line.textContent = '“Is this really for me?”';
       } else {
-        line.textContent = '“Thank you for not giving up on me.”';
+        line.textContent = '“I feel warm again.”';
       }
-      story.setAttribute('aria-label', `${mood === 'hungry' ? 'Hungry' : mood === 'hopeful' ? 'Hopeful' : 'Relieved'} Vera at the palace table. ${status.textContent}`);
+      story.setAttribute('aria-label', `${mood === 'hungry' ? 'Hungry' : mood === 'hopeful' ? 'Hopeful' : 'Relieved'} Vera at the palace table.`);
       if (previous && previous !== mood) enterStage(previous, mood);
       return previous && previous !== mood;
     }
